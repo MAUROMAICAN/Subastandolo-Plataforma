@@ -1,0 +1,1 @@
+ALTER TABLE public.shipping_info ADD COLUMN phone text;

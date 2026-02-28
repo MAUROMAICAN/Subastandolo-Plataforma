@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=Roboto:wght@300;400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern e-commerce palette */
+    --brand-dark: 220 20% 14%;
+    --brand-lime: 77 97% 50%;
+    --background: 0 0% 97%;
+    --foreground: 220 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 12%;
+
+    /* Primary - vibrant blue */
+    --primary: 220 90% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 220 20% 25%;
+
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 46%;
+
+    /* Accent - vivid lime for CTAs */
+    --accent: 77 97% 50%;
+    --accent-foreground: 220 20% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 220 90% 45%;
+
+    --radius: 0.5rem;
+
+    /* Nav */
+    --nav-bg: 220 25% 10%;
+    --nav-accent: 220 90% 50%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 220 90% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 100% 51%;
+    --sidebar-accent-foreground: 220 20% 10%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 220 90% 45%;
+
+    --font-heading: 'Roboto', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer utilities {
+  .bg-nav {
+    background: linear-gradient(135deg, hsl(220 25% 10%), hsl(220 40% 18%));
+  }
+
+  .bg-nav-solid {
+    background-color: hsl(220 25% 12%);
+  }
+}
+
+@keyframes admin-badge-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px hsla(0, 0%, 50%, 0.5)) drop-shadow(0 0 1px hsla(0, 0%, 80%, 0.3));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 10px hsla(0, 0%, 70%, 0.7)) drop-shadow(0 0 3px hsla(0, 0%, 100%, 0.5));
+    transform: scale(1.12);
+  }
+}
+
+@keyframes admin-diamond-flash {
+  0% { transform: rotate(-20deg) translateX(-14px); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: rotate(-20deg) translateX(28px); opacity: 0; }
+}
+
+.animate-admin-badge {
+  animation: admin-badge-glow 2.5s ease-in-out infinite;
+}
+
+.admin-diamond-flash {
+  animation: admin-diamond-flash 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Countdown urgency animations */
+.countdown-urgent {
+  animation: countdown-glow 2s ease-in-out infinite;
+}
+
+.countdown-critical {
+  animation: countdown-shake 1s ease-in-out infinite;
+}
+
+@keyframes countdown-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.1); }
+}
+
+@keyframes countdown-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-0.5px); }
+  75% { transform: translateX(0.5px); }
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 13% 80%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 13% 65%);
+}

@@ -1,0 +1,222 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2 } from "lucide-react";
+import type { BannerImage, SiteSetting, SiteSection } from "./types";
+
+interface Props {
+  siteSettings: SiteSetting[];
+  siteSections: SiteSection[];
+  banners: BannerImage[];
+  editingSettings: Record<string, string>;
+  setEditingSettings: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  savingSettings: boolean;
+  handleSaveSettings: () => Promise<void>;
+  fetchAllData: () => Promise<void>;
+}
+
+const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, editingSettings, setEditingSettings, savingSettings, handleSaveSettings, fetchAllData }: Props) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [banners, setBanners] = useState(initialBanners);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<string | null>(null);
+  const [editBannerTitle, setEditBannerTitle] = useState("");
+  const [editBannerSubtitle, setEditBannerSubtitle] = useState("");
+  const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
+  const [savingBanner, setSavingBanner] = useState(false);
+  const [localSections, setLocalSections] = useState(siteSections);
+
+  // Sync props
+  useState(() => { setBanners(initialBanners); setLocalSections(siteSections); });
+
+  const handleAddBanner = async () => {
+    if (!bannerFile || !user) return;
+    setUploadingBanner(true);
+    const filePath = `${crypto.randomUUID()}.${bannerFile.name.split(".").pop()}`;
+    const { error: upErr } = await supabase.storage.from("banner-images").upload(filePath, bannerFile);
+    if (upErr) { toast({ title: "Error", description: upErr.message, variant: "destructive" }); setUploadingBanner(false); return; }
+    const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
+    await supabase.from("banner_images").insert({ image_url: urlData.publicUrl, title: bannerTitle || null, subtitle: bannerSubtitle || null, display_order: banners.length, created_by: user.id });
+    toast({ title: "Banner agregado" }); setBannerFile(null); setBannerTitle(""); setBannerSubtitle(""); setUploadingBanner(false); fetchAllData();
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    await supabase.from("banner_images").delete().eq("id", id);
+    setBanners(prev => prev.filter(b => b.id !== id)); toast({ title: "Banner eliminado" });
+  };
+
+  const handleEditBannerStart = (b: BannerImage) => {
+    setEditingBanner(b.id); setEditBannerTitle(b.title || ""); setEditBannerSubtitle(b.subtitle || ""); setEditBannerFile(null);
+  };
+
+  const handleSaveBanner = async (id: string) => {
+    setSavingBanner(true);
+    const updateData: any = { title: editBannerTitle || null, subtitle: editBannerSubtitle || null };
+    if (editBannerFile) {
+      const filePath = `${crypto.randomUUID()}.${editBannerFile.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("banner-images").upload(filePath, editBannerFile);
+      if (upErr) { toast({ title: "Error subiendo imagen", variant: "destructive" }); setSavingBanner(false); return; }
+      const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
+      updateData.image_url = urlData.publicUrl;
+    }
+    await supabase.from("banner_images").update(updateData).eq("id", id);
+    toast({ title: "✅ Banner actualizado" }); setEditingBanner(null); setSavingBanner(false); fetchAllData();
+  };
+
+  const handleToggleBannerActive = async (id: string, active: boolean) => {
+    await supabase.from("banner_images").update({ is_active: active }).eq("id", id);
+    setBanners(prev => prev.map(b => b.id === id ? { ...b, is_active: active } : b));
+    toast({ title: active ? "Banner activado" : "Banner desactivado" });
+  };
+
+  const handleSectionToggle = async (id: string, visible: boolean) => {
+    await supabase.from("site_sections").update({ is_visible: visible } as any).eq("id", id);
+    setLocalSections(prev => prev.map(s => s.id === id ? { ...s, is_visible: visible } : s));
+  };
+
+  const handleSectionUpdate = async (id: string, field: string, value: string) => {
+    await supabase.from("site_sections").update({ [field]: value } as any).eq("id", id);
+    toast({ title: "Sección actualizada" });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Settings className="h-5 w-5 text-primary" /> Configuración Central</h1>
+        <Button onClick={handleSaveSettings} disabled={savingSettings} className="bg-primary text-primary-foreground rounded-sm text-xs">
+          {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}Guardar Cambios
+        </Button>
+      </div>
+      <Accordion type="multiple" defaultValue={["settings"]} className="space-y-2">
+        <AccordionItem value="settings" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-primary" /> Configuración del Sitio<Badge variant="outline" className="text-[10px] ml-1">{siteSettings.length}</Badge></div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 space-y-4">
+            {Object.entries(siteSettings.reduce<Record<string, SiteSetting[]>>((acc, s) => { if (!acc[s.category]) acc[s.category] = []; acc[s.category].push(s); return acc; }, {})).map(([cat, settings]) => (
+              <div key={cat} className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">{cat}</h3>
+                {settings.map(setting => (
+                  <div key={setting.id} className="flex items-center gap-3">
+                    <Label className="text-xs w-40 shrink-0">{setting.label}</Label>
+                    {setting.setting_type === "color" ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="w-8 h-8 rounded-sm border border-border shrink-0" style={{ backgroundColor: `hsl(${editingSettings[setting.setting_key] || "0 0% 50%"})` }} />
+                        <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-xs font-mono" placeholder="H S% L%" />
+                      </div>
+                    ) : (
+                      <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-xs" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="sections" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Secciones de la Página<Badge variant="outline" className="text-[10px] ml-1">{localSections.length}</Badge></div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 space-y-3">
+            {localSections.map(section => (
+              <div key={section.id} className="border border-border rounded-sm p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><span className="text-xs font-medium">{section.section_key}</span><Badge variant="outline" className="text-[10px]">{section.section_type}</Badge></div>
+                  <div className="flex items-center gap-2"><Label className="text-xs text-muted-foreground">Visible</Label><Switch checked={section.is_visible} onCheckedChange={(v) => handleSectionToggle(section.id, v)} /></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1"><Label className="text-xs">Título</Label><Input defaultValue={section.title || ""} onBlur={(e) => handleSectionUpdate(section.id, "title", e.target.value)} className="rounded-sm text-xs" /></div>
+                  <div className="space-y-1"><Label className="text-xs">Contenido</Label><Textarea defaultValue={section.content || ""} onBlur={(e) => handleSectionUpdate(section.id, "content", e.target.value)} rows={2} className="rounded-sm text-xs" /></div>
+                </div>
+              </div>
+            ))}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="banners" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-primary" /> Banners del Hero<Badge variant="outline" className="text-[10px] ml-1">{banners.length}</Badge></div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 space-y-4">
+            <Card className="border border-border rounded-sm">
+              <CardContent className="p-4 space-y-4">
+                <label className="flex items-center gap-2 px-4 py-3 rounded-sm border border-dashed border-primary/40 text-sm text-primary cursor-pointer hover:bg-primary/5 transition-colors w-full justify-center">
+                  <ImagePlus className="h-4 w-4" /> {bannerFile ? bannerFile.name : "Seleccionar imagen"}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setBannerFile(e.target.files?.[0] || null)} />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input value={bannerTitle} onChange={(e) => setBannerTitle(e.target.value)} placeholder="Título" className="rounded-sm text-xs" />
+                  <Input value={bannerSubtitle} onChange={(e) => setBannerSubtitle(e.target.value)} placeholder="Subtítulo" className="rounded-sm text-xs" />
+                </div>
+                <Button onClick={handleAddBanner} disabled={!bannerFile || uploadingBanner} className="bg-primary text-primary-foreground rounded-sm text-xs">
+                  {uploadingBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ImagePlus className="h-3.5 w-3.5 mr-1" />} Agregar
+                </Button>
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {banners.map(b => (
+                <div key={b.id} className="bg-card border border-border rounded-sm overflow-hidden">
+                  {editingBanner === b.id ? (
+                    <div className="p-4 space-y-3">
+                      <img src={editBannerFile ? URL.createObjectURL(editBannerFile) : b.image_url} className="w-full aspect-[16/9] object-cover rounded-sm" alt="" />
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-sm border border-dashed border-primary/40 text-xs text-primary cursor-pointer hover:bg-primary/5 w-full justify-center">
+                        <ImagePlus className="h-3.5 w-3.5" /> {editBannerFile ? editBannerFile.name : "Cambiar imagen"}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => setEditBannerFile(e.target.files?.[0] || null)} />
+                      </label>
+                      <Input value={editBannerTitle} onChange={(e) => setEditBannerTitle(e.target.value)} placeholder="Título" className="rounded-sm text-xs" />
+                      <Input value={editBannerSubtitle} onChange={(e) => setEditBannerSubtitle(e.target.value)} placeholder="Subtítulo" className="rounded-sm text-xs" />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleSaveBanner(b.id)} disabled={savingBanner} className="bg-primary text-primary-foreground rounded-sm text-xs flex-1">
+                          {savingBanner ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Guardar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingBanner(null)} className="rounded-sm text-xs">Cancelar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <img src={b.image_url} className={`w-full aspect-[16/9] object-cover ${!b.is_active ? 'opacity-40 grayscale' : ''}`} alt="" />
+                        {!b.is_active && <Badge variant="secondary" className="absolute top-2 left-2 text-[10px]">Inactivo</Badge>}
+                      </div>
+                      <div className="p-3 space-y-2">
+                        <p className="text-sm font-medium truncate">{b.title || "Sin título"}</p>
+                        <div className="flex items-center gap-1.5">
+                          <Button variant="outline" size="sm" onClick={() => handleEditBannerStart(b)} className="rounded-sm text-[10px] h-7 flex-1"><PenLine className="h-3 w-3 mr-1" /> Editar</Button>
+                          <Button variant="outline" size="icon" onClick={() => handleToggleBannerActive(b.id, !b.is_active)} className={`rounded-sm h-7 w-7 ${b.is_active ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {b.is_active ? <Eye className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>¿Eliminar banner?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteBanner(b.id)} className="bg-destructive text-destructive-foreground">Eliminar</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+};
+
+export default AdminCMSTab;

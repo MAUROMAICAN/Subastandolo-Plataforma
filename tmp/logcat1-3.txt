@@ -1,0 +1,361 @@
+2026-02-25 18:47:35.521  2319-2319  PreStartUtils           com.miui.home                        E  preLaunchProcess success infoPackage: com.subastandolo.app
+2026-02-25 18:47:35.616 16983-16983 Zygote                  pid-16983                            E  process_name_ptr:16983 com.subastandolo.app
+2026-02-25 18:47:35.616 16983-16983 Zygote                  pid-16983                            E  SetMemoryProtected process_name_ptr:16983 com.subastandolo.app
+2026-02-25 18:47:35.665  2319-10935 ActivityManagerWrapper  com.miui.home                        E  getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+                                                                                                     mainTaskId=703   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.subastandolo.app/com.subastandolo.app.MainActivity} }
+2026-02-25 18:47:35.733  2319-10935 ActivityManagerWrapper  com.miui.home                        E  getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+                                                                                                     mainTaskId=703   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.subastandolo.app/com.subastandolo.app.MainActivity} }
+---------------------------- PROCESS STARTED (16983) for package com.subastandolo.app ----------------------------
+2026-02-25 18:47:35.802 16983-16983 ActivityThread          com.subastandolo.app                 D  setEmbeddedParam packageName=com.subastandolo.app processName=com.subastandolo.app isEmbedded=false isIsolated=false
+2026-02-25 18:47:35.814 16983-16983 ApplicationLoaders      com.subastandolo.app                 D  Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+2026-02-25 18:47:35.814 16983-16983 ApplicationLoaders      com.subastandolo.app                 D  Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+2026-02-25 18:47:35.960  2319-10935 ActivityManagerWrapper  com.miui.home                        E  getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=1
+                                                                                                     mainTaskId=703   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.subastandolo.app/com.subastandolo.app.MainActivity} }
+2026-02-25 18:47:36.072 16983-16983 nativeloader            com.subastandolo.app                 D  Configuring clns-7 for other apk /data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/lib/arm64:/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.subastandolo.app
+2026-02-25 18:47:36.093 16983-16983 GraphicsEnvironment     com.subastandolo.app                 V  Currently set values for:
+2026-02-25 18:47:36.093 16983-16983 GraphicsEnvironment     com.subastandolo.app                 V    angle_gl_driver_selection_pkgs=[]
+2026-02-25 18:47:36.093 16983-16983 GraphicsEnvironment     com.subastandolo.app                 V    angle_gl_driver_selection_values=[]
+2026-02-25 18:47:36.093 16983-16983 GraphicsEnvironment     com.subastandolo.app                 V  Global.Settings values are invalid: number of packages: 0, number of values: 0
+2026-02-25 18:47:36.093 16983-16983 GraphicsEnvironment     com.subastandolo.app                 V  Neither updatable production driver nor prerelease driver is supported.
+2026-02-25 18:47:36.096 16983-17015 ActivityThread          com.subastandolo.app                 I  TrafficStats init done
+2026-02-25 18:47:36.098 16983-17015 ForceDarkHelperStubImpl com.subastandolo.app                 I  initialize for com.subastandolo.app , ForceDarkOrigin
+2026-02-25 18:47:36.101 16983-17015 nativeloader            com.subastandolo.app                 D  Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+2026-02-25 18:47:36.101 16983-17015 HWUI                    com.subastandolo.app                 D  JNI_OnLoad success
+2026-02-25 18:47:36.101 16983-17015 MiuiForceDarkConfig     com.subastandolo.app                 I  setConfig density:2.000000, mainRule:0, secondaryRule:0, tertiaryRule:0
+2026-02-25 18:47:36.105 16983-17015 ActivityThread          com.subastandolo.app                 I  Miui Feature Init done
+2026-02-25 18:47:36.136 16983-16983 FirebaseApp             com.subastandolo.app                 I  Device unlocked: initializing all Firebase APIs for app [DEFAULT]
+2026-02-25 18:47:36.157 16983-16983 FirebaseInitProvider    com.subastandolo.app                 I  FirebaseApp initialization successful
+2026-02-25 18:47:36.201 16983-16983 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.perf.scroll_opt"
+2026-02-25 18:47:36.209 16983-16983 nativeloader            com.subastandolo.app                 D  Load libpowerhalwrap_jni.so using system ns (caller=/system_ext/framework/mediatek-framework.jar): ok
+2026-02-25 18:47:36.209 16983-16983 PowerHalWrapper         com.subastandolo.app                 I  PowerHalWrapper.getInstance 
+2026-02-25 18:47:36.210 16983-16983 M-ProMotion             com.subastandolo.app                 I  M-ProMotion is disabled
+2026-02-25 18:47:36.214 16983-16983 FramePredict            com.subastandolo.app                 D  FramePredict init: true
+2026-02-25 18:47:36.220 16983-17015 ActivityThread          com.subastandolo.app                 I  HardwareRenderer preload  done
+2026-02-25 18:47:36.222 16983-17044 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/lib/arm64'
+2026-02-25 18:47:36.223 16983-17044 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk!/lib/arm64-v8a'
+2026-02-25 18:47:36.223 16983-17044 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/lib/arm64'
+2026-02-25 18:47:36.224 16983-17044 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk!/lib/arm64-v8a'
+2026-02-25 18:47:36.231 16983-17044 MMUD                    com.subastandolo.app                 D  mtk_memory_debug_init com.subastandolo.app 0xb40000744302c5d0
+2026-02-25 18:47:36.263 16983-16983 AppCompatDelegate       com.subastandolo.app                 D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
+2026-02-25 18:47:36.307 16983-16983 libc                    com.subastandolo.app                 W  Access denied finding property "persist.vendor.camera.IsVariableApertureSupported"
+2026-02-25 18:47:36.307 16983-16983 libc                    com.subastandolo.app                 W  Access denied finding property "persist.vendor.camera.IsStreetModeSupported"
+2026-02-25 18:47:36.334 16983-17049 MMUD                    com.subastandolo.app                 D  get_leak_baseline 3246391296
+2026-02-25 18:47:36.345 16983-16983 ubastandolo.app         com.subastandolo.app                 I  hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app, TargetSdkVersion=36) using reflection: allowed
+2026-02-25 18:47:36.362 16983-16983 WebViewFactory          com.subastandolo.app                 I  Loading com.google.android.webview version 145.0.7632.79 (code 763207903)
+2026-02-25 18:47:36.371 16983-16983 ApplicationLoaders      com.subastandolo.app                 D  Returning zygote-cached class loader: /system/framework/android.test.base.jar
+2026-02-25 18:47:36.372 16983-16983 ApplicationLoaders      com.subastandolo.app                 D  Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+2026-02-25 18:47:36.374 16983-16983 ubastandolo.app         com.subastandolo.app                 W  Loading /data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/oat/arm64/base.odex non-executable as it requires an image which we failed to load
+2026-02-25 18:47:36.377 16983-16983 nativeloader            com.subastandolo.app                 D  Configuring clns-8 for other apk /data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/lib/arm64:/data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+2026-02-25 18:47:36.409 16983-16983 cr_WVCFactoryProvider   com.subastandolo.app                 I  version=145.0.7632.79 (763207903) minSdkVersion=29 multiprocess=true packageId=127 splits=<none>
+2026-02-25 18:47:36.449 16983-16983 nativeloader            com.subastandolo.app                 D  Load /data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/base.apk!/lib/arm64-v8a/libwebviewchromium.so using class loader ns clns-8 (caller=/data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/base.apk): ok
+2026-02-25 18:47:36.452 16983-16983 nativeloader            com.subastandolo.app                 D  Load /system/lib64/libwebviewchromium_plat_support.so using class loader ns clns-8 (caller=/data/app/~~vWLI2LyORCyevo4d_0Ui_w==/com.google.android.webview-RLQP_ThPFiWdb-gz-zIP7Q==/base.apk): ok
+2026-02-25 18:47:36.457 16983-17069 chromium                com.subastandolo.app                 E  [0225/184736.456804:ERROR:android_webview/browser/variations/variations_seed_loader.cc:39] Seed missing signature.
+2026-02-25 18:47:36.479 16983-16983 cr_LibraryLoader        com.subastandolo.app                 I  Successfully loaded native library
+2026-02-25 18:47:36.481 16983-16983 cr_CachingUmaRecorder   com.subastandolo.app                 I  Flushed 20 samples from 20 histograms, 0 samples were dropped.
+2026-02-25 18:47:36.486 16983-16983 cr_ChildProcLH          com.subastandolo.app                 I  ScopedServiceBindingBatch.tryActivate: false
+2026-02-25 18:47:36.488 16983-16983 cr_CombinedPProvider    com.subastandolo.app                 I  #registerProvider() provider:WV.qk@918cb64 isPolicyCacheEnabled:false policyProvidersSize:0
+2026-02-25 18:47:36.490 16983-16983 cr_PolicyProvider       com.subastandolo.app                 I  #setManagerAndSource() 0
+2026-02-25 18:47:36.498 16983-16983 cr_DisplayManager       com.subastandolo.app                 I  Is Display Topology available: false
+2026-02-25 18:47:36.524 16983-16983 cr_CombinedPProvider    com.subastandolo.app                 I  #linkNativeInternal() 1
+2026-02-25 18:47:36.525 16983-16983 cr_AppResProvider       com.subastandolo.app                 I  #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+2026-02-25 18:47:36.525 16983-16983 cr_PolicyProvider       com.subastandolo.app                 I  #notifySettingsAvailable() 0
+2026-02-25 18:47:36.525 16983-16983 cr_CombinedPProvider    com.subastandolo.app                 I  #onSettingsAvailable() 0
+2026-02-25 18:47:36.525 16983-16983 cr_CombinedPProvider    com.subastandolo.app                 I  #flushPolicies()
+2026-02-25 18:47:36.572 16983-16983 chromium                com.subastandolo.app                 W  [WARNING:android_webview/browser/network_service/net_helpers.cc:137] HTTP Cache size is: 20971520
+2026-02-25 18:47:36.602 16983-16983 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.df.effect.conflict"
+2026-02-25 18:47:36.663 16983-16983 Capacitor               com.subastandolo.app                 D  Starting BridgeActivity
+2026-02-25 18:47:36.696 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: CapacitorCookies
+2026-02-25 18:47:36.700 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: WebView
+2026-02-25 18:47:36.702 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: CapacitorHttp
+2026-02-25 18:47:36.704 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: SystemBars
+2026-02-25 18:47:36.707 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: PushNotifications
+2026-02-25 18:47:36.776 16983-16983 Capacitor               com.subastandolo.app                 D  Registering plugin instance: NativeBiometric
+2026-02-25 18:47:36.817 16983-16983 Capacitor               com.subastandolo.app                 W  Unable to read file at path public/plugins
+2026-02-25 18:47:36.823 16983-16983 Capacitor               com.subastandolo.app                 D  Loading app at https://localhost
+2026-02-25 18:47:36.848 16983-17094 cr_media                com.subastandolo.app                 W  BLUETOOTH_CONNECT permission is missing.
+2026-02-25 18:47:36.850 16983-17094 cr_media                com.subastandolo.app                 W  getBluetoothAdapter() requires BLUETOOTH permission
+2026-02-25 18:47:36.850 16983-17094 cr_media                com.subastandolo.app                 W  registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+2026-02-25 18:47:36.854 16983-17111 libc                    com.subastandolo.app                 W  Access denied finding property "vendor.migl.debug"
+2026-02-25 18:47:36.854 16983-17111 libMiGL                 com.subastandolo.app                 I  EnableDR: 0
+2026-02-25 18:47:36.854 16983-17111 libMEOW                 com.subastandolo.app                 D  meow new tls: 0xb4000073136d40b0
+2026-02-25 18:47:36.854 16983-17111 libMEOW                 com.subastandolo.app                 D  meow reload base cfg path: na
+2026-02-25 18:47:36.854 16983-17111 libMEOW                 com.subastandolo.app                 D  meow reload overlay cfg path: na
+2026-02-25 18:47:36.856 16983-17111 QT                      com.subastandolo.app                 E  [QT]file does not exist
+2026-02-25 18:47:36.857 16983-16983 Activity                com.subastandolo.app                 W  PerfMonitor: Slow Operation: Activity com.subastandolo.app/.MainActivity onCreate took 580ms
+2026-02-25 18:47:36.857 16983-17111 libMEOW                 com.subastandolo.app                 D  applied 1 plugins for [com.subastandolo.app]:
+2026-02-25 18:47:36.857 16983-17111 libMEOW                 com.subastandolo.app                 D    plugin 1: [libMEOW_gift.so]:
+2026-02-25 18:47:36.860 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/
+2026-02-25 18:47:36.865 16983-16983 Capacitor               com.subastandolo.app                 D  App started
+2026-02-25 18:47:36.865 16983-17111 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/lib/arm64'
+2026-02-25 18:47:36.866 16983-17111 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk!/lib/arm64-v8a'
+2026-02-25 18:47:36.869 16983-17111 MMUD                    com.subastandolo.app                 D  mtk_memory_debug_init com.subastandolo.app 0xb40000743edea5d0
+2026-02-25 18:47:36.872 16983-16983 SecurityManager         com.subastandolo.app                 D  checkAccessControl flag0
+2026-02-25 18:47:36.883 16983-16983 Capacitor/...eBiometric com.subastandolo.app                 V  Notifying listeners for event biometryChange
+2026-02-25 18:47:36.883 16983-16983 Capacitor/...eBiometric com.subastandolo.app                 D  No listeners found for event biometryChange
+2026-02-25 18:47:36.884 16983-16983 Capacitor               com.subastandolo.app                 D  App resumed
+2026-02-25 18:47:36.888 16983-17042 PowerHalWrapper         com.subastandolo.app                 I  PowerHalWrapper.getInstance 
+2026-02-25 18:47:36.892 16983-16983 SurfaceFactory          com.subastandolo.app                 I  [static] sSurfaceFactory = com.mediatek.view.impl.SurfaceFactoryImpl@2f1f4e7
+2026-02-25 18:47:36.902 16983-16983 MiuiCamera...redManager com.subastandolo.app                 D  java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String android.provider.MiuiSettings$SettingsCloudData$CloudData.getString(java.lang.String, java.lang.String)' on a null object reference
+2026-02-25 18:47:36.903 16983-16983 FramePredict            com.subastandolo.app                 D  init success
+2026-02-25 18:47:36.907 16983-16983 HWUI                    com.subastandolo.app                 W  Unknown dataspace 0
+2026-02-25 18:47:36.908 16983-17044 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.display.iris_x7.support"
+2026-02-25 18:47:36.908 16983-17128 FramePredict            com.subastandolo.app                 E  registerContentObserver fail
+2026-02-25 18:47:36.912 16983-17111 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/lib/arm64'
+2026-02-25 18:47:36.913 16983-17111 vulkan                  com.subastandolo.app                 D  searching for layers in '/data/app/~~dQb1CZLqu7SC6e0iGK5sFQ==/com.subastandolo.app-35IRpWlUpCZGBHgGsb8UWw==/base.apk!/lib/arm64-v8a'
+2026-02-25 18:47:36.919 16983-17111 MMUD                    com.subastandolo.app                 D  mtk_memory_debug_init com.subastandolo.app 0xb400007438d4b5d0
+2026-02-25 18:47:36.923 16983-16983 VRI[MainActivity]       com.subastandolo.app                 D  hardware acceleration = true, forceHwAccelerated = false
+2026-02-25 18:47:36.934 16983-16983 InputEventReceiver      com.subastandolo.app                 D  Input log is disabled in InputEventReceiver.
+2026-02-25 18:47:36.954 16983-17146 CameraManagerGlobal     com.subastandolo.app                 I  Connecting to camera service
+2026-02-25 18:47:36.966 16983-17146 CameraExtStub           com.subastandolo.app                 D  init android.hardware.camera2.impl.CameraExtImplXiaoMi
+2026-02-25 18:47:36.969 16983-17146 CameraInjector          com.subastandolo.app                 D  waitForResult: 
+2026-02-25 18:47:36.969 16983-17153 CameraInjector          com.subastandolo.app                 D  updateCloudCameraControllerInfoAsync: E
+2026-02-25 18:47:36.977 16983-16983 DecorViewImmersiveImpl  com.subastandolo.app                 D  onAttachedToWindow:com.subastandolo.app/com.subastandolo.app.MainActivity
+2026-02-25 18:47:37.014 16983-17153 CameraInjector          com.subastandolo.app                 D  updateCloudCameraControllerInfoAsync: X
+2026-02-25 18:47:37.015 16983-17146 libc                    com.subastandolo.app                 W  Access denied finding property "vendor.camera.aux.packagelist"
+2026-02-25 18:47:37.015 16983-17146 libc                    com.subastandolo.app                 W  Access denied finding property "vendor.camera.aux.packagelistext"
+2026-02-25 18:47:37.015 16983-17146 CameraExtImplXiaoMi     com.subastandolo.app                 W  ignore the status update of camera: 2
+2026-02-25 18:47:37.019 16983-17013 CameraInjector          com.subastandolo.app                 D  updateCloudCameraControllerInfoAsync: has aleardy start update task.
+2026-02-25 18:47:37.019 16983-17013 CameraInjector          com.subastandolo.app                 D  waitForResult: 
+2026-02-25 18:47:37.019 16983-17013 libc                    com.subastandolo.app                 W  Access denied finding property "vendor.camera.aux.packagelist"
+2026-02-25 18:47:37.019 16983-17013 libc                    com.subastandolo.app                 W  Access denied finding property "vendor.camera.aux.packagelistext"
+2026-02-25 18:47:37.019 16983-17013 CameraManagerGlobal     com.subastandolo.app                 W  ignore the torch status update of camera: 2
+2026-02-25 18:47:37.026 16983-16983 BufferQueueConsumer     com.subastandolo.app                 D  [](id:425700000000,api:0,p:-1,c:16983) connect: controlledByApp=false
+2026-02-25 18:47:37.030 16983-16983 BLASTBufferQueue        com.subastandolo.app                 D  [VRI[MainActivity]#0](f:0,a:0) constructor()
+2026-02-25 18:47:37.031 16983-16983 BLASTBufferQueue        com.subastandolo.app                 D  [VRI[MainActivity]#0](f:0,a:0) update width=720 height=1600 format=-1 mTransformHint=0
+2026-02-25 18:47:37.043 16983-16983 VRI[MainActivity]       com.subastandolo.app                 D  vri.reportNextDraw android.view.ViewRootImpl.performTraversals:4962 android.view.ViewRootImpl.doTraversal:3561 android.view.ViewRootImpl$TraversalRunnable.run:11731 android.view.Choreographer$CallbackRecord.run:1784 android.view.Choreographer$CallbackRecord.run:1793 
+2026-02-25 18:47:37.043 16983-16983 VRI[MainActivity]       com.subastandolo.app                 D  Setup new sync=wmsSync-VRI[MainActivity]#0
+2026-02-25 18:47:37.045 16983-16983 UserSceneDetector       com.subastandolo.app                 D  invoke error.
+2026-02-25 18:47:37.046 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-D9lFQS66.js
+2026-02-25 18:47:37.054 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-CuJiZf5J.css
+2026-02-25 18:47:37.055 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/registerSW.js
+2026-02-25 18:47:37.056 16983-17044 HWUI                    com.subastandolo.app                 D  makeCurrent grContext:0xb40000724362dbd0 reset mTextureAvailable
+2026-02-25 18:47:37.059 16983-17044 ubastandolo.app         com.subastandolo.app                 D  MiuiProcessManagerServiceStub setSchedFifo
+2026-02-25 18:47:37.059 16983-17044 MiuiProcessManagerImpl  com.subastandolo.app                 I  setSchedFifo pid:16983, mode:3
+2026-02-25 18:47:37.062 16983-17044 MAGT_SYNC_FRAME         com.subastandolo.app                 D  MAGT Sync: MAGT is not supported. Disabling Sync.
+2026-02-25 18:47:37.062 16983-17044 ubastandolo.app         com.subastandolo.app                 D  Can't load libmbrainSDK
+2026-02-25 18:47:37.065 16983-17044 GrallocExtra            com.subastandolo.app                 I  gralloc_extra_query:is_SW3D 0
+2026-02-25 18:47:37.067 16983-17044 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.display.iris_x7.support"
+2026-02-25 18:47:37.099 16983-17044 libMEOW                 com.subastandolo.app                 D  meow new tls: 0xb400007313794170
+2026-02-25 18:47:37.099 16983-17044 libMEOW                 com.subastandolo.app                 D  applied 1 plugins for [com.subastandolo.app]:
+2026-02-25 18:47:37.100 16983-17044 libMEOW                 com.subastandolo.app                 D    plugin 1: [libMEOW_gift.so]:
+2026-02-25 18:47:37.133 16983-17044 LB                      com.subastandolo.app                 E  fail to open file: No such file or directory
+2026-02-25 18:47:37.133 16983-17044 LB                      com.subastandolo.app                 E  fail to open node: No such file or directory
+2026-02-25 18:47:37.133 16983-17044 LB                      com.subastandolo.app                 E  fail to open node: No such file or directory
+2026-02-25 18:47:37.133 16983-17044 GrallocExtra            com.subastandolo.app                 I  gralloc_extra_query:is_SW3D 0
+2026-02-25 18:47:37.134 16983-17044 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.display.iris_x7.support"
+2026-02-25 18:47:37.135 16983-17044 BLASTBufferQueue        com.subastandolo.app                 D  [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=720x1600 mFrameNumber=1 applyTransaction=true mTimestamp=323536222885052(auto) mPendingTransactions.size=0 graphicBufferId=72941429587972 transform=0
+2026-02-25 18:47:37.135 16983-17044 ubastandolo.app         com.subastandolo.app                 D  Can't load libmbrainSDK
+2026-02-25 18:47:37.137 16983-16983 VRI[MainActivity]       com.subastandolo.app                 D  vri.reportDrawFinished
+2026-02-25 18:47:37.138 16983-17106 VideoCapabilities       com.subastandolo.app                 W  Unrecognized profile/level 32768/256 for video/mp4v-es
+2026-02-25 18:47:37.140 16983-17106 VideoCapabilities       com.subastandolo.app                 W  Unrecognized profile/level 32768/256 for video/mp4v-es
+2026-02-25 18:47:37.152 16983-16983 ubastandolo.app         com.subastandolo.app                 I  hiddenapi: Accessing hidden field Landroid/content/pm/ApplicationInfo;->primaryCpuAbi:Ljava/lang/String; (runtime_flags=0, domain=platform, api=unsupported) from Lorg/chromium/android_webview/SystemStateUtil; (domain=app, TargetSdkVersion=36) using reflection: allowed
+2026-02-25 18:47:37.167 16983-17044 libc                    com.subastandolo.app                 W  Access denied finding property "ro.vendor.display.iris_x7.support"
+2026-02-25 18:47:37.186 16983-16983 HandWritingStubImpl     com.subastandolo.app                 I  refreshLastKeyboardType: 1
+2026-02-25 18:47:37.187 16983-16983 HandWritingStubImpl     com.subastandolo.app                 I  getCurrentKeyboardType: 1
+2026-02-25 18:47:37.209 16983-16983 HandWritingStubImpl     com.subastandolo.app                 I  getCurrentKeyboardType: 1
+2026-02-25 18:47:37.416 16983-17095 ubastandolo.app         com.subastandolo.app                 W  Long monitor contention with owner ThreadPoolForeg (17088) at java.lang.Object libcore.content.type.MimeMap$MemoizingSupplier.get()(MimeMap.java:475) waiters=0 in java.lang.Object libcore.content.type.MimeMap$MemoizingSupplier.get() for 359ms
+2026-02-25 18:47:37.416 16983-17089 ubastandolo.app         com.subastandolo.app                 W  Long monitor contention with owner ThreadPoolForeg (17088) at java.lang.Object libcore.content.type.MimeMap$MemoizingSupplier.get()(MimeMap.java:475) waiters=1 in java.lang.Object libcore.content.type.MimeMap$MemoizingSupplier.get() for 360ms
+2026-02-25 18:47:37.562 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/sw.js
+2026-02-25 18:47:37.590 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/workbox-8c29f6e4.js
+2026-02-25 18:47:37.613 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/push-handler.js
+2026-02-25 18:47:37.627 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/Index-NzOPOYQt.js
+2026-02-25 18:47:37.628 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/useVerifiedDealers-A-K5yAVI.js
+2026-02-25 18:47:37.632 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/AuctionCard-BfIDN5bH.js
+2026-02-25 18:47:37.642 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/badge-BgC6Qxo9.js
+2026-02-25 18:47:37.653 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/VerifiedBadge-bJJbswRD.js
+2026-02-25 18:47:37.657 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/trophy-DAk8aLIA.js
+2026-02-25 18:47:37.659 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/Countdown-QfK2Xuke.js
+2026-02-25 18:47:37.660 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/Footer-ByGIMCBW.js
+2026-02-25 18:47:37.662 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/heart-Dkt9hRYk.js
+2026-02-25 18:47:37.663 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/clock-DeI9_8FG.js
+2026-02-25 18:47:37.667 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/input-CdFsFhP-.js
+2026-02-25 18:47:37.669 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/logo-BcmzihaH.js
+2026-02-25 18:47:37.669 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/Navbar-BXXUDLEW.js
+2026-02-25 18:47:37.674 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/user-HUgn5qDd.js
+2026-02-25 18:47:37.675 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/AdminBadge-CaSzSFX3.js
+2026-02-25 18:47:37.679 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/search-Dc1oQqaq.js
+2026-02-25 18:47:37.685 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/BottomNav-CDxEXtkj.js
+2026-02-25 18:47:37.686 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/SEOHead-Bm_y-WNr.js
+2026-02-25 18:47:37.688 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/accordion-CfeJi8oO.js
+2026-02-25 18:47:37.688 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/house-BZmDxYH-.js
+2026-02-25 18:47:37.690 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-CBu_jvsG.js
+2026-02-25 18:47:37.691 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/lock-CO5MlBqd.js
+2026-02-25 18:47:37.691 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/shopping-bag-DdkWmlPx.js
+2026-02-25 18:47:37.692 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/shield-check-Dr5FS5U-.js
+2026-02-25 18:47:37.693 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/chevron-down-DTuszIEF.js
+2026-02-25 18:47:37.697 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/truck-BHI1uD_K.js
+2026-02-25 18:47:37.699 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/credit-card-BclQMn-3.js
+2026-02-25 18:47:37.700 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/ban-xgnjf8x8.js
+2026-02-25 18:47:37.700 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/trending-up-CTPlcEqe.js
+2026-02-25 18:47:37.702 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/chevron-right-mn3zQMp9.js
+2026-02-25 18:47:37.703 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/chevron-left-Ki1JE1iy.js
+2026-02-25 18:47:37.706 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/gavel-CucVM177.js
+2026-02-25 18:47:37.724 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-BIYIGO-4.js
+2026-02-25 18:47:37.735 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.ico
+2026-02-25 18:47:37.759 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/icons/icon-192.png
+2026-02-25 18:47:37.768 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.png
+2026-02-25 18:47:37.769 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/icons/icon-192.png
+2026-02-25 18:47:37.769 16983-17088 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.ico
+2026-02-25 18:47:37.770 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.png
+2026-02-25 18:47:37.772 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.ico
+2026-02-25 18:47:37.930 16983-16983 chromium                com.subastandolo.app                 I  [INFO:CONSOLE:1] "Uncaught (in promise) bad-precaching-response: bad-precaching-response :: [{"url":"https://localhost/favicon.ico","status":404}]", source: https://localhost/workbox-8c29f6e4.js (1)
+2026-02-25 18:47:37.934 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:37.953 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/Auth-Bz0q9hnm.js
+2026-02-25 18:47:37.956 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301355, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:37.956 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301355, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"subastas_v6"}
+2026-02-25 18:47:37.960 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/label-Dg0p9Z5G.js
+2026-02-25 18:47:37.962 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/checkbox-CZuyhDEb.js
+2026-02-25 18:47:37.964 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/card-CUI3okVZ.js
+2026-02-25 18:47:37.967 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-R428l9OM.js
+2026-02-25 18:47:37.968 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/circle-check-D20nTELc.js
+2026-02-25 18:47:37.969 16983-17098 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/mail-W_FgYefU.js
+2026-02-25 18:47:37.970 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/logo-dark-BEt6EFjo.js
+2026-02-25 18:47:37.971 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/eye-off-DeVlu8mP.js
+2026-02-25 18:47:37.972 16983-17089 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/eye-C7lMSXnq.js
+2026-02-25 18:47:37.980 16983-17095 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/shield-alert-DY4lg6rx.js
+2026-02-25 18:47:37.983 16983-17097 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/favicon.png
+2026-02-25 18:47:37.986 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/icons/icon-192.png
+2026-02-25 18:47:38.035 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/logo-dark-WDM2WDJA.png
+2026-02-25 18:47:38.041 16983-17085 Capacitor               com.subastandolo.app                 D  Handling local request: https://localhost/assets/index-BTBR-1OL.js
+2026-02-25 18:47:38.079 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.080 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.083 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.092 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301356, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.092 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301356, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"subastas_v7"}
+2026-02-25 18:47:38.096 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301357, pluginId: NativeBiometric, methodName: isAvailable
+2026-02-25 18:47:38.096 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301357, pluginId: NativeBiometric, methodName: isAvailable, methodData: {}
+2026-02-25 18:47:38.114 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.116 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.118 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: {"biometryType":3,"deviceIsSecure":true,"strongBiometryIsAvailable":true,"isAvailable":true,"authenticationStrength":1}
+2026-02-25 18:47:38.119 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301358, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.120 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301358, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"administrador"}
+2026-02-25 18:47:38.131 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.133 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.136 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301359, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.136 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301359, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"sobrepuja"}
+2026-02-25 18:47:38.146 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.147 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.149 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301360, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.150 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301360, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"pujando"}
+2026-02-25 18:47:38.168 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.170 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.233 16983-16983 AssistStructure         com.subastandolo.app                 I  Flattened final assist data: 3032 bytes, containing 1 windows, 6 views
+2026-02-25 18:47:38.239 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301361, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.241 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301361, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"notificacion"}
+2026-02-25 18:47:38.251 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.251 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.253 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301362, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.253 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301362, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"campanita"}
+2026-02-25 18:47:38.260 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.261 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.262 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301363, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.262 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301363, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"administrador_v2"}
+2026-02-25 18:47:38.268 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.269 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.270 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301364, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.270 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301364, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"sobrepuja_v2"}
+2026-02-25 18:47:38.276 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.280 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.281 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301365, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.281 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301365, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"pujando_v2"}
+2026-02-25 18:47:38.290 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.290 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.292 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301366, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.292 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301366, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"notificacion_v2"}
+2026-02-25 18:47:38.301 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.303 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.306 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301367, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.306 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301367, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"campanita_v2"}
+2026-02-25 18:47:38.312 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.313 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.315 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301368, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.315 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301368, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"administrador_v3"}
+2026-02-25 18:47:38.322 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.324 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.328 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301369, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.328 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301369, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"sobrepuja_v3"}
+2026-02-25 18:47:38.335 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.336 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.337 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301370, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.338 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301370, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"pujando_v3"}
+2026-02-25 18:47:38.346 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.347 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.348 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301371, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.349 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301371, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"notificacion_v3"}
+2026-02-25 18:47:38.358 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.361 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.365 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301372, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.366 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301372, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"campanita_v3"}
+2026-02-25 18:47:38.374 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.377 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.382 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301373, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.383 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301373, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"administrador_v4"}
+2026-02-25 18:47:38.391 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.393 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.395 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301374, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.395 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301374, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"sobrepuja_v4"}
+2026-02-25 18:47:38.402 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.404 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.406 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301375, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.407 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301375, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"pujando_v4"}
+2026-02-25 18:47:38.412 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.414 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.417 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301376, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.417 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301376, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"notificacion_v4"}
+2026-02-25 18:47:38.421 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.423 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.425 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301377, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.425 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301377, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"ganador_v4"}
+2026-02-25 18:47:38.431 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.431 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.433 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301378, pluginId: PushNotifications, methodName: deleteChannel
+2026-02-25 18:47:38.433 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301378, pluginId: PushNotifications, methodName: deleteChannel, methodData: {"id":"campanita_v4"}
+2026-02-25 18:47:38.441 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.443 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.446 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301379, pluginId: PushNotifications, methodName: createChannel
+2026-02-25 18:47:38.447 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301379, pluginId: PushNotifications, methodName: createChannel, methodData: {"id":"administrador_v4","name":"Admin","description":"Notificaciones de administración","importance":5,"sound":"administrador","vibration":true,"lights":true,"visibility":1}
+2026-02-25 18:47:38.479 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.479 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.481 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301380, pluginId: PushNotifications, methodName: createChannel
+2026-02-25 18:47:38.481 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301380, pluginId: PushNotifications, methodName: createChannel, methodData: {"id":"sobrepuja_v4","name":"Sobrepuja","description":"Te superaron en una puja","importance":5,"sound":"sobrepuja","vibration":true,"lights":true,"visibility":1}
+2026-02-25 18:47:38.487 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.489 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.492 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301381, pluginId: PushNotifications, methodName: createChannel
+2026-02-25 18:47:38.493 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301381, pluginId: PushNotifications, methodName: createChannel, methodData: {"id":"pujando_v4","name":"Nueva Puja","description":"Nueva puja en tu subasta","importance":5,"sound":"pujando","vibration":true,"lights":true,"visibility":1}
+2026-02-25 18:47:38.534 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.535 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.537 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301382, pluginId: PushNotifications, methodName: createChannel
+2026-02-25 18:47:38.537 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301382, pluginId: PushNotifications, methodName: createChannel, methodData: {"id":"ganador_v4","name":"Subasta Ganada","description":"Ganaste una subasta","importance":5,"sound":"ganador","vibration":true,"lights":true,"visibility":1}
+2026-02-25 18:47:38.571 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.572 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.653 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301383, pluginId: PushNotifications, methodName: createChannel
+2026-02-25 18:47:38.653 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301383, pluginId: PushNotifications, methodName: createChannel, methodData: {"id":"campanita_v4","name":"General","description":"Notificaciones generales","importance":5,"sound":"campanita","vibration":true,"lights":true,"visibility":1}
+2026-02-25 18:47:38.686 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.687 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File: https://localhost/assets/index-D9lFQS66.js - Line 151 - Msg: All notification channels created: administrador_v4, sobrepuja_v4, pujando_v4, ganador_v4, campanita_v4
+2026-02-25 18:47:38.687 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.698 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301384, pluginId: PushNotifications, methodName: requestPermissions
+2026-02-25 18:47:38.698 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301384, pluginId: PushNotifications, methodName: requestPermissions, methodData: {}
+2026-02-25 18:47:38.705 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: {"receive":"granted"}
+2026-02-25 18:47:38.706 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File: https://localhost/assets/index-D9lFQS66.js - Line 151 - Msg: Push permission result: granted
+2026-02-25 18:47:38.707 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.714 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301385, pluginId: PushNotifications, methodName: register
+2026-02-25 18:47:38.714 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301385, pluginId: PushNotifications, methodName: register, methodData: {}
+2026-02-25 18:47:38.723 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: undefined
+2026-02-25 18:47:38.725 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File: https://localhost/assets/index-D9lFQS66.js - Line 151 - Msg: Push notifications registered on launch
+2026-02-25 18:47:38.725 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.727 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.727 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 349 - Msg: [object Object]
+2026-02-25 18:47:38.732 16983-16983 Capacitor/...ionsPlugin com.subastandolo.app                 V  Notifying listeners for event registration
+2026-02-25 18:47:38.732 16983-16983 Capacitor/...ionsPlugin com.subastandolo.app                 D  No listeners found for event registration
+2026-02-25 18:47:38.733 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301386, pluginId: PushNotifications, methodName: addListener
+2026-02-25 18:47:38.733 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301386, pluginId: PushNotifications, methodName: addListener, methodData: {"eventName":"registration"}
+2026-02-25 18:47:38.734 16983-17110 Capacitor/...ionsPlugin com.subastandolo.app                 V  Notifying listeners for event registration
+2026-02-25 18:47:38.734 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301387, pluginId: PushNotifications, methodName: addListener
+2026-02-25 18:47:38.734 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301387, pluginId: PushNotifications, methodName: addListener, methodData: {"eventName":"registrationError"}
+2026-02-25 18:47:38.736 16983-16983 Capacitor/Plugin        com.subastandolo.app                 V  To native (Capacitor plugin): callbackId: 50301388, pluginId: PushNotifications, methodName: addListener
+2026-02-25 18:47:38.736 16983-16983 Capacitor               com.subastandolo.app                 V  callback: 50301388, pluginId: PushNotifications, methodName: addListener, methodData: {"eventName":"pushNotificationActionPerformed"}
+2026-02-25 18:47:38.740 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File:  - Line 333 - Msg: {"value":"d2xlZK2qSlCJUHIv4ARpVy:APA91bGAWKCMIrR2jAk8QIM4myXV7r2MdMF9Qq9rYnKrEAfjYKZC_SsKP_ks25mIKLcTvYUfmUbIUETQf7Ih_2qYRiA8BDm0sowDbgpY_ThF_1SzQWBRX_Y"}
+2026-02-25 18:47:38.740 16983-16983 Capacitor/Console       com.subastandolo.app                 I  File: https://localhost/assets/index-D9lFQS66.js - Line 151 - Msg: FCM Token received: d2xlZK2qSlCJUHIv4ARpVy:APA91bGAWKCMIrR2jAk8QIM4myXV7r2MdMF9Qq9rYnKrEAfjYKZC_SsKP_ks25mIKLcTvYUfmUbIUETQf7Ih_2qYRiA8BDm0sowDbgpY_ThF_1SzQWBRX_Y
+2026-02-25 18:47:38.744 16983-16983 Capacitor/Console       com.subastandolo.app                 W  File: https://localhost/assets/index-D9lFQS66.js - Line 151 - Msg: No authenticated user, token pending save
+2026-02-25 18:47:39.004 16983-16988 ubastandolo.app         com.subastandolo.app                 I  Compiler allocated 6713KB to compile void android.view.ViewRootImpl.performTraversals()
+2026-02-25 18:47:41.750 16983-17195 ProfileInstaller        com.subastandolo.app                 D  Installing profile for com.subastandolo.app

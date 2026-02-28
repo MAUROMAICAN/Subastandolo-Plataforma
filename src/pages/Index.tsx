@@ -1,0 +1,411 @@
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useVerifiedDealers } from "@/hooks/useVerifiedDealers";
+import { useAuth } from "@/hooks/useAuth";
+import { useFavorites } from "@/hooks/useFavorites";
+import { fuzzyFilter } from "@/lib/fuzzySearch";
+import AuctionCard from "@/components/AuctionCard";
+import Footer from "@/components/Footer";
+import BottomNav from "@/components/BottomNav";
+import Navbar from "@/components/Navbar";
+import SEOHead from "@/components/SEOHead";
+import { Search, ChevronLeft, ChevronRight, Store, TrendingUp, Clock, Flame, Gavel } from "lucide-react";
+import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import BuyerFAQSection from "@/components/BuyerFAQSection";
+import LaunchCountdown from "@/components/LaunchCountdown";
+import CampaignModal from "@/components/CampaignModal";
+import LoadingState from "@/components/LoadingState";
+import ErrorState from "@/components/ErrorState";
+import type { Tables } from "@/integrations/supabase/types";
+
+const Index = () => {
+  const { getSetting, sections } = useSiteSettings();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [auctions, setAuctions] = useState<Tables<"auctions">[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "my_bids">("all");
+  const [userBidAuctionIds, setUserBidAuctionIds] = useState<Set<string>>(new Set());
+  const [banners, setBanners] = useState<{ id: string; image_url: string; title: string | null; subtitle: string | null }[]>([]);
+
+  const siteName = getSetting("site_name", "SUBASTANDOLO");
+  const siteDescription = getSetting("site_description", "La plataforma #1 de subastas en línea");
+  const heroCta = getSetting("hero_cta_text", "Regístrate para Pujar");
+  const announcementBar = getSetting("announcement_bar");
+  const footerText = getSetting("footer_text", `© ${new Date().getFullYear()} SUBASTANDOLO. Todos los derechos reservados.`);
+  const bcvRate = getSetting("bcv_rate", "");
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      const { data } = await supabase.from("banner_images").select("id, image_url, title, subtitle").eq("is_active", true).order("display_order");
+      setBanners(data || []);
+    };
+    fetchBanners();
+  }, []);
+
+  const bannerInterval = parseInt(getSetting("banner_interval", "5"), 10) * 1000;
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => setCurrentSlide(prev => (prev + 1) % banners.length), bannerInterval);
+    return () => clearInterval(interval);
+  }, [banners.length, bannerInterval]);
+
+  const fetchAuctions = useCallback(async () => {
+    setFetchError(null);
+    setLoading(true);
+    const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
+    setLoading(false);
+    if (error) {
+      setFetchError(error.message);
+      return;
+    }
+    setAuctions(data || []);
+  }, []);
+
+  useEffect(() => {
+    void fetchAuctions();
+    const channel = supabase.channel("auctions-realtime").on("postgres_changes", { event: "*", schema: "public", table: "auctions" }, (payload) => {
+      if (payload.eventType === "DELETE") {
+        setAuctions(prev => prev.filter(a => a.id !== (payload.old as any).id));
+      } else if (payload.eventType === "INSERT") {
+        const newAuction = payload.new as Tables<"auctions">;
+        if (!newAuction.archived_at && ["active", "finalized", "scheduled"].includes(newAuction.status)) {
+          setAuctions(prev => [...prev, newAuction]);
+        }
+      } else if (payload.eventType === "UPDATE") {
+        const updated = payload.new as Tables<"auctions">;
+        const shouldBeVisible = !updated.archived_at && ["active", "finalized", "scheduled"].includes(updated.status);
+        setAuctions(prev => {
+          if (shouldBeVisible) {
+            const exists = prev.find(a => a.id === updated.id);
+            return exists ? prev.map(a => a.id === updated.id ? updated : a) : [...prev, updated];
+          }
+          return prev.filter(a => a.id !== updated.id);
+        });
+      }
+    }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchAuctions]);
+
+  useEffect(() => {
+    if (!user) {
+      setUserBidAuctionIds(new Set());
+      return;
+    }
+    const fetchUserBids = async () => {
+      const { data } = await supabase.from("bids").select("auction_id").eq("user_id", user.id);
+      if (data) {
+        setUserBidAuctionIds(new Set(data.map(b => b.auction_id)));
+      }
+    };
+    fetchUserBids();
+  }, [user]);
+
+  const creatorIds = useMemo(() => auctions.map(a => a.created_by), [auctions]);
+  const { dealers } = useVerifiedDealers(creatorIds);
+  const { isFavorite, toggleFavorite } = useFavorites();
+
+  const filtered = useMemo(() => {
+    let result = auctions;
+    if (activeFilter === "active") {
+      result = result.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now());
+    } else if (activeFilter === "my_bids") {
+      result = result.filter(a => userBidAuctionIds.has(a.id));
+    }
+    if (!searchQuery.trim()) return result;
+    return fuzzyFilter(
+      result,
+      searchQuery,
+      (a) => a.title + " " + (a.description || ""),
+      (a) => (a as any).operation_number,
+    );
+  }, [auctions, searchQuery, activeFilter, userBidAuctionIds]);
+
+  const scheduledAuctions = filtered.filter(a => a.status === "scheduled");
+  const activeAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now());
+  const endedAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() <= Date.now());
+
+  const visibleSections = sections.filter(s => s.is_visible && s.section_type !== "guide");
+
+  if (loading && auctions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <LoadingState message="Cargando subastas..." className="min-h-[50vh]" />
+      </div>
+    );
+  }
+
+  if (fetchError && auctions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <main className="flex-1 flex items-center justify-center">
+          <ErrorState
+            title="Error al cargar"
+            message="No pudimos cargar las subastas. Verifica tu conexión e intenta de nuevo."
+            onRetry={fetchAuctions}
+            retryLabel="Reintentar"
+          />
+        </main>
+      </div>
+    );
+  }
+
+  const filterButtons = [
+    { key: "all" as const, icon: Search, label: "Todas", count: auctions.length },
+    { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now()).length },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <CampaignModal />
+      <SEOHead title="Subastas Online en Venezuela - Tú pones el precio" description="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!" />
+      <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+      <main>
+        <LaunchCountdown />
+
+        {/* Announcement */}
+        {announcementBar && (
+          <div className="bg-primary text-primary-foreground py-1.5 text-[11px] font-medium overflow-hidden whitespace-nowrap">
+            <div className="inline-flex" style={{ animation: "marquee 25s linear infinite" }}>
+              <span className="px-8">{announcementBar}</span>
+              <span className="px-8">{announcementBar}</span>
+              <span className="px-8">{announcementBar}</span>
+              <span className="px-8">{announcementBar}</span>
+              <span className="px-8">{announcementBar}</span>
+            </div>
+            <style>{`@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-40%); } }`}</style>
+          </div>
+        )}
+
+        {/* BCV */}
+        {bcvRate && (
+          <div className="flex justify-end px-4 pt-2">
+            <div className="bg-card border border-border rounded-full px-3 py-1 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <TrendingUp className="h-3 w-3 text-primary" />
+              BCV: <span className="font-bold text-foreground">{parseFloat(bcvRate).toFixed(2)} Bs/$</span>
+            </div>
+          </div>
+        )}
+
+        {/* Banner */}
+        {banners.length > 0 && (
+          <section className="relative overflow-hidden h-[240px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3">
+            {banners.map((banner, index) => (
+              <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                <img src={banner.image_url} alt={banner.title || "Banner"} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/25 to-transparent" />
+              </div>
+            ))}
+            <div className="container mx-auto px-5 h-full flex items-center relative z-10">
+              <div className="max-w-md">
+                {banners[currentSlide] && (
+                  <>
+                    <h1 className="text-xl sm:text-3xl font-heading font-black text-white mb-2 drop-shadow-lg leading-tight">
+                      Subastas Online en Venezuela
+                    </h1>
+                    <p className="text-sm sm:text-lg font-semibold text-white/90 mb-1 drop-shadow">
+                      {banners[currentSlide].title || siteName}
+                    </p>
+                    <p className="text-xs sm:text-sm text-white/70 mb-5 drop-shadow">
+                      {banners[currentSlide].subtitle || siteDescription}
+                    </p>
+                  </>
+                )}
+                {!user && (
+                  <Button size="default" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-full shadow-lg text-xs h-9 px-5">
+                    <Link to="/auth">{heroCta}</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+            {banners.length > 1 && (
+              <>
+                <button onClick={() => setCurrentSlide(prev => (prev - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card/20 hover:bg-card/40 backdrop-blur-sm text-white flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={() => setCurrentSlide(prev => (prev + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card/20 hover:bg-card/40 backdrop-blur-sm text-white flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                  {banners.map((_, i) => <button key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? "bg-white w-5" : "bg-white/40"}`} />)}
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {banners.length === 0 && (
+          <section className="bg-nav py-14 sm:rounded-xl sm:mx-4 sm:mt-3">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-2xl sm:text-3xl font-heading font-black text-white mb-3">{siteName}</h2>
+              <p className="text-white/50 mb-5 max-w-md mx-auto text-sm">{siteDescription}</p>
+              {!user && (
+                <Button size="default" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-full shadow-lg h-9 px-5 text-xs">
+                  <Link to="/auth">{heroCta}</Link>
+                </Button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Stats */}
+        <div className="bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-2.5">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span><strong className="text-foreground text-sm">{auctions.length}</strong> productos</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                <strong className="text-foreground text-sm">{auctions.filter(a => new Date(a.end_time).getTime() > Date.now()).length}</strong> en vivo
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="sticky top-12 sm:top-14 z-30 bg-background border-b border-border/50">
+          <div className="container mx-auto px-4">
+            <div className="flex gap-1.5 overflow-x-auto py-2.5 scrollbar-hide">
+              {filterButtons.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setActiveFilter(f.key)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                    activeFilter === f.key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  <f.icon className="h-3 w-3" />
+                  {f.label} ({f.count})
+                </button>
+              ))}
+              {user && (
+                <button
+                  onClick={() => setActiveFilter("my_bids")}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                    activeFilter === "my_bids"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  <Gavel className="h-3 w-3" />
+                  Mis Pujas ({userBidAuctionIds.size})
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Listings */}
+        <section id="subastas" className="container mx-auto px-3 sm:px-4 py-5 sm:py-6">
+          {loading ? (
+            <AuctionGridSkeleton />
+          ) : filtered.length === 0 && (searchQuery || activeFilter !== "all") ? (
+            <div className="text-center py-16">
+              <Search className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+              <h2 className="text-base font-heading font-semibold text-muted-foreground">
+                {activeFilter === "my_bids" ? "No has pujado en ninguna subasta aún" : `Sin resultados para "${searchQuery}"`}
+              </h2>
+              {activeFilter === "my_bids" && (
+                <p className="text-xs text-muted-foreground mt-1.5">Explora las subastas activas y haz tu primera puja</p>
+              )}
+            </div>
+          ) : auctions.length === 0 ? (
+            <div className="text-center py-16">
+              <h2 className="text-base font-heading font-semibold text-muted-foreground">No hay subastas disponibles</h2>
+            </div>
+          ) : (
+            <div className="space-y-6 sm:space-y-8">
+              {scheduledAuctions.length > 0 && activeFilter !== "active" && (
+                <div>
+                  <h2 className="text-sm sm:text-base font-heading font-bold mb-3 flex items-center gap-2 px-0.5">
+                    <Clock className="h-4 w-4 text-primary" />
+                    Próximamente
+                    <span className="text-[10px] font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{scheduledAuctions.length}</span>
+                  </h2>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                    {scheduledAuctions.map(a => <AuctionCard key={a.id} auction={a} dealer={dealers[a.created_by]} isFavorite={isFavorite(a.id)} onToggleFavorite={toggleFavorite} />)}
+                  </div>
+                </div>
+              )}
+              {activeAuctions.length > 0 && (
+                <div>
+                  <h2 className="text-sm sm:text-base font-heading font-bold mb-3 flex items-center gap-2 px-0.5">
+                    <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    Subastas Activas
+                    <span className="text-[10px] font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{activeAuctions.length}</span>
+                  </h2>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                    {activeAuctions.map(a => <AuctionCard key={a.id} auction={a} dealer={dealers[a.created_by]} isFavorite={isFavorite(a.id)} onToggleFavorite={toggleFavorite} />)}
+                  </div>
+                </div>
+              )}
+              {endedAuctions.length > 0 && activeFilter !== "active" && (
+                <div>
+                  <h2 className="text-sm sm:text-base font-heading font-bold mb-3 text-muted-foreground px-0.5 flex items-center gap-2">
+                    <Gavel className="h-4 w-4" />
+                    Finalizadas
+                    <span className="text-[10px] font-normal bg-secondary px-2 py-0.5 rounded-full">{endedAuctions.length}</span>
+                  </h2>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                    {endedAuctions.map(a => <AuctionCard key={a.id} auction={a} dealer={dealers[a.created_by]} isFavorite={isFavorite(a.id)} onToggleFavorite={toggleFavorite} />)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <BuyerFAQSection />
+
+        {/* Dynamic sections */}
+        {visibleSections.map(section => (
+          <section key={section.id} className={`py-12 ${section.section_type === "cta" ? "bg-nav text-white" : "bg-secondary/20"}`}>
+            <div className="container mx-auto px-4 text-center max-w-xl">
+              {section.title && <h2 className={`text-xl font-heading font-bold mb-3 ${section.section_type === "cta" ? "text-white" : ""}`}>{section.title}</h2>}
+              {section.content && <p className={`text-sm ${section.section_type === "cta" ? "text-white/50 mb-5" : "text-muted-foreground"}`}>{section.content}</p>}
+              {section.section_type === "cta" && !user && (
+                <Button size="default" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-full">
+                  <Link to="/auth">{heroCta}</Link>
+                </Button>
+              )}
+            </div>
+          </section>
+        ))}
+
+        {/* Dealer CTA */}
+        {user && (
+          <section className="bg-card border-y border-border py-10">
+            <div className="container mx-auto px-4 text-center max-w-md">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Store className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-lg font-heading font-bold mb-1.5">¿Quieres vender en {siteName}?</h2>
+              <p className="text-xs text-muted-foreground mb-5">
+                Conviértete en Dealer verificado y publica tus productos.
+              </p>
+              <Button size="default" asChild className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full h-9 px-5 text-xs">
+                <Link to="/dealer/apply">
+                  <Store className="h-3.5 w-3.5 mr-1.5" />Regístrate como Dealer
+                </Link>
+              </Button>
+            </div>
+          </section>
+        )}
+
+        <div className="hidden sm:block"><Footer /></div>
+        <div className="sm:hidden h-14" />
+      </main>
+      <BottomNav />
+    </div>
+  );
+};
+
+export default Index;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">subastandolo</string>
+    <string name="title_activity_main">subastandolo</string>
+    <string name="package_name">com.subastandolo.app</string>
+    <string name="custom_url_scheme">com.subastandolo.app</string>
+</resources>
