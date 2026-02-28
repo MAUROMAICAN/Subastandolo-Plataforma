@@ -10,11 +10,10 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
-import { Search, ChevronLeft, ChevronRight, Store, TrendingUp, Clock, Flame, Gavel } from "lucide-react";
+import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Store } from "lucide-react";
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import BuyerFAQSection from "@/components/BuyerFAQSection";
 import LaunchCountdown from "@/components/LaunchCountdown";
 import CampaignModal from "@/components/CampaignModal";
@@ -24,9 +23,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 const Index = () => {
   const { getSetting, sections } = useSiteSettings();
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const [auctions, setAuctions] = useState<Tables<"auctions">[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -40,8 +37,7 @@ const Index = () => {
   const siteDescription = getSetting("site_description", "La plataforma #1 de subastas en línea");
   const heroCta = getSetting("hero_cta_text", "Regístrate para Pujar");
   const announcementBar = getSetting("announcement_bar");
-  const footerText = getSetting("footer_text", `© ${new Date().getFullYear()} SUBASTANDOLO. Todos los derechos reservados.`);
-  const bcvRate = getSetting("bcv_rate", "");
+
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -54,7 +50,7 @@ const Index = () => {
   const bannerInterval = parseInt(getSetting("banner_interval", "5"), 10) * 1000;
 
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (banners.length <= 1) return undefined;
     const interval = setInterval(() => setCurrentSlide(prev => (prev + 1) % banners.length), bannerInterval);
     return () => clearInterval(interval);
   }, [banners.length, bannerInterval]);
@@ -148,10 +144,10 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center p-4 text-center">
           <ErrorState
             title="Error al cargar"
-            message="No pudimos cargar las subastas. Verifica tu conexión e intenta de nuevo."
+            message={`No pudimos cargar las subastas. Error: ${fetchError}`}
             onRetry={fetchAuctions}
             retryLabel="Reintentar"
           />
@@ -188,15 +184,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* BCV */}
-        {bcvRate && (
-          <div className="flex justify-end px-4 pt-2">
-            <div className="bg-card border border-border rounded-full px-3 py-1 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <TrendingUp className="h-3 w-3 text-primary" />
-              BCV: <span className="font-bold text-foreground">{parseFloat(bcvRate).toFixed(2)} Bs/$</span>
-            </div>
-          </div>
-        )}
+
 
         {/* Banner */}
         {banners.length > 0 && (
@@ -211,15 +199,16 @@ const Index = () => {
               <div className="max-w-md">
                 {banners[currentSlide] && (
                   <>
-                    <h1 className="text-xl sm:text-3xl font-heading font-black text-white mb-2 drop-shadow-lg leading-tight">
-                      Subastas Online en Venezuela
-                    </h1>
-                    <p className="text-sm sm:text-lg font-semibold text-white/90 mb-1 drop-shadow">
-                      {banners[currentSlide].title || siteName}
-                    </p>
-                    <p className="text-xs sm:text-sm text-white/70 mb-5 drop-shadow">
-                      {banners[currentSlide].subtitle || siteDescription}
-                    </p>
+                    {banners[currentSlide].title && (
+                      <h1 className="text-xl sm:text-3xl font-heading font-black text-white mb-2 drop-shadow-lg leading-tight">
+                        {banners[currentSlide].title}
+                      </h1>
+                    )}
+                    {banners[currentSlide].subtitle && (
+                      <p className="text-xs sm:text-sm text-white/70 mb-5 drop-shadow">
+                        {banners[currentSlide].subtitle}
+                      </p>
+                    )}
                   </>
                 )}
                 {!user && (
@@ -255,6 +244,8 @@ const Index = () => {
           </section>
         )}
 
+        {/* Removed generic categories section to establish a unique layout */}
+
         {/* Stats */}
         <div className="bg-card border-b border-border">
           <div className="container mx-auto px-4 py-2.5">
@@ -276,11 +267,10 @@ const Index = () => {
                 <button
                   key={f.key}
                   onClick={() => setActiveFilter(f.key)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                    activeFilter === f.key
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                  }`}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${activeFilter === f.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                    }`}
                 >
                   <f.icon className="h-3 w-3" />
                   {f.label} ({f.count})
@@ -289,11 +279,10 @@ const Index = () => {
               {user && (
                 <button
                   onClick={() => setActiveFilter("my_bids")}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                    activeFilter === "my_bids"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                  }`}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${activeFilter === "my_bids"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                    }`}
                 >
                   <Gavel className="h-3 w-3" />
                   Mis Pujas ({userBidAuctionIds.size})
@@ -380,28 +369,47 @@ const Index = () => {
           </section>
         ))}
 
-        {/* Dealer CTA */}
-        {user && (
-          <section className="bg-card border-y border-border py-10">
-            <div className="container mx-auto px-4 text-center max-w-md">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <Store className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-lg font-heading font-bold mb-1.5">¿Quieres vender en {siteName}?</h2>
-              <p className="text-xs text-muted-foreground mb-5">
-                Conviértete en Dealer verificado y publica tus productos.
-              </p>
-              <Button size="default" asChild className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full h-9 px-5 text-xs">
-                <Link to="/dealer/apply">
-                  <Store className="h-3.5 w-3.5 mr-1.5" />Regístrate como Dealer
-                </Link>
-              </Button>
-            </div>
-          </section>
-        )}
+        {/* Premium CTA Section */}
+        <section className="relative overflow-hidden bg-primary py-20">
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-accent/10 -translate-y-1/3 translate-x-1/3 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-accent/5 translate-y-1/3 -translate-x-1/3 blur-2xl pointer-events-none" />
 
-        <div className="hidden sm:block"><Footer /></div>
-        <div className="sm:hidden h-14" />
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="inline-flex items-center gap-2 bg-accent/15 border border-accent/30 text-accent text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-wide uppercase">
+                <Gavel className="h-3.5 w-3.5" />
+                Únete a Subastandolo
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-heading font-black text-white mb-4 leading-tight">
+                ¿Listo para conseguir
+                <span className="text-accent"> los mejores precios?</span>
+              </h2>
+              <p className="text-white/50 text-base mb-8 max-w-xl mx-auto leading-relaxed">
+                Únete a miles de compradores que ya están ganando subastas increíbles.
+                Sin intermediarios. Tú pones el precio.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {!user && (
+                  <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-black text-sm h-12 px-8 rounded-full shadow-lg shadow-accent/25">
+                    <Link to="/auth">
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Registrarse Gratis
+                    </Link>
+                  </Button>
+                )}
+                <Button size="lg" variant="outline" asChild className="border-white/20 text-white hover:bg-white/10 font-bold text-sm h-12 px-8 rounded-full">
+                  <Link to="/dealer/apply">
+                    <Store className="h-4 w-4 mr-2" />
+                    Sé Dealer Verificado
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
       </main>
       <BottomNav />
     </div>

@@ -41,72 +41,82 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
   return (
     <Link to={`/auction/${auction.id}`} className="group block h-full">
-      <div className="bg-card rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col border border-border/60 hover:border-primary/30">
-        {/* Image */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted/30">
+      <div className="bg-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col border-2 border-transparent hover:border-primary/20 relative">
+        {/* Image Area */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-white flex items-center justify-center p-4">
           {auction.image_url ? (
             <img
               src={auction.image_url}
               alt={auction.title}
-              className="w-full h-full object-contain p-2 group-hover:scale-[1.03] transition-transform duration-500"
+              className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/50 text-xs bg-muted/10 rounded-xl">
               Sin imagen
             </div>
           )}
 
-          {/* Status */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {/* Status Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
             {isScheduled && (
-              <Badge className="bg-primary/90 text-primary-foreground border-0 text-[10px] px-2 py-0.5 rounded-md font-semibold">
-                <Clock className="h-3 w-3 mr-1" />
-                PRÓXIMAMENTE
+              <Badge className="bg-primary/95 text-primary-foreground border-0 text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-sm shadow-sm backdrop-blur-sm">
+                <Clock className="h-3 w-3 mr-1.5" />
+                Próximamente
               </Badge>
             )}
             {isLive && (
               <>
-                <Badge className="bg-destructive text-destructive-foreground border-0 text-[10px] px-2 py-0.5 rounded-md font-semibold animate-pulse">
-                  🔴 EN VIVO
-                </Badge>
+                {/* Modern minimalist LIVE badge */}
+                <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg">
+                  {/* Pulsing ring + dot — brand green */}
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#A6E300" }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#A6E300" }} />
+                  </span>
+                  Activa
+                </div>
                 {(auction as any).is_extended && (
-                  <Badge className="bg-warning text-warning-foreground border-0 text-[10px] px-2 py-0.5 rounded-md font-semibold">
-                    ⚡ EXTENDIDA
-                  </Badge>
+                  <div className="flex items-center gap-1 bg-amber-500/90 backdrop-blur-sm border border-amber-400/30 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-md mt-1">
+                    ⚡ Extendida
+                  </div>
                 )}
               </>
             )}
           </div>
 
-          {/* Ended */}
+          {/* Ended Overlay */}
           {isEnded && (
-            <div className="absolute inset-0 bg-foreground/25 flex items-center justify-center backdrop-blur-[1px]">
-              <span className="bg-card text-muted-foreground text-[11px] font-semibold px-3 py-1.5 rounded-md">
+            <div className="absolute inset-0 bg-background/40 flex items-center justify-center backdrop-blur-[2px] z-20">
+              <span className="bg-foreground text-background text-xs uppercase tracking-widest font-bold px-4 py-2 rounded-sm shadow-xl">
                 Finalizada
               </span>
             </div>
           )}
 
-          {/* Favorite */}
+          {/* Favorite Button */}
           {user && onToggleFavorite && (
             <button
               onClick={handleFavoriteClick}
-              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-card/80 hover:bg-card border border-border/40 flex items-center justify-center transition-all z-10 backdrop-blur-sm"
+              className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 hover:bg-white text-muted-foreground shadow-sm flex items-center justify-center transition-all z-20 hover:scale-110"
             >
               <Heart
-                className={`h-4 w-4 transition-colors ${isFavorite ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
+                className={`h-4 w-4 transition-colors ${isFavorite ? "fill-destructive text-destructive" : "hover:text-destructive"}`}
               />
             </button>
           )}
+
+          {/* Subtle gradient overlay at bottom of image for contrast */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
         </div>
 
-        {/* Info */}
-        <div className="p-3 flex flex-col flex-1 gap-1.5">
-          {/* Dealer */}
+        {/* Info Area */}
+        <div className="p-4 sm:p-5 flex flex-col flex-1 bg-gradient-to-b from-card to-muted/10">
+
+          {/* Dealer Info */}
           {dealer && (
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-primary font-medium truncate">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs text-muted-foreground font-medium truncate uppercase tracking-wider">
                 {dealer.name}
               </span>
               {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
@@ -114,64 +124,64 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
           )}
 
           {/* Title */}
-          <h3 className="font-medium text-[13px] leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+          <h3 className="font-heading font-semibold text-sm sm:text-base leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors mb-3">
             {auction.title}
           </h3>
 
-          {/* Price */}
-          <div className="mt-auto pt-1.5">
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5 font-medium">
-              {isScheduled ? "Precio inicial" : hasBids ? "Puja actual" : "Precio inicial"}
-            </p>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-[11px] text-foreground font-medium">US$</span>
-              <span className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none">
-                {Math.floor(displayPrice).toLocaleString("es-MX")}
-              </span>
-              <span className="text-[11px] text-muted-foreground font-medium">
-                {(displayPrice % 1).toFixed(2).substring(1)}
-              </span>
-            </div>
-          </div>
-
-          {/* Timer */}
-          <div className="border-t border-border/30 pt-2 mt-1.5">
-            {isScheduled ? (
+          {/* Price & Timer Row */}
+          <div className="mt-auto flex flex-col gap-3">
+            <div className="flex items-end justify-between">
               <div>
-                <p className="text-[9px] text-muted-foreground mb-1 font-medium">
-                  {auction.status === "scheduled" ? "Próximamente" : "Inicia en"}
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 font-semibold">
+                  {isScheduled ? "Precio Inicial" : hasBids ? "Puja Actual" : "Precio Inicial"}
                 </p>
-                {startTime ? (
-                  <Countdown endTime={startTime} />
-                ) : (
-                  <span className="text-[11px] text-primary font-medium">Por definir</span>
-                )}
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-sm text-foreground/80 font-bold">US$</span>
+                  <span className="text-2xl sm:text-3xl font-black text-foreground tracking-tight leading-none">
+                    {Math.floor(displayPrice).toLocaleString("es-MX")}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-bold ml-0.5">
+                    {(displayPrice % 1).toFixed(2).substring(1)}
+                  </span>
+                </div>
               </div>
-            ) : !isEnded ? (
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-muted-foreground font-medium flex items-center gap-1">
-                  <Clock className="h-3 w-3" />Termina en
-                </span>
-                <Countdown endTime={auction.end_time} />
+
+              {/* Timer Block */}
+              {!isEnded && (
+                <div className="text-right flex flex-col items-end">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 font-semibold flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {isScheduled ? "Inicia en" : "Termina"}
+                  </p>
+                  <div className="bg-secondary/50 px-2 py-1 rounded-sm">
+                    {startTime && isScheduled ? (
+                      <Countdown endTime={startTime} />
+                    ) : isLive ? (
+                      <Countdown endTime={auction.end_time} />
+                    ) : (
+                      <span className="text-xs font-bold font-mono">--:--:--</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Winner Info */}
+            {isEnded && auction.winner_name && (
+              <div className="flex items-center gap-2 text-xs text-primary bg-primary/10 rounded-sm px-3 py-2 border border-primary/20">
+                <Trophy className="h-4 w-4 shrink-0" />
+                <span className="font-bold truncate">Ganador: {maskName(auction.winner_name)}</span>
               </div>
-            ) : null}
+            )}
+
+            {/* Premium CTA Button */}
+            {isLive && (
+              <div className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-black uppercase tracking-widest rounded-sm py-3 mt-2 flex items-center justify-center gap-2 transition-transform group-hover:scale-[1.02] shadow-sm">
+                <Gavel className="h-4 w-4" />
+                Ofertar Ahora
+              </div>
+            )}
           </div>
-
-          {/* Winner */}
-          {isEnded && auction.winner_name && (
-            <div className="flex items-center gap-1.5 text-[11px] text-primary bg-primary/5 rounded-md px-2 py-1.5">
-              <Trophy className="h-3.5 w-3.5 shrink-0" />
-              <span className="font-medium truncate">Ganador: {maskName(auction.winner_name)}</span>
-            </div>
-          )}
-
-          {/* CTA */}
-          {isLive && (
-            <div className="flex items-center justify-center gap-1.5 bg-accent text-accent-foreground text-[11px] font-bold rounded-md py-2 mt-0.5">
-              <Gavel className="h-3.5 w-3.5" />
-              ¡Pujar ahora!
-            </div>
-          )}
         </div>
       </div>
     </Link>

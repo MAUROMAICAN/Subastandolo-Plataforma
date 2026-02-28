@@ -4,9 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { Capacitor } from '@capacitor/core';
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { SiteProvider } from "@/hooks/useSiteSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SplashScreen from "@/components/SplashScreen";
@@ -37,6 +39,7 @@ const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Menu = lazy(() => import("./pages/Menu"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +68,22 @@ function PushNotificationInitializer() {
   return null;
 }
 
+/** Initializes real-time UI/audio notifications globally */
+function RealtimeNotificationInitializer() {
+  useRealtimeNotifications();
+  return null;
+}
+
+const RootRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null; // Or a simple loader
+  if (Capacitor.isNativePlatform() && !user) {
+    return <Auth />;
+  }
+  return <Index />;
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
@@ -80,33 +99,35 @@ const App = () => {
             <AuthProvider>
               <SiteProvider>
                 <PushNotificationInitializer />
+                <RealtimeNotificationInitializer />
                 <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Auth />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route path="/home" element={<ProtectedRoute authOnly><Index /></ProtectedRoute>} />
-                  <Route path="/auction/:id" element={<AuctionDetail />} />
-                  <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
-                  <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
-                  <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
-                  <Route path="/demo/badges" element={<BadgeDemo />} />
-                  <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
-                  <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
-                  <Route path="/ayuda" element={<Help />} />
-                  <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
-                  <Route path="/compradores" element={<BuyerFAQ />} />
-                  <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
-                  <Route path="/instalar" element={<InstallApp />} />
-                  <Route path="/como-funciona" element={<HowItWorksPage />} />
-                  <Route path="/nosotros" element={<AboutPage />} />
-                  <Route path="/contacto" element={<Contact />} />
-                  <Route path="/terminos" element={<TermsPage />} />
-                  <Route path="/privacidad" element={<PrivacyPage />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                  <Routes>
+                    <Route path="/" element={<RootRoute />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/home" element={<Index />} />
+                    <Route path="/auction/:id" element={<AuctionDetail />} />
+                    <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
+                    <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
+                    <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
+                    <Route path="/demo/badges" element={<BadgeDemo />} />
+                    <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
+                    <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
+                    <Route path="/ayuda" element={<Help />} />
+                    <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
+                    <Route path="/compradores" element={<BuyerFAQ />} />
+                    <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
+                    <Route path="/instalar" element={<InstallApp />} />
+                    <Route path="/como-funciona" element={<HowItWorksPage />} />
+                    <Route path="/nosotros" element={<AboutPage />} />
+                    <Route path="/contacto" element={<Contact />} />
+                    <Route path="/terminos" element={<TermsPage />} />
+                    <Route path="/privacidad" element={<PrivacyPage />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
+                    <Route path="/notificaciones" element={<ProtectedRoute authOnly><NotificationsPage /></ProtectedRoute>} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
                 </Suspense>
               </SiteProvider>
             </AuthProvider>

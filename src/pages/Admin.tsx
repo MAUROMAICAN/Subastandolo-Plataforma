@@ -245,7 +245,7 @@ const Admin = () => {
           {sidebarOpen ? (
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center"><Shield className="h-4 w-4 text-accent-foreground" /></div>
-              <div><span className="font-heading font-bold text-sm block leading-tight">Admin</span><span className="text-[10px] text-white/40 leading-tight">Panel de Control</span></div>
+              <div><span className="font-heading font-bold text-sm block leading-tight text-white">Admin</span><span className="text-[10px] text-white/40 leading-tight">Panel de Control</span></div>
             </div>
           ) : (
             <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center mx-auto"><Shield className="h-4 w-4 text-accent-foreground" /></div>
@@ -255,8 +255,8 @@ const Admin = () => {
           {sidebarOpen && <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-2 mb-2">Navegación</p>}
           {sidebarItems.map(item => (
             <button key={item.key} onClick={() => { setActiveTab(item.key); if (window.innerWidth < 1024) setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs rounded-md transition-all relative ${activeTab === item.key ? "bg-primary/80 text-white font-semibold shadow-md shadow-primary/20" : "text-white/50 hover:text-white hover:bg-white/5"}`}>
-              <item.icon className={`h-4 w-4 shrink-0 ${activeTab === item.key ? "text-white" : ""}`} />
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs rounded-md transition-all relative ${activeTab === item.key ? "bg-accent text-accent-foreground font-semibold shadow-md" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
+              <item.icon className={`h-4 w-4 shrink-0`} />
               {sidebarOpen && <span>{item.label}</span>}
               {item.badge && item.badge > 0 && (
                 <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1 -right-1"} min-w-[20px] h-5 px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold`}>{item.badge}</span>

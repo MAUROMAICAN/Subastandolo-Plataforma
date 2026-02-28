@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.png";
+
 import { useAuth } from "@/hooks/useAuth";
 import NotificationBell from "@/components/NotificationBell";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Shield, User, Search, Menu, X, Store, HelpCircle } from "lucide-react";
 import AdminBadge from "@/components/AdminBadge";
 import ReferButton from "@/components/ReferButton";
+import AnnouncementTicker from "@/components/AnnouncementTicker";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,7 +19,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
-  const { user, profile, isAdmin, isDealer, loading, signOut } = useAuth();
+  const { user, profile, isAdmin, isDealer, signOut } = useAuth();
   const { getSetting } = useSiteSettings();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -38,26 +39,26 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-[60] overflow-x-hidden">
+    <header className="sticky top-0 z-[100] shadow-sm">
       {/* Main Nav */}
-      <div className="bg-nav">
-        <div className="container mx-auto flex h-12 sm:h-14 items-center justify-between px-3 sm:px-4 gap-2">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src={logo} alt={siteName} className="h-6 sm:h-7 w-auto" />
+      <div className="bg-nav overflow-x-hidden">
+        <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
+          <Link to="/" className="flex items-center shrink-0">
+            <img src="/logo_letras.svg" alt={siteName} className="h-8 sm:h-10 w-auto object-contain" />
           </Link>
 
           {/* Search - Desktop */}
           {onSearchChange && (
-            <div className="hidden lg:flex flex-1 max-w-lg mx-4">
+            <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
               <div className="relative w-full">
                 <Input
-                  placeholder="Buscar productos, lotes..."
+                  placeholder="Buscar productos, marcas y más..."
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="bg-white text-foreground border-0 h-9 pr-10 rounded-full shadow-sm placeholder:text-muted-foreground/50 text-sm"
+                  className="bg-white text-foreground border-0 h-10 pr-12 rounded-sm shadow-sm placeholder:text-muted-foreground/60 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
-                <button className="absolute right-0 top-0 h-9 w-10 bg-primary hover:bg-primary/90 flex items-center justify-center rounded-r-full transition-colors">
-                  <Search className="h-4 w-4 text-primary-foreground" />
+                <button className="absolute right-0 top-0 h-10 w-12 bg-white hover:bg-gray-100 flex items-center justify-center rounded-r-sm transition-colors border-l border-gray-200">
+                  <Search className="h-5 w-5 text-gray-400" />
                 </button>
               </div>
             </div>
@@ -118,26 +119,29 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
       </div>
 
       {/* Secondary Nav - Desktop */}
-      <div className="hidden lg:block bg-nav-solid border-b border-white/5">
+      <div className="hidden lg:block bg-nav-solid border-t border-white/10">
         <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-0 h-9 text-[12px]">
-            <Link to="/" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md">Inicio</Link>
-            <a href="/#subastas" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md">Subastas</a>
-            <Link to="/como-funciona" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md">Cómo Funciona</Link>
-            <Link to="/nosotros" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md">Nosotros</Link>
-            <Link to="/compradores" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md">Compradores</Link>
-            <Link to="/ayuda" className="px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-md flex items-center gap-1"><HelpCircle className="h-3 w-3" />Ayuda</Link>
-            <div className="ml-auto flex items-center gap-2">
+          <nav className="flex items-center gap-1 h-10 text-[13px]">
+            <Link to="/" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Inicio</Link>
+            <a href="/#subastas" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Subastas</a>
+            <Link to="/como-funciona" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Cómo Funciona</Link>
+            <Link to="/nosotros" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Nosotros</Link>
+            <Link to="/compradores" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Compradores</Link>
+            <Link to="/ayuda" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm flex items-center gap-1.5"><HelpCircle className="h-3.5 w-3.5" />Ayuda</Link>
+            <div className="ml-auto flex items-center gap-3">
               <ReferButton variant="compact" />
             </div>
             {!user && (
-              <Link to="/auth" className="px-3 py-1.5 text-accent hover:text-accent/80 hover:bg-white/5 transition-colors font-bold flex items-center gap-1 border border-accent/30 rounded-full text-[11px]">
-                <Store className="h-3 w-3" />Sé Dealer
+              <Link to="/auth" className="px-4 py-1.5 text-white hover:bg-white/10 transition-colors font-bold flex items-center gap-1.5 border border-white/20 rounded-full text-[12px] ml-2">
+                <Store className="h-3.5 w-3.5" />Sé Dealer
               </Link>
             )}
           </nav>
         </div>
       </div>
+
+      {/* Announcement Ticker */}
+      <AnnouncementTicker message={getSetting("announcement_bar", "")} />
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (

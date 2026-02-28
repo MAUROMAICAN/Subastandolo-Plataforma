@@ -68,7 +68,7 @@ const AdminNotificationsTab = () => {
         if (emailData?.emails) {
           emailMap = emailData.emails;
         }
-      } catch {}
+      } catch { }
 
       if (profiles) {
         const mapped: UserOption[] = profiles.map((p) => ({
@@ -109,19 +109,22 @@ const AdminNotificationsTab = () => {
     setSending(true);
     try {
       if (targetType === "all") {
-        const { data: subs } = await supabase
-          .from("push_subscriptions")
-          .select("user_id");
+        // Fetch ALL users from profiles table (not push_subscriptions which may be empty)
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id");
 
-        const uniqueIds = [...new Set((subs || []).map((s) => s.user_id))];
+        if (profilesError) throw profilesError;
 
-        if (uniqueIds.length === 0) {
-          toast({ title: "Sin suscriptores", description: "No hay usuarios registrados para push", variant: "destructive" });
+        const userIds = (profiles || []).map((p) => p.id);
+
+        if (userIds.length === 0) {
+          toast({ title: "Sin usuarios", description: "No hay usuarios registrados aún", variant: "destructive" });
           setSending(false);
           return;
         }
 
-        const notifs = uniqueIds.map((uid) => ({
+        const notifs = userIds.map((uid) => ({
           user_id: uid,
           title,
           message: body,
@@ -129,11 +132,13 @@ const AdminNotificationsTab = () => {
           link: url || "/",
         }));
 
+        // Insert in batches of 50
         for (let i = 0; i < notifs.length; i += 50) {
-          await supabase.from("notifications").insert(notifs.slice(i, i + 50));
+          const { error } = await supabase.from("notifications").insert(notifs.slice(i, i + 50));
+          if (error) throw error;
         }
 
-        toast({ title: "✅ Enviado", description: `Notificación enviada a ${uniqueIds.length} usuarios` });
+        toast({ title: "✅ Enviado", description: `Notificación in-app enviada a ${userIds.length} usuario(s)` });
       } else {
         if (!selectedUser) {
           toast({ title: "Error", description: "Selecciona un usuario", variant: "destructive" });
@@ -141,7 +146,7 @@ const AdminNotificationsTab = () => {
           return;
         }
 
-        await supabase.from("notifications").insert({
+        const { error } = await supabase.from("notifications").insert({
           user_id: selectedUser.id,
           title,
           message: body,
@@ -149,6 +154,7 @@ const AdminNotificationsTab = () => {
           link: url || "/",
         });
 
+        if (error) throw error;
         toast({ title: "✅ Enviado", description: `Notificación enviada a ${selectedUser.full_name}` });
       }
 
@@ -157,7 +163,7 @@ const AdminNotificationsTab = () => {
       setUrl("/");
       setSelectedUser(null);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error al enviar", description: err.message || "Error desconocido", variant: "destructive" });
     } finally {
       setSending(false);
     }

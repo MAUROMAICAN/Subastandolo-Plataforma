@@ -40,5 +40,5 @@ WHERE a.id = n.id;
 -- Update the sequence to continue after the last assigned number
 SELECT setval('public.auction_operation_seq', COALESCE(
   (SELECT MAX(REPLACE(operation_number, 'OP-', '')::int) FROM public.auctions WHERE operation_number IS NOT NULL),
-  0
+  1
 ));

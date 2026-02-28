@@ -251,7 +251,21 @@ const Auth = () => {
         if ((biometricAvailable || biometricChecking) && !biometricEnabled) {
           setShowBiometricPrompt(true);
         } else {
-          navigate("/home", { replace: true });
+          try {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+              const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', currentUser.id);
+              const userRoles = roles?.map(r => r.role) || [];
+              if (userRoles.includes('admin')) {
+                navigate("/admin", { replace: true });
+                return;
+              } else if (userRoles.includes('dealer')) {
+                navigate("/dealer", { replace: true });
+                return;
+              }
+            }
+          } catch (e) { }
+          navigate("/mi-panel", { replace: true });
         }
         // Reset auto-prompt flag so next time they return it fires again
         autoPromptFiredRef.current = false;
@@ -618,308 +632,308 @@ const Auth = () => {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="w-full max-w-sm">
 
-        {isLogin && isReturningUser ? (
-          <>
-            {/* Returning user: avatar + greeting */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary/20 bg-muted mb-3 shadow-md">
-                {rememberedAvatar ? (
-                  <img src={rememberedAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
-                    <User className="h-8 w-8 text-primary/60" />
+          {isLogin && isReturningUser ? (
+            <>
+              {/* Returning user: avatar + greeting */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary/20 bg-muted mb-3 shadow-md">
+                  {rememberedAvatar ? (
+                    <img src={rememberedAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
+                      <User className="h-8 w-8 text-primary/60" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-0.5">{getGreeting()}</p>
+                <h2 className="text-lg font-heading font-bold text-foreground">{rememberedName || "Usuario"}</h2>
+                <p className="text-xs text-muted-foreground/70">{maskEmail(rememberedEmail)}</p>
+              </div>
+
+              {/* Biometric button — prominent */}
+              {biometricEnabled && !biometricChecking && (
+                <button
+                  type="button"
+                  onClick={handleBiometricLogin}
+                  disabled={loading}
+                  className="w-full mb-4 flex items-center gap-4 p-4 rounded-2xl bg-brand-dark text-brand-lime shadow-lg hover:bg-brand-dark/90 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-brand-lime/10 flex items-center justify-center shrink-0">
+                    <Fingerprint className="h-6 w-6 text-brand-lime" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold leading-tight">Entrar con {getBiometryLabel()}</p>
+                    <p className="text-[11px] text-brand-lime/70 leading-tight mt-0.5">Rápido y seguro</p>
+                  </div>
+                </button>
+              )}
+
+              <form onSubmit={(e) => { setEmail(rememberedEmail); handleSubmit(e); }} className="w-full space-y-4">
+                <input type="hidden" value={rememberedEmail} onChange={() => { }} />
+
+                {/* Divider when biometric is shown */}
+                {biometricEnabled && !biometricChecking && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[11px] text-muted-foreground">o con contraseña</span>
+                    <div className="flex-1 h-px bg-border" />
                   </div>
                 )}
-              </div>
-              <p className="text-xs text-muted-foreground mb-0.5">{getGreeting()}</p>
-              <h2 className="text-lg font-heading font-bold text-foreground">{rememberedName || "Usuario"}</h2>
-              <p className="text-xs text-muted-foreground/70">{maskEmail(rememberedEmail)}</p>
-            </div>
 
-            {/* Biometric button — prominent */}
-            {biometricEnabled && !biometricChecking && (
-              <button
-                type="button"
-                onClick={handleBiometricLogin}
-                disabled={loading}
-                className="w-full mb-4 flex items-center gap-4 p-4 rounded-2xl bg-brand-dark text-brand-lime shadow-lg hover:bg-brand-dark/90 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                <div className="w-11 h-11 rounded-xl bg-brand-lime/10 flex items-center justify-center shrink-0">
-                  <Fingerprint className="h-6 w-6 text-brand-lime" />
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <PasswordInput
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                    minLength={6}
+                    autoComplete="current-password"
+                  />
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold leading-tight">Entrar con {getBiometryLabel()}</p>
-                  <p className="text-[11px] text-brand-lime/70 leading-tight mt-0.5">Rápido y seguro</p>
-                </div>
-              </button>
-            )}
 
-            <form onSubmit={(e) => { setEmail(rememberedEmail); handleSubmit(e); }} className="w-full space-y-4">
-              <input type="hidden" value={rememberedEmail} onChange={() => {}} />
-
-              {/* Divider when biometric is shown */}
-              {biometricEnabled && !biometricChecking && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-foreground">o con contraseña</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              )}
-
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <PasswordInput
-                  placeholder="Contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                  minLength={6}
-                  autoComplete="current-password"
-                />
-              </div>
-
-              {loginAttempts > 0 && !isLocked && (
-                <p className="text-[11px] text-destructive/80 pl-1">
-                  Intento {loginAttempts}/{MAX_LOGIN_ATTEMPTS}
-                </p>
-              )}
-              {isLocked && (
-                <div className="flex items-center gap-2 bg-destructive/10 rounded-xl px-3 py-2">
-                  <ShieldAlert className="h-3.5 w-3.5 text-destructive shrink-0" />
-                  <p className="text-[11px] text-destructive font-medium">
-                    Bloqueado — restablece tu contraseña ({Math.ceil(lockoutRemaining / 60000)} min)
+                {loginAttempts > 0 && !isLocked && (
+                  <p className="text-[11px] text-destructive/80 pl-1">
+                    Intento {loginAttempts}/{MAX_LOGIN_ATTEMPTS}
                   </p>
+                )}
+                {isLocked && (
+                  <div className="flex items-center gap-2 bg-destructive/10 rounded-xl px-3 py-2">
+                    <ShieldAlert className="h-3.5 w-3.5 text-destructive shrink-0" />
+                    <p className="text-[11px] text-destructive font-medium">
+                      Bloqueado — restablece tu contraseña ({Math.ceil(lockoutRemaining / 60000)} min)
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-right">
+                  <button type="button" onClick={() => setView("forgot")} className="text-xs text-primary hover:underline font-medium">
+                    ¿Olvidaste tu contraseña?
+                  </button>
                 </div>
-              )}
 
-              <div className="text-right">
-                <button type="button" onClick={() => setView("forgot")} className="text-xs text-primary hover:underline font-medium">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
+                {validationError && (
+                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{validationError}</p>
+                  </div>
+                )}
 
-              {validationError && (
-                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-                  <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-xs text-destructive">{validationError}</p>
-                </div>
-              )}
+                <Button
+                  type="submit"
+                  className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
+                  disabled={loading || isLocked}
+                >
+                  {loading ? "Verificando..." : "Ingresar"}
+                </Button>
 
-              <Button
-                type="submit"
-                className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
-                disabled={loading || isLocked}
-              >
-                {loading ? "Verificando..." : "Ingresar"}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem("last_login_email");
-                  localStorage.removeItem("last_login_name");
-                  localStorage.removeItem("last_login_avatar");
-                  setEmail("");
-                  setPassword("");
-                  window.location.reload();
-                }}
-                className="block w-full text-center text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-              >
-                Usar otra cuenta
-              </button>
-            </form>
-          </>
-        ) : isLogin ? (
-          <>
-            {/* Standard login */}
-            <div className="flex flex-col items-center mb-8">
-              <img src={logo} alt="Subastandolo" className="w-48 object-contain mb-6" />
-              <h2 className="text-2xl font-heading font-bold text-foreground">Iniciar Sesión</h2>
-              <p className="text-sm text-muted-foreground mt-1">Accede a tu cuenta de subastas</p>
-            </div>
-
-            {/* Biometric prominent button */}
-            {biometricEnabled && !biometricChecking && (
-              <button
-                type="button"
-                onClick={handleBiometricLogin}
-                disabled={loading}
-                className="w-full mb-5 flex items-center gap-4 p-4 rounded-2xl bg-brand-dark text-brand-lime shadow-lg hover:bg-brand-dark/90 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                <div className="w-11 h-11 rounded-xl bg-brand-lime/10 flex items-center justify-center shrink-0">
-                  <Fingerprint className="h-6 w-6 text-brand-lime" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold leading-tight">Entrar con {getBiometryLabel()}</p>
-                  <p className="text-[11px] text-brand-lime/70 leading-tight mt-0.5">Rápido y seguro</p>
-                </div>
-              </button>
-            )}
-
-            <form onSubmit={handleSubmit} className="w-full space-y-4">
-              {biometricEnabled && !biometricChecking && (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-foreground">o con correo</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              )}
-
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="email"
-                  placeholder="Correo electrónico"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <PasswordInput
-                  placeholder="Contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                  minLength={6}
-                  autoComplete="current-password"
-                />
-              </div>
-
-              {loginAttempts > 0 && !isLocked && (
-                <p className="text-[11px] text-destructive/80 pl-1">
-                  Intento {loginAttempts}/{MAX_LOGIN_ATTEMPTS}
-                </p>
-              )}
-
-              <div className="flex justify-between items-center px-1">
-                <button type="button" onClick={() => setView("resend")} className="text-xs text-muted-foreground hover:text-primary transition-colors">
-                  ¿No recibiste verificación?
-                </button>
-                <button type="button" onClick={() => setView("forgot")} className="text-xs text-primary hover:underline font-medium">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-
-              {validationError && (
-                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-                  <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-xs text-destructive">{validationError}</p>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
-                disabled={loading || isLocked}
-              >
-                {loading ? "Verificando..." : "Ingresar"}
-              </Button>
-            </form>
-          </>
-        ) : (
-          <>
-            {/* Register */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-14 h-14 rounded-2xl bg-brand-dark flex items-center justify-center mb-4 shadow-md">
-                <User className="h-7 w-7 text-brand-lime" />
-              </div>
-              <h2 className="text-2xl font-heading font-bold text-foreground">Crear Cuenta</h2>
-              <p className="text-sm text-muted-foreground mt-1">Regístrate para participar en subastas</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="w-full space-y-4">
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Nombre completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Teléfono (Ej: 0412-1234567)"
-                  value={phone}
-                  onChange={(e) => {
-                    let val = e.target.value.replace(/[^0-9+\-\s]/g, "");
-                    const digits = val.replace(/\D/g, "");
-                    if (digits.startsWith("5858")) val = "+58" + digits.slice(4);
-                    else if (digits.startsWith("580")) val = "+58" + digits.slice(3);
-                    setPhone(val);
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem("last_login_email");
+                    localStorage.removeItem("last_login_name");
+                    localStorage.removeItem("last_login_avatar");
+                    setEmail("");
+                    setPassword("");
+                    window.location.reload();
                   }}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                />
+                  className="block w-full text-center text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                >
+                  Usar otra cuenta
+                </button>
+              </form>
+            </>
+          ) : isLogin ? (
+            <>
+              {/* Standard login */}
+              <div className="flex flex-col items-center mb-8">
+                <img src={logo} alt="Subastandolo" className="w-48 object-contain mb-6" />
+                <h2 className="text-2xl font-heading font-bold text-foreground">Iniciar Sesión</h2>
+                <p className="text-sm text-muted-foreground mt-1">Accede a tu cuenta de subastas</p>
               </div>
 
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="email"
-                  placeholder="Correo electrónico"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <PasswordInput
-                  placeholder="Contraseña (mín. 6 caracteres)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <div className="flex items-start gap-3 bg-muted/40 rounded-2xl p-3">
-                <Checkbox
-                  id="terms"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-                  className="mt-0.5 shrink-0"
-                />
-                <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                  He leído y acepto los{" "}
-                  <Link to="/terminos" className="text-primary hover:underline font-semibold" target="_blank">
-                    Términos y Condiciones
-                  </Link>
-                </label>
-              </div>
-
-              {validationError && (
-                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-                  <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-xs text-destructive">{validationError}</p>
-                </div>
+              {/* Biometric prominent button */}
+              {biometricEnabled && !biometricChecking && (
+                <button
+                  type="button"
+                  onClick={handleBiometricLogin}
+                  disabled={loading}
+                  className="w-full mb-5 flex items-center gap-4 p-4 rounded-2xl bg-brand-dark text-brand-lime shadow-lg hover:bg-brand-dark/90 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-brand-lime/10 flex items-center justify-center shrink-0">
+                    <Fingerprint className="h-6 w-6 text-brand-lime" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold leading-tight">Entrar con {getBiometryLabel()}</p>
+                    <p className="text-[11px] text-brand-lime/70 leading-tight mt-0.5">Rápido y seguro</p>
+                  </div>
+                </button>
               )}
 
-              <Button
-                type="submit"
-                className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
-                disabled={loading}
-              >
-                {loading ? "Creando cuenta..." : "Crear cuenta"}
-              </Button>
-            </form>
-          </>
-        )}
+              <form onSubmit={handleSubmit} className="w-full space-y-4">
+                {biometricEnabled && !biometricChecking && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[11px] text-muted-foreground">o con correo</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <PasswordInput
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                    minLength={6}
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                {loginAttempts > 0 && !isLocked && (
+                  <p className="text-[11px] text-destructive/80 pl-1">
+                    Intento {loginAttempts}/{MAX_LOGIN_ATTEMPTS}
+                  </p>
+                )}
+
+                <div className="flex justify-between items-center px-1">
+                  <button type="button" onClick={() => setView("resend")} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                    ¿No recibiste verificación?
+                  </button>
+                  <button type="button" onClick={() => setView("forgot")} className="text-xs text-primary hover:underline font-medium">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+
+                {validationError && (
+                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{validationError}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
+                  disabled={loading || isLocked}
+                >
+                  {loading ? "Verificando..." : "Ingresar"}
+                </Button>
+              </form>
+            </>
+          ) : (
+            <>
+              {/* Register */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-brand-dark flex items-center justify-center mb-4 shadow-md">
+                  <User className="h-7 w-7 text-brand-lime" />
+                </div>
+                <h2 className="text-2xl font-heading font-bold text-foreground">Crear Cuenta</h2>
+                <p className="text-sm text-muted-foreground mt-1">Regístrate para participar en subastas</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="w-full space-y-4">
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nombre completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                  />
+                </div>
+
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Teléfono (Ej: 0412-1234567)"
+                    value={phone}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/[^0-9+\-\s]/g, "");
+                      const digits = val.replace(/\D/g, "");
+                      if (digits.startsWith("5858")) val = "+58" + digits.slice(4);
+                      else if (digits.startsWith("580")) val = "+58" + digits.slice(3);
+                      setPhone(val);
+                    }}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <PasswordInput
+                    placeholder="Contraseña (mín. 6 caracteres)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-14 rounded-2xl border border-input bg-background pl-12 pr-12 text-base focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="flex items-start gap-3 bg-muted/40 rounded-2xl p-3">
+                  <Checkbox
+                    id="terms"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                    className="mt-0.5 shrink-0"
+                  />
+                  <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                    He leído y acepto los{" "}
+                    <Link to="/terminos" className="text-primary hover:underline font-semibold" target="_blank">
+                      Términos y Condiciones
+                    </Link>
+                  </label>
+                </div>
+
+                {validationError && (
+                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{validationError}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-14 bg-brand-dark text-brand-lime hover:bg-brand-dark/90 font-bold rounded-2xl text-sm tracking-wide shadow-md active:scale-[0.98] transition-all"
+                  disabled={loading}
+                >
+                  {loading ? "Creando cuenta..." : "Crear cuenta"}
+                </Button>
+              </form>
+            </>
+          )}
         </div>
       </div>
 

@@ -33,20 +33,20 @@ const LaunchCountdown = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-r from-primary via-primary/90 to-accent">
+    <section className="relative overflow-hidden bg-accent text-accent-foreground isolate">
       {/* Animated background particles */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-2 left-[10%] w-1 h-1 rounded-full bg-white animate-pulse" />
-        <div className="absolute top-4 left-[30%] w-1.5 h-1.5 rounded-full bg-white animate-pulse delay-300" />
-        <div className="absolute top-1 left-[50%] w-1 h-1 rounded-full bg-white animate-pulse delay-700" />
-        <div className="absolute top-3 left-[70%] w-1.5 h-1.5 rounded-full bg-white animate-pulse delay-500" />
-        <div className="absolute top-2 left-[90%] w-1 h-1 rounded-full bg-white animate-pulse delay-200" />
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-2 left-[10%] w-1 h-1 rounded-full bg-accent-foreground animate-pulse" />
+        <div className="absolute top-4 left-[30%] w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse delay-300" />
+        <div className="absolute top-1 left-[50%] w-1 h-1 rounded-full bg-accent-foreground animate-pulse delay-700" />
+        <div className="absolute top-3 left-[70%] w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse delay-500" />
+        <div className="absolute top-2 left-[90%] w-1 h-1 rounded-full bg-accent-foreground animate-pulse delay-200" />
       </div>
 
       <div className="container mx-auto px-4 py-5 sm:py-6 relative">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
           {/* Left: label */}
-          <div className="flex items-center gap-2 text-primary-foreground">
+          <div className="flex items-center gap-2">
             <Rocket className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" />
             <div className="text-center sm:text-left">
               <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest opacity-80">
@@ -59,22 +59,22 @@ const LaunchCountdown = () => {
           </div>
 
           {/* Divider */}
-          <div className="hidden sm:block w-px h-10 bg-primary-foreground/30" />
+          <div className="hidden sm:block w-px h-10 bg-accent-foreground/20" />
 
           {/* Countdown digits */}
           <div className="flex items-center gap-2 sm:gap-3">
             {units.map((u, i) => (
               <div key={u.label} className="flex items-center gap-2 sm:gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="bg-black/30 backdrop-blur-sm border border-white/20 text-primary-foreground font-mono font-extrabold text-xl sm:text-3xl rounded-md px-3 py-2 sm:px-4 sm:py-3 min-w-[3rem] sm:min-w-[4rem] text-center tabular-nums shadow-lg">
+                  <span className="bg-accent-foreground/10 border border-accent-foreground/20 font-mono font-black text-xl sm:text-3xl rounded-md px-3 py-2 sm:px-4 sm:py-3 min-w-[3rem] sm:min-w-[4rem] text-center tabular-nums shadow-sm">
                     {String(u.value).padStart(2, "0")}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] font-medium text-primary-foreground/70 mt-1 uppercase tracking-wider">
+                  <span className="text-[9px] sm:text-[10px] font-bold mt-1 uppercase tracking-wider opacity-80">
                     {u.label}
                   </span>
                 </div>
                 {i < units.length - 1 && (
-                  <span className="text-primary-foreground/60 font-bold text-lg sm:text-2xl -mt-4 animate-pulse">
+                  <span className="opacity-60 font-black text-lg sm:text-2xl -mt-4 animate-pulse">
                     :
                   </span>
                 )}
