@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1042669431876",
+    "project_id": "subastandolo-app",
+    "storage_bucket": "subastandolo-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042669431876:android:908d3a81ab1a1f591ca011",
+        "android_client_info": {
+          "package_name": "com.subastandolo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnUU8MZcEXBj5cG8mZQW1AFw95jz5m17Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

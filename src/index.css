@@ -38,6 +38,10 @@
     --accent-foreground: 215 28% 10%;
     /* Dark navy on green */
 
+    /* Brand specific colors used by Tailwind */
+    --brand-dark: 215 28% 17%;
+    --brand-lime: 82 100% 45%;
+
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 

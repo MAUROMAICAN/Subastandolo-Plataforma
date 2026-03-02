@@ -129,10 +129,10 @@ const App = () => {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                <CookieConsent />
               </SiteProvider>
             </AuthProvider>
           </ErrorBoundary>
-          <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Shield, Cookie } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const COOKIE_CONSENT_KEY = "cookie_consent";
 
@@ -10,15 +11,19 @@ type ConsentValue = "all" | "necessary" | null;
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    let t: ReturnType<typeof setTimeout>;
     if (!stored) {
-      // Small delay so it doesn't flash on load
-      const t = setTimeout(() => setVisible(true), 1200);
-      return () => clearTimeout(t);
+      t = setTimeout(() => setVisible(true), 1200);
     }
-  }, []);
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [user]);
 
   const accept = (value: ConsentValue) => {
     if (!value) return;
