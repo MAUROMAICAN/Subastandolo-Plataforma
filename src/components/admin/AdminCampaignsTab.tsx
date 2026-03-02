@@ -134,12 +134,12 @@ const AdminCampaignsTab = () => {
     fetchCampaigns();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary dark:text-accent" /></div>;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Megaphone className="h-5 w-5 text-primary" />
+        <Megaphone className="h-5 w-5 text-primary dark:text-accent" />
         <h1 className="text-xl font-heading font-bold">Campañas Publicitarias</h1>
       </div>
 
@@ -214,13 +214,13 @@ const AdminCampaignsTab = () => {
                       Expira: {new Date(c.ends_at).toLocaleString("es-VE", { timeZone: "America/Caracas", dateStyle: "medium", timeStyle: "short" })}
                     </p>
                   )}
-                  {c.link_url && <p className="text-[10px] text-muted-foreground truncate">{c.link_url}</p>}
+                  {c.link_url && <p className="text-[10px] text-muted-foreground dark:text-gray-300 truncate">{c.link_url}</p>}
                   <div className="flex items-center gap-1.5">
                     <Button variant="outline" size="sm" onClick={() => startEdit(c)} className="rounded-md text-[10px] h-7 flex-1"><PenLine className="h-3 w-3 mr-1" /> Editar</Button>
-                    <Button variant="outline" size="icon" onClick={() => handleResend(c.id)} className="rounded-md h-7 w-7 text-primary" title="Reenviar a todos">
+                    <Button variant="outline" size="icon" onClick={() => handleResend(c.id)} className="rounded-md h-7 w-7 text-primary dark:text-accent" title="Reenviar a todos">
                       <RotateCcw className="h-3 w-3" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleToggle(c.id, !c.is_active)} className={`rounded-md h-7 w-7 ${c.is_active ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <Button variant="outline" size="icon" onClick={() => handleToggle(c.id, !c.is_active)} className={`rounded-md h-7 w-7 ${c.is_active ? 'text-primary dark:text-accent' : 'text-muted-foreground'}`}>
                       {c.is_active ? <Eye className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
                     </Button>
                     <AlertDialog>
@@ -237,7 +237,7 @@ const AdminCampaignsTab = () => {
           </div>
         ))}
         {campaigns.length === 0 && (
-          <div className="col-span-full text-center py-8 text-muted-foreground text-sm">No hay campañas creadas aún.</div>
+          <div className="col-span-full text-center py-8 text-muted-foreground dark:text-gray-300 text-sm">No hay campañas creadas aún.</div>
         )}
       </div>
     </div>

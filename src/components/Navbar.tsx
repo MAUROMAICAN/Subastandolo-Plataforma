@@ -55,10 +55,10 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
                   placeholder="Buscar productos, marcas y más..."
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="bg-white text-foreground border-0 h-10 pr-12 rounded-sm shadow-sm placeholder:text-muted-foreground/60 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="bg-white text-foreground border-0 h-10 pr-12 rounded-full shadow-sm placeholder:text-muted-foreground/60 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
-                <button className="absolute right-0 top-0 h-10 w-12 bg-white hover:bg-gray-100 flex items-center justify-center rounded-r-sm transition-colors border-l border-gray-200">
-                  <Search className="h-5 w-5 text-gray-400" />
+                <button className="absolute right-0 top-0 h-10 w-14 bg-[#244299] hover:bg-[#1e367d] flex items-center justify-center rounded-r-full transition-colors border-none">
+                  <Search className="h-5 w-5 text-white" />
                 </button>
               </div>
             </div>
@@ -132,8 +132,8 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
               <ReferButton variant="compact" />
             </div>
             {!user && (
-              <Link to="/auth" className="px-4 py-1.5 text-white hover:bg-white/10 transition-colors font-bold flex items-center gap-1.5 border border-white/20 rounded-full text-[12px] ml-2">
-                <Store className="h-3.5 w-3.5" />Sé Dealer
+              <Link to="/auth" className="px-4 py-1.5 text-accent hover:bg-accent/10 transition-colors font-bold flex items-center gap-1.5 border border-accent rounded-full text-[12px] ml-2">
+                Sé Dealer
               </Link>
             )}
           </nav>

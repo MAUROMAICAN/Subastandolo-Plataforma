@@ -53,7 +53,7 @@ const AdminDisputesTab = ({ adminDisputes, fetchAllData }: Props) => {
     <div className="space-y-4">
       <h1 className="text-xl font-heading font-bold flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Disputas ({adminDisputes.length})</h1>
       {adminDisputes.length === 0 ? (
-        <Card className="border border-border rounded-sm"><CardContent className="p-8 text-center text-muted-foreground"><CheckCircle className="h-8 w-8 mx-auto mb-2 text-primary" />Sin disputas abiertas</CardContent></Card>
+        <Card className="border border-border rounded-sm"><CardContent className="p-8 text-center text-muted-foreground"><CheckCircle className="h-8 w-8 mx-auto mb-2 text-primary dark:text-accent" />Sin disputas abiertas</CardContent></Card>
       ) : (
         <div className="space-y-3">
           {adminDisputes.map((d: any) => (
@@ -63,12 +63,12 @@ const AdminDisputesTab = ({ adminDisputes, fetchAllData }: Props) => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-heading font-bold text-sm truncate">{d.auction_title}</h3>
-                      <Badge variant="outline" className={`text-[10px] shrink-0 ${d.status === "open" ? "bg-amber-500/10 text-amber-600" : d.status === "mediation" ? "bg-primary/10 text-primary" : d.status === "resolved" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                      <Badge variant="outline" className={`text-[10px] shrink-0 ${d.status === "open" ? "bg-amber-500/10 text-amber-600" : d.status === "mediation" ? "bg-primary/10 text-primary dark:text-accent" : d.status === "resolved" ? "bg-primary/10 text-primary dark:text-accent" : "bg-destructive/10 text-destructive"}`}>
                         {d.status === "open" ? "Abierta" : d.status === "mediation" ? "En Mediación" : d.status === "resolved" ? "Resuelta" : "Reembolsada"}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">🛒 <strong>{d.buyer_name}</strong> — 🏪 <strong>{d.dealer_name}</strong></p>
-                    <p className="text-xs text-muted-foreground mt-1">{d.description}</p>
+                    <p className="text-xs text-muted-foreground dark:text-gray-300 mt-1">{d.description}</p>
                   </div>
                 </div>
                 {selectedAdminDispute === d.id ? (
@@ -84,7 +84,7 @@ const AdminDisputesTab = ({ adminDisputes, fetchAllData }: Props) => {
                 ) : (
                   <div className="mt-3 flex gap-2">
                     {(d.status === "open" || d.status === "mediation") && <Button size="sm" variant="outline" onClick={() => setSelectedAdminDispute(d.id)}>⚖️ Resolver</Button>}
-                    {d.resolution && <p className="text-xs text-primary flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {d.resolution}</p>}
+                    {d.resolution && <p className="text-xs text-primary dark:text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {d.resolution}</p>}
                   </div>
                 )}
               </CardContent>

@@ -136,22 +136,22 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
     const map: Record<string, { label: string; class: string }> = {
       pending: { label: "Pendiente", class: "bg-warning/10 text-warning border-warning/20" },
       under_review: { label: "En Revisión", class: "bg-amber-500/10 text-amber-600 border-amber-200" },
-      verified: { label: "Verificado", class: "bg-primary/10 text-primary border-primary/20" },
-      released: { label: "Liberado", class: "bg-primary/10 text-primary border-primary/20" },
+      verified: { label: "Verificado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
+      released: { label: "Liberado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
       refunded: { label: "Reembolsado", class: "bg-destructive/10 text-destructive border-destructive/20" },
     };
-    return map[status] || { label: status, class: "bg-muted text-muted-foreground border-border" };
+    return map[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
   };
 
   const deliveryLabel = (status: string) => {
     const map: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-muted text-muted-foreground border-border" },
+      pending: { label: "Pendiente", class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" },
       ready_to_ship: { label: "Listo para enviar", class: "bg-blue-500/10 text-blue-600 border-blue-200" },
-      shipped: { label: "Enviado", class: "bg-primary/10 text-primary border-primary/20" },
-      in_transit: { label: "En tránsito", class: "bg-primary/10 text-primary border-primary/20" },
-      delivered: { label: "Entregado", class: "bg-primary/10 text-primary border-primary/20" },
+      shipped: { label: "Enviado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
+      in_transit: { label: "En tránsito", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
+      delivered: { label: "Entregado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
     };
-    return map[status] || { label: status, class: "bg-muted text-muted-foreground border-border" };
+    return map[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
   };
 
   const toggleSort = (field: SortField) => {
@@ -169,7 +169,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" /> Subastas Ganadas
+          <Trophy className="h-5 w-5 text-primary dark:text-accent" /> Subastas Ganadas
         </h1>
         <Badge variant="outline" className="text-xs">{stats.total} total</Badge>
       </div>
@@ -177,12 +177,12 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Ganadas", value: stats.total, icon: Trophy, color: "text-primary", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
-          { label: "Ingresos", value: `$${stats.totalRevenue.toLocaleString("es-MX")}`, icon: DollarSign, color: "text-primary", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
+          { label: "Total Ganadas", value: stats.total, icon: Trophy, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
+          { label: "Ingresos", value: `$${stats.totalRevenue.toLocaleString("es-MX")}`, icon: DollarSign, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
           { label: "Pago Pendiente", value: stats.pendingPayment, icon: Clock, color: "text-warning", action: () => { setPaymentFilter("pending"); setDeliveryFilter("all"); } },
-          { label: "Pago Verificado", value: stats.verified, icon: CheckCircle, color: "text-primary", action: () => { setPaymentFilter("verified"); setDeliveryFilter("all"); } },
-          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-primary", action: () => { setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
-          { label: "Entregados", value: stats.delivered, icon: Package, color: "text-primary", action: () => { setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
+          { label: "Pago Verificado", value: stats.verified, icon: CheckCircle, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("verified"); setDeliveryFilter("all"); } },
+          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-primary dark:text-accent", action: () => { setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
+          { label: "Entregados", value: stats.delivered, icon: Package, color: "text-primary dark:text-accent", action: () => { setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
         ].map((s, i) => (
           <Card
             key={i}
@@ -203,7 +203,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
+            <span className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Filtros</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div className="relative lg:col-span-2">
@@ -269,19 +269,19 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-secondary/50 border-b border-border">
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3">Producto</th>
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden sm:table-cell">Nº Operación</th>
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden md:table-cell">Ganador</th>
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden lg:table-cell">Dealer</th>
-                  <th className="text-right font-semibold text-muted-foreground px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("current_price")}>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Producto</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Nº Operación</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden md:table-cell">Ganador</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden lg:table-cell">Dealer</th>
+                  <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("current_price")}>
                     <span className="flex items-center justify-end gap-1">Precio <SortIcon field="current_price" /></span>
                   </th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3">Pago</th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3 hidden md:table-cell">Envío</th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("end_time")}>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Pago</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden md:table-cell">Envío</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("end_time")}>
                     <span className="flex items-center justify-center gap-1">Fecha <SortIcon field="end_time" /></span>
                   </th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3">Acciones</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -348,7 +348,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         <DialogContent className="max-w-2xl bg-card max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading text-sm flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-primary" />
+              <Trophy className="h-4 w-4 text-primary dark:text-accent" />
               Detalle de Subasta Ganada
             </DialogTitle>
           </DialogHeader>
@@ -356,7 +356,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
             <div className="space-y-4">
               {loadingDetail && (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <Loader2 className="h-5 w-5 animate-spin text-primary dark:text-accent" />
                 </div>
               )}
 
@@ -367,8 +367,8 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                 )}
                 <div className="flex-1 space-y-1">
                   <h3 className="font-heading font-bold text-sm">{selectedAuction.title}</h3>
-                  <p className="text-[10px] text-muted-foreground font-mono">{selectedAuction.operation_number || "Sin Nº"}</p>
-                  <p className="text-lg font-heading font-bold text-primary">${selectedAuction.current_price.toLocaleString("es-MX")} USD</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono">{selectedAuction.operation_number || "Sin Nº"}</p>
+                  <p className="text-lg font-heading font-bold text-primary dark:text-accent">${selectedAuction.current_price.toLocaleString("es-MX")} USD</p>
                   <p className="text-[10px] text-muted-foreground">
                     Finalizada: {new Date(selectedAuction.end_time).toLocaleString("es-VE")}
                   </p>
@@ -378,18 +378,18 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
               {/* Participants */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <User className="h-3 w-3" /> Ganador
                   </p>
                   <p className="text-sm font-medium">{winnerProfiles[selectedAuction.winner_id!]?.full_name || "Desconocido"}</p>
                   {winnerProfiles[selectedAuction.winner_id!]?.phone && (
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <p className="text-[10px] text-muted-foreground dark:text-gray-300 flex items-center gap-1">
                       <Phone className="h-3 w-3" /> {winnerProfiles[selectedAuction.winner_id!].phone}
                     </p>
                   )}
                 </div>
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <Package className="h-3 w-3" /> Dealer
                   </p>
                   <p className="text-sm font-medium">{dealerProfiles[selectedAuction.created_by] || "Desconocido"}</p>
@@ -399,7 +399,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
               {/* Status */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <CreditCard className="h-3 w-3" /> Estado de Pago
                   </p>
                   <Badge variant="outline" className={paymentLabel(selectedAuction.payment_status).class}>
@@ -407,7 +407,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                   </Badge>
                 </div>
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <Truck className="h-3 w-3" /> Estado de Envío
                   </p>
                   <Badge variant="outline" className={deliveryLabel(selectedAuction.delivery_status).class}>
@@ -422,7 +422,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
               {/* Shipping info */}
               {!loadingDetail && shippingInfo && (
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> Datos de Envío
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -440,7 +440,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
               {/* Payment proof */}
               {!loadingDetail && proofUrl && (
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-2">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                     <FileText className="h-3 w-3" /> Comprobante de Pago
                   </p>
                   <div className="flex items-center gap-2">
@@ -469,7 +469,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
               {/* Timestamps */}
               <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
                   <Calendar className="h-3 w-3" /> Línea de Tiempo
                 </p>
                 <div className="space-y-1 text-[10px] text-muted-foreground">

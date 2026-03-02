@@ -42,7 +42,9 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       settingsRes.data.forEach((s: any) => { map[s.setting_key] = s.setting_value || ""; });
       setSettings(map);
 
-      // Apply color settings to CSS variables
+      // The DB values were overriding the Tailwind .dark classes due to inline style specificity!
+      // To maintain an aggressive dark mode that works properly, we bypass the DB color forcing.
+      /*
       const colorMap: Record<string, string> = {
         primary_color: "--primary",
         accent_color: "--accent",
@@ -55,6 +57,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           root.style.setProperty(cssVar, s.setting_value);
         }
       });
+      */
     }
 
     setSections((sectionsRes.data as SiteSection[]) || []);

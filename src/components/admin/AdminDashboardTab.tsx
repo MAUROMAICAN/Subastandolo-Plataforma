@@ -43,10 +43,10 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
       <h1 className="text-xl font-heading font-bold">Dashboard</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Total Subastas", value: auctions.length, icon: Package, color: "text-primary", tab: "auctions" as AdminTab },
-          { label: "Activas", value: activeAuctions.length, icon: TrendingUp, color: "text-primary", tab: "auctions" as AdminTab },
+          { label: "Total Subastas", value: auctions.length, icon: Package, color: "text-primary dark:text-accent", tab: "auctions" as AdminTab },
+          { label: "Activas", value: activeAuctions.length, icon: TrendingUp, color: "text-primary dark:text-accent", tab: "auctions" as AdminTab },
           { label: "Pendientes", value: pendingAuctions.length, icon: Clock, color: "text-warning", tab: "review" as AdminTab },
-          { label: "Usuarios", value: allUsers.length, icon: Users, color: "text-primary", tab: "users" as AdminTab },
+          { label: "Usuarios", value: allUsers.length, icon: Users, color: "text-primary dark:text-accent", tab: "users" as AdminTab },
         ].map((m, i) => (
           <Card key={i} className="border border-border rounded-sm cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all" onClick={() => setActiveTab(m.tab)}>
             <CardContent className="p-4">
@@ -60,49 +60,49 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="border border-border rounded-sm cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all" onClick={() => setActiveTab("auctions")}>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Ventas Totales</p>
+            <p className="text-xs text-muted-foreground dark:text-gray-300 mb-1">Ventas Totales</p>
             <p className="text-xl font-heading font-bold">${totalRevenue.toLocaleString("es-MX")}</p>
           </CardContent>
         </Card>
         <Card className="border border-border rounded-sm cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all" onClick={() => setActiveTab("auctions")}>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Total Pujas</p>
+            <p className="text-xs text-muted-foreground dark:text-gray-300 mb-1">Total Pujas</p>
             <p className="text-xl font-heading font-bold">{totalBids}</p>
           </CardContent>
         </Card>
         <Card className="border border-border rounded-sm cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all" onClick={() => setActiveTab("dealers")}>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Dealers Activos</p>
+            <p className="text-xs text-muted-foreground dark:text-gray-300 mb-1">Dealers Activos</p>
             <p className="text-xl font-heading font-bold">{dealers.length}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Tesorería */}
-      <Card className="border border-primary/30 rounded-sm bg-primary/5">
+      <Card className="border border-primary/30 dark:border-accent/30 rounded-sm bg-primary/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-primary" /> 💰 Tesorería
+            <DollarSign className="h-4 w-4 text-primary dark:text-accent" /> 💰 Tesorería
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="bg-card border border-border rounded-sm p-4 space-y-1">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <Shield className="h-3 w-3" /> Balance en Escrow
               </p>
               <p className="text-2xl font-heading font-bold text-foreground">${totalEscrow.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-muted-foreground">{escrowAuctions.length} subastas con fondos retenidos</p>
             </div>
             <div className="bg-card border border-border rounded-sm p-4 space-y-1">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" /> Comisiones Acumuladas
               </p>
-              <p className="text-2xl font-heading font-bold text-primary">${totalCommissions.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-heading font-bold text-primary dark:text-accent">${totalCommissions.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-muted-foreground">{commissionPct}% sobre {completedSales.length} ventas completadas</p>
             </div>
             <div className="bg-card border border-border rounded-sm p-4 space-y-1">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <CreditCard className="h-3 w-3" /> Pendiente Pago a Dealers
               </p>
               <p className="text-2xl font-heading font-bold text-foreground">${pendingDealerPayout.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
@@ -110,7 +110,7 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
             </div>
           </div>
           <div className="pt-2">
-            <Button variant="outline" size="sm" onClick={() => navigate("/admin/dealer-payments")} className="rounded-sm text-xs h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/5">
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/dealer-payments")} className="rounded-sm text-xs h-8 gap-1.5 border-primary/30 dark:border-accent/30 text-primary dark:text-accent hover:bg-primary/5">
               <DollarSign className="h-3.5 w-3.5" /> Ver Panel de Pagos a Dealers →
             </Button>
           </div>
@@ -118,21 +118,21 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
       </Card>
 
       {/* Finanzas */}
-      <Card className="border border-primary/30 rounded-sm bg-primary/5">
+      <Card className="border border-primary/30 dark:border-accent/30 rounded-sm bg-primary/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-primary" /> 💰 Finanzas — Tasa & Comisiones
+            <DollarSign className="h-4 w-4 text-primary dark:text-accent" /> 💰 Finanzas — Tasa & Comisiones
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
           <div className="bg-card border border-border rounded-sm p-4 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
               <TrendingUp className="h-3.5 w-3.5" /> Tasa BCV del Día (Bs/$)
             </p>
             <p className="text-[10px] text-muted-foreground">Este valor afecta todos los cálculos de conversión USD → Bs en la plataforma.</p>
             <div className="flex items-center gap-3">
               <Input type="number" step="0.01" value={editingSettings["bcv_rate"] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, bcv_rate: e.target.value }))} className="rounded-sm text-lg font-bold max-w-[200px]" placeholder="Ej: 72.50" />
-              <span className="text-sm text-muted-foreground font-medium">Bs/$</span>
+              <span className="text-sm text-muted-foreground dark:text-gray-300 font-medium">Bs/$</span>
             </div>
             {editingSettings["bcv_rate"] && (
               <p className="text-xs text-muted-foreground">
@@ -141,20 +141,20 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
             )}
           </div>
           <div className="bg-card border border-border rounded-sm p-4 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Comisión de la Plataforma (%)
             </p>
             <p className="text-[10px] text-muted-foreground">Porcentaje que se descuenta al dealer por cada venta exitosa.</p>
             <div className="flex items-center gap-3">
               <Input type="number" step="0.5" min="0" max="50" value={editingSettings["commission_percentage"] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, commission_percentage: e.target.value }))} className="rounded-sm text-lg font-bold max-w-[200px]" placeholder="Ej: 10" />
-              <span className="text-sm text-muted-foreground font-medium">%</span>
+              <span className="text-sm text-muted-foreground dark:text-gray-300 font-medium">%</span>
             </div>
             {editingSettings["commission_percentage"] && (
               <div className="bg-secondary/50 border border-border rounded-sm p-3 space-y-1">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase">Ejemplo con subasta de $100:</p>
+                <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase">Ejemplo con subasta de $100:</p>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <div><p className="text-muted-foreground">Comprador paga</p><p className="font-bold text-foreground">$100.00</p></div>
-                  <div><p className="text-muted-foreground">Tu comisión</p><p className="font-bold text-primary">${(100 * parseFloat(editingSettings["commission_percentage"] || "0") / 100).toFixed(2)}</p></div>
+                  <div><p className="text-muted-foreground">Tu comisión</p><p className="font-bold text-primary dark:text-accent">${(100 * parseFloat(editingSettings["commission_percentage"] || "0") / 100).toFixed(2)}</p></div>
                   <div><p className="text-muted-foreground">Dealer recibe</p><p className="font-bold text-foreground">${(100 - 100 * parseFloat(editingSettings["commission_percentage"] || "0") / 100).toFixed(2)}</p></div>
                 </div>
               </div>

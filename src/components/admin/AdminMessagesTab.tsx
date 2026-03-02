@@ -42,7 +42,7 @@ const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: P
                 return (
                   <button key={d.user_id} onClick={() => setSelectedDealerId(d.user_id)}
                     className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs border-b border-border hover:bg-secondary/30 transition-colors ${selectedDealerId === d.user_id ? "bg-primary/5" : ""}`}>
-                    <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <User className="h-3.5 w-3.5 text-muted-foreground dark:text-gray-300 shrink-0" />
                     <span className="flex-1 text-left truncate">{d.full_name}</span>
                     {unread > 0 && <span className="w-5 h-5 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">{unread}</span>}
                   </button>
@@ -75,7 +75,7 @@ const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: P
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs">Selecciona un dealer para chatear</div>
+              <div className="flex-1 flex items-center justify-center text-muted-foreground dark:text-gray-300 text-xs">Selecciona un dealer para chatear</div>
             )}
           </CardContent>
         </Card>

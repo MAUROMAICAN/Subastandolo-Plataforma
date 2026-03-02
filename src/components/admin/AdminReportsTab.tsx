@@ -26,7 +26,7 @@ const AdminReportsTab = ({ auctionReports, fetchAllData }: Props) => {
     <div className="space-y-4">
       <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" /> Reportes</h1>
       {auctionReports.length === 0 ? (
-        <Card className="border border-border rounded-sm"><CardContent className="p-8 text-center text-muted-foreground text-sm">No hay reportes.</CardContent></Card>
+        <Card className="border border-border rounded-sm"><CardContent className="p-8 text-center text-muted-foreground dark:text-gray-300 text-sm">No hay reportes.</CardContent></Card>
       ) : (
         <div className="space-y-3">
           {auctionReports.map((report: any) => (
@@ -38,9 +38,9 @@ const AdminReportsTab = ({ auctionReports, fetchAllData }: Props) => {
                       <Badge variant={report.status === "pending" ? "destructive" : "default"} className="text-[10px]">{report.status === "pending" ? "Pendiente" : "Revisado"}</Badge>
                       <Badge variant="outline" className="text-[10px]">{reasonLabels[report.reason] || report.reason}</Badge>
                     </div>
-                    <p className="text-sm font-medium">Subasta: <a href={`/auction/${report.auction_id}`} className="text-primary hover:underline">{report.auction_title}</a></p>
+                    <p className="text-sm font-medium">Subasta: <a href={`/auction/${report.auction_id}`} className="text-primary dark:text-accent hover:underline">{report.auction_title}</a></p>
                     <p className="text-xs text-muted-foreground">Reportado por: <strong>{report.reporter_name}</strong></p>
-                    {report.details && <p className="text-xs text-muted-foreground bg-secondary/50 p-2 rounded-sm mt-1">{report.details}</p>}
+                    {report.details && <p className="text-xs text-muted-foreground dark:text-gray-300 bg-secondary/50 p-2 rounded-sm mt-1">{report.details}</p>}
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
                     {report.status === "pending" && (

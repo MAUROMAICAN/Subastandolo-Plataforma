@@ -98,18 +98,18 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
             <div className="bg-secondary/40 border border-border rounded-sm p-4 text-center">
               <div className="text-2xl mb-1">📢</div>
               <p className="text-xs font-bold text-foreground mb-1">Publicar</p>
-              <p className="text-lg font-extrabold text-primary">¡GRATIS!</p>
+              <p className="text-lg font-extrabold text-accent">¡GRATIS!</p>
             </div>
             <div className="bg-secondary/40 border border-border rounded-sm p-4 text-center">
               <div className="text-2xl mb-1">💰</div>
               <p className="text-xs font-bold text-foreground mb-1">Comisión por venta</p>
-              <p className="text-lg font-extrabold text-primary">Solo 5%</p>
+              <p className="text-lg font-extrabold text-accent">Solo 5%</p>
               <p className="text-[10px] text-muted-foreground">del valor final</p>
             </div>
             <div className="bg-secondary/40 border border-border rounded-sm p-4 text-center">
               <div className="text-2xl mb-1">🚫</div>
               <p className="text-xs font-bold text-foreground mb-1">Si no vendes</p>
-              <p className="text-lg font-extrabold text-primary">$0</p>
+              <p className="text-lg font-extrabold text-accent">$0</p>
               <p className="text-[10px] text-muted-foreground">Sin cargos ocultos</p>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           <div className="bg-secondary/30 border border-border rounded-sm p-4">
             <p className="text-xs font-bold text-foreground mb-2">📊 Ejemplo:</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-primary">$95</strong> y nosotros gestionamos toda la seguridad de la transacción por solo <strong className="text-foreground">$5</strong>.
+              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-accent hover:underline cursor-help" title="Descontando el 5% de comisión">$95</strong> y nosotros gestionamos toda la seguridad de la transacción por solo <strong className="text-foreground">$5</strong>.
             </p>
           </div>
 

@@ -589,14 +589,14 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col bg-background">
       {import.meta.env.DEV && (
         <div className="bg-blue-500/10 border-b border-blue-500/20 p-3 text-center">
-          <p className="text-xs text-blue-400 mb-2 font-medium">Modo de Pruebas Local Detectado</p>
+          <p className="text-xs text-blue-800 dark:text-blue-400 mb-2 font-medium">Modo de Pruebas Local Detectado</p>
           <Button
             size="sm"
             onClick={() => {
               localStorage.setItem("dev_bypass", "true");
               window.location.reload();
             }}
-            className="bg-blue-500 text-white hover:bg-blue-600 text-xs h-8 rounded-full"
+            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-xs h-8 rounded-full"
           >
             🔌 Entrar Directo (Modo Maqueta)
           </Button>
@@ -691,8 +691,9 @@ const Auth = () => {
           {view === "login-email" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               {/* Logo */}
-              <div className="flex items-center mb-8">
-                <img src="/logo_letras.svg" alt="Subastándolo" className="h-8" />
+              <div className="flex justify-start items-center mb-8 -ml-2">
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
               </div>
 
               <div className="mb-8">
@@ -846,6 +847,11 @@ const Auth = () => {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
 
+              {/* Logo */}
+              <div className="flex justify-start items-center mb-6 mt-4 -ml-2">
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
+              </div>
               <div className="mb-3 text-3xl">👋</div>
               <div className="mb-8">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">Crea tu cuenta en Subastándolo</h2>

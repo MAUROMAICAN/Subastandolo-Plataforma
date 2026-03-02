@@ -81,7 +81,7 @@ export default function UserActionMenu({
 
           {!isCurrentAdmin && !u.roles?.includes("admin") && (
             <DropdownMenuItem onClick={onPromoteAdmin}>
-              <Shield className="h-4 w-4 mr-2 text-primary" /> Promover a Admin
+              <Shield className="h-4 w-4 mr-2 text-primary dark:text-accent" /> Promover a Admin
             </DropdownMenuItem>
           )}
           {!isCurrentAdmin && u.roles?.includes("admin") && (
@@ -123,7 +123,7 @@ export default function UserActionMenu({
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={() => onAction(u.user_id, "unban_user")}>
-                  <Play className="h-4 w-4 mr-2 text-primary" /> Reactivar
+                  <Play className="h-4 w-4 mr-2 text-primary dark:text-accent" /> Reactivar
                 </DropdownMenuItem>
               )}
 

@@ -172,13 +172,13 @@ const AdminNotificationsTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
-        <Bell className="h-5 w-5 text-primary" />
+        <Bell className="h-5 w-5 text-primary dark:text-accent" />
         <h2 className="font-heading font-bold text-lg">Enviar Notificación Push</h2>
       </div>
 
       <div className="bg-card border border-border rounded-xl p-6 space-y-4 max-w-xl">
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Destinatarios</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">Destinatarios</label>
           <div className="flex gap-2">
             <Button
               variant={targetType === "all" ? "default" : "outline"}
@@ -201,18 +201,18 @@ const AdminNotificationsTab = () => {
 
         {targetType === "specific" && (
           <div ref={dropdownRef} className="relative">
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Buscar usuario</label>
+            <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">Buscar usuario</label>
 
             {selectedUser ? (
               <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2 bg-secondary/30">
                 <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                  <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-[10px] font-bold">
                     {(selectedUser.full_name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium truncate block">{selectedUser.full_name}</span>
-                  <span className="text-[10px] text-muted-foreground truncate block">{selectedUser.email || "Sin correo"}</span>
+                  <span className="text-[10px] text-muted-foreground dark:text-gray-300 truncate block">{selectedUser.email || "Sin correo"}</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedUser(null)}>
                   <X className="h-3.5 w-3.5" />
@@ -236,7 +236,7 @@ const AdminNotificationsTab = () => {
                     {loadingUsers ? (
                       <div className="flex items-center justify-center py-6">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground ml-2">Cargando usuarios...</span>
+                        <span className="text-xs text-muted-foreground dark:text-gray-300 ml-2">Cargando usuarios...</span>
                       </div>
                     ) : filteredUsers.length === 0 ? (
                       <div className="py-4 text-center text-xs text-muted-foreground">
@@ -253,11 +253,11 @@ const AdminNotificationsTab = () => {
                               className="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-accent/50 transition-colors text-left"
                             >
                               <Avatar className="h-7 w-7 shrink-0">
-                                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">{initials}</AvatarFallback>
+                                <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-[10px] font-bold">{initials}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
                                 <span className="text-sm font-medium truncate block">{u.full_name}</span>
-                                <span className="text-[10px] text-muted-foreground truncate block">{u.email || "Sin correo"}</span>
+                                <span className="text-[10px] text-muted-foreground dark:text-gray-300 truncate block">{u.email || "Sin correo"}</span>
                               </div>
                             </button>
                           );
@@ -272,22 +272,22 @@ const AdminNotificationsTab = () => {
         )}
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Título</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">Título</label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título de la notificación" className="text-sm" />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Mensaje</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">Mensaje</label>
           <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Contenido del mensaje..." rows={3} className="text-sm" />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">URL al hacer clic</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">URL al hacer clic</label>
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="/" className="text-sm" />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Sonido / Tipo</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 mb-1 block">Sonido / Tipo</label>
           <Select value={tag} onValueChange={setTag}>
             <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>

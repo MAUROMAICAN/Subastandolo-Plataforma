@@ -31,7 +31,7 @@ const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeFilter, setActiveFilter] = useState<"all" | "active" | "my_bids">("all");
   const [userBidAuctionIds, setUserBidAuctionIds] = useState<Set<string>>(new Set());
-  const [banners, setBanners] = useState<{ id: string; image_url: string; title: string | null; subtitle: string | null }[]>([]);
+  const [banners, setBanners] = useState<{ id: string; image_url: string; title: string | null; subtitle: string | null; description: string | null }[]>([]);
 
   const siteName = getSetting("site_name", "SUBASTANDOLO");
   const siteDescription = getSetting("site_description", "La plataforma #1 de subastas en línea");
@@ -41,7 +41,7 @@ const Index = () => {
 
   useEffect(() => {
     const fetchBanners = async () => {
-      const { data } = await supabase.from("banner_images").select("id, image_url, title, subtitle").eq("is_active", true).order("display_order");
+      const { data } = await supabase.from("banner_images").select("id, image_url, title, subtitle, description").eq("is_active", true).order("display_order");
       setBanners(data || []);
     };
     fetchBanners();
@@ -200,19 +200,24 @@ const Index = () => {
                 {banners[currentSlide] && (
                   <>
                     {banners[currentSlide].title && (
-                      <h1 className="text-xl sm:text-3xl font-heading font-black text-white mb-2 drop-shadow-lg leading-tight">
+                      <h1 className="text-3xl sm:text-5xl font-heading font-black text-white mb-3 drop-shadow-lg leading-tight">
                         {banners[currentSlide].title}
                       </h1>
                     )}
                     {banners[currentSlide].subtitle && (
-                      <p className="text-xs sm:text-sm text-white/70 mb-5 drop-shadow">
+                      <p className="text-lg sm:text-xl font-medium text-white mb-2 drop-shadow-md">
                         {banners[currentSlide].subtitle}
+                      </p>
+                    )}
+                    {banners[currentSlide].description && (
+                      <p className="text-sm sm:text-base text-white/80 mb-6 drop-shadow">
+                        {banners[currentSlide].description}
                       </p>
                     )}
                   </>
                 )}
                 {!user && (
-                  <Button size="default" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-full shadow-lg text-xs h-9 px-5">
+                  <Button size="default" asChild className="bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-2">
                     <Link to="/auth">{heroCta}</Link>
                   </Button>
                 )}
@@ -236,7 +241,7 @@ const Index = () => {
               <h2 className="text-2xl sm:text-3xl font-heading font-black text-white mb-3">{siteName}</h2>
               <p className="text-white/50 mb-5 max-w-md mx-auto text-sm">{siteDescription}</p>
               {!user && (
-                <Button size="default" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-full shadow-lg h-9 px-5 text-xs">
+                <Button size="default" asChild className="bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg h-11 px-8 text-sm mt-2">
                   <Link to="/auth">{heroCta}</Link>
                 </Button>
               )}
@@ -398,7 +403,7 @@ const Index = () => {
                     </Link>
                   </Button>
                 )}
-                <Button size="lg" variant="outline" asChild className="border-white/20 text-white hover:bg-white/10 font-bold text-sm h-12 px-8 rounded-full">
+                <Button size="lg" variant="outline" asChild className="bg-transparent border-white/20 text-white hover:bg-white/10 font-bold text-sm h-12 px-8 rounded-full">
                   <Link to="/dealer/apply">
                     <Store className="h-4 w-4 mr-2" />
                     Sé Dealer Verificado

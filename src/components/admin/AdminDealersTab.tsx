@@ -89,10 +89,10 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-secondary/50 border-b border-border">
-                <th className="text-left font-semibold text-muted-foreground px-4 py-3">Dealer</th>
-                <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden sm:table-cell">Teléfono</th>
-                <th className="text-center font-semibold text-muted-foreground px-4 py-3">Verificación</th>
-                <th className="text-center font-semibold text-muted-foreground px-4 py-3">Acciones</th>
+                <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Dealer</th>
+                <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Teléfono</th>
+                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Verificación</th>
+                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -101,7 +101,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                   <td className="px-4 py-3"><p className="font-medium">{app.full_name || app.business_name}</p><p className="text-muted-foreground text-[10px]">{app.business_name}</p></td>
                   <td className="px-4 py-3 hidden sm:table-cell">{app.phone}</td>
                   <td className="px-4 py-3 text-center">
-                    <Badge className={`text-[10px] border-0 ${app.status === "approved" ? "bg-primary/15 text-primary" : app.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
+                    <Badge className={`text-[10px] border-0 ${app.status === "approved" ? "bg-primary/15 text-primary dark:text-accent" : app.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
                       {app.status === "approved" ? "Aprobado" : app.status === "rejected" ? "Rechazado" : "Pendiente"}
                     </Badge>
                   </td>
@@ -150,23 +150,23 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3 font-heading">
-                  <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary font-bold">{(selectedDealer.full_name || selectedDealer.business_name || "D").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
-                  <div><p className="text-base">{selectedDealer.full_name || selectedDealer.business_name}</p><p className="text-xs text-muted-foreground font-normal">{selectedDealer.business_name}</p></div>
+                  <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary dark:text-accent font-bold">{(selectedDealer.full_name || selectedDealer.business_name || "D").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                  <div><p className="text-base">{selectedDealer.full_name || selectedDealer.business_name}</p><p className="text-xs text-muted-foreground dark:text-gray-300 font-normal">{selectedDealer.business_name}</p></div>
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-5 mt-2">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Teléfono</p><p className="text-sm font-medium">{selectedDealer.phone}</p></div>
-                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Cédula</p><p className="text-sm font-medium">{selectedDealer.cedula_number || "No registrada"}</p></div>
-                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Fecha</p><p className="text-sm font-medium">{new Date(selectedDealer.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</p></div>
-                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Estado</p>
-                    <Badge className={`text-[10px] border-0 ${selectedDealer.status === "approved" ? "bg-primary/15 text-primary" : selectedDealer.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
+                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Teléfono</p><p className="text-sm font-medium">{selectedDealer.phone}</p></div>
+                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Cédula</p><p className="text-sm font-medium">{selectedDealer.cedula_number || "No registrada"}</p></div>
+                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Fecha</p><p className="text-sm font-medium">{new Date(selectedDealer.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</p></div>
+                  <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Estado</p>
+                    <Badge className={`text-[10px] border-0 ${selectedDealer.status === "approved" ? "bg-primary/15 text-primary dark:text-accent" : selectedDealer.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
                       {selectedDealer.status === "approved" ? "Aprobado" : selectedDealer.status === "rejected" ? "Rechazado" : "Pendiente"}
                     </Badge>
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-heading font-bold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Documentos KYC</h3>
+                  <h3 className="text-sm font-heading font-bold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary dark:text-accent" /> Documentos KYC</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {[{ key: "selfie", label: "📸 Selfie" }, { key: "cedula_front", label: "🪪 Cédula (Frontal)" }, { key: "cedula_back", label: "🪪 Cédula (Reverso)" }, { key: "address_proof", label: "🏠 Comprobante" }].map(doc => (
                       <div key={doc.key} className="border border-border rounded-md overflow-hidden">
@@ -186,7 +186,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                 )}
                 {selectedDealer.status === "approved" && (
                   <div className="border-t border-border pt-4 space-y-3">
-                    <p className="text-xs font-heading font-bold flex items-center gap-1.5"><Settings className="h-3.5 w-3.5 text-primary" /> Controles</p>
+                    <p className="text-xs font-heading font-bold flex items-center gap-1.5"><Settings className="h-3.5 w-3.5 text-primary dark:text-accent" /> Controles</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Nivel Manual</Label>

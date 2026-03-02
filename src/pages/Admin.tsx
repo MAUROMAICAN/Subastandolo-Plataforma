@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +33,7 @@ import type { AdminTab, AuctionExtended, WinnerInfo, BannerImage, DealerUser, Me
 const Admin = () => {
   const { user, isAdmin, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -193,12 +195,19 @@ const Admin = () => {
 
   const handleSaveSettings = async () => {
     setSavingSettings(true);
+    let hasError = false;
     for (const setting of siteSettings) {
       const newValue = editingSettings[setting.setting_key];
       if (newValue !== (setting.setting_value || "")) {
-        await supabase.from("site_settings").update({ setting_value: newValue, updated_by: user!.id, updated_at: new Date().toISOString() } as any).eq("setting_key", setting.setting_key);
+        const { error } = await supabase.from("site_settings").update({ setting_value: newValue, updated_by: user!.id, updated_at: new Date().toISOString() } as any).eq("setting_key", setting.setting_key);
+        if (error) {
+          toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
+          hasError = true;
+          break;
+        }
       }
     }
+    if (!hasError) toast({ title: "✅ Cambios guardados", description: "La configuración se ha guardado exitosamente." });
     setSavingSettings(false); fetchAllData();
   };
 

@@ -68,12 +68,12 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
                 <h4 className="font-medium text-sm">{auction.title}</h4>
                 <p className="text-xs text-muted-foreground">Dealer: <strong>{auction.dealer_name}</strong> · Precio: ${auction.starting_price.toLocaleString("es-MX")}</p>
                 {(auction as any).requested_duration_hours && (
-                  <p className="text-xs text-primary mt-1">
+                  <p className="text-xs text-primary dark:text-accent mt-1">
                     <Clock className="h-3 w-3 inline mr-1" />
                     Duración solicitada: <strong>{(auction as any).requested_duration_hours}h ({((auction as any).requested_duration_hours / 24).toFixed(1)} días)</strong>
                   </p>
                 )}
-                {auction.description && <p className="text-xs text-muted-foreground mt-2 bg-secondary/30 p-2 rounded-sm">{auction.description}</p>}
+                {auction.description && <p className="text-xs text-muted-foreground dark:text-gray-300 mt-2 bg-secondary/30 p-2 rounded-sm">{auction.description}</p>}
               </div>
               <Badge variant="outline" className="text-[10px] shrink-0">{auction.status === "pending" ? "Pendiente" : "En Revisión"}</Badge>
             </div>

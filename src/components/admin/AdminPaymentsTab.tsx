@@ -91,7 +91,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" /> Gestión de Cobros</h1>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Cobros</h1>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/20">{paymentProofs.filter((p: any) => p.status === "pending").length} pendientes</Badge>
           <Badge variant="outline" className="text-xs">{paymentProofs.length} total</Badge>
@@ -105,13 +105,13 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-secondary/50 border-b border-border">
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3">Subasta</th>
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden sm:table-cell">Comprador</th>
-                  <th className="text-right font-semibold text-muted-foreground px-4 py-3">Monto</th>
-                  <th className="text-left font-semibold text-muted-foreground px-4 py-3 hidden md:table-cell">Referencia</th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3">Comprobante</th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3">Estado</th>
-                  <th className="text-center font-semibold text-muted-foreground px-4 py-3">Acciones</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Subasta</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Comprador</th>
+                  <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Monto</th>
+                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden md:table-cell">Referencia</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Comprobante</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Estado</th>
+                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -132,7 +132,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <Badge variant="outline" className={`text-[10px] ${proof.status === "pending" ? "bg-warning/10 text-warning border-warning/20" : proof.status === "approved" ? "bg-primary/10 text-primary border-primary/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
+                      <Badge variant="outline" className={`text-[10px] ${proof.status === "pending" ? "bg-warning/10 text-warning border-warning/20" : proof.status === "approved" ? "bg-primary/10 text-primary dark:text-accent border-primary/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
                         {proof.status === "pending" ? "Pendiente" : proof.status === "approved" ? "Aprobado" : "Rechazado"}
                       </Badge>
                     </td>

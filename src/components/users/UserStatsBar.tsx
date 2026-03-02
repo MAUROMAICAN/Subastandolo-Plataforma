@@ -16,11 +16,11 @@ interface Props {
 export default function UserStatsBar({ stats }: Props) {
   const items = [
     { label: "Total", value: stats.total, icon: Users, color: "text-foreground" },
-    { label: "Admins", value: stats.admins, icon: Shield, color: "text-primary" },
-    { label: "Dealers", value: stats.dealers, icon: Package, color: "text-primary" },
-    { label: "Compradores", value: stats.buyers, icon: UserCheck, color: "text-primary" },
+    { label: "Admins", value: stats.admins, icon: Shield, color: "text-primary dark:text-accent" },
+    { label: "Dealers", value: stats.dealers, icon: Package, color: "text-primary dark:text-accent" },
+    { label: "Compradores", value: stats.buyers, icon: UserCheck, color: "text-primary dark:text-accent" },
     { label: "Suspendidos", value: stats.banned, icon: Ban, color: "text-destructive" },
-    { label: "Nuevos (7d)", value: stats.newThisWeek, icon: TrendingUp, color: "text-primary" },
+    { label: "Nuevos (7d)", value: stats.newThisWeek, icon: TrendingUp, color: "text-primary dark:text-accent" },
   ];
 
   return (
@@ -32,7 +32,7 @@ export default function UserStatsBar({ stats }: Props) {
         >
           <item.icon className={`h-4 w-4 ${item.color}`} />
           <span className={`text-xl font-bold tracking-tight ${item.color}`}>{item.value}</span>
-          <span className="text-[10px] text-muted-foreground font-medium">{item.label}</span>
+          <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-medium">{item.label}</span>
         </div>
       ))}
     </div>

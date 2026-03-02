@@ -166,7 +166,7 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
             <CircleCheck className="h-3.5 w-3.5" />
             <span>Imagen optimizada · {TARGET_WIDTH}×{TARGET_HEIGHT}</span>
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="text-xs text-muted-foreground hover:text-destructive h-7">
+          <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="text-xs text-muted-foreground dark:text-gray-300 hover:text-destructive h-7">
             <X className="h-3 w-3 mr-1" /> Cambiar
           </Button>
         </div>
@@ -182,7 +182,7 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
         onDrop={handleDrop}
         className={`
           relative flex flex-col items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed transition-all duration-200 cursor-pointer
-          ${dragging ? "border-primary bg-primary/10 scale-[1.01]" : "border-muted-foreground/25 bg-muted/20 hover:border-primary/50 hover:bg-primary/5"}
+          ${dragging ? "border-primary bg-primary/10 dark:bg-accent/10 scale-[1.01]" : "border-muted-foreground/25 bg-muted/20 hover:border-primary/50 hover:bg-primary/5"}
           ${uploading ? "pointer-events-none opacity-70" : ""}
         `}
         onClick={() => !uploading && inputRef.current?.click()}
@@ -198,7 +198,7 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
 
         {uploading ? (
           <div className="flex flex-col items-center gap-3 w-full">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary dark:text-accent" />
             <p className="text-sm font-medium text-foreground">Optimizando y subiendo…</p>
             <Progress value={progress} className="h-2 w-full max-w-[200px]" />
             <p className="text-[10px] text-muted-foreground">{progress}%</p>
@@ -206,11 +206,11 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
         ) : (
           <>
             <div className="flex items-center justify-center h-14 w-14 rounded-full bg-primary/10">
-              <Upload className="h-6 w-6 text-primary" />
+              <Upload className="h-6 w-6 text-primary dark:text-accent" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">Arrastra tu imagen aquí</p>
-              <p className="text-xs text-muted-foreground mt-1">o haz clic para seleccionar</p>
+              <p className="text-xs text-muted-foreground dark:text-gray-300 mt-1">o haz clic para seleccionar</p>
             </div>
             <Button
               type="button" variant="outline" size="sm"
@@ -219,7 +219,7 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
             >
               <ImagePlus className="h-3.5 w-3.5" /> Seleccionar Imagen
             </Button>
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground mt-1">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground dark:text-gray-300 mt-1">
               <span>JPG / PNG / WEBP</span>
               <span>•</span>
               <span>9:16 completo + optimización automática</span>

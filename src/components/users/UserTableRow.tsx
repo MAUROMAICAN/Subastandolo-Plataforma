@@ -39,17 +39,17 @@ export default function UserTableRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9 shrink-0">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-sm truncate max-w-[160px]">{u.full_name}</span>
               {u.roles?.includes("admin") && <AdminBadge size="sm" />}
               {isCurrentAdmin && (
-                <Badge variant="outline" className="text-[8px] px-1 py-0 border-primary/40 text-primary">TÚ</Badge>
+                <Badge variant="outline" className="text-[8px] px-1 py-0 border-primary/40 dark:border-accent/40 text-primary dark:text-accent">TÚ</Badge>
               )}
             </div>
-            <span className="text-xs text-muted-foreground truncate block max-w-[200px]">{u.email || "—"}</span>
+            <span className="text-xs text-muted-foreground dark:text-gray-300 truncate block max-w-[200px]">{u.email || "—"}</span>
           </div>
         </div>
       </td>
@@ -67,7 +67,7 @@ export default function UserTableRow({
               key={r}
               variant="outline"
               className={`text-[9px] px-1.5 py-0 ${
-                r === "admin" ? "bg-primary/10 text-primary border-primary/30" :
+                r === "admin" ? "bg-primary/10 text-primary dark:text-accent border-primary/30" :
                 r === "dealer" ? "bg-accent/10 text-accent-foreground border-accent/30" :
                 "bg-secondary text-muted-foreground"
               }`}
@@ -83,7 +83,7 @@ export default function UserTableRow({
         {u.banned ? (
           <Badge variant="destructive" className="text-[9px] px-1.5 py-0">Suspendido</Badge>
         ) : (
-          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/5 text-primary border-primary/20">Activo</Badge>
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/5 dark:bg-accent/5 text-primary dark:text-accent border-primary/20">Activo</Badge>
         )}
       </td>
 

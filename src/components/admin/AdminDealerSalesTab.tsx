@@ -123,7 +123,7 @@ const ReceiptProofImage = ({ proofPath }: { proofPath: string }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Comprobante adjunto</p>
+        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Comprobante adjunto</p>
         <Button variant="ghost" size="sm" className="text-[10px] h-7 gap-1" onClick={handleDownload}>
           <Download className="h-3 w-3" /> Descargar
         </Button>
@@ -471,7 +471,7 @@ const AdminDealerSalesTab = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary dark:text-accent" /></div>;
   }
 
   return (
@@ -479,7 +479,7 @@ const AdminDealerSalesTab = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" /> Ventas de Dealers
+          <TrendingUp className="h-5 w-5 text-primary dark:text-accent" /> Ventas de Dealers
         </h1>
         <Badge variant="outline" className="text-xs">{dealers.length} dealers activos</Badge>
       </div>
@@ -487,11 +487,11 @@ const AdminDealerSalesTab = () => {
       {/* Summary Cards as Filter Buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Ventas Totales", value: totals.totalSales, icon: ShoppingBag, color: "text-primary", format: (v: number) => v.toString(), filter: "with_sales" },
+          { label: "Ventas Totales", value: totals.totalSales, icon: ShoppingBag, color: "text-primary dark:text-accent", format: (v: number) => v.toString(), filter: "with_sales" },
           { label: "Ingresos Brutos", value: totals.totalRevenue, icon: DollarSign, color: "text-foreground", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
-          { label: "Comisión Plataforma", value: totals.totalCommission, icon: TrendingUp, color: "text-primary", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
+          { label: "Comisión Plataforma", value: totals.totalCommission, icon: TrendingUp, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
           { label: "Total Adeudado", value: totals.totalOwed, icon: Wallet, color: "text-warning", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_balance" },
-          { label: "Total Pagado", value: totals.totalPaid, icon: CheckCircle, color: "text-primary", format: (v: number) => `$${v.toFixed(2)}`, filter: "all" },
+          { label: "Total Pagado", value: totals.totalPaid, icon: CheckCircle, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "all" },
           { label: "Con Saldo", value: totals.dealersWithBalance, icon: Users, color: "text-destructive", format: (v: number) => v.toString(), filter: "with_balance" },
         ].map((stat, idx) => (
           <Card
@@ -502,7 +502,7 @@ const AdminDealerSalesTab = () => {
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{stat.label}</span>
+                <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-medium uppercase tracking-wide">{stat.label}</span>
               </div>
               <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.format(stat.value)}</p>
             </CardContent>
@@ -549,11 +549,11 @@ const AdminDealerSalesTab = () => {
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-9 w-9 shrink-0">
                       {dealer.avatar_url && <AvatarImage src={dealer.avatar_url} alt={dealer.dealer_name} />}
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{(dealer.dealer_name || "D").charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">{(dealer.dealer_name || "D").charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
                       <p className="text-sm font-bold truncate">{dealer.dealer_name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{dealer.business_name}</p>
+                      <p className="text-[10px] text-muted-foreground dark:text-gray-300 truncate">{dealer.business_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
@@ -567,7 +567,7 @@ const AdminDealerSalesTab = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-muted-foreground">Adeudado</p>
-                      <p className={`text-xs font-bold ${dealer.pending_balance > 0 ? "text-warning" : "text-primary"}`}>
+                      <p className={`text-xs font-bold ${dealer.pending_balance > 0 ? "text-warning" : "text-primary dark:text-accent"}`}>
                         ${dealer.pending_balance.toFixed(2)}
                       </p>
                     </div>
@@ -595,11 +595,11 @@ const AdminDealerSalesTab = () => {
                         { label: "Ventas", value: dealer.total_sales.toString(), color: "text-foreground" },
                         { label: "Ingresos Brutos", value: `$${dealer.total_revenue.toFixed(2)}`, color: "text-foreground" },
                         { label: "Comisión", value: `$${dealer.total_commission.toFixed(2)}`, color: "text-muted-foreground" },
-                        { label: "Neto Dealer", value: `$${dealer.total_dealer_net.toFixed(2)}`, color: "text-primary" },
-                        { label: "Pagado", value: `$${dealer.total_paid.toFixed(2)}`, color: "text-primary" },
+                        { label: "Neto Dealer", value: `$${dealer.total_dealer_net.toFixed(2)}`, color: "text-primary dark:text-accent" },
+                        { label: "Pagado", value: `$${dealer.total_paid.toFixed(2)}`, color: "text-primary dark:text-accent" },
                       ].map((item, i) => (
                         <div key={i} className="bg-card border border-border rounded-sm p-2.5">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{item.label}</p>
+                          <p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wide">{item.label}</p>
                           <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
                         </div>
                       ))}
@@ -608,10 +608,10 @@ const AdminDealerSalesTab = () => {
                     {/* Bank Account Info */}
                     {dealer.bank_account ? (
                       <div className="bg-card border border-border rounded-sm p-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-2">
+                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1 mb-2">
                           <CreditCard className="h-3 w-3" /> Cuenta Bancaria
                           {dealer.bank_account.is_verified ? (
-                            <Badge variant="outline" className="text-[9px] ml-1 bg-primary/10 text-primary border-primary/20">Verificada</Badge>
+                            <Badge variant="outline" className="text-[9px] ml-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">Verificada</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[9px] ml-1 bg-warning/10 text-warning border-warning/20">Sin verificar</Badge>
                           )}
@@ -632,22 +632,22 @@ const AdminDealerSalesTab = () => {
                     {/* Sales History */}
                     {dealer.sales.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-2">
+                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1 mb-2">
                           <ShoppingBag className="h-3 w-3" /> Historial de Ventas ({dealer.sales.length})
                         </p>
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
                               <tr className="bg-secondary/50 border-b border-border">
-                                <th className="text-center font-semibold text-muted-foreground px-2 py-2 w-10">✓</th>
-                                <th className="text-left font-semibold text-muted-foreground px-3 py-2">Nº Op.</th>
-                                <th className="text-left font-semibold text-muted-foreground px-3 py-2">Producto</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Venta USD</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Tasa BCV</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Monto Bs</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Comisión</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Neto</th>
-                                <th className="text-right font-semibold text-muted-foreground px-3 py-2">Fecha</th>
+                                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-2 py-2 w-10">✓</th>
+                                <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Nº Op.</th>
+                                <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Producto</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Venta USD</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Tasa BCV</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Monto Bs</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Comisión</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Neto</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Fecha</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -662,28 +662,28 @@ const AdminDealerSalesTab = () => {
                                       title={sale.is_paid ? "Marcar como no pagado" : "Marcar como pagado"}
                                     />
                                   </td>
-                                  <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                                  <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground dark:text-gray-300 whitespace-nowrap">
                                     {sale.operation_number || "—"}
                                   </td>
                                   <td className="px-3 py-2 truncate max-w-[160px]">{sale.auction_title}</td>
                                   <td className="px-3 py-2 text-right font-bold">${sale.sale_amount.toFixed(2)}</td>
-                                  <td className="px-3 py-2 text-right text-muted-foreground font-mono" title={!sale.has_proof ? "Estimado (sin comprobante)" : ""}>
+                                  <td className="px-3 py-2 text-right text-muted-foreground dark:text-gray-300 font-mono" title={!sale.has_proof ? "Estimado (sin comprobante)" : ""}>
                                     {sale.bcv_rate ? `${sale.bcv_rate.toFixed(2)}` : "—"}
                                     {sale.bcv_rate && !sale.has_proof && <span className="text-warning ml-0.5">*</span>}
                                   </td>
-                                  <td className="px-3 py-2 text-right font-bold text-primary" title={!sale.has_proof ? "Estimado (sin comprobante)" : ""}>
+                                  <td className="px-3 py-2 text-right font-bold text-primary dark:text-accent" title={!sale.has_proof ? "Estimado (sin comprobante)" : ""}>
                                     {sale.amount_bs ? `Bs ${sale.amount_bs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}` : "—"}
                                     {sale.amount_bs && !sale.has_proof && <span className="text-warning ml-0.5">*</span>}
                                   </td>
                                   <td className="px-3 py-2 text-right text-muted-foreground">${sale.commission_amount.toFixed(2)} ({sale.commission_percentage}%)</td>
-                                  <td className="px-3 py-2 text-right font-bold text-primary">${sale.dealer_net.toFixed(2)}</td>
+                                  <td className="px-3 py-2 text-right font-bold text-primary dark:text-accent">${sale.dealer_net.toFixed(2)}</td>
                                   <td className="px-3 py-2 text-right text-muted-foreground">{new Date(sale.created_at).toLocaleDateString("es-MX")}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                           {dealer.sales.some(s => !s.has_proof) && (
-                            <p className="text-[9px] text-muted-foreground mt-1.5 italic">* Estimado — <span className="text-warning font-medium">Autorizado</span></p>
+                            <p className="text-[9px] text-muted-foreground dark:text-gray-300 mt-1.5 italic">* Estimado — <span className="text-warning font-medium">Autorizado</span></p>
                           )}
                         </div>
                       </div>
@@ -692,14 +692,14 @@ const AdminDealerSalesTab = () => {
                     {/* Withdrawal History */}
                     {dealer.withdrawals.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-2">
+                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1 mb-2">
                           <ArrowDownCircle className="h-3 w-3" /> Retiros / Pagos ({dealer.withdrawals.length})
                         </p>
                         <div className="space-y-2">
                           {dealer.withdrawals.map(w => {
                             const statusColors: Record<string, string> = {
                               pending: "bg-warning/10 text-warning border-warning/20",
-                              approved: "bg-primary/10 text-primary border-primary/20",
+                              approved: "bg-primary/10 text-primary dark:text-accent border-primary/20",
                               rejected: "bg-destructive/10 text-destructive border-destructive/20",
                             };
                             return (
@@ -707,7 +707,7 @@ const AdminDealerSalesTab = () => {
                                 <div className="flex items-center gap-3">
                                   <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
                                   <p className="text-[10px] text-muted-foreground">{new Date(w.created_at).toLocaleDateString("es-MX")}</p>
-                                  {w.admin_notes && <p className="text-[10px] text-muted-foreground italic hidden sm:block">— {w.admin_notes}</p>}
+                                  {w.admin_notes && <p className="text-[10px] text-muted-foreground dark:text-gray-300 italic hidden sm:block">— {w.admin_notes}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className={`text-[10px] ${statusColors[w.status] || ""}`}>
@@ -746,15 +746,15 @@ const AdminDealerSalesTab = () => {
                     {/* Payment History */}
                     {dealer.payments.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-2">
+                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1 mb-2">
                           <Receipt className="h-3 w-3" /> Comprobantes de Pago ({dealer.payments.length})
                         </p>
                         <div className="space-y-2">
                           {dealer.payments.map(p => (
                             <div key={p.id} className="flex items-center justify-between border border-border rounded-sm px-3 py-2.5 bg-card hover:bg-secondary/10 transition-colors">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center">
-                                  <Receipt className="h-4 w-4 text-primary" />
+                                <div className="w-8 h-8 rounded-sm bg-primary/10 dark:bg-accent/10 flex items-center justify-center">
+                                  <Receipt className="h-4 w-4 text-primary dark:text-accent" />
                                 </div>
                                 <div>
                                   <p className="text-sm font-bold">${p.total_amount.toFixed(2)}</p>
@@ -766,7 +766,7 @@ const AdminDealerSalesTab = () => {
                               </div>
                               <div className="flex items-center gap-2">
                                 <p className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString("es-MX")}</p>
-                                <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">{p.items.length} ops</Badge>
+                                <Badge variant="outline" className="text-[9px] bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">{p.items.length} ops</Badge>
                                 <Button size="sm" variant="outline" className="h-7 text-[10px] rounded-sm" onClick={() => { setViewingReceipt(p); setViewingReceiptDealer(dealer); }}>
                                   <FileText className="h-3 w-3 mr-1" /> Ver
                                 </Button>
@@ -778,7 +778,7 @@ const AdminDealerSalesTab = () => {
                     )}
 
                     {dealer.total_sales === 0 && dealer.withdrawals.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">Este dealer aún no tiene ventas ni retiros registrados.</p>
+                      <p className="text-xs text-muted-foreground dark:text-gray-300 text-center py-4">Este dealer aún no tiene ventas ni retiros registrados.</p>
                     )}
                   </div>
                 )}
@@ -793,7 +793,7 @@ const AdminDealerSalesTab = () => {
         <DialogContent className="max-w-2xl bg-card max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-heading flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-primary" /> Registrar Pago a Dealer
+              <Receipt className="h-5 w-5 text-primary dark:text-accent" /> Registrar Pago a Dealer
             </DialogTitle>
           </DialogHeader>
           {paymentDialog && (
@@ -803,7 +803,7 @@ const AdminDealerSalesTab = () => {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
                     {paymentDialog.dealer.avatar_url && <AvatarImage src={paymentDialog.dealer.avatar_url} />}
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{(paymentDialog.dealer.dealer_name || "D").charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary dark:text-accent font-bold">{(paymentDialog.dealer.dealer_name || "D").charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <p className="text-sm font-bold">{paymentDialog.dealer.dealer_name}</p>
@@ -832,7 +832,7 @@ const AdminDealerSalesTab = () => {
               {/* Select Operations */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Operaciones a Pagar</p>
+                  <p className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Operaciones a Pagar</p>
                   <div className="flex gap-1.5">
                     <Button size="sm" variant="outline" className="h-6 text-[10px] rounded-sm px-2"
                       onClick={() => setSelectedEarnings(new Set(paymentDialog.dealer.sales.filter(s => !s.is_paid).map(s => s.earning_id)))}>
@@ -886,7 +886,7 @@ const AdminDealerSalesTab = () => {
                           <td className="px-2 py-1.5 text-right font-bold">${sale.dealer_net.toFixed(2)}</td>
                           <td className="px-2 py-1.5 text-center">
                             {sale.is_paid
-                              ? <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">Pagado</Badge>
+                              ? <Badge variant="outline" className="text-[9px] bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">Pagado</Badge>
                               : <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20">Pendiente</Badge>}
                           </td>
                         </tr>
@@ -896,14 +896,14 @@ const AdminDealerSalesTab = () => {
                 </div>
                 <div className="flex items-center justify-between mt-2 px-1">
                   <p className="text-[10px] text-muted-foreground">{selectedEarnings.size} operaciones seleccionadas</p>
-                  <p className="text-sm font-bold text-primary">Total: ${selectedTotal.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-primary dark:text-accent">Total: ${selectedTotal.toFixed(2)}</p>
                 </div>
               </div>
 
               {/* Payment Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Banknote className="h-3 w-3" /> Método de pago</label>
+                  <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 flex items-center gap-1"><Banknote className="h-3 w-3" /> Método de pago</label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger className="h-9 rounded-sm text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -915,7 +915,7 @@ const AdminDealerSalesTab = () => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Hash className="h-3 w-3" /> Nº de referencia *</label>
+                  <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 flex items-center gap-1"><Hash className="h-3 w-3" /> Nº de referencia *</label>
                   <Input value={paymentReference} onChange={e => setPaymentReference(e.target.value)} placeholder="Número de referencia" className="h-9 rounded-sm text-xs font-mono" />
                 </div>
               </div>
@@ -928,9 +928,9 @@ const AdminDealerSalesTab = () => {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Comprobante de pago (PDF, JPG, PNG)</label>
+                <label className="text-xs font-medium text-muted-foreground dark:text-gray-300 flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Comprobante de pago (PDF, JPG, PNG)</label>
                 <Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} className="h-9 rounded-sm text-xs" />
-                {paymentProofFile && <p className="text-[10px] text-primary">📎 {paymentProofFile.name}</p>}
+                {paymentProofFile && <p className="text-[10px] text-primary dark:text-accent">📎 {paymentProofFile.name}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -939,11 +939,11 @@ const AdminDealerSalesTab = () => {
               </div>
 
               {/* Summary */}
-              <div className="bg-primary/5 border border-primary/20 rounded-sm p-3">
+              <div className="bg-primary/5 border border-primary/20 dark:border-accent/20 rounded-sm p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total a Pagar</p>
-                    <p className="text-xl font-heading font-bold text-primary">${selectedTotal.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Total a Pagar</p>
+                    <p className="text-xl font-heading font-bold text-primary dark:text-accent">${selectedTotal.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-muted-foreground">{selectedEarnings.size} operaciones</p>
@@ -970,15 +970,15 @@ const AdminDealerSalesTab = () => {
         <DialogContent className="max-w-lg bg-card">
           <DialogHeader>
             <DialogTitle className="text-base font-heading flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-primary" /> Comprobante de Pago
+              <Receipt className="h-5 w-5 text-primary dark:text-accent" /> Comprobante de Pago
             </DialogTitle>
           </DialogHeader>
           {viewingReceipt && viewingReceiptDealer && (
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
               {/* Receipt Header */}
               <div className="bg-secondary/30 border border-border rounded-sm p-4 text-center">
-                <p className="text-lg font-heading font-bold text-primary">${viewingReceipt.total_amount.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-lg font-heading font-bold text-primary dark:text-accent">${viewingReceipt.total_amount.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground dark:text-gray-300 mt-1">
                   Pagado a <span className="font-semibold text-foreground">{viewingReceiptDealer.dealer_name}</span>
                 </p>
                 <p className="text-[10px] text-muted-foreground">{viewingReceiptDealer.business_name}</p>
@@ -1016,7 +1016,7 @@ const AdminDealerSalesTab = () => {
 
               {/* Operations included */}
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide mb-1.5">
                   Operaciones incluidas ({viewingReceipt.items.length})
                 </p>
                 <div className="border border-border rounded-sm overflow-hidden">
@@ -1043,8 +1043,8 @@ const AdminDealerSalesTab = () => {
                     </tbody>
                     <tfoot>
                       <tr className="bg-primary/5 border-t border-primary/20">
-                        <td className="px-2 py-1.5 font-bold text-primary">TOTAL</td>
-                        <td className="px-2 py-1.5 text-right font-bold text-primary">${viewingReceipt.total_amount.toFixed(2)}</td>
+                        <td className="px-2 py-1.5 font-bold text-primary dark:text-accent">TOTAL</td>
+                        <td className="px-2 py-1.5 text-right font-bold text-primary dark:text-accent">${viewingReceipt.total_amount.toFixed(2)}</td>
                       </tr>
                     </tfoot>
                   </table>

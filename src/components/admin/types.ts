@@ -10,6 +10,7 @@ export interface BannerImage {
   image_url: string;
   title: string | null;
   subtitle: string | null;
+  description: string | null;
   display_order: number;
   is_active: boolean;
 }

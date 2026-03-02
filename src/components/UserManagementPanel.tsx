@@ -283,7 +283,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
           <Users className="h-5 w-5 text-primary" />
           Gestión de Usuarios
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground dark:text-gray-300 mt-0.5">
           Administra todos los usuarios de la plataforma
         </p>
       </div>
@@ -352,7 +352,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
               <thead>
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="px-4 py-3 text-left">
-                    <button onClick={() => toggleSort("name")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                    <button onClick={() => toggleSort("name")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground dark:text-gray-300 hover:text-foreground transition-colors">
                       Usuario
                       <ArrowUpDown className="h-3 w-3" />
                     </button>
@@ -361,7 +361,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
                     <span className="text-xs font-semibold text-muted-foreground">Teléfono</span>
                   </th>
                   <th className="px-3 py-3 text-left hidden sm:table-cell">
-                    <button onClick={() => toggleSort("role")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                    <button onClick={() => toggleSort("role")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground dark:text-gray-300 hover:text-foreground transition-colors">
                       Rol
                       <ArrowUpDown className="h-3 w-3" />
                     </button>
@@ -370,7 +370,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
                     <span className="text-xs font-semibold text-muted-foreground">Estado</span>
                   </th>
                   <th className="px-3 py-3 text-left hidden lg:table-cell">
-                    <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                    <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground dark:text-gray-300 hover:text-foreground transition-colors">
                       Registro
                       <ArrowUpDown className="h-3 w-3" />
                     </button>
@@ -383,7 +383,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">
+                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground dark:text-gray-300 text-sm">
                       {searchQuery ? "No se encontraron usuarios con esa búsqueda." : "No hay usuarios en esta categoría."}
                     </td>
                   </tr>
@@ -425,7 +425,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
             <div className="space-y-5 overflow-y-auto flex-1 min-h-0 pr-1">
               <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-md border border-border">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                  <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-sm font-bold">
                     {(promoteDialog.full_name || "?").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -433,8 +433,8 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
                   <p className="font-semibold text-sm">{promoteDialog.full_name}</p>
                   <p className="text-xs text-muted-foreground">{promoteDialog.email}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">Admin</Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground dark:text-gray-300 ml-auto" />
+                <Badge className="bg-primary/10 text-primary dark:text-accent border-primary/30 dark:border-accent/30 text-xs">Admin</Badge>
               </div>
 
               <div className="space-y-3">
@@ -485,7 +485,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
           {tierDialog && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-md border border-border">
-                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">{(tierDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-sm font-bold">{(tierDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
                 <div><p className="font-semibold text-sm">{tierDialog.full_name}</p><p className="text-xs text-muted-foreground">{tierDialog.email}</p></div>
               </div>
               <div className="space-y-2">
@@ -520,7 +520,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
           {phoneDialog && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-md border border-border">
-                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">{(phoneDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-sm font-bold">{(phoneDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
                 <div><p className="font-semibold text-sm">{phoneDialog.full_name}</p><p className="text-xs text-muted-foreground">{phoneDialog.email}</p></div>
               </div>
               <div className="space-y-2">
@@ -554,7 +554,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
           {passwordDialog && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-md border border-border">
-                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">{(passwordDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-sm font-bold">{(passwordDialog.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
                 <div><p className="font-semibold text-sm">{passwordDialog.full_name}</p><p className="text-xs text-muted-foreground">{passwordDialog.email}</p></div>
               </div>
               <div className="space-y-2">

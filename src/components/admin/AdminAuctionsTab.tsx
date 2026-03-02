@@ -331,7 +331,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                         <Zap className="h-2.5 w-2.5 mr-0.5" />EXTENDIDA
                       </Badge>
                     )}
-                    {auction.operation_number && <span className="text-[10px] text-muted-foreground font-mono">{auction.operation_number}</span>}
+                    {auction.operation_number && <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono">{auction.operation_number}</span>}
                   </div>
                   <p className="text-xs text-muted-foreground">{auction.dealer_name} · ${auction.current_price.toLocaleString("es-MX")} · {auction.bids_count} pujas</p>
                   <p className="text-[10px] text-muted-foreground">Fin: {new Date(auction.end_time).toLocaleString("es-MX")}</p>
@@ -372,7 +372,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
               {editingTime === auction.id && (
                 <div className="p-3 rounded-sm bg-secondary/50 border border-border space-y-3">
                   <p className="text-xs font-heading font-bold flex items-center gap-1.5">
-                    <Timer className="h-3.5 w-3.5 text-primary" /> Cambiar Tiempo de Subasta
+                    <Timer className="h-3.5 w-3.5 text-primary dark:text-accent" /> Cambiar Tiempo de Subasta
                   </p>
                   <div className="flex items-end gap-2">
                     <div className="space-y-1 flex-1 max-w-xs">
@@ -461,7 +461,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
 
               {isEnded && winner && (
                 <div className="p-2.5 rounded-sm bg-primary/5 border border-primary/10 space-y-2">
-                  <div className="flex items-center gap-1.5 text-primary font-semibold text-xs"><Trophy className="h-3.5 w-3.5" /> Ganador</div>
+                  <div className="flex items-center gap-1.5 text-primary dark:text-accent font-semibold text-xs"><Trophy className="h-3.5 w-3.5" /> Ganador</div>
                   <div className="text-xs space-y-0.5">
                     <div className="flex items-center gap-1.5"><User className="h-3 w-3 text-muted-foreground" />{winner.full_name}</div>
                     {winner.phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-muted-foreground" />{winner.phone}</div>}
@@ -481,14 +481,14 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                   { key: "under_review", label: "En Revisión", icon: "🔍", color: "text-amber-600 bg-amber-500/10" },
                   { key: "verified", label: "Verificado", icon: "✓", color: "text-blue-600 bg-blue-500/10" },
                   { key: "escrow", label: "Custodia", icon: "🔐", color: "text-orange-600 bg-orange-500/10" },
-                  { key: "released", label: "Liberado", icon: "💸", color: "text-primary bg-primary/10" },
+                  { key: "released", label: "Liberado", icon: "💸", color: "text-primary dark:text-accent bg-primary/10" },
                   { key: "refunded", label: "Reembolsado", icon: "↩️", color: "text-destructive bg-destructive/10" },
                 ];
                 const deliverySteps = [
                   { key: "pending", label: "Pendiente", icon: "📦", color: "text-muted-foreground bg-muted" },
                   { key: "ready_to_ship", label: "Listo", icon: "📋", color: "text-blue-600 bg-blue-500/10" },
                   { key: "shipped", label: "Enviado", icon: "🚚", color: "text-amber-600 bg-amber-500/10" },
-                  { key: "delivered", label: "Entregado", icon: "✅", color: "text-primary bg-primary/10" },
+                  { key: "delivered", label: "Entregado", icon: "✅", color: "text-primary dark:text-accent bg-primary/10" },
                 ];
                 const currentPayIdx = paymentSteps.findIndex(s => s.key === payStatus);
                 const currentDelIdx = deliverySteps.findIndex(s => s.key === delStatus);
@@ -515,12 +515,12 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                 return (
                   <div className="p-3 rounded-sm bg-card border border-border space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-primary" /> Estado de Fondos</p>
+                      <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-primary dark:text-accent" /> Estado de Fondos</p>
                       {frozen && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 font-bold animate-pulse">🔒 CONGELADO</Badge>}
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Pago</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Pago</span>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}><ChevronLeft className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}><ChevronLeft className="h-3 w-3 rotate-180" /></Button>
@@ -532,7 +532,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                           return (
                             <div key={step.key} className="flex items-center flex-1">
                               <div className={`flex flex-col items-center flex-1 ${isActive || isPast ? "" : "opacity-30"}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
                                 <span className={`text-[8px] mt-0.5 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
                               </div>
                               {i < paymentSteps.length - 1 && <div className={`h-0.5 w-full min-w-1 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary" : "bg-border"}`} />}
@@ -543,7 +543,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Envío</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Envío</span>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}><ChevronLeft className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}><ChevronLeft className="h-3 w-3 rotate-180" /></Button>
@@ -555,7 +555,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                           return (
                             <div key={step.key} className="flex items-center flex-1">
                               <div className={`flex flex-col items-center flex-1 ${isActive || isPast ? "" : "opacity-30"}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
                                 <span className={`text-[8px] mt-0.5 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
                               </div>
                               {i < deliverySteps.length - 1 && <div className={`h-0.5 w-full min-w-1 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary" : "bg-border"}`} />}
@@ -566,16 +566,16 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                     </div>
                     {(auction as any).delivered_at && !frozen && payStatus === "escrow" && (
                       <div className="flex items-center gap-1.5 bg-primary/5 border border-primary/10 rounded-sm px-2.5 py-1.5">
-                        <Clock className="h-3 w-3 text-primary shrink-0" />
-                        <p className="text-[10px] text-primary">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
+                        <Clock className="h-3 w-3 text-primary dark:text-accent shrink-0" />
+                        <p className="text-[10px] text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
                       </div>
                     )}
                     {auction.winner_id && (
                       <div className="border-t border-border pt-2 space-y-1.5">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1"><DollarSign className="h-3 w-3" /> Desglose de Comisión</p>
+                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1"><DollarSign className="h-3 w-3" /> Desglose de Comisión</p>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="bg-secondary/30 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Venta Total</p><p className="text-sm font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
-                          <div className="bg-primary/10 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Comisión ({commissionPct}%)</p><p className="text-sm font-bold text-primary">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
+                          <div className="bg-primary/10 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Comisión ({commissionPct}%)</p><p className="text-sm font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
                           <div className="bg-secondary/30 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Dealer Recibe</p><p className="text-sm font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
                         </div>
                       </div>

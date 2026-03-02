@@ -72,10 +72,12 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerTitle, setBannerTitle] = useState("");
   const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [bannerDescription, setBannerDescription] = useState("");
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [editingBanner, setEditingBanner] = useState<string | null>(null);
   const [editBannerTitle, setEditBannerTitle] = useState("");
   const [editBannerSubtitle, setEditBannerSubtitle] = useState("");
+  const [editBannerDescription, setEditBannerDescription] = useState("");
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [savingBanner, setSavingBanner] = useState(false);
   const [localSections, setLocalSections] = useState(siteSections);
@@ -90,8 +92,13 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
     const { error: upErr } = await supabase.storage.from("banner-images").upload(filePath, bannerFile);
     if (upErr) { toast({ title: "Error", description: upErr.message, variant: "destructive" }); setUploadingBanner(false); return; }
     const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
-    await supabase.from("banner_images").insert({ image_url: urlData.publicUrl, title: bannerTitle || null, subtitle: bannerSubtitle || null, display_order: banners.length, created_by: user.id });
-    toast({ title: "Banner agregado" }); setBannerFile(null); setBannerTitle(""); setBannerSubtitle(""); setUploadingBanner(false); fetchAllData();
+    const { error: dbErr } = await supabase.from("banner_images").insert({ image_url: urlData.publicUrl, title: bannerTitle || null, subtitle: bannerSubtitle || null, description: bannerDescription || null, display_order: banners.length, created_by: user.id });
+    if (dbErr) {
+      toast({ title: "Error en Base de Datos", description: dbErr.message, variant: "destructive" });
+      setUploadingBanner(false);
+      return;
+    }
+    toast({ title: "Banner agregado" }); setBannerFile(null); setBannerTitle(""); setBannerSubtitle(""); setBannerDescription(""); setUploadingBanner(false); fetchAllData();
   };
 
   const handleDeleteBanner = async (id: string) => {
@@ -100,12 +107,12 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   };
 
   const handleEditBannerStart = (b: BannerImage) => {
-    setEditingBanner(b.id); setEditBannerTitle(b.title || ""); setEditBannerSubtitle(b.subtitle || ""); setEditBannerFile(null);
+    setEditingBanner(b.id); setEditBannerTitle(b.title || ""); setEditBannerSubtitle(b.subtitle || ""); setEditBannerDescription(b.description || ""); setEditBannerFile(null);
   };
 
   const handleSaveBanner = async (id: string) => {
     setSavingBanner(true);
-    const updateData: any = { title: editBannerTitle || null, subtitle: editBannerSubtitle || null };
+    const updateData: any = { title: editBannerTitle || null, subtitle: editBannerSubtitle || null, description: editBannerDescription || null };
     if (editBannerFile) {
       const filePath = `${crypto.randomUUID()}.${editBannerFile.name.split(".").pop()}`;
       const { error: upErr } = await supabase.storage.from("banner-images").upload(filePath, editBannerFile);
@@ -113,7 +120,12 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
       const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
       updateData.image_url = urlData.publicUrl;
     }
-    await supabase.from("banner_images").update(updateData).eq("id", id);
+    const { error: dbErr } = await supabase.from("banner_images").update(updateData).eq("id", id);
+    if (dbErr) {
+      toast({ title: "Error guardando", description: dbErr.message, variant: "destructive" });
+      setSavingBanner(false);
+      return;
+    }
     toast({ title: "✅ Banner actualizado" }); setEditingBanner(null); setSavingBanner(false); fetchAllData();
   };
 
@@ -136,7 +148,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Settings className="h-5 w-5 text-primary" /> Configuración Central</h1>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Settings className="h-5 w-5 text-primary dark:text-accent" /> Configuración Central</h1>
         <Button onClick={handleSaveSettings} disabled={savingSettings} className="bg-primary text-primary-foreground rounded-sm text-xs">
           {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}Guardar Cambios
         </Button>
@@ -144,12 +156,12 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
       <Accordion type="multiple" defaultValue={["settings"]} className="space-y-2">
         <AccordionItem value="settings" className="border border-border rounded-sm overflow-hidden">
           <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
-            <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-primary" /> Configuración del Sitio<Badge variant="outline" className="text-[10px] ml-1">{siteSettings.length}</Badge></div>
+            <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-primary dark:text-accent" /> Configuración del Sitio<Badge variant="outline" className="text-[10px] ml-1">{siteSettings.length}</Badge></div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 space-y-4">
             {Object.entries(siteSettings.reduce<Record<string, SiteSetting[]>>((acc, s) => { if (!acc[s.category]) acc[s.category] = []; acc[s.category].push(s); return acc; }, {})).map(([cat, settings]) => (
               <div key={cat} className="space-y-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">{cat}</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider border-b border-border pb-1">{cat}</h3>
                 {settings.map(setting => (
                   <div key={setting.id} className="flex items-center gap-3">
                     <Label className="text-xs w-40 shrink-0">{setting.label}</Label>
@@ -179,9 +191,22 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
                           placeholder="#A6E300"
                           maxLength={7}
                         />
-                        <span className="text-[10px] text-muted-foreground font-mono hidden sm:block">
+                        <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono hidden sm:block">
                           HSL: {editingSettings[setting.setting_key] || "—"}
                         </span>
+                      </div>
+                    ) : setting.setting_key === "ticker_speed" ? (
+                      <div className="flex items-center gap-3 flex-1">
+                        <input
+                          type="range"
+                          min="10"
+                          max="100"
+                          step="5"
+                          value={editingSettings[setting.setting_key] || "50"}
+                          onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))}
+                          className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-xs font-mono w-8 text-muted-foreground">{editingSettings[setting.setting_key] || "50"}s</span>
                       </div>
                     ) : (
                       <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-xs" />
@@ -194,7 +219,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
         </AccordionItem>
         <AccordionItem value="sections" className="border border-border rounded-sm overflow-hidden">
           <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
-            <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Secciones de la Página<Badge variant="outline" className="text-[10px] ml-1">{localSections.length}</Badge></div>
+            <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-primary dark:text-accent" /> Secciones de la Página<Badge variant="outline" className="text-[10px] ml-1">{localSections.length}</Badge></div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 space-y-3">
             {localSections.map(section => (
@@ -213,18 +238,19 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
         </AccordionItem>
         <AccordionItem value="banners" className="border border-border rounded-sm overflow-hidden">
           <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
-            <div className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-primary" /> Banners del Hero<Badge variant="outline" className="text-[10px] ml-1">{banners.length}</Badge></div>
+            <div className="flex items-center gap-2"><ImagePlus className="h-4 w-4 text-primary dark:text-accent" /> Banners del Hero<Badge variant="outline" className="text-[10px] ml-1">{banners.length}</Badge></div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 space-y-4">
             <Card className="border border-border rounded-sm">
               <CardContent className="p-4 space-y-4">
-                <label className="flex items-center gap-2 px-4 py-3 rounded-sm border border-dashed border-primary/40 text-sm text-primary cursor-pointer hover:bg-primary/5 transition-colors w-full justify-center">
+                <label className="flex items-center gap-2 px-4 py-3 rounded-sm border border-dashed border-primary/40 text-sm text-primary dark:text-accent cursor-pointer hover:bg-primary/5 transition-colors w-full justify-center">
                   <ImagePlus className="h-4 w-4" /> {bannerFile ? bannerFile.name : "Seleccionar imagen"}
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => setBannerFile(e.target.files?.[0] || null)} />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input value={bannerTitle} onChange={(e) => setBannerTitle(e.target.value)} placeholder="Título" className="rounded-sm text-xs" />
                   <Input value={bannerSubtitle} onChange={(e) => setBannerSubtitle(e.target.value)} placeholder="Subtítulo" className="rounded-sm text-xs" />
+                  <Input value={bannerDescription} onChange={(e) => setBannerDescription(e.target.value)} placeholder="Descripción adicional" className="rounded-sm text-xs col-span-2" />
                 </div>
                 <Button onClick={handleAddBanner} disabled={!bannerFile || uploadingBanner} className="bg-primary text-primary-foreground rounded-sm text-xs">
                   {uploadingBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ImagePlus className="h-3.5 w-3.5 mr-1" />} Agregar
@@ -237,12 +263,13 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
                   {editingBanner === b.id ? (
                     <div className="p-4 space-y-3">
                       <img src={editBannerFile ? URL.createObjectURL(editBannerFile) : b.image_url} className="w-full aspect-[16/9] object-cover rounded-sm" alt="" />
-                      <label className="flex items-center gap-2 px-3 py-2 rounded-sm border border-dashed border-primary/40 text-xs text-primary cursor-pointer hover:bg-primary/5 w-full justify-center">
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-sm border border-dashed border-primary/40 text-xs text-primary dark:text-accent cursor-pointer hover:bg-primary/5 w-full justify-center">
                         <ImagePlus className="h-3.5 w-3.5" /> {editBannerFile ? editBannerFile.name : "Cambiar imagen"}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => setEditBannerFile(e.target.files?.[0] || null)} />
                       </label>
                       <Input value={editBannerTitle} onChange={(e) => setEditBannerTitle(e.target.value)} placeholder="Título" className="rounded-sm text-xs" />
                       <Input value={editBannerSubtitle} onChange={(e) => setEditBannerSubtitle(e.target.value)} placeholder="Subtítulo" className="rounded-sm text-xs" />
+                      <Input value={editBannerDescription} onChange={(e) => setEditBannerDescription(e.target.value)} placeholder="Descripción adicional" className="rounded-sm text-xs" />
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => handleSaveBanner(b.id)} disabled={savingBanner} className="bg-primary text-primary-foreground rounded-sm text-xs flex-1">
                           {savingBanner ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Guardar
@@ -260,7 +287,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
                         <p className="text-sm font-medium truncate">{b.title || "Sin título"}</p>
                         <div className="flex items-center gap-1.5">
                           <Button variant="outline" size="sm" onClick={() => handleEditBannerStart(b)} className="rounded-sm text-[10px] h-7 flex-1"><PenLine className="h-3 w-3 mr-1" /> Editar</Button>
-                          <Button variant="outline" size="icon" onClick={() => handleToggleBannerActive(b.id, !b.is_active)} className={`rounded-sm h-7 w-7 ${b.is_active ? 'text-primary' : 'text-muted-foreground'}`}>
+                          <Button variant="outline" size="icon" onClick={() => handleToggleBannerActive(b.id, !b.is_active)} className={`rounded-sm h-7 w-7 ${b.is_active ? 'text-primary dark:text-accent' : 'text-muted-foreground'}`}>
                             {b.is_active ? <Eye className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
                           </Button>
                           <AlertDialog>

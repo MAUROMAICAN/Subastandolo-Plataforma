@@ -42,13 +42,13 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 font-heading">
             <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              <AvatarFallback className="bg-primary/10 text-primary dark:text-accent font-bold">
                 {(userName || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="text-base">Expediente: {userName || "Usuario"}</p>
-              <p className="text-xs text-muted-foreground font-normal">ID: {userId.slice(0, 8)}...</p>
+              <p className="text-xs text-muted-foreground dark:text-gray-300 font-normal">ID: {userId.slice(0, 8)}...</p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -164,7 +164,7 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
                   <AccordionContent className="px-4 pb-3 space-y-2">
                     {details.reviews_received?.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Recibidas ({details.reviews_received.length})</p>
+                        <p className="text-[10px] font-bold text-muted-foreground dark:text-gray-300 uppercase mb-1">Recibidas ({details.reviews_received.length})</p>
                         {details.reviews_received.slice(0, 5).map((r: any) => (
                           <div key={r.id} className="text-xs py-1 border-b border-border/50">
                             <span>{"⭐".repeat(r.rating)} </span>
@@ -231,7 +231,7 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
 
 const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="bg-secondary/30 rounded-md p-3">
-    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">{icon} {label}</p>
+    <p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1 flex items-center gap-1">{icon} {label}</p>
     <p className="text-sm font-medium break-all">{value}</p>
   </div>
 );
