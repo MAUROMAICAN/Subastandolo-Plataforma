@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import Countdown from "@/components/Countdown";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import { Trophy, Clock, Heart, Store } from "lucide-react";
+import { Trophy, Clock, Heart, Store, Gavel } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -147,9 +147,10 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             {/* Timer / Progress */}
             {!isEnded && (
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                <Clock className="h-3 w-3 shrink-0" />
-                <span className="truncate">
-                  {isScheduled ? "Empieza en " : "Termina "}
+                {/* On mobile: hide the clock icon and label, show only the countdown */}
+                <Clock className="hidden sm:block h-3 w-3 shrink-0" />
+                <span className="hidden sm:inline truncate">
+                  {isScheduled ? "Empieza en" : "Termina"}
                 </span>
                 <span className="text-foreground/80 font-bold font-mono bg-secondary/80 px-1.5 py-0.5 rounded-sm">
                   {startTime && isScheduled ? (
@@ -168,6 +169,14 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 rounded-sm px-2 py-1 border border-primary/20 mt-1">
                 <Trophy className="h-3 w-3 shrink-0" />
                 <span className="font-bold truncate">Gana: {maskName(auction.winner_name)}</span>
+              </div>
+            )}
+
+            {/* CTA Button — Elegant full-width, live auctions only */}
+            {isLive && (
+              <div className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-accent/40 bg-accent/5 hover:bg-accent/15 text-accent font-semibold tracking-wide text-[11px] sm:text-xs uppercase transition-all group-hover:border-accent/80 group-hover:bg-accent/10 cursor-pointer">
+                <Gavel className="h-3 w-3" />
+                Ofertar
               </div>
             )}
           </div>
