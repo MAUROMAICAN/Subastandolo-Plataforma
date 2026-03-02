@@ -170,19 +170,7 @@ const Index = () => {
       <main>
         <LaunchCountdown />
 
-        {/* Announcement */}
-        {announcementBar && (
-          <div className="bg-primary text-primary-foreground py-1.5 text-[11px] font-medium overflow-hidden whitespace-nowrap">
-            <div className="inline-flex" style={{ animation: "marquee 25s linear infinite" }}>
-              <span className="px-8">{announcementBar}</span>
-              <span className="px-8">{announcementBar}</span>
-              <span className="px-8">{announcementBar}</span>
-              <span className="px-8">{announcementBar}</span>
-              <span className="px-8">{announcementBar}</span>
-            </div>
-            <style>{`@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-40%); } }`}</style>
-          </div>
-        )}
+        {/* Banners start immediately after the Navbar */}
 
 
 
