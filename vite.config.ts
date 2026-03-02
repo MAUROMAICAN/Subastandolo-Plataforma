@@ -21,14 +21,26 @@ export default defineConfig(({ mode }) => ({
       injectRegister: false,
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,png,svg,webp,woff2}"],
+        globPatterns: ["**/*.{js,css,png,svg,webp,woff2}"],
         globIgnores: ["**/favicon.ico", "**/sounds/**"],
         cleanupOutdatedCaches: true,
         importScripts: ["/push-handler.js"],
+        // ALWAYS fetch HTML (index.html) from the network so users see the latest version
+        navigateFallback: null,
         runtimeCaching: [
           {
+            // Navigation requests: always network-first so JS & CSS updates are picked up
+            urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
+            handler: "NetworkFirst" as const,
+            options: {
+              cacheName: "pages-cache",
+              networkTimeoutSeconds: 5,
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
-            handler: "CacheFirst",
+            handler: "CacheFirst" as const,
             options: {
               cacheName: "supabase-images",
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
@@ -37,7 +49,7 @@ export default defineConfig(({ mode }) => ({
           },
           {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
-            handler: "CacheFirst",
+            handler: "CacheFirst" as const,
             options: {
               cacheName: "static-images",
               expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
