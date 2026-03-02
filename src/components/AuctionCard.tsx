@@ -113,8 +113,8 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
         {/* Info Area (Highly Compact) */}
         <div className="p-2.5 sm:p-4 flex flex-col flex-1 bg-gradient-to-b from-card to-muted/5">
 
-          {/* Title */}
-          <h3 className="font-heading font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors mb-1 sm:mb-2" title={auction.title}>
+          {/* Title - guaranteed legible on both dark/light card backgrounds */}
+          <h3 className="font-heading font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white group-hover:text-primary transition-colors mb-1 sm:mb-2" title={auction.title}>
             {auction.title}
           </h3>
 
@@ -144,10 +144,10 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               )}
             </div>
 
-            {/* Timer / Progress */}
+            {/* Timer / Progress - centered on mobile */}
             {!isEnded && (
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                {/* On mobile: hide the clock icon and label, show only the countdown */}
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
+                {/* On mobile: hide the clock icon and label, show only the countdown centered */}
                 <Clock className="hidden sm:block h-3 w-3 shrink-0" />
                 <span className="hidden sm:inline truncate">
                   {isScheduled ? "Empieza en" : "Termina"}

@@ -183,29 +183,32 @@ const Index = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/25 to-transparent" />
               </div>
             ))}
-            <div className="container mx-auto px-5 h-full flex items-center relative z-10">
-              <div className="max-w-md">
+            <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
+              <div className="max-w-xs sm:max-w-md">
                 {banners[currentSlide] && (
                   <>
-                    {banners[currentSlide].title && (
-                      <h1 className="text-3xl sm:text-5xl font-heading font-black text-white mb-3 drop-shadow-lg leading-tight">
-                        {banners[currentSlide].title}
-                      </h1>
-                    )}
-                    {banners[currentSlide].subtitle && (
-                      <p className="text-lg sm:text-xl font-medium text-white mb-2 drop-shadow-md">
-                        {banners[currentSlide].subtitle}
-                      </p>
-                    )}
-                    {banners[currentSlide].description && (
-                      <p className="text-sm sm:text-base text-white/80 mb-6 drop-shadow">
-                        {banners[currentSlide].description}
-                      </p>
-                    )}
+                    {/* Text block with subtle frosted backing for mobile legibility */}
+                    <div className="bg-white/70 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none rounded-xl sm:rounded-none p-3 sm:p-0 w-fit">
+                      {banners[currentSlide].title && (
+                        <h1 className="text-2xl sm:text-5xl font-heading font-black text-gray-900 sm:text-white sm:drop-shadow-lg leading-tight mb-1 sm:mb-3 uppercase">
+                          {banners[currentSlide].title}
+                        </h1>
+                      )}
+                      {banners[currentSlide].subtitle && (
+                        <p className="text-sm sm:text-xl font-medium text-gray-700 sm:text-white sm:drop-shadow-md">
+                          {banners[currentSlide].subtitle}
+                        </p>
+                      )}
+                      {banners[currentSlide].description && (
+                        <p className="text-xs sm:text-base text-gray-600 sm:text-white/80 mt-1 sm:mt-2 sm:drop-shadow">
+                          {banners[currentSlide].description}
+                        </p>
+                      )}
+                    </div>
                   </>
                 )}
                 {!user && (
-                  <Button size="default" asChild className="bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-2">
+                  <Button size="default" asChild className="bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-3">
                     <Link to="/auth">{heroCta}</Link>
                   </Button>
                 )}
