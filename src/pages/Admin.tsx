@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle,
-  Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell
+  Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell, LogOut
 } from "lucide-react";
 import AdminBadge from "@/components/AdminBadge";
 import UserManagementPanel from "@/components/UserManagementPanel";
@@ -305,6 +305,12 @@ const Admin = () => {
               </Button>
               {unreadMessages > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[9px] rounded-full flex items-center justify-center font-bold">{unreadMessages}</span>}
             </div>
+            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="h-8 px-2 sm:px-3 text-xs gap-1.5 text-muted-foreground hover:text-foreground hidden sm:flex">
+              <LogOut className="h-3.5 w-3.5" /> Salir
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => navigate("/")} className="h-8 w-8 sm:hidden text-muted-foreground">
+              <LogOut className="h-4 w-4" />
+            </Button>
             <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-border">
               <Avatar className="h-8 w-8 border border-border">
                 {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ""} />}
