@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import Countdown from "@/components/Countdown";
-import { Trophy, Clock, Heart, Gavel } from "lucide-react";
+import { Trophy, Heart, Zap, Timer } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -40,143 +39,128 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
   return (
     <Link to={`/auction/${auction.id}`} className="group block h-full">
-      <div className="bg-card rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col border border-border/50 hover:border-primary/20 relative">
-        {/* Image Area */}
-        <div className="relative aspect-square sm:aspect-[4/3] overflow-hidden bg-white/5 flex items-center justify-center p-2 sm:p-4">
+      <div className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-card border border-white/5 shadow-md hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
+
+        {/* ── IMAGE ZONE ── */}
+        <div className="relative aspect-square overflow-hidden bg-muted/10">
           {auction.image_url ? (
             <img
               src={auction.image_url}
               alt={auction.title}
-              className="w-full h-full object-cover sm:object-contain group-hover:scale-105 transition-transform duration-700 ease-out rounded-t-xl"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground/50 text-[10px] sm:text-xs bg-muted/10 rounded-t-xl">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 text-xs">
               Sin imagen
             </div>
           )}
 
-          {/* Status Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-            {isScheduled && (
-              <Badge className="bg-primary/95 text-primary-foreground border-0 text-[9px] sm:text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm shadow-sm backdrop-blur-sm">
-                <Clock className="h-2.5 w-2.5 mr-1" />
-                Pronto
-              </Badge>
-            )}
+          {/* Deep gradient at bottom for price legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+          {/* ── TOP-LEFT: Status badge ── */}
+          <div className="absolute top-2 left-2 z-10">
             {isLive && (
-              <>
-                {/* Modern minimalist LIVE badge */}
-                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md border border-white/10 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
-                  {/* Pulsing ring + dot */}
-                  <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#A6E300" }} />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2" style={{ backgroundColor: "#A6E300" }} />
-                  </span>
-                  Activa
-                </div>
-                {(auction as any).is_extended && (
-                  <div className="flex items-center gap-0.5 bg-amber-500/90 backdrop-blur-sm border border-amber-400/30 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md mt-0.5">
-                    ⚡ Ext.
-                  </div>
-                )}
-              </>
+              <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md border border-white/15 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full shadow-lg">
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#A6E300" }} />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#A6E300" }} />
+                </span>
+                En vivo
+              </div>
+            )}
+            {isScheduled && (
+              <div className="flex items-center gap-1 bg-primary/90 backdrop-blur-sm text-primary-foreground text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full shadow">
+                <Timer className="h-2.5 w-2.5" />
+                Pronto
+              </div>
             )}
           </div>
 
-          {/* Ended Overlay */}
+          {/* ── TOP-RIGHT: Favorite ── */}
+          {user && onToggleFavorite && (
+            <button
+              onClick={handleFavoriteClick}
+              className="absolute top-2 right-2 z-10 h-7 w-7 rounded-full bg-black/50 backdrop-blur-sm border border-white/15 text-white/80 hover:text-red-400 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/70"
+            >
+              <Heart className={`h-3.5 w-3.5 transition-colors ${isFavorite ? "fill-red-400 text-red-400" : ""}`} />
+            </button>
+          )}
+
+          {/* ── ENDED OVERLAY ── */}
           {isEnded && (
-            <div className="absolute inset-0 bg-background/40 flex items-center justify-center backdrop-blur-[1px] z-20">
-              <span className="bg-foreground text-background text-[10px] sm:text-xs uppercase tracking-widest font-bold px-3 py-1.5 rounded-sm shadow-xl">
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] flex items-center justify-center z-20">
+              <span className="bg-foreground/90 text-background text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 rounded-full shadow-xl">
                 Finalizada
               </span>
             </div>
           )}
 
-          {/* Favorite Button (floating directly on image, Etsy style) */}
-          {user && onToggleFavorite && (
-            <button
-              onClick={handleFavoriteClick}
-              className="absolute top-2 right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/90 hover:bg-white text-muted-foreground shadow-sm flex items-center justify-center transition-all z-20 hover:scale-110"
-            >
-              <Heart
-                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors ${isFavorite ? "fill-destructive text-destructive" : "hover:text-destructive"}`}
-              />
-            </button>
-          )}
+          {/* ── BOTTOM OF IMAGE: Price overlaid ── */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-3 pt-8">
+            {/* Extended badge */}
+            {(auction as any).is_extended && (
+              <div className="mb-1.5 inline-flex items-center gap-1 bg-amber-500/90 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                <Zap className="h-2.5 w-2.5" /> Extendida
+              </div>
+            )}
 
-          {/* Subtle gradient overlay at bottom of image for contrast */}
-          <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+            {/* Price */}
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-white/70 text-[10px] font-bold">US$</span>
+              <span className="text-white text-xl font-black tracking-tight leading-none drop-shadow-lg">
+                {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              {hasBids && !isEnded && (
+                <span className="ml-1.5 text-[8px] font-bold uppercase tracking-wide text-emerald-300 border border-emerald-400/30 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                  Pujado
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Info Area (Highly Compact) */}
-        <div className="p-2.5 sm:p-4 flex flex-col flex-1 bg-gradient-to-b from-card to-muted/5">
-
-          {/* Title - guaranteed legible on both dark/light card backgrounds */}
-          <h3 className="font-heading font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white group-hover:text-primary transition-colors mb-1 sm:mb-2" title={auction.title}>
+        {/* ── INFO ZONE ── */}
+        <div className="flex flex-col flex-1 px-3 pt-2.5 pb-2.5">
+          {/* Title */}
+          <h3 className="font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white/90 group-hover:text-primary transition-colors">
             {auction.title}
           </h3>
 
-
-
-          {/* Spacer to push price to bottom */}
-          <div className="mt-auto flex flex-col gap-1.5">
-            {/* Price Row — centered and larger */}
-            <div className="flex items-baseline justify-center gap-0.5 mt-1">
-              <span className="text-[10px] sm:text-xs text-foreground/70 font-bold">US$</span>
-              <span className="text-lg sm:text-xl font-black text-foreground tracking-tight leading-none">
-                {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {/* Countdown */}
+          {!isEnded && (
+            <div className="mt-2 flex items-center justify-center gap-1.5 bg-primary/5 border border-primary/15 rounded-lg py-1.5 px-2">
+              <Timer className="h-3 w-3 text-primary/70 shrink-0 hidden sm:block" />
+              <span className="font-mono text-[10px] sm:text-xs font-bold text-foreground/90 tracking-wide">
+                {startTime && isScheduled ? (
+                  <Countdown endTime={startTime} />
+                ) : isLive ? (
+                  <Countdown endTime={auction.end_time} />
+                ) : ("--:--:--")}
               </span>
             </div>
-            {hasBids && !isEnded && (
-              <div className="flex justify-center mt-0.5">
-                <span className="text-[9px] text-success font-medium bg-success/10 px-1.5 py-0.5 rounded-sm">
-                  Con Ofertas
-                </span>
-              </div>
-            )}
+          )}
 
-            {/* Timer / Progress - centered on mobile */}
-            {!isEnded && (
-              <div className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                {/* On mobile: hide the clock icon and label, show only the countdown centered */}
-                <Clock className="hidden sm:block h-3 w-3 shrink-0" />
-                <span className="hidden sm:inline truncate">
-                  {isScheduled ? "Empieza en" : "Termina"}
-                </span>
-                <span className="text-foreground/80 font-bold font-mono bg-secondary/80 px-1.5 py-0.5 rounded-sm">
-                  {startTime && isScheduled ? (
-                    <Countdown endTime={startTime} />
-                  ) : isLive ? (
-                    <Countdown endTime={auction.end_time} />
-                  ) : (
-                    "--:--:--"
-                  )}
-                </span>
-              </div>
-            )}
+          {/* Winner badge */}
+          {isEnded && auction.winner_name && (
+            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 rounded-lg px-2.5 py-1.5 border border-primary/20">
+              <Trophy className="h-3 w-3 shrink-0" />
+              <span className="font-bold truncate">Ganador: {maskName(auction.winner_name)}</span>
+            </div>
+          )}
 
-            {/* Winner Info */}
-            {isEnded && auction.winner_name && (
-              <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 rounded-sm px-2 py-1 border border-primary/20 mt-1">
-                <Trophy className="h-3 w-3 shrink-0" />
-                <span className="font-bold truncate">Gana: {maskName(auction.winner_name)}</span>
-              </div>
-            )}
-
-            {/* CTA Button — Elegant full-width, live auctions only */}
-            {isLive && (
-              <div className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-accent/40 bg-accent/5 hover:bg-accent/15 text-accent font-semibold tracking-wide text-[11px] sm:text-xs uppercase transition-all group-hover:border-accent/80 group-hover:bg-accent/10 cursor-pointer">
-                <Gavel className="h-3 w-3" />
-                Ofertar
-              </div>
-            )}
-          </div>
+          {/* CTA */}
+          {isLive && (
+            <div className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-accent text-accent-foreground font-bold text-[10px] sm:text-xs uppercase tracking-widest shadow-sm shadow-accent/30 group-hover:shadow-accent/50 group-hover:brightness-110 transition-all cursor-pointer">
+              Ofertar →
+            </div>
+          )}
         </div>
+
       </div>
     </Link>
   );
 };
 
 export default AuctionCard;
-
