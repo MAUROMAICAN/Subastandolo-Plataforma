@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Mail, Lock, User, Phone, ShieldAlert, CheckCircle2,
+  Mail, Lock, User, Phone, ShieldAlert, CircleCheck,
   RefreshCw, Fingerprint, ShieldCheck, Sparkles, Send, KeyRound
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError, isEmailNotConfirmedError } from "@/lib/authErrors";
 import { sanitizeEmail, sanitizeText, sanitizePhone } from "@/lib/sanitize";
+import { BASE_URL } from "@/lib/env";
 import PasswordInput from "@/components/PasswordInput";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 
@@ -189,7 +190,7 @@ const Auth = () => {
         }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(sanitizeEmail(email), {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${BASE_URL}/reset-password`,
         });
         if (error) {
           toast({ title: "Error", description: translateAuthError(error.message), variant: "destructive" });
@@ -419,7 +420,7 @@ const Auth = () => {
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-brand-lime/5 border border-brand-lime/20 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lime/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-9 w-9 text-brand-lime" />
+                  <CircleCheck className="h-9 w-9 text-brand-lime" />
                 </div>
               </div>
               <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-brand-lime flex items-center justify-center">
@@ -586,6 +587,22 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {import.meta.env.DEV && (
+        <div className="bg-blue-500/10 border-b border-blue-500/20 p-3 text-center">
+          <p className="text-xs text-blue-400 mb-2 font-medium">Modo de Pruebas Local Detectado</p>
+          <Button
+            size="sm"
+            onClick={() => {
+              localStorage.setItem("dev_bypass", "true");
+              window.location.reload();
+            }}
+            className="bg-blue-500 text-white hover:bg-blue-600 text-xs h-8 rounded-full"
+          >
+            🔌 Entrar Directo (Modo Maqueta)
+          </Button>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="w-full max-w-sm">
 

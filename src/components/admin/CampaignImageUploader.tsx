@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ImagePlus, Upload, Loader2, X, CheckCircle2 } from "lucide-react";
+import { ImagePlus, Upload, Loader2, X, CircleCheck } from "lucide-react";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const TARGET_WIDTH = 1080;
@@ -163,7 +163,7 @@ const CampaignImageUploader = ({ onUploadComplete, existingUrl, onClear }: Campa
         </div>
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-1.5 text-xs text-emerald-600">
-            <CheckCircle2 className="h-3.5 w-3.5" />
+            <CircleCheck className="h-3.5 w-3.5" />
             <span>Imagen optimizada · {TARGET_WIDTH}×{TARGET_HEIGHT}</span>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="text-xs text-muted-foreground hover:text-destructive h-7">

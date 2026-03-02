@@ -25,6 +25,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isDealer, setIsDealer] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // --- LOCAL DEV BYPASS ---
+  if (import.meta.env.DEV && localStorage.getItem("dev_bypass") === "true") {
+    const fakeUser = {
+      id: "00000000-0000-0000-0000-000000000000",
+      email: "prueba@localhost",
+    } as User;
+
+    return (
+      <AuthContext.Provider value={{
+        user: fakeUser,
+        session: { user: fakeUser } as Session,
+        profile: { full_name: "Usuario Maqueta", phone: "+584120000000" },
+        isAdmin: true,   // Grants admin access for UI testing
+        isDealer: true,  // Grants dealer access for UI testing
+        loading: false,
+        refreshProfile: async () => { },
+        signUp: async () => ({ error: null }),
+        signIn: async () => ({ error: null }),
+        signOut: async () => {
+          localStorage.removeItem("dev_bypass");
+          window.location.href = "/";
+        }
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
+  // ------------------------
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
