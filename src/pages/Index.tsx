@@ -184,21 +184,22 @@ const Index = () => {
               </div>
             ))}
             <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
-              <div className="max-w-[55%] sm:max-w-md">
+              {/* Use most of the available width on mobile so text doesn't wrap */}
+              <div className="w-[80%] sm:max-w-md overflow-hidden">
                 {banners[currentSlide] && (
                   <>
                     {banners[currentSlide].title && (
-                      <h1 className="text-lg sm:text-5xl font-heading font-black text-white drop-shadow-xl leading-tight mb-1 sm:mb-3">
+                      <h1 className="text-base sm:text-5xl font-heading font-black text-white drop-shadow-xl leading-tight mb-0.5 sm:mb-3 truncate">
                         {banners[currentSlide].title}
                       </h1>
                     )}
                     {banners[currentSlide].subtitle && (
-                      <p className="text-xs sm:text-xl font-medium text-white/90 drop-shadow-md">
+                      <p className="text-[11px] sm:text-xl font-medium text-white/90 drop-shadow-md truncate">
                         {banners[currentSlide].subtitle}
                       </p>
                     )}
                     {banners[currentSlide].description && (
-                      <p className="hidden sm:block text-sm sm:text-base text-white/80 mt-2 drop-shadow">
+                      <p className="hidden sm:block text-sm sm:text-base text-white/80 mt-2 drop-shadow truncate">
                         {banners[currentSlide].description}
                       </p>
                     )}
