@@ -36,8 +36,12 @@ const AnnouncementTicker = ({ message }: AnnouncementTickerProps) => {
     const tickerSpeed = parseInt(getSetting("ticker_speed", "50"), 10);
 
     const defaultMessage =
-        "🚀 GRAN INAUGURACIÓN 1 DE MARZO 2026 · ¡NO TE PIERDAS LAS MEJORES SUBASTAS ONLINE EN VENEZUELA! · SUBASTANDOLO - LA FORMA INTELIGENTE DE COMPRAR Y VENDER · ";
+        "🚀 GRAN INAUGURACIÓN 1 DE MARZO 2026 · ¡NO TE PIERDAS LAS MEJORES SUBASTAS ONLINE EN VENEZUELA! · SUBASTANDOLO - LA FORMA INTELIGENTE DE COMPRAR Y VENDER ·";
     const text = message && message.trim() ? message : defaultMessage;
+
+    // Create the gap user requested ("unos 6 espacios de teclado")
+    const gap = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"; // 6 non-breaking spaces
+    const repeated = `${text}${gap}`;
 
     return (
         <div className="relative bg-[#244299] overflow-hidden border-b border-white/10" style={{ height: "34px" }}>
@@ -52,21 +56,36 @@ const AnnouncementTicker = ({ message }: AnnouncementTickerProps) => {
                     </div>
                 )}
 
-                {/* Scrolling announcement */}
-                <div className="flex-1 overflow-hidden relative h-full">
+                {/* Scrolling announcement (Seamless infinite loop) */}
+                <div className="flex-1 overflow-hidden relative h-full flex items-center">
                     <div
-                        className="absolute flex items-center h-[34px] whitespace-nowrap text-[11px] font-medium text-white/70 tracking-wide"
-                        style={{ animation: `ticker-scroll ${tickerSpeed}s linear infinite`, width: "max-content", left: 0 }}
+                        className="flex items-center whitespace-nowrap text-[11px] font-medium text-white/70 tracking-wide"
+                        style={{
+                            animation: `ticker-scroll ${tickerSpeed}s linear infinite`,
+                            width: "max-content",
+                            willChange: "transform"
+                        }}
                     >
-                        {text}
+                        {/* We render exactly 4 copies to ensure there's always enough text to fill ultra-wide screens smoothly */}
+                        <span>{repeated}</span>
+                        <span>{repeated}</span>
+                        <span>{repeated}</span>
+                        <span>{repeated}</span>
+                        <span>{repeated}</span>
+                        <span>{repeated}</span>
                     </div>
                 </div>
             </div>
 
             <style>{`
         @keyframes ticker-scroll {
-          0%   { transform: translateX(100vw); }
-          100% { transform: translateX(-100%); }
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            /* Move exactly by the width of ONE block of standard text repeats */
+            transform: translateX(calc(-100% / 6)); 
+          }
         }
       `}</style>
         </div>
