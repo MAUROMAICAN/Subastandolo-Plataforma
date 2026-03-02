@@ -180,7 +180,7 @@ const Index = () => {
             {banners.map((banner, index) => (
               <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <img src={banner.image_url} alt={banner.title || "Banner"} className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/25 to-transparent" />
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 45%, rgba(0,0,0,0.05) 75%, transparent 100%)' }} />
               </div>
             ))}
             <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
