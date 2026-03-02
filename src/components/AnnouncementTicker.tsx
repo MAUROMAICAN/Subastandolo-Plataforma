@@ -38,7 +38,6 @@ const AnnouncementTicker = ({ message }: AnnouncementTickerProps) => {
     const defaultMessage =
         "🚀 GRAN INAUGURACIÓN 1 DE MARZO 2026 · ¡NO TE PIERDAS LAS MEJORES SUBASTAS ONLINE EN VENEZUELA! · SUBASTANDOLO - LA FORMA INTELIGENTE DE COMPRAR Y VENDER · ";
     const text = message && message.trim() ? message : defaultMessage;
-    const repeated = `${text}     ${text}     ${text}`;
 
     return (
         <div className="relative bg-[#244299] overflow-hidden border-b border-white/10" style={{ height: "34px" }}>
@@ -54,20 +53,20 @@ const AnnouncementTicker = ({ message }: AnnouncementTickerProps) => {
                 )}
 
                 {/* Scrolling announcement */}
-                <div className="flex-1 overflow-hidden relative">
+                <div className="flex-1 overflow-hidden relative h-full">
                     <div
-                        className="flex items-center h-[34px] whitespace-nowrap text-[11px] font-medium text-white/70 tracking-wide"
-                        style={{ animation: `ticker-scroll ${tickerSpeed}s linear infinite`, width: "max-content" }}
+                        className="absolute flex items-center h-[34px] whitespace-nowrap text-[11px] font-medium text-white/70 tracking-wide"
+                        style={{ animation: `ticker-scroll ${tickerSpeed}s linear infinite`, width: "max-content", left: 0 }}
                     >
-                        {repeated}
+                        {text}
                     </div>
                 </div>
             </div>
 
             <style>{`
         @keyframes ticker-scroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-33.33%); }
+          0%   { transform: translateX(100vw); }
+          100% { transform: translateX(-100%); }
         }
       `}</style>
         </div>
