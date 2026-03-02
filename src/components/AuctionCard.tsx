@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import Countdown from "@/components/Countdown";
-import VerifiedBadge from "@/components/VerifiedBadge";
-import { Trophy, Clock, Heart, Store, Gavel } from "lucide-react";
+import { Trophy, Clock, Heart, Gavel } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -118,31 +117,24 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             {auction.title}
           </h3>
 
-          {/* Dealer Info - smaller and softer */}
-          {dealer && (
-            <div className="flex items-center gap-1 mb-2 opacity-75">
-              <Store className="h-2.5 w-2.5 text-muted-foreground" />
-              <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium truncate uppercase">
-                {dealer.name}
-              </span>
-              {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
-            </div>
-          )}
+
 
           {/* Spacer to push price to bottom */}
           <div className="mt-auto flex flex-col gap-1.5">
-            {/* Price Row (Etsy Style: Just the numbers bolded) */}
-            <div className="flex items-baseline gap-0.5">
+            {/* Price Row — centered and larger */}
+            <div className="flex items-baseline justify-center gap-0.5 mt-1">
               <span className="text-[10px] sm:text-xs text-foreground/70 font-bold">US$</span>
-              <span className="text-base sm:text-xl font-black text-foreground tracking-tight leading-none">
+              <span className="text-lg sm:text-xl font-black text-foreground tracking-tight leading-none">
                 {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              {hasBids && !isEnded && (
-                <span className="text-[9px] sm:text-[10px] text-success font-medium ml-1 bg-success/10 px-1 py-0.5 rounded-sm shrink-0">
-                  {hasBids ? "Con Ofertas" : "Sin Pujas"}
-                </span>
-              )}
             </div>
+            {hasBids && !isEnded && (
+              <div className="flex justify-center mt-0.5">
+                <span className="text-[9px] text-success font-medium bg-success/10 px-1.5 py-0.5 rounded-sm">
+                  Con Ofertas
+                </span>
+              </div>
+            )}
 
             {/* Timer / Progress - centered on mobile */}
             {!isEnded && (
