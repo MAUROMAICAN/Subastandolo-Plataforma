@@ -56,8 +56,8 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             </div>
           )}
 
-          {/* Deep gradient at bottom for price legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+          {/* Deep gradient: covers bottom 60% of the image for guaranteed contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.1) 60%, transparent 100%)' }} />
 
           {/* ── TOP-LEFT: Status badge ── */}
           <div className="absolute top-2 left-2 z-10">
@@ -108,8 +108,8 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
             {/* Price */}
             <div className="flex items-baseline gap-0.5">
-              <span className="text-white/70 text-[10px] font-bold">US$</span>
-              <span className="text-white text-xl font-black tracking-tight leading-none drop-shadow-lg">
+              <span className="text-white/80 text-[10px] font-bold" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>US$</span>
+              <span className="text-white text-xl font-black tracking-tight leading-none" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8)' }}>
                 {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               {hasBids && !isEnded && (
