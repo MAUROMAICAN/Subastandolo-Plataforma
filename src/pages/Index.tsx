@@ -176,7 +176,7 @@ const Index = () => {
 
         {/* Banner */}
         {banners.length > 0 && (
-          <section className="relative overflow-hidden h-[240px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3">
+          <section className="relative overflow-hidden h-[170px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3">
             {banners.map((banner, index) => (
               <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <img src={banner.image_url} alt={banner.title || "Banner"} className="absolute inset-0 w-full h-full object-cover" />
@@ -184,31 +184,28 @@ const Index = () => {
               </div>
             ))}
             <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
-              <div className="max-w-xs sm:max-w-md">
+              <div className="max-w-[55%] sm:max-w-md">
                 {banners[currentSlide] && (
                   <>
-                    {/* Text block with subtle frosted backing for mobile legibility */}
-                    <div className="bg-white/70 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none rounded-xl sm:rounded-none p-3 sm:p-0 w-fit">
-                      {banners[currentSlide].title && (
-                        <h1 className="text-2xl sm:text-5xl font-heading font-black text-gray-900 sm:text-white sm:drop-shadow-lg leading-tight mb-1 sm:mb-3 uppercase">
-                          {banners[currentSlide].title}
-                        </h1>
-                      )}
-                      {banners[currentSlide].subtitle && (
-                        <p className="text-sm sm:text-xl font-medium text-gray-700 sm:text-white sm:drop-shadow-md">
-                          {banners[currentSlide].subtitle}
-                        </p>
-                      )}
-                      {banners[currentSlide].description && (
-                        <p className="text-xs sm:text-base text-gray-600 sm:text-white/80 mt-1 sm:mt-2 sm:drop-shadow">
-                          {banners[currentSlide].description}
-                        </p>
-                      )}
-                    </div>
+                    {banners[currentSlide].title && (
+                      <h1 className="text-lg sm:text-5xl font-heading font-black text-white drop-shadow-xl leading-tight mb-1 sm:mb-3">
+                        {banners[currentSlide].title}
+                      </h1>
+                    )}
+                    {banners[currentSlide].subtitle && (
+                      <p className="text-xs sm:text-xl font-medium text-white/90 drop-shadow-md">
+                        {banners[currentSlide].subtitle}
+                      </p>
+                    )}
+                    {banners[currentSlide].description && (
+                      <p className="hidden sm:block text-sm sm:text-base text-white/80 mt-2 drop-shadow">
+                        {banners[currentSlide].description}
+                      </p>
+                    )}
                   </>
                 )}
                 {!user && (
-                  <Button size="default" asChild className="bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-3">
+                  <Button size="default" asChild className="hidden sm:inline-flex bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-3">
                     <Link to="/auth">{heroCta}</Link>
                   </Button>
                 )}
