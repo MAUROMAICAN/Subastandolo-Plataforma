@@ -5,7 +5,7 @@ import type { User, Session } from "@supabase/supabase-js";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: { full_name: string; phone: string | null; manual_buyer_tier?: string | null; avatar_url?: string | null } | null;
+  profile: { full_name: string; phone: string | null; city?: string | null; state?: string | null; manual_buyer_tier?: string | null; avatar_url?: string | null } | null;
   isAdmin: boolean;
   isDealer: boolean;
   loading: boolean;
@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string; phone: string | null; manual_buyer_tier?: string | null; avatar_url?: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; phone: string | null; city?: string | null; state?: string | null; manual_buyer_tier?: string | null; avatar_url?: string | null } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDealer, setIsDealer] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <AuthContext.Provider value={{
         user: fakeUser,
         session: { user: fakeUser } as Session,
-        profile: { full_name: "Usuario Maqueta", phone: "+584120000000" },
+        profile: { full_name: "Usuario Maqueta", phone: "+584120000000", city: "Caracas", state: "Distrito Capital" },
         isAdmin: true,   // Grants admin access for UI testing
         isDealer: true,  // Grants dealer access for UI testing
         loading: false,
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(async () => {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("full_name, phone, manual_buyer_tier, avatar_url")
+              .select("full_name, phone, city, state, manual_buyer_tier, avatar_url")
               .eq("id", session.user.id)
               .single();
             setProfile(profileData);
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name, phone, manual_buyer_tier, avatar_url")
+      .select("full_name, phone, city, state, manual_buyer_tier, avatar_url")
       .eq("id", user.id)
       .single();
     if (profileData) setProfile(profileData);

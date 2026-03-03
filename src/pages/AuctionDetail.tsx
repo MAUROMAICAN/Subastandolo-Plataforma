@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 
 const DescriptionToggle = ({ text, maxLength = 120 }: { text: string; maxLength?: number }) => {
   const [expanded, setExpanded] = useState(false);
@@ -398,7 +399,7 @@ const AuctionDetail = () => {
               const tier = getDealerTier(dealer.salesCount);
               return (
                 <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 bg-card border ${tier.colors.border} rounded-xl px-4 py-3`}>
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
                     <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
                       {dealer.avatarUrl ? (
                         <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
@@ -406,12 +407,12 @@ const AuctionDetail = () => {
                         <User className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
-                    <span className="text-sm font-semibold truncate">{dealer.name}</span>
+                    <span className="text-sm font-semibold truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
                     <VerifiedBadge size="md" salesCount={dealer.salesCount} />
                     <span className={`text-[10px] ${tier.colors.bg} border ${tier.colors.border} ${tier.colors.text} rounded-lg px-2 py-0.5 shrink-0 font-semibold whitespace-nowrap`}>
                       {tier.label}
                     </span>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
                     <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
                   </div>
@@ -420,14 +421,16 @@ const AuctionDetail = () => {
             })()}
             {dealer && !dealer.isVerified && (
               <div className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-4 py-3">
-                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                  {dealer.avatarUrl ? (
-                    <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-                <span className="text-sm font-semibold truncate">{dealer.name}</span>
+                <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-full">
+                  <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                    {dealer.avatarUrl ? (
+                      <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
+                </Link>
               </div>
             )}
 

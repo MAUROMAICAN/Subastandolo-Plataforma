@@ -93,6 +93,8 @@ const DealerApply = () => {
   const [businessName, setBusinessName] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // File states
@@ -122,6 +124,8 @@ const DealerApply = () => {
       setApplication(data);
       if (profile?.phone) setPhone(profile.phone);
       if (profile?.full_name) setFullName(profile.full_name);
+      if (profile?.city) setCity(profile.city);
+      if (profile?.state) setState(profile.state);
       setLoading(false);
     };
     fetchApplication();
@@ -156,6 +160,10 @@ const DealerApply = () => {
     // Validations
     if (!selfieFile || !cedulaFrontFile || !cedulaBackFile || !addressProofFile) {
       toast({ title: "Faltan documentos", description: "Debes subir todos los documentos requeridos.", variant: "destructive" });
+      return;
+    }
+    if (!city.trim() || !state.trim()) {
+      toast({ title: "Datos incompletos", description: "Debes ingresar tu Ciudad y Estado.", variant: "destructive" });
       return;
     }
     if (!termsAccepted) {
@@ -198,6 +206,11 @@ const DealerApply = () => {
       } as any);
 
       if (error) throw error;
+
+      // Update the user's profile with city and state location
+      if (profile && (profile.city !== city || profile.state !== state)) {
+        await supabase.from("profiles").update({ city, state }).eq("id", user.id);
+      }
 
       setUploadProgress(100);
       toast({ title: "¡Solicitud enviada!", description: "Un administrador revisará tu verificación pronto." });
@@ -307,6 +320,16 @@ const DealerApply = () => {
                   <div className="space-y-1.5">
                     <Label className="text-xs">Fecha de nacimiento *</Label>
                     <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required className="rounded-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Estado *</Label>
+                    <Input value={state} onChange={(e) => setState(e.target.value)} required placeholder="Ej: Distrito Capital" className="rounded-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Ciudad *</Label>
+                    <Input value={city} onChange={(e) => setCity(e.target.value)} required placeholder="Ej: Caracas" className="rounded-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -21,14 +21,16 @@ import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import AuctionCard from "@/components/AuctionCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
   ChevronRight, ImageIcon, Store, Download, Star, Heart, Plus, Package,
-  Lock, ShieldCheck
+  Lock, ShieldCheck, User, MapPin
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -38,10 +40,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile";
 
 const BuyerPanel = () => {
-  const { user, profile, isDealer, isAdmin, loading: authLoading } = useAuth();
+  const { user, profile, isDealer, isAdmin, loading: authLoading, refreshProfile } = useAuth();
   const { getSetting } = useSiteSettings();
   const { winsCount } = useBuyerWins(user?.id);
   const { buyerStats } = useUserReviews(user?.id);
@@ -126,6 +128,76 @@ const BuyerPanel = () => {
       toast({ title: "✅ Éxito", description: "Tu contraseña ha sido actualizada." });
       return true;
     }
+  };
+
+  const ProfileView = () => {
+    const [fullName, setFullName] = useState(profile?.full_name || "");
+    const [phone, setPhone] = useState(profile?.phone || "");
+    const [city, setCity] = useState(profile?.city || "");
+    const [state, setState] = useState(profile?.state || "");
+    const [updating, setUpdating] = useState(false);
+    const { toast } = useToast();
+
+    const onSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setUpdating(true);
+      const { error } = await supabase.from("profiles").update({
+        full_name: fullName,
+        phone,
+        city,
+        state
+      }).eq("id", user!.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "¡Actualizado!", description: "Tu perfil ha sido guardado." });
+        await refreshProfile();
+      }
+      setUpdating(false);
+    };
+
+    return (
+      <main className="container mx-auto px-4 py-4 max-w-3xl">
+        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
+          <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+        </button>
+        <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
+          <User className="h-5 w-5 text-primary" />
+          Mi Perfil
+        </h1>
+        <Card className="border border-border rounded-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-heading font-bold">Datos Personales y Ubicación</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Nombre completo</label>
+                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Teléfono</label>
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Estado (Departamento / Provincia) *</label>
+                  <Input value={state} onChange={(e) => setState(e.target.value)} required placeholder="Ej. Distrito Capital" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Ciudad *</label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} required placeholder="Ej. Caracas" />
+                </div>
+              </div>
+              <Button type="submit" disabled={updating} className="w-full sm:w-auto mt-4">
+                {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Guardar Cambios"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
+    );
   };
 
   const SecurityView = () => {
@@ -400,6 +472,15 @@ const BuyerPanel = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <SecurityView />
+      </div>
+    );
+  }
+
+  if (view === "profile") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <ProfileView />
       </div>
     );
   }
@@ -696,6 +777,23 @@ const BuyerPanel = () => {
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Descargar App</p>
                 <p className="text-xs text-muted-foreground">Instala la app en tu dispositivo</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Perfil */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
+            onClick={() => setView("profile")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Mi Perfil</p>
+                <p className="text-xs text-muted-foreground">Datos personales y ubicación</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
             </CardContent>

@@ -124,6 +124,23 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             {auction.title}
           </h3>
 
+          {/* Dealer Link */}
+          {dealer && (
+            <div
+              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = `/dealer/${auction.created_by}`;
+              }}
+            >
+              <div className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0">
+                <span className="text-[8px] font-bold text-secondary-foreground">{dealer.name.substring(0, 1)}</span>
+              </div>
+              <span className="truncate font-medium hover:underline">{dealer.name}</span>
+            </div>
+          )}
+
           {/* Countdown */}
           {!isEnded && (
             <div className="mt-2 flex items-center justify-center gap-1.5 bg-primary/5 border border-primary/15 rounded-lg py-1.5 px-2">

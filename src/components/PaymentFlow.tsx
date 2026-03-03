@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, CheckCircle, Copy, Clock, Building2, CreditCard, FileText, DollarSign } from "lucide-react";
+import { Loader2, Upload, CheckCircle, Copy, Clock, Building2, CreditCard, FileText, DollarSign, MapPin } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 interface PaymentFlowProps {
   auctionId: string;
@@ -31,6 +33,7 @@ const BANK_INFO = {
 
 const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: PaymentFlowProps) => {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [bcvRate, setBcvRate] = useState<number | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [rateLoading, setRateLoading] = useState(true);
@@ -160,6 +163,25 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             </Button>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // Location missing interceptor
+  const canPay = Boolean(profile?.city && profile?.state);
+  if (!canPay) {
+    return (
+      <div className="bg-card border border-destructive/30 rounded-sm overflow-hidden p-6 text-center space-y-4">
+        <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-2">
+          <MapPin className="h-6 w-6 text-destructive" />
+        </div>
+        <h3 className="font-heading font-bold text-lg text-foreground">Información Incompleta</h3>
+        <p className="text-sm text-muted-foreground mx-auto">
+          ⚠️ Por favor actualiza tu información de Ciudad y Estado en tu perfil para proceder con el reporte de tu pago.
+        </p>
+        <Link to="/mi-panel" className="inline-block mt-4">
+          <Button className="font-bold">Ir a mi Perfil</Button>
+        </Link>
       </div>
     );
   }

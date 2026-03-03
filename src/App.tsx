@@ -44,6 +44,7 @@ const Menu = lazy(() => import("./pages/Menu"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const QuieroVender = lazy(() => import("./pages/QuieroVender"));
+const DealerProfile = lazy(() => import("./pages/DealerProfile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,6 +132,7 @@ const App = () => {
                         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
                         <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
                         <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
+                        <Route path="/dealer/:id" element={<DealerProfile />} />
                         <Route path="/demo/badges" element={<BadgeDemo />} />
                         <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
                         <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
