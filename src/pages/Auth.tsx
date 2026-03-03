@@ -974,7 +974,8 @@ const Auth = () => {
               </button>
               <div className="mb-6 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight">Casi listo</h2>
-                <p className="text-sm font-medium text-muted-foreground mt-2">{maskEmail(email)}</p>
+                <p className="text-xs font-semibold text-primary/70 uppercase tracking-widest mt-1">Completa tus datos</p>
+                <p className="text-sm font-medium text-muted-foreground mt-1">{maskEmail(email)}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
