@@ -102,6 +102,19 @@ const Admin = () => {
       bidsCountMap[b.auction_id] = (bidsCountMap[b.auction_id] || 0) + 1;
     });
 
+    // We also need images for reports specifically since they may reference past/archived auctions
+    const reportAuctionIds = ((reportsRes as any).data || []).map((r: any) => r.auction_id).filter(Boolean);
+    if (reportAuctionIds.length > 0) {
+      const { data: reportImages } = await supabase.from("auction_images").select("*").in("auction_id", reportAuctionIds).order("display_order");
+      (reportImages || []).forEach((img: any) => {
+        if (!imagesMap[img.auction_id]) imagesMap[img.auction_id] = [];
+        // Only push if it's not already there avoiding duplicates
+        if (!imagesMap[img.auction_id].find(i => i.id === img.id)) {
+          imagesMap[img.auction_id].push(img);
+        }
+      });
+    }
+
     const profileMap: Record<string, any> = {};
     const dealerNames: Record<string, string> = {};
     ((profilesRes as any).data || []).forEach((p: any) => {
