@@ -184,26 +184,26 @@ const Index = () => {
               </div>
             ))}
             <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
-              {/* Use most of the available width on mobile so text doesn't wrap awkwardly */}
-              <div className="w-[90%] sm:max-w-xl">
+              {/* Text container: no truncate, allows natural wrap and better scaling */}
+              <div className="w-[85%] sm:max-w-xl">
                 {banners[currentSlide] && (
-                  <>
+                  <div className="flex flex-col gap-1 sm:gap-4">
                     {banners[currentSlide].title && (
-                      <h1 className="text-base sm:text-5xl font-heading font-black text-white drop-shadow-xl leading-tight mb-0.5 sm:mb-3 whitespace-normal break-words">
+                      <h1 className="text-lg sm:text-5xl font-heading font-black text-white drop-shadow-2xl leading-tight">
                         {banners[currentSlide].title}
                       </h1>
                     )}
                     {banners[currentSlide].subtitle && (
-                      <p className="text-[11px] sm:text-xl font-medium text-white/90 drop-shadow-md whitespace-normal break-words line-clamp-3 sm:line-clamp-none">
+                      <p className="text-xs sm:text-xl font-medium text-white/95 drop-shadow-lg leading-relaxed">
                         {banners[currentSlide].subtitle}
                       </p>
                     )}
                     {banners[currentSlide].description && (
-                      <p className="hidden sm:block text-sm sm:text-base text-white/80 mt-2 drop-shadow whitespace-normal break-words line-clamp-2">
+                      <p className="hidden sm:block text-sm sm:text-lg text-white/90 drop-shadow-md leading-relaxed">
                         {banners[currentSlide].description}
                       </p>
                     )}
-                  </>
+                  </div>
                 )}
                 {!user && (
                   <Button size="default" asChild className="hidden sm:inline-flex bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-3">
