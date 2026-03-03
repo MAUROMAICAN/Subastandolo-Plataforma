@@ -105,8 +105,12 @@ export default function DealerProfile() {
                     {/* Cover background */}
                     <div className="h-32 sm:h-48 bg-gradient-to-r from-slate-800 to-slate-900 w-full relative">
                         <div className="absolute inset-0 bg-black/20" />
-                        <div className="absolute -bottom-12 sm:-bottom-16 left-6 sm:left-10">
-                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-xl bg-card">
+                    </div>
+
+                    <CardContent className="px-6 sm:px-10 pb-8 relative bg-card">
+                        <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-end -mt-12 sm:-mt-16 mb-6">
+
+                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-xl bg-card shrink-0">
                                 {profile.avatar_url ? (
                                     <img src={profile.avatar_url} alt={displayName} className="object-cover w-full h-full" />
                                 ) : (
@@ -115,14 +119,9 @@ export default function DealerProfile() {
                                     </AvatarFallback>
                                 )}
                             </Avatar>
-                        </div>
-                    </div>
 
-                    <CardContent className="pt-16 sm:pt-20 px-6 sm:px-10 pb-8 relative bg-card">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between items-start sm:items-center mb-6">
-
-                            <div className="flex-1">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                            <div className="flex-1 text-center sm:text-left pt-2 sm:pt-0 pb-1">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 justify-center sm:justify-start">
                                     <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-foreground">{displayName}</h1>
                                     {isDealer && <VerifiedBadge size="lg" salesCount={dealer.salesCount} />}
                                 </div>
@@ -131,7 +130,7 @@ export default function DealerProfile() {
                                     <p className="text-sm text-muted-foreground font-medium mb-2">Representante Legal: {profile.full_name}</p>
                                 )}
 
-                                <div className="flex flex-wrap text-sm gap-x-5 gap-y-2 mt-3 text-muted-foreground font-medium">
+                                <div className="flex flex-wrap text-sm items-center justify-center sm:justify-start gap-x-5 gap-y-2 mt-3 text-muted-foreground font-medium">
                                     <span className="flex items-center gap-1.5 bg-secondary/50 px-3 py-1 rounded-full">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         {profile.city && profile.state ? `${profile.city}, ${profile.state}` : "Ubicación no especificada"}
