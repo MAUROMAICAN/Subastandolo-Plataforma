@@ -54,7 +54,7 @@ const Auth = () => {
   const loginInProgressRef = useRef(false);
   const autoPromptFiredRef = useRef(false);
 
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -112,10 +112,31 @@ const Auth = () => {
 
   // ── Auto-redirect if already logged in ──
   useEffect(() => {
-    if (!user) return;
+    if (authLoading || !user) return;
     if (loginInProgressRef.current) return;
-    navigate("/home", { replace: true });
-  }, [user, navigate]);
+
+    // Check if profile is complete before redirecting to home
+    const checkProfile = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile?.full_name) {
+        // If profile is complete, we can redirect to home or panel
+        navigate("/home", { replace: true });
+      } else {
+        // If profile is incomplete, stay here and show registration details
+        console.log("Profile incomplete, staying on register-details");
+        setView("register-details");
+        // Also ensure email is set if available from session
+        if (user.email) setEmail(user.email);
+      }
+    };
+
+    checkProfile();
+  }, [user, navigate, authLoading]);
 
   // ── Detect remembered user on mount → welcome-back screen ──
   useEffect(() => {

@@ -14,7 +14,6 @@ import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Sto
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import BuyerFAQSection from "@/components/BuyerFAQSection";
 import LaunchCountdown from "@/components/LaunchCountdown";
 import CampaignModal from "@/components/CampaignModal";
 import LoadingState from "@/components/LoadingState";
@@ -36,7 +35,6 @@ const Index = () => {
   const siteName = getSetting("site_name", "SUBASTANDOLO");
   const siteDescription = getSetting("site_description", "La plataforma #1 de subastas en línea");
   const heroCta = getSetting("hero_cta_text", "Regístrate para Pujar");
-  const announcementBar = getSetting("announcement_bar");
 
 
   useEffect(() => {
@@ -130,7 +128,12 @@ const Index = () => {
   const activeAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now());
   const endedAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() <= Date.now());
 
-  const visibleSections = sections.filter(s => s.is_visible && s.section_type !== "guide");
+  const visibleSections = sections.filter(s =>
+    s.is_visible &&
+    s.section_type !== "guide" &&
+    !s.title?.toLowerCase().includes("cómo funciona") &&
+    !s.title?.toLowerCase().includes("preguntas frecuentes")
+  );
 
   if (loading && auctions.length === 0) {
     return (
@@ -360,7 +363,6 @@ const Index = () => {
           )}
         </section>
 
-        <BuyerFAQSection />
 
         {/* Dynamic sections */}
         {visibleSections.map(section => (

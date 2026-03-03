@@ -78,8 +78,6 @@ const Footer = () => {
             <h4 className="font-heading font-bold text-white text-sm uppercase tracking-wider mb-5">Ayuda</h4>
             <ul className="space-y-3">
               {[
-                { label: "Cómo funciona", to: "/como-funciona" },
-                { label: "Preguntas frecuentes", to: "/ayuda" },
                 { label: "Contacto", to: "/contacto" },
                 { label: "Centro de ayuda", to: "/ayuda" },
                 { label: "Reportar problema", to: "/contacto" },
