@@ -50,9 +50,14 @@ const ReputationThermometer = ({ percentage, totalReviews, size = "md", showLabe
           ))}
         </div>
         {showLabel && (
-          <span className={`${s.text} mt-1 font-medium`} style={{ color: NEW_SELLER_COLOR }}>
-            Sin calificaciones
-          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className={`${s.text} font-medium text-blue-600 dark:text-blue-400`}>
+              Sin calificaciones
+            </span>
+            <span className={`${s.text} text-muted-foreground`}>
+              0 ventas
+            </span>
+          </div>
         )}
       </div>
     );
