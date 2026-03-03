@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     const userName = name || "Usuario";
     const appName = "SUBASTANDOLO";
-    const appUrl = "https://subastandolo.lovable.app";
+    const appUrl = "https://subastandolo.com";
 
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",

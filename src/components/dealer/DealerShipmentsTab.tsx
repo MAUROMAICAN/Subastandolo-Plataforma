@@ -234,7 +234,7 @@ export default function DealerShipmentsTab({
                         <div class="row"><span>Estado:</span><strong>${shipping.state}</strong></div>
                       </div>
                       <div class="product">Producto: <strong>${auction.title}</strong></div>
-                      <div class="footer">Generado por SUBASTANDOLO — subastandolo.lovable.app</div>
+                      <div class="footer">Generado por SUBASTANDOLO — subastandolo.com</div>
                     </div></body></html>`;
                   const w = window.open("", "_blank", "width=550,height=600");
                   if (w) { w.document.write(printContent); w.document.close(); w.print(); }
@@ -263,11 +263,10 @@ export default function DealerShipmentsTab({
           )}
 
           {a.dealer_ship_deadline && showForm && (
-            <div className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-sm border ${
-              new Date(a.dealer_ship_deadline).getTime() < Date.now()
+            <div className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-sm border ${new Date(a.dealer_ship_deadline).getTime() < Date.now()
                 ? "bg-destructive/5 border-destructive/20 text-destructive"
                 : "bg-secondary/30 border-border text-muted-foreground"
-            }`}>
+              }`}>
               <Clock className="h-3.5 w-3.5 shrink-0" />
               <span>Plazo de envío: <strong>{new Date(a.dealer_ship_deadline).toLocaleString("es-MX")}</strong></span>
               {new Date(a.dealer_ship_deadline).getTime() < Date.now() && <span className="font-bold ml-1">— VENCIDO</span>}
