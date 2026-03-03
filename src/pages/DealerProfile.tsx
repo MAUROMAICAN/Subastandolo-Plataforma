@@ -145,30 +145,49 @@ export default function DealerProfile() {
 
                         {/* Reputation Section */}
                         {isDealer && tier && (
-                            <div className="bg-secondary/40 border border-border/50 rounded-xl p-5 sm:p-6 mt-2">
+                            <div className="bg-secondary/40 border border-border/50 rounded-xl p-5 sm:p-6 mt-4 md:mt-6">
                                 <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-1.5">
                                     <ShieldCheck className="h-4 w-4 text-primary" />
                                     Nivel de Vendedor
                                 </span>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                                     <div className="lg:col-span-4 flex flex-col pt-1">
                                         <div className="flex flex-col mb-1 border-l-4 pl-3 py-1" style={{ borderColor: tier.colors.text }}>
                                             <span className={`text-xl font-black ${tier.colors.text} leading-none mb-1`}>
                                                 {tier.label}
                                             </span>
                                             <span className="text-sm font-medium text-muted-foreground">
-                                                {dealer.salesCount} ventas concretadas
+                                                ¡Uno de los mejores del sitio!
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="lg:col-span-8 bg-card border border-border/50 rounded-xl p-4 shadow-sm">
-                                        <ReputationThermometer
-                                            percentage={dealerStats.positivePercentage}
-                                            totalReviews={dealerStats.totalReviews}
-                                            size="lg"
-                                        />
+                                    <div className="lg:col-span-8 space-y-6">
+                                        <div className="bg-card border border-border/50 rounded-xl p-4 shadow-sm">
+                                            <ReputationThermometer
+                                                percentage={dealerStats.positivePercentage}
+                                                totalReviews={dealerStats.totalReviews}
+                                                size="lg"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-4 text-center divide-x divide-border/50">
+                                            <div className="flex flex-col justify-center">
+                                                <span className="text-2xl font-black text-foreground">{dealer.salesCount}</span>
+                                                <span className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Ventas<br className="hidden sm:block" />Concretadas</span>
+                                            </div>
+                                            <div className="flex flex-col justify-center px-2">
+                                                <span className="text-2xl font-black text-foreground">{dealerStats.totalReviews > 0 ? `${Math.round(dealerStats.positivePercentage)}%` : 'N/A'}</span>
+                                                <span className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Lo<br className="hidden sm:block" />Recomiendan</span>
+                                            </div>
+                                            <div className="flex flex-col justify-center">
+                                                <span className="text-2xl font-black text-foreground">
+                                                    {new Date().getFullYear() - new Date(profile.created_at).getFullYear() || 1}
+                                                </span>
+                                                <span className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Años en<br className="hidden sm:block" />Subastandolo</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
