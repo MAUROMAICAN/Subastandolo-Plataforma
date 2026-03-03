@@ -27,10 +27,7 @@ interface ReviewCardProps {
   onReplySubmitted?: () => void;
 }
 
-const maskName = (name: string): string => {
-  if (name.length <= 4) return name;
-  return `${name.slice(0, 2)}${"*".repeat(name.length - 4)}${name.slice(-2)}`;
-};
+import { maskName } from "@/lib/utils";
 
 const ReviewCard = ({
   id,

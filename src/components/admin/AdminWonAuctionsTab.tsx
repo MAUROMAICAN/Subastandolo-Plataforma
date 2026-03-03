@@ -293,11 +293,14 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                   return (
                     <tr key={a.id} className="hover:bg-secondary/20 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer group"
+                          onClick={() => navigate(`/auction/${a.id}`)}
+                        >
                           {a.image_url && (
-                            <img src={a.image_url} alt={a.title} className="w-8 h-8 rounded-sm object-cover border border-border shrink-0" />
+                            <img src={a.image_url} alt={a.title} className="w-8 h-8 rounded-sm object-cover border border-border shrink-0 group-hover:opacity-80 transition-opacity" />
                           )}
-                          <p className="font-medium truncate max-w-[180px]">{a.title}</p>
+                          <p className="font-medium truncate max-w-[180px] group-hover:text-primary transition-colors">{a.title}</p>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">

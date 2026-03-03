@@ -46,12 +46,9 @@ import ReportAuctionButton from "@/components/ReportAuctionButton";
 import WinnerCelebration from "@/components/WinnerCelebration";
 import SEO from "@/components/SEO";
 import type { Tables } from "@/integrations/supabase/types";
+import { maskName } from "@/lib/utils";
 import confetti from "canvas-confetti";
 
-const maskName = (name: string): string => {
-  if (name.length <= 4) return name;
-  return `${name.slice(0, 2)}${"*".repeat(name.length - 4)}${name.slice(-2)}`;
-};
 
 const fireConfetti = () => {
   const count = 200;

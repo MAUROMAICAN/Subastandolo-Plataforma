@@ -3,11 +3,7 @@ import Countdown from "@/components/Countdown";
 import { Trophy, Heart, Zap, Timer } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
-
-const maskName = (name: string): string => {
-  if (name.length <= 4) return name;
-  return `${name.slice(0, 2)}${"*".repeat(name.length - 4)}${name.slice(-2)}`;
-};
+import { maskName } from "@/lib/utils";
 
 interface DealerInfo {
   name: string;

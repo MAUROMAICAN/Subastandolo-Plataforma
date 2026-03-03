@@ -319,11 +319,21 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         return (
           <Card key={auction.id} className={`border rounded-sm ${isArchived ? "border-muted opacity-60" : "border-border"}`}>
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center gap-3">
-                {mainImage && <img src={mainImage} className="w-16 h-16 rounded-sm object-cover border border-border shrink-0" alt="" />}
-                <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 group">
+                {mainImage && (
+                  <img
+                    src={mainImage}
+                    className="w-16 h-16 rounded-sm object-cover border border-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => navigate(`/auction/${auction.id}`)}
+                    alt=""
+                  />
+                )}
+                <div
+                  className="flex-1 min-w-0 cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => navigate(`/auction/${auction.id}`)}
+                >
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-medium text-sm truncate">{auction.title}</h4>
+                    <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{auction.title}</h4>
                     <Badge variant="outline" className="text-[10px]">{auction.status}</Badge>
                     {isArchived && <Badge variant="secondary" className="text-[10px]">Archivada</Badge>}
                     {(auction as any).is_extended && (

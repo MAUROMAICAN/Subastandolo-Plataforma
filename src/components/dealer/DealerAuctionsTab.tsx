@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { maskName } from "@/lib/utils";
 import type { AuctionWithImages, WinnerProfile } from "./types";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -278,7 +279,7 @@ export default function DealerAuctionsTab({
                                 {auction.bids.map((bid, index) => (
                                   <tr key={bid.id} className={`border-b border-border last:border-0 ${index === 0 ? "bg-primary/5" : ""}`}>
                                     <td className="px-3 py-1.5">{index === 0 ? "👑" : index + 1}</td>
-                                    <td className="px-3 py-1.5">{bid.bidder_name}</td>
+                                    <td className="px-3 py-1.5">{maskName(bid.bidder_name)}</td>
                                     <td className="px-3 py-1.5 text-right font-bold text-primary">${bid.amount.toLocaleString("es-MX")}</td>
                                     <td className="px-3 py-1.5 text-right text-muted-foreground">{new Date(bid.created_at).toLocaleDateString("es-MX")}</td>
                                   </tr>
