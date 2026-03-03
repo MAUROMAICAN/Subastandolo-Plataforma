@@ -42,6 +42,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Menu = lazy(() => import("./pages/Menu"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const QuieroVender = lazy(() => import("./pages/QuieroVender"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,7 @@ const App = () => {
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<ProtectedRoute authOnly><NotificationsPage /></ProtectedRoute>} />
+                        <Route path="/quiero-vender" element={<QuieroVender />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>

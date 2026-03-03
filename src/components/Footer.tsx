@@ -58,7 +58,7 @@ const Footer = () => {
                 { label: "En Vivo ahora", to: "/#subastas" },
                 { label: "Próximas subastas", to: "/" },
                 { label: "Subastas ganadas", to: "/mi-panel" },
-                { label: "Sé Dealer", to: "/dealer/apply" },
+                { label: "Quiero Vender", to: "/quiero-vender" },
               ].map(({ label, to }) => (
                 <li key={label}>
                   <Link

@@ -410,9 +410,9 @@ const Index = () => {
                   </Button>
                 )}
                 <Button size="lg" variant="outline" asChild className="bg-transparent border-white/20 text-white hover:bg-white/10 font-bold text-sm h-12 px-8 rounded-full">
-                  <Link to="/dealer/apply">
+                  <Link to="/quiero-vender">
                     <Store className="h-4 w-4 mr-2" />
-                    Sé Dealer Verificado
+                    Quiero Vender
                   </Link>
                 </Button>
               </div>

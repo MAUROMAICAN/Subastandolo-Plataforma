@@ -132,8 +132,8 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
               <ReferButton variant="compact" />
             </div>
             {!user && (
-              <Link to="/auth" className="px-4 py-1.5 text-accent hover:bg-accent/10 transition-colors font-bold flex items-center gap-1.5 border border-accent rounded-full text-[12px] ml-2">
-                Sé Dealer
+              <Link to="/quiero-vender" className="px-4 py-1.5 text-accent hover:bg-accent/10 transition-colors font-bold flex items-center gap-1.5 border border-accent rounded-full text-[12px] ml-2">
+                Quiero Vender
               </Link>
             )}
           </nav>
@@ -202,8 +202,8 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
             </Link>
             <div className="border-t border-border/50 my-1" />
             {!user && (
-              <Link to="/auth" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground font-bold flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                <Store className="h-4 w-4" />Regístrate como Dealer
+              <Link to="/quiero-vender" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground font-bold flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                <Store className="h-4 w-4" />Quiero Vender
               </Link>
             )}
             {user && (
