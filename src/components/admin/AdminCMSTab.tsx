@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2 } from "lucide-react";
+import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2, LayoutTemplate, Globe } from "lucide-react";
 import type { BannerImage, SiteSetting, SiteSection } from "./types";
 
 // Convert HSL string "H S% L%" to hex color
@@ -61,11 +61,12 @@ interface Props {
   editingSettings: Record<string, string>;
   setEditingSettings: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   savingSettings: boolean;
+  setSavingSettings: React.Dispatch<React.SetStateAction<boolean>>;
   handleSaveSettings: () => Promise<void>;
   fetchAllData: () => Promise<void>;
 }
 
-const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, editingSettings, setEditingSettings, savingSettings, handleSaveSettings, fetchAllData }: Props) => {
+const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, editingSettings, setEditingSettings, savingSettings, setSavingSettings, handleSaveSettings, fetchAllData }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [banners, setBanners] = useState(initialBanners);
@@ -145,6 +146,31 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
     toast({ title: "Sección actualizada" });
   };
 
+  const handleUploadSettingImage = async (file: File, settingKey: string) => {
+    try {
+      setSavingSettings(true);
+      const filePath = `${settingKey}-${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("banner-images").upload(filePath, file);
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
+
+      // Update local state directly
+      setEditingSettings(p => ({ ...p, [settingKey]: urlData.publicUrl }));
+
+      // Auto-save to DB for this specific setting so it's immediate
+      const { error: dbErr } = await supabase.from("site_settings").update({ setting_value: urlData.publicUrl }).eq("setting_key", settingKey);
+      if (dbErr) throw dbErr;
+
+      toast({ title: "✅ Imagen actualizada correctamente" });
+      fetchAllData();
+    } catch (e: any) {
+      toast({ title: "Error al subir imagen", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -154,67 +180,126 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
         </Button>
       </div>
       <Accordion type="multiple" defaultValue={["settings"]} className="space-y-2">
-        <AccordionItem value="settings" className="border border-border rounded-sm overflow-hidden">
+        {/* BRANDING / VISUAL IDENTITY */}
+        <AccordionItem value="branding" className="border border-border rounded-sm overflow-hidden">
           <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
-            <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-primary dark:text-accent" /> Configuración del Sitio<Badge variant="outline" className="text-[10px] ml-1">{siteSettings.length}</Badge></div>
+            <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-primary dark:text-accent" /> Identidad Visual</div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 space-y-4">
-            {Object.entries(siteSettings.reduce<Record<string, SiteSetting[]>>((acc, s) => { if (!acc[s.category]) acc[s.category] = []; acc[s.category].push(s); return acc; }, {})).map(([cat, settings]) => (
-              <div key={cat} className="space-y-2">
-                <h3 className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider border-b border-border pb-1">{cat}</h3>
-                {settings.map(setting => (
-                  <div key={setting.id} className="flex items-center gap-3">
-                    <Label className="text-xs w-40 shrink-0">{setting.label}</Label>
-                    {setting.setting_type === "color" ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        {/* Native color picker */}
-                        <input
-                          type="color"
-                          value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
-                          onChange={(e) => {
-                            const hsl = hexToHsl(e.target.value);
-                            setEditingSettings(p => ({ ...p, [setting.setting_key]: hsl }));
-                          }}
-                          className="w-10 h-10 rounded-md border border-border cursor-pointer p-0.5 bg-transparent"
-                          title="Seleccionar color"
-                        />
-                        {/* Hex text input */}
-                        <Input
-                          value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                              setEditingSettings(p => ({ ...p, [setting.setting_key]: hexToHsl(val) }));
-                            }
-                          }}
-                          className="rounded-sm text-xs font-mono uppercase max-w-[120px]"
-                          placeholder="#A6E300"
-                          maxLength={7}
-                        />
-                        <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono hidden sm:block">
-                          HSL: {editingSettings[setting.setting_key] || "—"}
-                        </span>
+          <AccordionContent className="px-4 pb-4 space-y-6 pt-2">
+
+            {/* Logos & Media */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Logotipos</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {siteSettings.filter(s => s.setting_key === 'site_logo' || s.setting_key === 'favicon_url').map(setting => (
+                  <div key={setting.id} className="bg-card border border-border p-3 rounded-sm space-y-3">
+                    <Label className="text-xs font-semibold">{setting.label}</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="h-20 w-full bg-secondary/50 rounded-sm border border-dashed border-border flex items-center justify-center overflow-hidden p-2">
+                        {editingSettings[setting.setting_key] ? (
+                          <img src={editingSettings[setting.setting_key]} alt={setting.label} className="max-h-full max-w-full object-contain drop-shadow-md" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sin imagen</span>
+                        )}
                       </div>
-                    ) : setting.setting_key === "ticker_speed" ? (
-                      <div className="flex items-center gap-3 flex-1">
-                        <input
-                          type="range"
-                          min="10"
-                          max="100"
-                          step="5"
-                          value={editingSettings[setting.setting_key] || "50"}
-                          onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))}
-                          className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
-                        />
-                        <span className="text-xs font-mono w-8 text-muted-foreground">{editingSettings[setting.setting_key] || "50"}s</span>
-                      </div>
-                    ) : (
-                      <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-xs" />
-                    )}
+                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs rounded-sm cursor-pointer transition-colors">
+                        <ImagePlus className="h-3.5 w-3.5" /> Cambiar Imagen
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          if (e.target.files?.[0]) handleUploadSettingImage(e.target.files[0], setting.setting_key);
+                        }} />
+                      </label>
+                    </div>
                   </div>
                 ))}
               </div>
-            ))}
+            </div>
+
+            {/* Colors */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Colores del Tema</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {siteSettings.filter(s => s.setting_type === 'color').map(setting => (
+                  <div key={setting.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 bg-secondary/10 rounded-sm border border-transparent hover:border-border transition-colors">
+                    <Label className="text-xs w-full sm:w-48 shrink-0">{setting.label}</Label>
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="color"
+                        value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
+                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: hexToHsl(e.target.value) }))}
+                        className="w-8 h-8 rounded border border-border cursor-pointer p-0 bg-transparent shrink-0"
+                        title="Seleccionar color"
+                      />
+                      <Input
+                        value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) setEditingSettings(p => ({ ...p, [setting.setting_key]: hexToHsl(val) }));
+                        }}
+                        className="rounded-sm text-xs font-mono uppercase h-8 w-24"
+                        placeholder="#A6E300"
+                        maxLength={7}
+                      />
+                      <span className="text-[10px] text-muted-foreground font-mono hidden sm:block ml-2 w-24 truncate">
+                        {editingSettings[setting.setting_key]}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* GENERAL INFO */}
+        <AccordionItem value="general" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-primary dark:text-accent" /> Información General</div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 space-y-4 pt-2">
+            <div className="grid grid-cols-1 gap-4">
+              {siteSettings.filter(s => s.setting_type !== 'color' && s.setting_key !== 'site_logo' && s.setting_key !== 'favicon_url' && s.category === 'general').map(setting => (
+                <div key={setting.id} className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">{setting.label}</Label>
+                  {setting.setting_key === 'site_description' ? (
+                    <Textarea value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm min-h-[80px]" />
+                  ) : (
+                    <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm h-9" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* SYSTEM & DISPLAY CONFIG */}
+        <AccordionItem value="system" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><LayoutTemplate className="h-4 w-4 text-primary dark:text-accent" /> Configuración de Visualización</div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 space-y-4 pt-2">
+            <div className="grid grid-cols-1 gap-4">
+              {siteSettings.filter(s => s.category === 'display' || s.category === 'features').map(setting => (
+                <div key={setting.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 bg-secondary/10 rounded-sm border border-transparent">
+                  <Label className="text-xs font-medium w-full sm:w-60 shrink-0">{setting.label}</Label>
+                  {setting.setting_key === "ticker_speed" ? (
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="range"
+                        min="10"
+                        max="100"
+                        step="5"
+                        value={editingSettings[setting.setting_key] || "50"}
+                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))}
+                        className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                      />
+                      <span className="text-xs font-mono w-10 text-muted-foreground text-right">{editingSettings[setting.setting_key] || "50"}s</span>
+                    </div>
+                  ) : (
+                    <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm h-9 flex-1" />
+                  )}
+                </div>
+              ))}
+            </div>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="sections" className="border border-border rounded-sm overflow-hidden">

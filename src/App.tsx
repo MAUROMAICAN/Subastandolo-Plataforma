@@ -7,9 +7,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { SiteProvider } from "@/hooks/useSiteSettings";
+import { SiteProvider, useSiteSettings } from "@/hooks/useSiteSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { Helmet } from "react-helmet-async";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SplashScreen from "@/components/SplashScreen";
@@ -77,6 +78,20 @@ function RealtimeNotificationInitializer() {
   return null;
 }
 
+/** Injects dynamic Global Settings into HTML Head */
+const SiteHead = () => {
+  const { getSetting } = useSiteSettings();
+  const faviconUrl = getSetting("favicon_url", "/favicon.ico");
+
+  return (
+    <Helmet>
+      <link rel="icon" type="image/svg+xml" href={faviconUrl} />
+      <link rel="icon" type="image/png" href={faviconUrl} />
+      <link rel="apple-touch-icon" href={faviconUrl} />
+    </Helmet>
+  );
+};
+
 const RootRoute = () => {
   const { user, loading } = useAuth();
 
@@ -103,6 +118,7 @@ const App = () => {
               <ErrorBoundary>
                 <AuthProvider>
                   <SiteProvider>
+                    <SiteHead />
                     <PushNotificationInitializer />
                     <RealtimeNotificationInitializer />
                     <Suspense fallback={<PageLoader />}>

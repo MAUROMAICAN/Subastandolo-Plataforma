@@ -6,6 +6,7 @@ import { Instagram, Facebook, Twitter, Youtube, MessageCircle, Gavel, ChevronRig
 const Footer = () => {
   const { getSetting } = useSiteSettings();
   const siteName = getSetting("site_name", "SUBASTANDOLO");
+  const siteLogo = getSetting("site_logo", "/logo_letras.svg");
   const siteDescription = getSetting("site_description", "La plataforma #1 de subastas en línea");
   const footerText = getSetting("footer_text", `© ${new Date().getFullYear()} Subastandolo. Todos los derechos reservados.`);
 
@@ -23,9 +24,9 @@ const Footer = () => {
               <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
                 <Gavel className="h-5 w-5 text-accent-foreground" />
               </div>
-              <span className="font-heading font-black text-lg text-white tracking-wide uppercase">
-                {siteName}
-              </span>
+              <Link to="/">
+                <img src={siteLogo} alt={siteName} className="h-8 max-w-[200px] object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
+              </Link>
             </div>
             <p className="text-white/50 text-sm leading-relaxed mb-6">{siteDescription}</p>
             {/* Social Links */}

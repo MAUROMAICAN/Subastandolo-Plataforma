@@ -26,6 +26,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const siteName = getSetting("site_name", "SUBASTANDOLO");
+  const siteLogo = getSetting("site_logo", "/logo_letras.svg");
 
   const handleSignOut = async () => {
     try {
@@ -44,7 +45,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
       <div className="bg-nav overflow-x-hidden">
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
           <Link to="/" className="flex items-center shrink-0">
-            <img src="/logo_letras.svg" alt={siteName} className="h-8 sm:h-10 w-auto object-contain" />
+            <img src={siteLogo} alt={siteName} className="h-8 sm:h-10 w-auto object-contain" />
           </Link>
 
           {/* Search - Desktop */}
