@@ -250,15 +250,29 @@ const Admin = () => {
 
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? "w-60 fixed lg:relative z-40" : "w-0 lg:w-16"} bg-nav-solid text-white shrink-0 transition-all duration-300 flex flex-col h-screen lg:sticky top-0 overflow-hidden`}>
-        <div className="flex items-center gap-3 h-14 sm:h-16 px-4 border-b border-white/10 shrink-0">
-          {sidebarOpen ? (
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center"><Shield className="h-4 w-4 text-accent-foreground" /></div>
-              <div><span className="font-heading font-bold text-sm block leading-tight text-white">Admin</span><span className="text-[10px] text-white/40 leading-tight">Panel de Control</span></div>
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center mx-auto"><Shield className="h-4 w-4 text-accent-foreground" /></div>
-          )}
+        <div className="flex flex-col border-b border-white/10 shrink-0">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3 h-14 sm:h-16 px-4 hover:bg-white/5 transition-colors text-left"
+          >
+            {sidebarOpen ? (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center"><Shield className="h-4 w-4 text-accent-foreground" /></div>
+                <div><span className="font-heading font-bold text-sm block leading-tight text-white">Admin</span><span className="text-[10px] text-white/40 leading-tight">Panel de Control</span></div>
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center mx-auto"><Shield className="h-4 w-4 text-accent-foreground" /></div>
+            )}
+          </button>
+
+          <div className="px-2 pb-2 space-y-1">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2.5 text-xs text-white/40 hover:text-white w-full px-3 py-2 rounded-md hover:bg-white/5 transition-colors">
+              <Globe className="h-3.5 w-3.5" />{sidebarOpen && <span>Ver sitio</span>}
+            </button>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:flex items-center gap-2.5 text-xs text-white/30 hover:text-white w-full px-3 py-2 rounded-md hover:bg-white/5 transition-colors">
+              {sidebarOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}{sidebarOpen && <span>Colapsar</span>}
+            </button>
+          </div>
         </div>
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
           {sidebarOpen && <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-2 mb-2">Navegación</p>}
@@ -273,13 +287,8 @@ const Admin = () => {
             </button>
           ))}
         </nav>
-        <div className="p-3 border-t border-white/10 space-y-2 shrink-0">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2.5 text-xs text-white/40 hover:text-white w-full px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors">
-            <Globe className="h-3.5 w-3.5" />{sidebarOpen && <span>Ver sitio</span>}
-          </button>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:flex items-center gap-2.5 text-xs text-white/30 hover:text-white w-full px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors">
-            {sidebarOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <Menu className="h-3.5 w-3.5" />}{sidebarOpen && <span>Colapsar</span>}
-          </button>
+        <div className="p-3 border-t border-white/10 shrink-0 flex flex-col items-center">
+          <span className="text-[10px] text-white/20">v1.2.0</span>
         </div>
       </aside>
 
