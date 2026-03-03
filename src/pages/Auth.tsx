@@ -692,8 +692,8 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               {/* Logo */}
               <div className="flex justify-center items-center mb-8">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto hidden dark:block" />
               </div>
 
               <div className="mb-8 text-center">
@@ -848,8 +848,8 @@ const Auth = () => {
 
               {/* Logo */}
               <div className="flex justify-center items-center mb-6 mt-4">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto hidden dark:block" />
               </div>
               <div className="mb-3 text-3xl text-center">👋</div>
               <div className="mb-8 text-center">

@@ -84,8 +84,8 @@ const ResetPassword = () => {
 
   const LogoContainer = () => (
     <div className="flex justify-center items-center mb-6">
-      <img src="/inicio_claro.svg" alt="Subastándolo" className="h-10 w-auto dark:hidden" />
-      <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-10 w-auto hidden dark:block" />
+      <img src="/inicio_claro.svg" alt="Subastándolo" className="h-10 sm:h-12 w-auto dark:hidden" />
+      <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-10 sm:h-12 w-auto hidden dark:block" />
     </div>
   );
 
