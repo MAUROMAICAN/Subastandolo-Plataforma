@@ -388,6 +388,18 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-email-exists", {
+        body: { email: emailToCheck },
+      });
+      if (error || !data) return false;
+      return data.exists === true;
+    } catch {
+      return false;
+    }
+  };
+
   const maskEmail = (e: string) => {
     if (!e) return "";
     const [local, domain] = e.split("@");
@@ -729,31 +741,9 @@ const Auth = () => {
                   e.preventDefault();
                   setLoading(true);
                   try {
-                    // Check if the email already has a complete profile
-                    // We use signInWithOtp to probe existence without revealing passwords
-                    // Strategy: try to sign in with a bad password → if error is "Invalid login credentials"
-                    // the user EXISTS. If error is anything else (e.g. user not found) → NEW USER.
-                    const { error: probeError } = await supabase.auth.signInWithPassword({
-                      email: sanitizeEmail(email),
-                      password: "__probe__",
-                    });
-
-                    if (!probeError) {
-                      // Extremely unlikely (matched a real password), go to password view
-                      setView("password");
-                    } else if (
-                      probeError.message.toLowerCase().includes("invalid login") ||
-                      probeError.message.toLowerCase().includes("invalid credentials") ||
-                      probeError.message.toLowerCase().includes("email not confirmed")
-                    ) {
-                      // User EXISTS in auth → go to password screen
-                      setView("password");
-                    } else {
-                      // User does NOT EXIST → start fresh registration
-                      setView("register-details");
-                    }
+                    const exists = await checkEmailExists(sanitizeEmail(email));
+                    setView(exists ? "password" : "register-details");
                   } catch {
-                    // On network error, fall back to password view
                     setView("password");
                   }
                   setLoading(false);
@@ -918,21 +908,8 @@ const Auth = () => {
                   e.preventDefault();
                   setLoading(true);
                   try {
-                    const { error: probeError } = await supabase.auth.signInWithPassword({
-                      email: sanitizeEmail(email),
-                      password: "__probe__",
-                    });
-                    if (!probeError ||
-                      probeError.message.toLowerCase().includes("invalid login") ||
-                      probeError.message.toLowerCase().includes("invalid credentials") ||
-                      probeError.message.toLowerCase().includes("email not confirmed")
-                    ) {
-                      // User already exists → redirect to login password screen
-                      setView("password");
-                    } else {
-                      // New user → proceed to registration details
-                      setView("register-details");
-                    }
+                    const exists = await checkEmailExists(sanitizeEmail(email));
+                    setView(exists ? "password" : "register-details");
                   } catch {
                     setView("register-details");
                   }
