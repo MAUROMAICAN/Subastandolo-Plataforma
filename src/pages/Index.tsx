@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Navbar from "@/components/Navbar";
 import SEO from "@/components/SEO";
-import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Store } from "lucide-react";
+import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Store, Globe } from "lucide-react";
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -131,6 +131,7 @@ const Index = () => {
   const visibleSections = sections.filter(s =>
     s.is_visible &&
     s.section_type !== "guide" &&
+    s.section_type !== "cta" &&
     !s.title?.toLowerCase().includes("cómo funciona") &&
     !s.title?.toLowerCase().includes("preguntas frecuentes")
   );
@@ -387,10 +388,10 @@ const Index = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 bg-accent/15 border border-accent/30 text-accent text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-wide uppercase">
-                <Gavel className="h-3.5 w-3.5" />
-                Únete a Subastandolo
-              </div>
+              <Link to="/auth" className="inline-flex items-center gap-2 bg-accent/20 hover:bg-accent/30 transition-colors border border-accent/40 text-accent text-xs font-bold px-5 py-2 rounded-full mb-6 tracking-wide uppercase shadow-sm cursor-pointer">
+                <Globe className="h-3.5 w-3.5" />
+                Registrarse en Subastandolo
+              </Link>
               <h2 className="text-3xl sm:text-4xl font-heading font-black text-white mb-4 leading-tight">
                 ¿Listo para conseguir
                 <span className="text-accent"> los mejores precios?</span>
