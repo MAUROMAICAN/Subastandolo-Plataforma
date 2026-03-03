@@ -725,8 +725,8 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               {/* Logo */}
               <div className="flex justify-center items-center mb-8">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto dark:hidden" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto hidden dark:block" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto hidden dark:block" />
               </div>
 
               <div className="mb-8 text-center">
@@ -789,7 +789,7 @@ const Auth = () => {
 
               <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">
-                  Ingresa tu contraseña 🔑
+                  Ingresa tu contraseña
                 </h2>
                 <p className="text-sm font-medium text-muted-foreground mt-2">{maskEmail(email)}</p>
               </div>
@@ -894,10 +894,9 @@ const Auth = () => {
 
               {/* Logo */}
               <div className="flex justify-center items-center mb-6 mt-4">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto dark:hidden" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-24 sm:h-32 w-auto hidden dark:block" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto hidden dark:block" />
               </div>
-              <div className="mb-3 text-3xl text-center">👋</div>
               <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">Crea tu cuenta en Subastándolo</h2>
                 <p className="text-sm text-muted-foreground mt-2">Usa tu mejor correo para las subastas.</p>
