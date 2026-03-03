@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,7 +84,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   const [localSections, setLocalSections] = useState(siteSections);
 
   // Sync props
-  useState(() => { setBanners(initialBanners); setLocalSections(siteSections); });
+  useEffect(() => { setBanners(initialBanners); setLocalSections(siteSections); }, [initialBanners, siteSections]);
 
   const handleAddBanner = async () => {
     if (!bannerFile || !user) return;
