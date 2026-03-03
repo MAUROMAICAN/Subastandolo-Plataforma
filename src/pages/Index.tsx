@@ -206,17 +206,17 @@ const Index = () => {
                 {banners[currentSlide] && (
                   <div className="flex flex-col gap-1 sm:gap-4">
                     {banners[currentSlide].title && (
-                      <h1 className="text-lg sm:text-5xl font-heading font-black text-white drop-shadow-2xl leading-tight">
+                      <h1 className="font-heading font-black text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] leading-tight text-[clamp(1.25rem,4.5vw,3.5rem)]">
                         {banners[currentSlide].title}
                       </h1>
                     )}
                     {banners[currentSlide].subtitle && (
-                      <p className="text-xs sm:text-xl font-medium text-white/95 drop-shadow-lg leading-relaxed">
+                      <p className="font-medium text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-relaxed text-[clamp(0.85rem,2.5vw,1.5rem)] mt-1">
                         {banners[currentSlide].subtitle}
                       </p>
                     )}
                     {banners[currentSlide].description && (
-                      <p className="hidden sm:block text-sm sm:text-lg text-white/90 drop-shadow-md leading-relaxed">
+                      <p className="font-normal text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-relaxed text-[clamp(0.75rem,1.8vw,1.125rem)] mt-2 line-clamp-2">
                         {banners[currentSlide].description}
                       </p>
                     )}
