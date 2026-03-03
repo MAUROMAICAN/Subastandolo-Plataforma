@@ -724,7 +724,42 @@ const Auth = () => {
                 <p className="text-sm text-muted-foreground mt-2">Ingresa tu correo para continuar.</p>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); setView("password"); }} className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setLoading(true);
+                  try {
+                    // Check if the email already has a complete profile
+                    // We use signInWithOtp to probe existence without revealing passwords
+                    // Strategy: try to sign in with a bad password → if error is "Invalid login credentials"
+                    // the user EXISTS. If error is anything else (e.g. user not found) → NEW USER.
+                    const { error: probeError } = await supabase.auth.signInWithPassword({
+                      email: sanitizeEmail(email),
+                      password: "__probe__",
+                    });
+
+                    if (!probeError) {
+                      // Extremely unlikely (matched a real password), go to password view
+                      setView("password");
+                    } else if (
+                      probeError.message.toLowerCase().includes("invalid login") ||
+                      probeError.message.toLowerCase().includes("invalid credentials") ||
+                      probeError.message.toLowerCase().includes("email not confirmed")
+                    ) {
+                      // User EXISTS in auth → go to password screen
+                      setView("password");
+                    } else {
+                      // User does NOT EXIST → start fresh registration
+                      setView("register-details");
+                    }
+                  } catch {
+                    // On network error, fall back to password view
+                    setView("password");
+                  }
+                  setLoading(false);
+                }}
+                className="space-y-4"
+              >
                 <div className="relative">
                   <Input
                     type="email"
@@ -740,10 +775,10 @@ const Auth = () => {
 
                 <Button
                   type="submit"
-                  disabled={!email.includes('@')}
+                  disabled={!email.includes('@') || loading}
                   className="w-full h-14 bg-zinc-800 text-white hover:bg-zinc-700 font-bold rounded-2xl text-base tracking-wide shadow active:scale-[0.98] transition-all disabled:opacity-40"
                 >
-                  Ingresar
+                  {loading ? "Verificando..." : "Ingresar"}
                 </Button>
               </form>
             </div>
@@ -878,7 +913,33 @@ const Auth = () => {
                 <p className="text-sm text-muted-foreground mt-2">Usa tu mejor correo para las subastas.</p>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); setView("register-details"); }} className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setLoading(true);
+                  try {
+                    const { error: probeError } = await supabase.auth.signInWithPassword({
+                      email: sanitizeEmail(email),
+                      password: "__probe__",
+                    });
+                    if (!probeError ||
+                      probeError.message.toLowerCase().includes("invalid login") ||
+                      probeError.message.toLowerCase().includes("invalid credentials") ||
+                      probeError.message.toLowerCase().includes("email not confirmed")
+                    ) {
+                      // User already exists → redirect to login password screen
+                      setView("password");
+                    } else {
+                      // New user → proceed to registration details
+                      setView("register-details");
+                    }
+                  } catch {
+                    setView("register-details");
+                  }
+                  setLoading(false);
+                }}
+                className="space-y-4"
+              >
                 <Input
                   type="email"
                   placeholder="tumail@ejemplo.com"
@@ -891,10 +952,10 @@ const Auth = () => {
                 />
                 <Button
                   type="submit"
-                  disabled={!email.includes('@')}
+                  disabled={!email.includes('@') || loading}
                   className="w-full h-14 bg-zinc-800 text-white hover:bg-zinc-700 font-bold rounded-2xl text-base tracking-wide shadow active:scale-[0.98] transition-all disabled:opacity-40"
                 >
-                  Continuar
+                  {loading ? "Verificando..." : "Continuar"}
                 </Button>
               </form>
             </div>
