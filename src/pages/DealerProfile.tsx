@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useVerifiedDealer } from "@/hooks/useVerifiedDealers";
 import { useUserReviews } from "@/hooks/useReviews";
@@ -139,17 +139,7 @@ export default function DealerProfile() {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 w-full sm:w-auto">
-                                <button
-                                    onClick={() => window.open(`https://wa.me/58${profile.phone?.replace(/\D/g, "")}`, '_blank')}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-success text-white px-4 py-2 rounded-lg font-bold hover:bg-success/90 transition-colors shadow-sm text-sm"
-                                    disabled={!profile.phone}
-                                >
-                                    <MessageCircle className="h-4 w-4" />
-                                    Contactar
-                                </button>
-                            </div>
+                            {/* Removed Action Buttons (Contactar) per user request */}
                         </div>
 
                         {/* Reputation Section */}
