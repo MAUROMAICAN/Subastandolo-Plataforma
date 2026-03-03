@@ -1041,7 +1041,7 @@ const Auth = () => {
             className="flex items-center justify-center gap-2 mx-auto text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             {view === "login-email" ? (
-              <><span className="text-xl">👋</span> ¿Primera vez aquí? <span className="text-primary font-bold ml-1">Crea tu cuenta ahora</span></>
+              <>¿Primera vez aquí? <span className="text-primary font-bold ml-1">Crea tu cuenta ahora</span></>
             ) : (
               <>¿Ya tienes cuenta? <span className="text-primary font-bold ml-1">Inicia sesión</span></>
             )}
