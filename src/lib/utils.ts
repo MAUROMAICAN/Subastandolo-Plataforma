@@ -7,6 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function maskName(name: string | null | undefined): string {
   if (!name) return "";
-  if (name.length <= 3) return `${name[0]}***`;
-  return `${name.slice(0, 2)}***${name.slice(-1)}`;
+  const str = name.trim();
+  if (str.length <= 2) return `${str[0]}*`;
+  if (str.length <= 4) return `${str.slice(0, 2)}***`;
+  return `${str.slice(0, 2)}${"*".repeat(str.length - 3)}${str.slice(-1)}`;
 }
