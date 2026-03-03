@@ -691,16 +691,16 @@ const Auth = () => {
           {view === "login-email" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               {/* Logo */}
-              <div className="flex justify-start items-center mb-8 -ml-2">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
+              <div className="flex justify-center items-center mb-6">
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-28 sm:h-36 w-auto dark:hidden drop-shadow-sm" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-28 sm:h-36 w-auto hidden dark:block drop-shadow-md" />
               </div>
 
-              <div className="mb-8">
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">
                   Inicia sesión en<br />Subastándolo
                 </h2>
-                <p className="text-sm text-muted-foreground mt-2">Ingresa tu correo para continuar.</p>
+                <p className="text-sm text-muted-foreground mt-3">Ingresa tu correo para continuar.</p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); setView("password"); }} className="space-y-4">
@@ -741,11 +741,11 @@ const Auth = () => {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
 
-              <div className="mb-8">
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">
                   Ingresa tu contraseña 🔑
                 </h2>
-                <p className="text-sm font-medium text-muted-foreground mt-2">{maskEmail(email)}</p>
+                <p className="text-sm font-medium text-muted-foreground mt-3">{maskEmail(email)}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -848,14 +848,14 @@ const Auth = () => {
               </button>
 
               {/* Logo */}
-              <div className="flex justify-start items-center mb-6 mt-4 -ml-2">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
+              <div className="flex justify-center items-center mb-4 mt-2">
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-28 sm:h-36 w-auto dark:hidden drop-shadow-sm" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-28 sm:h-36 w-auto hidden dark:block drop-shadow-md" />
               </div>
-              <div className="mb-3 text-3xl">👋</div>
-              <div className="mb-8">
+              <div className="mb-3 text-4xl text-center">👋</div>
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">Crea tu cuenta en Subastándolo</h2>
-                <p className="text-sm text-muted-foreground mt-2">Usa tu mejor correo para las subastas.</p>
+                <p className="text-sm text-muted-foreground mt-3">Usa tu mejor correo para las subastas.</p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); setView("register-details"); }} className="space-y-4">
@@ -891,9 +891,9 @@ const Auth = () => {
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
-              <div className="mb-6">
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-black text-foreground tracking-tight">Casi listo</h2>
-                <p className="text-sm font-medium text-muted-foreground mt-2">{maskEmail(email)}</p>
+                <p className="text-sm font-medium text-muted-foreground mt-3">{maskEmail(email)}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
