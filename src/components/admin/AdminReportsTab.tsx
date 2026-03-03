@@ -91,6 +91,11 @@ const AdminReportsTab = ({ auctionReports, fetchAllData }: Props) => {
             <Card key={report.id} className={`border rounded-sm ${report.status === "pending" ? "border-destructive/30 bg-destructive/5" : "border-border"}`}>
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-start justify-between gap-3">
+                  {report.auction_image && (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-md overflow-hidden bg-secondary border border-border">
+                      <img src={report.auction_image} alt="Miniatura" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant={report.status === "pending" ? "destructive" : "default"} className="text-[10px]">{report.status === "pending" ? "Pendiente" : "Revisado"}</Badge>

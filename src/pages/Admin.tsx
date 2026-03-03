@@ -186,6 +186,7 @@ const Admin = () => {
     const reportsList = ((reportsRes as any).data || []).map((r: any) => ({
       ...r,
       auction_title: auctionList.find(a => a.id === r.auction_id)?.title || "Subasta",
+      auction_image: imagesMap[r.auction_id]?.[0]?.image_url || null,
       reporter_name: dealerNames[r.reporter_id] || "Usuario",
     }));
     setAuctionReports(reportsList);
@@ -222,18 +223,18 @@ const Admin = () => {
   const sidebarItems: { key: AdminTab; label: string; icon: any; badge?: number }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "review", label: "Revisión", icon: Eye, badge: pendingAuctions.length },
-    { key: "auctions", label: "Subastas", icon: Gavel },
-    { key: "payments", label: "Pagos", icon: CreditCard, badge: pendingPayments },
-    { key: "won", label: "Ganadas", icon: Trophy },
-    { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages },
+    { key: "auctions", label: "Subastas", icon: Gavel, badge: auctions.length },
+    { key: "payments", label: "Pagos", icon: CreditCard, badge: paymentProofs.length },
+    { key: "won", label: "Ganadas", icon: Trophy, badge: auctions.filter(a => a.status === "finalized").length },
+    { key: "messages", label: "Mensajes", icon: MessageCircle, badge: messages.length },
     { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
-    { key: "dealers", label: "Dealers", icon: Package },
-    { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: openDisputes },
-    { key: "reports", label: "Reportes", icon: Flag, badge: auctionReports.filter((r: any) => r.status === "pending").length },
+    { key: "dealers", label: "Dealers", icon: Package, badge: dealers.length },
+    { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: adminDisputes.length },
+    { key: "reports", label: "Reportes", icon: Flag, badge: auctionReports.length },
     { key: "campaigns", label: "Campañas", icon: ImagePlus },
     { key: "notifications", label: "Push", icon: Bell },
-    { key: "users", label: "Usuarios", icon: Users },
-    { key: "team", label: "Equipo", icon: Shield },
+    { key: "users", label: "Usuarios", icon: Users, badge: allUsers.length },
+    { key: "team", label: "Equipo", icon: Shield, badge: allUsers.filter(u => u.role === "admin").length },
     { key: "cms", label: "Config. Central", icon: Settings },
   ];
 
