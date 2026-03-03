@@ -26,19 +26,20 @@ const ResetPassword = () => {
     const hash = window.location.hash;
     if (hash.includes("type=recovery")) {
       setReady(true);
-    } else {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "PASSWORD_RECOVERY") {
-          setReady(true);
-        }
-      });
-      return () => subscription.unsubscribe();
+      return () => { };
     }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setReady(true);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Resend cooldown timer
   useEffect(() => {
-    if (resendCooldown <= 0) return;
+    if (resendCooldown <= 0) return () => { };
     const timer = setInterval(() => {
       setResendCooldown((prev) => Math.max(prev - 1, 0));
     }, 1000);
