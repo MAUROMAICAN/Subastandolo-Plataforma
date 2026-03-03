@@ -101,13 +101,12 @@ export default function DealerProfile() {
                 <BackButton />
 
                 {/* Profile Header */}
-                <Card className="border border-border rounded-xl overflow-hidden overflow-visible relative mt-8 sm:mt-12">
+                <Card className="border border-border rounded-2xl overflow-hidden shadow-md mt-4 sm:mt-8">
                     {/* Cover background */}
-                    <div className="h-24 sm:h-32 bg-gradient-to-r from-primary/80 to-accent w-full absolute top-0 left-0" />
-
-                    <CardContent className="pt-0 px-4 sm:px-8 pb-6 sm:pb-8 relative">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-end -mt-12 sm:-mt-16 mb-4 sm:mb-6">
-                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-card shadow-lg bg-card">
+                    <div className="h-32 sm:h-48 bg-gradient-to-r from-slate-800 to-slate-900 w-full relative">
+                        <div className="absolute inset-0 bg-black/20" />
+                        <div className="absolute -bottom-12 sm:-bottom-16 left-6 sm:left-10">
+                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-xl bg-card">
                                 {profile.avatar_url ? (
                                     <img src={profile.avatar_url} alt={displayName} className="object-cover w-full h-full" />
                                 ) : (
@@ -116,56 +115,62 @@ export default function DealerProfile() {
                                     </AvatarFallback>
                                 )}
                             </Avatar>
+                        </div>
+                    </div>
 
-                            <div className="flex-1 text-center sm:text-left pt-2 sm:pt-0 pb-2">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 justify-center sm:justify-start">
-                                    <h1 className="text-2xl sm:text-3xl font-heading font-bold">{displayName}</h1>
+                    <CardContent className="pt-16 sm:pt-20 px-6 sm:px-10 pb-8 relative bg-card">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between items-start sm:items-center mb-6">
+
+                            <div className="flex-1">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                                    <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-foreground">{displayName}</h1>
                                     {isDealer && <VerifiedBadge size="lg" salesCount={dealer.salesCount} />}
                                 </div>
 
                                 {dealerInfo?.business_name && dealerInfo.business_name !== profile.full_name && (
-                                    <p className="text-muted-foreground font-medium mb-1">Rep. Legal: {profile.full_name}</p>
+                                    <p className="text-sm text-muted-foreground font-medium mb-2">Representante Legal: {profile.full_name}</p>
                                 )}
 
-                                <div className="flex flex-wrap text-sm items-center justify-center sm:justify-start gap-x-4 gap-y-2 mt-2 text-muted-foreground">
-                                    <span className="flex items-center gap-1.5 font-medium text-foreground">
+                                <div className="flex flex-wrap text-sm gap-x-5 gap-y-2 mt-3 text-muted-foreground font-medium">
+                                    <span className="flex items-center gap-1.5 bg-secondary/50 px-3 py-1 rounded-full">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         {profile.city && profile.state ? `${profile.city}, ${profile.state}` : "Ubicación no especificada"}
                                     </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <Calendar className="h-4 w-4" />
+                                    <span className="flex items-center gap-1.5 bg-secondary/50 px-3 py-1 rounded-full">
+                                        <Calendar className="h-4 w-4 text-muted-foreground" />
                                         Miembro desde {new Date(profile.created_at).toLocaleDateString("es-VE", { month: "short", year: "numeric" })}
                                     </span>
                                 </div>
                             </div>
-
-                            {/* Removed Action Buttons (Contactar) per user request */}
                         </div>
 
                         {/* Reputation Section */}
                         {isDealer && tier && (
-                            <div className="bg-secondary/20 border border-border rounded-xl p-4 sm:p-5 flex flex-col md:flex-row gap-6 items-center justify-between">
-                                <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <ShieldCheck className="h-4 w-4 text-primary" />
-                                        Nivel de Vendedor
-                                    </span>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`px-3 py-1 rounded-lg font-bold text-sm ${tier.colors.bg} ${tier.colors.text} border ${tier.colors.border}`}>
-                                            {tier.label}
-                                        </span>
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            {dealer.salesCount} ventas concretadas
-                                        </span>
-                                    </div>
-                                </div>
+                            <div className="bg-secondary/40 border border-border/50 rounded-xl p-5 sm:p-6 mt-2">
+                                <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                                    <ShieldCheck className="h-4 w-4 text-primary" />
+                                    Nivel de Vendedor
+                                </span>
 
-                                <div className="w-full md:w-[60%] lg:w-[50%]">
-                                    <ReputationThermometer
-                                        percentage={dealerStats.positivePercentage}
-                                        totalReviews={dealerStats.totalReviews}
-                                        size="lg"
-                                    />
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                                    <div className="lg:col-span-4 flex flex-col pt-1">
+                                        <div className="flex flex-col mb-1 border-l-4 pl-3 py-1" style={{ borderColor: tier.colors.text }}>
+                                            <span className={`text-xl font-black ${tier.colors.text} leading-none mb-1`}>
+                                                {tier.label}
+                                            </span>
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {dealer.salesCount} ventas concretadas
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="lg:col-span-8 bg-card border border-border/50 rounded-xl p-4 shadow-sm">
+                                        <ReputationThermometer
+                                            percentage={dealerStats.positivePercentage}
+                                            totalReviews={dealerStats.totalReviews}
+                                            size="lg"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
