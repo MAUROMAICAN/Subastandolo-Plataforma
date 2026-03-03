@@ -158,9 +158,21 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
       // Update local state directly
       setEditingSettings(p => ({ ...p, [settingKey]: urlData.publicUrl }));
 
-      // Auto-save to DB for this specific setting so it's immediate
-      const { error: dbErr } = await supabase.from("site_settings").update({ setting_value: urlData.publicUrl }).eq("setting_key", settingKey);
-      if (dbErr) throw dbErr;
+      // Upsert to DB for this specific setting so it's immediate
+      const { data: existing } = await supabase.from("site_settings").select("id").eq("setting_key", settingKey).maybeSingle();
+      if (existing) {
+        const { error: dbErr } = await supabase.from("site_settings").update({ setting_value: urlData.publicUrl }).eq("setting_key", settingKey);
+        if (dbErr) throw dbErr;
+      } else {
+        const { error: dbErr } = await supabase.from("site_settings").insert({
+          setting_key: settingKey,
+          setting_value: urlData.publicUrl,
+          setting_type: 'image',
+          category: 'branding',
+          label: settingKey === 'site_logo' ? 'Logo Principal' : settingKey === 'favicon_url' ? 'Favicon' : 'Imagen'
+        });
+        if (dbErr) throw dbErr;
+      }
 
       toast({ title: "✅ Imagen actualizada correctamente" });
       fetchAllData();
@@ -189,15 +201,19 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
 
             {/* Logos & Media */}
             <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Logotipos</h3>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Logotipos e Imágenes Clave</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {siteSettings.filter(s => s.setting_key === 'site_logo' || s.setting_key === 'favicon_url').map(setting => (
-                  <div key={setting.id} className="bg-card border border-border p-3 rounded-sm space-y-3">
+                {[
+                  { key: 'site_logo', label: 'Logotipo Principal' },
+                  { key: 'favicon_url', label: 'Favicon (Icono de pestaña)' },
+                  { key: 'quiero_vender_hero', label: 'Hero Image "Quiero Vender"' }
+                ].map(setting => (
+                  <div key={setting.key} className="bg-card border border-border p-3 rounded-sm space-y-3">
                     <Label className="text-xs font-semibold">{setting.label}</Label>
                     <div className="flex flex-col gap-3">
-                      <div className="h-20 w-full bg-secondary/50 rounded-sm border border-dashed border-border flex items-center justify-center overflow-hidden p-2">
-                        {editingSettings[setting.setting_key] ? (
-                          <img src={editingSettings[setting.setting_key]} alt={setting.label} className="max-h-full max-w-full object-contain drop-shadow-md" />
+                      <div className="h-20 w-full bg-secondary/50 rounded-sm border border-dashed border-border flex items-center justify-center overflow-hidden p-2 relative group">
+                        {editingSettings[setting.key] ? (
+                          <img src={editingSettings[setting.key]} alt={setting.label} className="max-h-full max-w-full object-contain drop-shadow-md" />
                         ) : (
                           <span className="text-xs text-muted-foreground">Sin imagen</span>
                         )}
@@ -205,7 +221,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
                       <label className="flex items-center justify-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs rounded-sm cursor-pointer transition-colors">
                         <ImagePlus className="h-3.5 w-3.5" /> Cambiar Imagen
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          if (e.target.files?.[0]) handleUploadSettingImage(e.target.files[0], setting.setting_key);
+                          if (e.target.files?.[0]) handleUploadSettingImage(e.target.files[0], setting.key);
                         }} />
                       </label>
                     </div>
@@ -218,29 +234,34 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
             <div className="space-y-4">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Colores del Tema</h3>
               <div className="grid grid-cols-1 gap-3">
-                {siteSettings.filter(s => s.setting_type === 'color').map(setting => (
-                  <div key={setting.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 bg-secondary/10 rounded-sm border border-transparent hover:border-border transition-colors">
+                {[
+                  { key: 'primary_color', label: 'Color Primario (General)' },
+                  { key: 'secondary_color', label: 'Color Secundario' },
+                  { key: 'accent_color', label: 'Color de Acento (Botones, Destacados)' },
+                  { key: 'background_color', label: 'Color de Fondo Global' }
+                ].map(setting => (
+                  <div key={setting.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 bg-secondary/10 rounded-sm border border-transparent hover:border-border transition-colors">
                     <Label className="text-xs w-full sm:w-48 shrink-0">{setting.label}</Label>
                     <div className="flex items-center gap-2 flex-1">
                       <input
                         type="color"
-                        value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
-                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: hexToHsl(e.target.value) }))}
+                        value={hslToHex(editingSettings[setting.key] || "0 0% 50%")}
+                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: hexToHsl(e.target.value) }))}
                         className="w-8 h-8 rounded border border-border cursor-pointer p-0 bg-transparent shrink-0"
                         title="Seleccionar color"
                       />
                       <Input
-                        value={hslToHex(editingSettings[setting.setting_key] || "0 0% 50%")}
+                        value={hslToHex(editingSettings[setting.key] || "0 0% 50%")}
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) setEditingSettings(p => ({ ...p, [setting.setting_key]: hexToHsl(val) }));
+                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) setEditingSettings(p => ({ ...p, [setting.key]: hexToHsl(val) }));
                         }}
                         className="rounded-sm text-xs font-mono uppercase h-8 w-24"
                         placeholder="#A6E300"
                         maxLength={7}
                       />
                       <span className="text-[10px] text-muted-foreground font-mono hidden sm:block ml-2 w-24 truncate">
-                        {editingSettings[setting.setting_key]}
+                        {editingSettings[setting.key]}
                       </span>
                     </div>
                   </div>
@@ -257,13 +278,19 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 space-y-4 pt-2">
             <div className="grid grid-cols-1 gap-4">
-              {siteSettings.filter(s => s.setting_type !== 'color' && s.setting_key !== 'site_logo' && s.setting_key !== 'favicon_url' && s.category === 'general').map(setting => (
-                <div key={setting.id} className="space-y-1.5">
+              {[
+                { key: 'site_name', label: 'Nombre del Sitio', isTextarea: false },
+                { key: 'site_description', label: 'Descripción Corta (SEO)', isTextarea: true },
+                { key: 'contact_email', label: 'Email de Contacto', isTextarea: false },
+                { key: 'whatsapp_number', label: 'Número de WhatsApp', isTextarea: false },
+                { key: 'footer_text', label: 'Texto del Copyright (Footer)', isTextarea: false },
+              ].map(setting => (
+                <div key={setting.key} className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">{setting.label}</Label>
-                  {setting.setting_key === 'site_description' ? (
-                    <Textarea value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm min-h-[80px]" />
+                  {setting.isTextarea ? (
+                    <Textarea value={editingSettings[setting.key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))} className="rounded-sm text-sm min-h-[80px]" />
                   ) : (
-                    <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm h-9" />
+                    <Input value={editingSettings[setting.key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))} className="rounded-sm text-sm h-9" />
                   )}
                 </div>
               ))}
@@ -278,24 +305,27 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 space-y-4 pt-2">
             <div className="grid grid-cols-1 gap-4">
-              {siteSettings.filter(s => s.category === 'display' || s.category === 'features').map(setting => (
-                <div key={setting.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 bg-secondary/10 rounded-sm border border-transparent">
+              {[
+                { key: 'ticker_speed', label: 'Velocidad de Tickers (Segs)' },
+                { key: 'commission_percentage', label: 'Porcentaje de Comisión (%)' }
+              ].map(setting => (
+                <div key={setting.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 bg-secondary/10 rounded-sm border border-transparent">
                   <Label className="text-xs font-medium w-full sm:w-60 shrink-0">{setting.label}</Label>
-                  {setting.setting_key === "ticker_speed" ? (
+                  {setting.key === "ticker_speed" ? (
                     <div className="flex items-center gap-3 flex-1">
                       <input
                         type="range"
                         min="10"
                         max="100"
                         step="5"
-                        value={editingSettings[setting.setting_key] || "50"}
-                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))}
+                        value={editingSettings[setting.key] || "50"}
+                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))}
                         className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
                       />
-                      <span className="text-xs font-mono w-10 text-muted-foreground text-right">{editingSettings[setting.setting_key] || "50"}s</span>
+                      <span className="text-xs font-mono w-10 text-muted-foreground text-right">{editingSettings[setting.key] || "50"}s</span>
                     </div>
                   ) : (
-                    <Input value={editingSettings[setting.setting_key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.setting_key]: e.target.value }))} className="rounded-sm text-sm h-9 flex-1" />
+                    <Input value={editingSettings[setting.key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))} className="rounded-sm text-sm h-9 flex-1" />
                   )}
                 </div>
               ))}

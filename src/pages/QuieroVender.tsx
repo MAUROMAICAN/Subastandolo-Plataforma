@@ -5,8 +5,11 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const QuieroVender = () => {
+    const { getSetting } = useSiteSettings();
+    const heroImage = getSetting("quiero_vender_hero", "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800");
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <SEO
@@ -55,7 +58,7 @@ const QuieroVender = () => {
                                     +300% en alcance
                                 </div>
                                 <img
-                                    src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800"
+                                    src={heroImage}
                                     alt="Ventas Exitosas"
                                     className="rounded-xl object-cover w-full h-[300px] sm:h-[400px]"
                                 />

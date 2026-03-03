@@ -210,14 +210,31 @@ const Admin = () => {
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     let hasError = false;
-    for (const setting of siteSettings) {
-      const newValue = editingSettings[setting.setting_key];
-      if (newValue !== (setting.setting_value || "")) {
-        const { error } = await supabase.from("site_settings").update({ setting_value: newValue, updated_by: user!.id, updated_at: new Date().toISOString() } as any).eq("setting_key", setting.setting_key);
-        if (error) {
-          toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
-          hasError = true;
-          break;
+    for (const [key, newValue] of Object.entries(editingSettings)) {
+      const existingSetting = siteSettings.find(s => s.setting_key === key);
+      const oldValue = existingSetting ? (existingSetting.setting_value || "") : "";
+
+      if (newValue !== oldValue) {
+        if (existingSetting) {
+          const { error } = await supabase.from("site_settings").update({ setting_value: newValue, updated_by: user!.id, updated_at: new Date().toISOString() } as any).eq("setting_key", key);
+          if (error) {
+            toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
+            hasError = true;
+            break;
+          }
+        } else {
+          const { error } = await supabase.from("site_settings").insert({
+            setting_key: key,
+            setting_value: newValue,
+            setting_type: key.includes("color") ? "color" : "text",
+            category: "general",
+            label: key,
+          } as any);
+          if (error) {
+            toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
+            hasError = true;
+            break;
+          }
         }
       }
     }
