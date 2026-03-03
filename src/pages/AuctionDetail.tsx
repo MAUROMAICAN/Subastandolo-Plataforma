@@ -395,42 +395,39 @@ const AuctionDetail = () => {
             </div>
 
             {/* Dealer info */}
-            {dealer && dealer.isVerified && (() => {
-              const tier = getDealerTier(dealer.salesCount);
-              return (
-                <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 bg-card border ${tier.colors.border} rounded-xl px-4 py-3`}>
-                  <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-                    <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+            {dealer && (
+              <div className="bg-card border border-border rounded-xl px-5 py-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                  <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+                    <div className="w-12 h-12 rounded-full border border-border bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
                       {dealer.avatarUrl ? (
                         <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
                       ) : (
-                        <User className="h-4 w-4 text-muted-foreground" />
+                        <User className="h-6 w-6 text-muted-foreground" />
                       )}
                     </div>
-                    <span className="text-sm font-semibold truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
-                    <VerifiedBadge size="md" salesCount={dealer.salesCount} />
-                    <span className={`text-[10px] ${tier.colors.bg} border ${tier.colors.border} ${tier.colors.text} rounded-lg px-2 py-0.5 shrink-0 font-semibold whitespace-nowrap`}>
-                      {tier.label}
-                    </span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5 font-bold text-foreground text-sm sm:text-base">
+                        <span className="truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
+                        {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
+                      </div>
+
+                      {(() => {
+                        const tier = getDealerTier(dealer?.salesCount || 0);
+                        return (
+                          <span className={`text-xs font-semibold ${tier.colors.text} mt-0.5`}>
+                            {tier.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </Link>
-                  <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
+
+                  <div className="flex flex-col items-start sm:items-end justify-center shrink-0 pl-[52px] sm:pl-0 sm:border-l sm:border-border sm:pl-4">
                     <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
+                    <span className="text-[10px] text-muted-foreground mt-1 font-medium">{dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}</span>
                   </div>
                 </div>
-              );
-            })()}
-            {dealer && !dealer.isVerified && (
-              <div className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-4 py-3">
-                <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity w-full">
-                  <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                    {dealer.avatarUrl ? (
-                      <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
-                </Link>
               </div>
             )}
 
