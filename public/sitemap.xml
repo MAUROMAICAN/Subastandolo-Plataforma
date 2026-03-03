@@ -2,20 +2,44 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.subastandolo.com/</loc>
-    <lastmod>2026-02-21</lastmod>
+    <lastmod>2026-03-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.subastandolo.com/subastas</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.subastandolo.com/home</loc>
+    <lastmod>2026-03-03</lastmod>
     <changefreq>always</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.subastandolo.com/como-funciona</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.subastandolo.com/nosotros</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.subastandolo.com/contacto</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.subastandolo.com/ayuda</loc>
-    <lastmod>2026-02-21</lastmod>
+    <lastmod>2026-03-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.subastandolo.com/politicas-publicacion</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>monthly</priority>
+    <priority>0.4</priority>
   </url>
 </urlset>

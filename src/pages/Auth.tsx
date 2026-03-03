@@ -379,8 +379,8 @@ const Auth = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "¡Buenos días";
-    if (hour < 18) return "¡Buenos días";
+    if (hour >= 5 && hour < 12) return "¡Buenos días";
+    if (hour >= 12 && hour < 18) return "¡Buenas tardes";
     return "¡Buenas noches";
   };
 
@@ -692,8 +692,8 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               {/* Logo */}
               <div className="flex justify-center items-center mb-8">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-12 w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-12 w-auto hidden dark:block" />
               </div>
 
               <div className="mb-8 text-center">
@@ -771,8 +771,7 @@ const Auth = () => {
                 {/* ── Biometric enrollment checkbox ── */}
                 {biometricAvailable && !biometricChecking && !biometricEnabled && (
                   <div
-                    className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4 cursor-pointer"
-                    onClick={() => setEnableBiometricOnLogin(!enableBiometricOnLogin)}
+                    className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4"
                   >
                     <Checkbox
                       id="enable-biometric"
@@ -849,8 +848,8 @@ const Auth = () => {
 
               {/* Logo */}
               <div className="flex justify-center items-center mb-6 mt-4">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto dark:hidden drop-shadow-sm" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-32 sm:h-40 w-auto hidden dark:block drop-shadow-md" />
+                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-12 w-auto dark:hidden" />
+                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-12 w-auto hidden dark:block" />
               </div>
               <div className="mb-3 text-3xl text-center">👋</div>
               <div className="mb-8 text-center">
@@ -937,8 +936,7 @@ const Auth = () => {
                 </div>
 
                 <div
-                  className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4 cursor-pointer"
-                  onClick={() => setTermsAccepted(!termsAccepted)}
+                  className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4"
                 >
                   <Checkbox
                     id="terms"

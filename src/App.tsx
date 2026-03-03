@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
@@ -91,53 +92,55 @@ const App = () => {
 
   return (
     <ThemeProvider defaultTheme="system" enableSystem attribute="class">
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ErrorBoundary>
-              <AuthProvider>
-                <SiteProvider>
-                  <PushNotificationInitializer />
-                  <RealtimeNotificationInitializer />
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<RootRoute />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/auth/callback" element={<AuthCallback />} />
-                      <Route path="/home" element={<Index />} />
-                      <Route path="/auction/:id" element={<AuctionDetail />} />
-                      <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
-                      <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
-                      <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
-                      <Route path="/demo/badges" element={<BadgeDemo />} />
-                      <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
-                      <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
-                      <Route path="/ayuda" element={<Help />} />
-                      <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
-                      <Route path="/compradores" element={<BuyerFAQ />} />
-                      <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
-                      <Route path="/instalar" element={<InstallApp />} />
-                      <Route path="/como-funciona" element={<HowItWorksPage />} />
-                      <Route path="/nosotros" element={<AboutPage />} />
-                      <Route path="/contacto" element={<Contact />} />
-                      <Route path="/terminos" element={<TermsPage />} />
-                      <Route path="/privacidad" element={<PrivacyPage />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
-                      <Route path="/notificaciones" element={<ProtectedRoute authOnly><NotificationsPage /></ProtectedRoute>} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                  <CookieConsent />
-                </SiteProvider>
-              </AuthProvider>
-            </ErrorBoundary>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ErrorBoundary>
+                <AuthProvider>
+                  <SiteProvider>
+                    <PushNotificationInitializer />
+                    <RealtimeNotificationInitializer />
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<RootRoute />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/home" element={<Index />} />
+                        <Route path="/auction/:id" element={<AuctionDetail />} />
+                        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
+                        <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
+                        <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
+                        <Route path="/demo/badges" element={<BadgeDemo />} />
+                        <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
+                        <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
+                        <Route path="/ayuda" element={<Help />} />
+                        <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
+                        <Route path="/compradores" element={<BuyerFAQ />} />
+                        <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
+                        <Route path="/instalar" element={<InstallApp />} />
+                        <Route path="/como-funciona" element={<HowItWorksPage />} />
+                        <Route path="/nosotros" element={<AboutPage />} />
+                        <Route path="/contacto" element={<Contact />} />
+                        <Route path="/terminos" element={<TermsPage />} />
+                        <Route path="/privacidad" element={<PrivacyPage />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
+                        <Route path="/notificaciones" element={<ProtectedRoute authOnly><NotificationsPage /></ProtectedRoute>} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                    <CookieConsent />
+                  </SiteProvider>
+                </AuthProvider>
+              </ErrorBoundary>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </HelmetProvider>
     </ThemeProvider>
   );
 };

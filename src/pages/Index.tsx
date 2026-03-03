@@ -9,7 +9,7 @@ import AuctionCard from "@/components/AuctionCard";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Navbar from "@/components/Navbar";
-import SEOHead from "@/components/SEOHead";
+import SEO from "@/components/SEO";
 import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Store } from "lucide-react";
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
@@ -164,7 +164,21 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <CampaignModal />
-      <SEOHead title="Subastas Online en Venezuela - Tú pones el precio" description="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!" />
+      <SEO
+        title="Subastas Online en Venezuela - Tú pones el precio"
+        description="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!"
+        schemaData={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Subastandolo.com",
+          "url": "https://www.subastandolo.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.subastandolo.com/home?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }}
+      />
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main>

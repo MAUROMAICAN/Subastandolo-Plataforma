@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 const DescriptionToggle = ({ text, maxLength = 120 }: { text: string; maxLength?: number }) => {
   const [expanded, setExpanded] = useState(false);
   const needsTruncate = text.length > maxLength;
-  
+
   if (!needsTruncate) return <span>{text}</span>;
 
   return (
@@ -44,7 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X } from "lucide-react";
 import ReportAuctionButton from "@/components/ReportAuctionButton";
 import WinnerCelebration from "@/components/WinnerCelebration";
-import SEOHead from "@/components/SEOHead";
+import SEO from "@/components/SEO";
 import type { Tables } from "@/integrations/supabase/types";
 import confetti from "canvas-confetti";
 
@@ -264,7 +264,7 @@ const AuctionDetail = () => {
             auctionId: auction.id,
             auctionTitle: auction.title,
           },
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
     setBidding(false);
@@ -303,10 +303,26 @@ const AuctionDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead
-        title={`Subasta de ${auction.title} en Venezuela`}
-        description={`Participa en la subasta de ${auction.title}. Precio inicial desde $${auction.starting_price}. ¡Puja ahora y ahorra!`}
-        image={allImages[0] || undefined}
+      <SEO
+        title={auction.title}
+        description={`Participa en la subasta de ${auction.title} en Subastandolo.com. Precio inicial: $${auction.starting_price.toLocaleString("es-MX")}. ¡Oferta ahora!`}
+        image={allImages[0]}
+        url={`https://www.subastandolo.com/auction/${id}`}
+        type="product"
+        schemaData={{
+          "@context": "https://schema.org/",
+          "@type": "Product",
+          "name": auction.title,
+          "image": allImages,
+          "description": auction.description,
+          "offers": {
+            "@type": "Offer",
+            "url": `https://www.subastandolo.com/auction/${id}`,
+            "priceCurrency": "USD",
+            "price": currentPrice,
+            "availability": isEnded ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+          }
+        }}
       />
       <Navbar />
       <BackButton />

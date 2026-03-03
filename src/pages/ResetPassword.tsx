@@ -4,12 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Lock, Mail, RefreshCw, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Mail, RefreshCw, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError } from "@/lib/authErrors";
 import PasswordInput from "@/components/PasswordInput";
-import logo from "@/assets/logo-dark.png";
 
 const RESEND_COOLDOWN = 30;
 
@@ -83,103 +81,102 @@ const ResetPassword = () => {
     setLoading(false);
   };
 
+  const LogoContainer = () => (
+    <div className="flex justify-center items-center mb-6">
+      <img src="/inicio_claro.svg" alt="Subastándolo" className="h-10 w-auto dark:hidden" />
+      <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-10 w-auto hidden dark:block" />
+    </div>
+  );
+
   // ── Invalid / expired link view ──
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-md border border-border rounded-sm shadow-sm">
-          <CardHeader className="text-center space-y-2">
-            <img src={logo} alt="Subastandolo" className="h-14 mx-auto object-contain mb-1" />
-            <div className="mx-auto bg-destructive/10 rounded-full p-3 w-fit">
-              <AlertTriangle className="h-8 w-8 text-destructive" />
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-400">
+          <LogoContainer />
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-destructive/5 border border-destructive/20 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+              </div>
             </div>
-            <CardTitle className="text-xl font-heading">Enlace inválido o expirado</CardTitle>
-            <CardDescription className="text-xs leading-relaxed">
+          </div>
+          <div className="text-center mb-6 space-y-2">
+            <h3 className="text-xl font-heading font-bold text-foreground">Enlace inválido o expirado</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Este enlace ya fue usado o ha expirado. Ingresa tu correo para recibir uno nuevo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </p>
+          </div>
+          <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Correo electrónico</Label>
+              <Label className="text-xs text-muted-foreground font-medium pl-1">Correo electrónico</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
                 <Input
                   type="email"
                   placeholder="tu@correo.com"
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
-                  className="pl-10 rounded-sm h-9"
+                  className="h-12 rounded-2xl bg-muted/20 border-border/50 pl-11 focus-visible:ring-1 transition-all"
                 />
               </div>
             </div>
             <Button
               onClick={handleResendRecovery}
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-sm"
+              className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-2xl shadow-lg active:scale-[0.98] transition-all"
               disabled={resendLoading || resendCooldown > 0 || !resendEmail.trim()}
             >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resendLoading ? "animate-spin" : ""}`} />
-              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "Enviar nuevo enlace"}
+              {resendLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : "Enviar nuevo enlace"}
+              {resendCooldown > 0 && ` (${resendCooldown}s)`}
             </Button>
-            <Button onClick={() => navigate("/auth")} variant="ghost" className="w-full text-xs">
-              ← Ir a iniciar sesión
+            <Button onClick={() => navigate("/auth")} variant="ghost" className="w-full text-muted-foreground hover:text-foreground text-sm">
+              ← Volver al inicio
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   // ── Reset password form ──
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md border border-border rounded-sm shadow-sm">
-        <CardHeader className="text-center space-y-1 pb-2">
-          <img src={logo} alt="Subastandolo" className="h-14 mx-auto object-contain mb-2" />
-          <CardTitle className="text-xl font-heading">Nueva Contraseña</CardTitle>
-          <CardDescription className="text-xs">Ingresa tu nueva contraseña. Debe ser diferente a la anterior.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleReset} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nueva contraseña</Label>
-              <PasswordInput
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 rounded-sm h-9"
-                required
-                minLength={6}
-                startAdornment={<Lock className="h-4 w-4" />}
-                showLabel="Ver contraseña"
-                hideLabel="Ocultar contraseña"
-              />
-              {password.length > 0 && password.length < 6 && (
-                <p className="text-[10px] text-destructive/80">Mínimo 6 caracteres</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Confirmar contraseña</Label>
-              <PasswordInput
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10 rounded-sm h-9"
-                required
-                minLength={6}
-                startAdornment={<Lock className="h-4 w-4" />}
-                showLabel="Ver confirmación"
-                hideLabel="Ocultar confirmación"
-              />
-              {confirmPassword.length > 0 && password !== confirmPassword && (
-                <p className="text-[10px] text-destructive/80">Las contraseñas no coinciden</p>
-              )}
-            </div>
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-sm" disabled={loading || password.length < 6 || password !== confirmPassword}>
-              {loading ? "Actualizando..." : "Actualizar contraseña"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+      <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-400">
+        <LogoContainer />
+        <div className="text-center mb-8 space-y-2">
+          <h3 className="text-2xl font-heading font-bold text-foreground">Nueva Contraseña</h3>
+          <p className="text-sm text-muted-foreground">Ingresa tu nueva contraseña para recuperar el acceso.</p>
+        </div>
+        <form onSubmit={handleReset} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground font-medium pl-1">Nueva contraseña</Label>
+            <PasswordInput
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 rounded-2xl bg-muted/20 border-border/50 pr-12 focus-visible:ring-1 transition-all"
+              required
+              minLength={6}
+              startAdornment={<Lock className="h-4 w-4" />}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground font-medium pl-1">Confirmar contraseña</Label>
+            <PasswordInput
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="h-12 rounded-2xl bg-muted/20 border-border/50 pr-12 focus-visible:ring-1 transition-all"
+              required
+              minLength={6}
+              startAdornment={<Lock className="h-4 w-4" />}
+            />
+          </div>
+          <Button type="submit" className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-2xl shadow-lg active:scale-[0.98] transition-all" disabled={loading || password.length < 6 || password !== confirmPassword}>
+            {loading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : "Actualizar contraseña"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

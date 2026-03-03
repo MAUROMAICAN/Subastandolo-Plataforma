@@ -1,14 +1,38 @@
 import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/integrations/supabase/client";
 
 const DEEP_LINK_SCHEME = "com.subastandolo.app://auth/callback";
 
 const AuthCallback = () => {
   useEffect(() => {
-    const search = window.location.search || "";
-    const hash = window.location.hash || "";
-    const deepLink = `${DEEP_LINK_SCHEME}${search}${hash}`;
+    const handleAuth = async () => {
+      const isNative = Capacitor.isNativePlatform();
+      const search = window.location.search || "";
+      const hash = window.location.hash || "";
 
-    window.location.replace(deepLink);
+      if (isNative) {
+        // App redirection flow
+        const deepLink = `${DEEP_LINK_SCHEME}${search}${hash}`;
+        window.location.replace(deepLink);
+      } else {
+        // Web redirection flow
+        // The Supabase client automatically handles the hash/search to set the session
+        // We just need to wait a tiny bit to ensure it's processed or check the session
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          window.location.replace("/home");
+        } else {
+          // Fallback if no session found immediately
+          setTimeout(() => {
+            window.location.replace("/home");
+          }, 1500);
+        }
+      }
+    };
+
+    handleAuth();
   }, []);
 
   return (

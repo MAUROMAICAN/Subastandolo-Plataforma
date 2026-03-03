@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import WonAuctionCard from "@/components/WonAuctionCard";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useDisputes, type Dispute } from "@/hooks/useDisputes";
@@ -8,11 +7,12 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useBuyerWins } from "@/hooks/useBuyerStats";
 import { useUserReviews } from "@/hooks/useReviews";
 import { useFavorites } from "@/hooks/useFavorites";
-import BuyerBadge, { getBuyerTier } from "@/components/BuyerBadge";
+import BuyerBadge from "@/components/BuyerBadge";
 import AdminBadge from "@/components/AdminBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
 import DisputeChat from "@/components/DisputeChat";
 import DisputeForm from "@/components/DisputeForm";
+import PasswordInput from "@/components/PasswordInput";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
@@ -26,7 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
-  ChevronRight, ImageIcon, Store, Download, User, Package, Gavel, Plus, Star, Heart, Trophy,
+  ChevronRight, ImageIcon, Store, Download, Star, Heart, Plus, Package,
+  Lock, ShieldCheck
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -37,7 +38,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security";
 
 const BuyerPanel = () => {
   const { user, profile, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -55,7 +56,6 @@ const BuyerPanel = () => {
   const [loadingAuctions, setLoadingAuctions] = useState(true);
   const [selectedAuctionForDispute, setSelectedAuctionForDispute] = useState<Tables<"auctions"> | null>(null);
   const [favoriteAuctions, setFavoriteAuctions] = useState<Tables<"auctions">[]>([]);
-  const [loadingFavorites, setLoadingFavorites] = useState(true);
 
   const siteName = getSetting("site_name", "SUBASTANDOLO");
 
@@ -83,7 +83,6 @@ const BuyerPanel = () => {
   useEffect(() => {
     if (!user || favoriteIds.size === 0) {
       setFavoriteAuctions([]);
-      setLoadingFavorites(false);
       return;
     }
     const fetchFavs = async () => {
@@ -94,7 +93,6 @@ const BuyerPanel = () => {
         .in("id", ids)
         .order("end_time", { ascending: true });
       setFavoriteAuctions(data || []);
-      setLoadingFavorites(false);
     };
     fetchFavs();
   }, [user, favoriteIds]);
@@ -115,6 +113,119 @@ const BuyerPanel = () => {
     setView("dispute-detail");
     if (d.evidence_urls.length > 0) loadEvidence(d.evidence_urls);
     else setEvidenceUrls([]);
+  };
+
+  const handlePasswordUpdate = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      const { toast } = await import("@/hooks/use-toast");
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return false;
+    } else {
+      const { toast } = await import("@/hooks/use-toast");
+      toast({ title: "✅ Éxito", description: "Tu contraseña ha sido actualizada." });
+      return true;
+    }
+  };
+
+  const SecurityView = () => {
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [updating, setUpdating] = useState(false);
+
+    const onSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newPassword !== confirmPassword) {
+        const { toast } = await import("@/hooks/use-toast");
+        toast({ title: "Error", description: "Las contraseñas no coinciden.", variant: "destructive" });
+        return;
+      }
+      if (newPassword.length < 6) {
+        const { toast } = await import("@/hooks/use-toast");
+        toast({ title: "Error", description: "Mínimo 6 caracteres.", variant: "destructive" });
+        return;
+      }
+      setUpdating(true);
+      const success = await handlePasswordUpdate(newPassword);
+      if (success) {
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+      setUpdating(false);
+    };
+
+    return (
+      <main className="container mx-auto px-4 py-4 max-w-3xl">
+        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
+          <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+        </button>
+
+        <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
+          <Lock className="h-5 w-5 text-primary" />
+          Seguridad de la Cuenta
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="border border-border rounded-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-heading font-bold">Cambiar Contraseña</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={onSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Nueva contraseña</label>
+                  <PasswordInput
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="h-10 rounded-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Confirmar nueva contraseña</label>
+                  <PasswordInput
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="h-10 rounded-sm"
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-primary text-primary-foreground rounded-sm font-bold" disabled={updating}>
+                  {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Actualizar Contraseña"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border rounded-sm bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-heading font-bold">Estado de Cuenta</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-brand-lime/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-brand-lime" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">Cuenta Verificada</p>
+                  <p className="text-[10px] text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              <div className="p-3 bg-card border border-border rounded-sm">
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Tu cuenta está protegida con cifrado de extremo a extremo. Recuerda no compartir tu contraseña con nadie.
+                </p>
+              </div>
+              <Button variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => navigate("/reset-password")}>
+                ¿Olvidaste tu contraseña?
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
   };
 
   if (authLoading || !user) {
@@ -284,6 +395,15 @@ const BuyerPanel = () => {
     );
   }
 
+  if (view === "security") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <SecurityView />
+      </div>
+    );
+  }
+
   // New dispute view
   if (view === "new-dispute") {
     return (
@@ -399,7 +519,7 @@ const BuyerPanel = () => {
             <ProfileAvatarUpload
               avatarUrl={(profile as any)?.avatar_url || null}
               userName={profile?.full_name || "Usuario"}
-              onAvatarChange={() => {}}
+              onAvatarChange={() => { }}
               size="md"
             />
             <div className="flex-1 min-w-0">
@@ -459,27 +579,27 @@ const BuyerPanel = () => {
               {wonAuctions.map(a => {
                 const endDate = new Date(a.end_time);
                 const dateStr = endDate.toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" });
-                
-                const statusLabel = 
-                  a.delivery_status === "delivered" || a.delivered_at ? "Entregado" :
-                  a.delivery_status === "shipped" || a.tracking_number ? "En camino" :
-                  a.payment_status === "verified" ? "Pago verificado" :
-                  a.payment_status === "under_review" ? "Pago en revisión" :
-                  a.payment_status === "escrow" ? "En escrow" :
-                  "Pago pendiente";
 
-                const statusColor = 
+                const statusLabel =
+                  a.delivery_status === "delivered" || a.delivered_at ? "Entregado" :
+                    a.delivery_status === "shipped" || a.tracking_number ? "En camino" :
+                      a.payment_status === "verified" ? "Pago verificado" :
+                        a.payment_status === "under_review" ? "Pago en revisión" :
+                          a.payment_status === "escrow" ? "En escrow" :
+                            "Pago pendiente";
+
+                const statusColor =
                   a.delivery_status === "delivered" || a.delivered_at ? "text-emerald-600" :
-                  a.delivery_status === "shipped" || a.tracking_number ? "text-primary" :
-                  a.payment_status === "verified" ? "text-primary" :
-                  "text-amber-600";
+                    a.delivery_status === "shipped" || a.tracking_number ? "text-primary" :
+                      a.payment_status === "verified" ? "text-primary" :
+                        "text-amber-600";
 
                 const statusDesc =
                   a.delivery_status === "delivered" || a.delivered_at ? "Asumimos que ya recibiste la compra" :
-                  a.delivery_status === "shipped" || a.tracking_number ? "Tu producto está en camino" :
-                  a.payment_status === "verified" ? "El dealer preparará tu envío" :
-                  a.payment_status === "under_review" ? "Estamos revisando tu comprobante" :
-                  "Sube tu comprobante de pago";
+                    a.delivery_status === "shipped" || a.tracking_number ? "Tu producto está en camino" :
+                      a.payment_status === "verified" ? "El dealer preparará tu envío" :
+                        a.payment_status === "under_review" ? "Estamos revisando tu comprobante" :
+                          "Sube tu comprobante de pago";
 
                 return (
                   <div
@@ -576,6 +696,23 @@ const BuyerPanel = () => {
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Descargar App</p>
                 <p className="text-xs text-muted-foreground">Instala la app en tu dispositivo</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Seguridad */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
+            onClick={() => setView("security")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Lock className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Seguridad</p>
+                <p className="text-xs text-muted-foreground">Contraseña y acceso</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
             </CardContent>
