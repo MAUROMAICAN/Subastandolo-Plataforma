@@ -42,7 +42,7 @@ const QuieroVender = () => {
                                         Regístrate Ahora <ChevronRight className="ml-2 h-5 w-5" />
                                     </Link>
                                 </Button>
-                                <Button size="lg" variant="outline" asChild className="h-14 px-8 text-base font-bold rounded-full border-white/20 text-white hover:bg-white/10 w-full sm:w-auto mt-2 sm:mt-0">
+                                <Button size="lg" variant="outline" asChild className="h-14 px-8 text-base font-bold rounded-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white w-full sm:w-auto mt-2 sm:mt-0">
                                     <a href="#beneficios">Conoce los beneficios</a>
                                 </Button>
                             </div>
@@ -174,16 +174,16 @@ const QuieroVender = () => {
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-24 bg-card text-center relative overflow-hidden">
-                    <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+                <section className="py-24 bg-primary text-center relative overflow-hidden">
+                    <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]" />
                     <div className="container relative z-10 mx-auto px-4 max-w-3xl">
-                        <h2 className="text-3xl sm:text-5xl font-heading font-black text-foreground mb-6 leading-tight">
+                        <h2 className="text-3xl sm:text-5xl font-heading font-black text-white mb-6 leading-tight">
                             Abre tu nuevo canal de ventas de forma masiva
                         </h2>
-                        <p className="text-muted-foreground text-lg sm:text-xl mb-10">
+                        <p className="text-white/80 text-lg sm:text-xl mb-10 font-medium">
                             Acepta el modelo 2026 del e-commerce. Más rapidez, mejor liquidez, y un sistema en el que dictas las reglas.
                         </p>
-                        <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg font-bold rounded-full shadow-lg">
+                        <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 h-14 px-10 text-lg font-bold rounded-full shadow-lg">
                             <Link to="/auth">
                                 Comenzar Inscripción de Dealer
                             </Link>
