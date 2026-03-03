@@ -7,13 +7,24 @@ const useApiBCVRate = () => {
     const [rate, setRate] = useState<number | null>(null);
     useEffect(() => {
         const fetchRate = async () => {
-            try {
-                const res = await fetch("https://pydolarve.org/api/v2/dollar?page=bcv", {
-                    signal: AbortSignal.timeout(5000),
-                });
-                const data = await res.json();
-                if (data?.monitors?.usd?.price) setRate(data.monitors.usd.price);
-            } catch { /* silent fail */ }
+            // Primary: pydolarve.org (may be intermittently down)
+            // Secondary: ve.dolarapi.com as fallback
+            const endpoints = [
+                { url: "https://pydolarve.org/api/v2/dollar?page=bcv", extract: (d: any) => d?.monitors?.usd?.price },
+                { url: "https://ve.dolarapi.com/v1/dolares/oficial", extract: (d: any) => d?.promedio },
+            ];
+            for (const ep of endpoints) {
+                try {
+                    const res = await fetch(ep.url, { signal: AbortSignal.timeout(5000) });
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    const value = ep.extract(data);
+                    if (value && !isNaN(Number(value))) {
+                        setRate(Number(value));
+                        return; // got a value, stop trying
+                    }
+                } catch { /* try next */ }
+            }
         };
         fetchRate();
         const interval = setInterval(fetchRate, 5 * 60 * 1000);
