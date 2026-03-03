@@ -306,6 +306,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
           <AccordionContent className="px-4 pb-4 space-y-4 pt-2">
             <div className="grid grid-cols-1 gap-4">
               {[
+                { key: 'announcement_bar', label: 'Texto del Ticker (Mensaje Superior)' },
                 { key: 'ticker_speed', label: 'Velocidad de Tickers (Segs)' },
                 { key: 'commission_percentage', label: 'Porcentaje de Comisión (%)' }
               ].map(setting => (
@@ -324,6 +325,8 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
                       />
                       <span className="text-xs font-mono w-10 text-muted-foreground text-right">{editingSettings[setting.key] || "50"}s</span>
                     </div>
+                  ) : setting.key === "announcement_bar" ? (
+                    <Input value={editingSettings[setting.key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))} className="rounded-sm text-sm h-9 flex-1" placeholder="Ej: ¡Envíos gratis este fin de semana!" />
                   ) : (
                     <Input value={editingSettings[setting.key] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: e.target.value }))} className="rounded-sm text-sm h-9 flex-1" />
                   )}
