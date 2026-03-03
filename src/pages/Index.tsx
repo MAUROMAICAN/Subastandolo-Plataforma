@@ -202,29 +202,29 @@ const Index = () => {
               </div>
             ))}
             <div className="container mx-auto px-4 sm:px-5 h-full flex items-center relative z-10">
-              {/* Text container: no truncate, allows natural wrap and better scaling */}
-              <div className="w-[85%] sm:max-w-xl">
+              {/* Text container: no truncate, allows natural wrap and better scaling, but tight and structured */}
+              <div className="w-full max-w-[90%] sm:max-w-2xl">
                 {banners[currentSlide] && (
-                  <div className="flex flex-col gap-1 sm:gap-4">
+                  <div className="flex flex-col gap-1.5 sm:gap-2">
                     {banners[currentSlide].title && (
-                      <h1 className="font-heading font-black text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] leading-tight text-[clamp(1.25rem,4.5vw,3.5rem)]">
+                      <h1 className="font-heading font-black text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] leading-[1.1] text-[clamp(1.4rem,4vw,2.75rem)] uppercase tracking-tight text-balance">
                         {banners[currentSlide].title}
                       </h1>
                     )}
                     {banners[currentSlide].subtitle && (
-                      <p className="font-medium text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-relaxed text-[clamp(0.85rem,2.5vw,1.5rem)] mt-1">
+                      <p className="font-semibold text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-snug text-[clamp(0.9rem,2vw,1.35rem)] mt-0.5 text-balance">
                         {banners[currentSlide].subtitle}
                       </p>
                     )}
                     {banners[currentSlide].description && (
-                      <p className="font-normal text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-relaxed text-[clamp(0.75rem,1.8vw,1.125rem)] mt-2 line-clamp-2">
+                      <p className="font-normal text-white/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-snug text-[clamp(0.8rem,1.5vw,1rem)] mt-1 line-clamp-2 max-w-xl">
                         {banners[currentSlide].description}
                       </p>
                     )}
                   </div>
                 )}
                 {!user && (
-                  <Button size="default" asChild className="hidden sm:inline-flex bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-3">
+                  <Button size="default" asChild className="hidden sm:inline-flex bg-[#B5FB05] text-[#1a1a2e] hover:bg-[#9fe004] font-bold rounded-full shadow-lg text-sm h-11 px-8 mt-4 sm:mt-5 transition-transform hover:scale-105">
                     <Link to="/auth">{heroCta}</Link>
                   </Button>
                 )}
