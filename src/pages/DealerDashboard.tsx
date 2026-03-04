@@ -46,6 +46,7 @@ const DealerDashboard = () => {
   const [winnerProfiles, setWinnerProfiles] = useState<Record<string, WinnerProfile>>({});
   const [dealerAvatarUrl, setDealerAvatarUrl] = useState<string | null>(null);
   const [shippingInfoMap, setShippingInfoMap] = useState<Record<string, any>>({});
+  const [showComingSoon, setShowComingSoon] = useState<string | null>(null);
 
   // Tracking state (shared between Auctions and Shipments tabs)
   const [trackingNumber, setTrackingNumber] = useState<Record<string, string>>({});
@@ -381,22 +382,52 @@ const DealerDashboard = () => {
 
         {/* ── TAB NAVIGATION ── */}
         <div className="mb-5">
-          {/* Scrollable pill tabs */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${activeTab === tab.key
-                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(" ").pop()}</span>
-              </button>
-            ))}
+            {tabs.map(tab => {
+              // Tabs restricted to admins only until marketplace is live
+              const isRestricted = !isAdmin && ["store", "store-orders"].includes(tab.key);
+
+              return (
+                <div key={tab.key} className="relative shrink-0">
+                  {/* Próximamente tooltip */}
+                  {showComingSoon === tab.key && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+                      <div className="bg-foreground text-background text-[10px] font-black px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-xl flex items-center gap-1">
+                        🚀 Próximamente
+                      </div>
+                      {/* Arrow */}
+                      <div className="w-2 h-2 bg-foreground rotate-45 mx-auto -mt-1" />
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      if (isRestricted) {
+                        setShowComingSoon(tab.key);
+                        setTimeout(() => setShowComingSoon(null), 2500);
+                      } else {
+                        setActiveTab(tab.key);
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${isRestricted
+                        ? "opacity-50 cursor-not-allowed bg-secondary/30 text-muted-foreground"
+                        : activeTab === tab.key
+                          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }`}
+                  >
+                    <tab.icon className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.label.split(" ").pop()}</span>
+                    {isRestricted && (
+                      <span className="hidden sm:inline text-[9px] font-black bg-muted-foreground/20 text-muted-foreground rounded-full px-1.5 py-0.5 ml-0.5">
+                        Próx.
+                      </span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
