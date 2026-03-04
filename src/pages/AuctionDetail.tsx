@@ -666,7 +666,7 @@ const AuctionDetail = () => {
                 <div className="flex gap-2">
                   <Input
                     type="number"
-                    placeholder={`Mínimo $${(currentPrice + 1).toLocaleString("es-MX")}`}
+                    placeholder="Coloca tu monto"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                     min={currentPrice + 1}
