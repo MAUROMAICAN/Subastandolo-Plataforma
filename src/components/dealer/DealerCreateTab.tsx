@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Upload, AlertTriangle, Headphones, Copy } from "lucide-react";
@@ -36,6 +35,15 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResizeTextarea = useCallback(() => {
+    const el = descTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    // 4 extra lines of breathing room (approx 24px per line)
+    el.style.height = (el.scrollHeight + 96) + "px";
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -45,6 +53,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
       setAuctionDuration(initialData.durationHours);
       setIsDuplicate(true);
       onInitialDataConsumed?.();
+      // Trigger resize after state settles
+      setTimeout(autoResizeTextarea, 50);
     }
     // Only run on mount with initial data
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,7 +240,20 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Descripción del Producto *</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Describe detalladamente el producto: condición, características, modelo, etc." rows={8} className="rounded-sm" maxLength={2000} />
+            <textarea
+              ref={descTextareaRef}
+              value={description}
+              required
+              maxLength={2000}
+              placeholder="Describe detalladamente el producto: condición, características, modelo, etc."
+              rows={8}
+              className="flex w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden"
+              style={{ minHeight: "12rem" }}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                autoResizeTextarea();
+              }}
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Precio Inicial ($) *</Label>
