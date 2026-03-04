@@ -432,7 +432,7 @@ const AuctionDetail = () => {
                     })()}
                     {/* Reputation bar — full width */}
                     <div className="mt-2">
-                      <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
+                      <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" fullWidth />
                     </div>
                   </div>
                 </Link>

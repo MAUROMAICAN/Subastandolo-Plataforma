@@ -3,6 +3,7 @@ interface ReputationThermometerProps {
   totalReviews: number;
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
+  fullWidth?: boolean;
 }
 
 // MercadoLibre-style segments
@@ -31,15 +32,16 @@ const sizeConfig = {
   lg: { h: 10, gap: 3, w: 180, text: "text-xs", indicator: 12 },
 };
 
-const ReputationThermometer = ({ percentage, totalReviews, size = "md", showLabel = true }: ReputationThermometerProps) => {
+const ReputationThermometer = ({ percentage, totalReviews, size = "md", showLabel = true, fullWidth = false }: ReputationThermometerProps) => {
   const level = getReputationLevel(percentage, totalReviews);
   const s = sizeConfig[size];
   const isNew = totalReviews === 0;
+  const widthStyle = fullWidth ? "100%" : s.w;
 
   // For new sellers, show a single blue bar
   if (isNew) {
     return (
-      <div className="flex flex-col" style={{ width: s.w }}>
+      <div className="flex flex-col" style={{ width: widthStyle }}>
         <div className="flex" style={{ gap: s.gap, height: s.h }}>
           {SEGMENTS.map((_, i) => (
             <div
@@ -67,7 +69,7 @@ const ReputationThermometer = ({ percentage, totalReviews, size = "md", showLabe
   const activeIndex = level.segmentIndex;
 
   return (
-    <div className="flex flex-col" style={{ width: s.w }}>
+    <div className="flex flex-col" style={{ width: widthStyle }}>
       <div className="flex" style={{ gap: s.gap, height: s.h }}>
         {SEGMENTS.map((seg, i) => (
           <div
