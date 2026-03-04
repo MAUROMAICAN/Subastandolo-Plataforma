@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Truck, CheckCircle, MapPin } from "lucide-react";
 
 interface ShippingFormProps {
@@ -22,6 +23,7 @@ const STATES = [
 
 const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [fullName, setFullName] = useState("");
   const [cedula, setCedula] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,6 +35,17 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [existing, setExisting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [prefilledFromProfile, setPrefilledFromProfile] = useState(false);
+
+  // Pre-fill from profile
+  useEffect(() => {
+    if (profile) {
+      if (profile.full_name) { setFullName(profile.full_name); setPrefilledFromProfile(true); }
+      if ((profile as any).phone) setPhone((profile as any).phone);
+      if ((profile as any).city) setCity((profile as any).city);
+      if ((profile as any).state) setState((profile as any).state);
+    }
+  }, [profile]);
 
   useEffect(() => {
     const check = async () => {
@@ -77,6 +90,14 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
       });
       if (error) throw error;
 
+      // Sync back to user profile so it's pre-filled next time
+      await supabase.from("profiles").update({
+        full_name: fullName.trim(),
+        phone: phone.trim(),
+        city: city.trim(),
+        state,
+      } as any).eq("id", userId);
+
       toast({ title: "¡Datos de envío guardados!" });
       setExisting(true);
       onComplete();
@@ -109,6 +130,13 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
         </p>
       </div>
       <div className="p-4 space-y-3">
+        {/* Pre-fill banner */}
+        {prefilledFromProfile && (
+          <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-[11px] text-primary dark:text-[#A6E300]">
+            <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+            Datos pre-llenados desde tu perfil. Revisa y completa los campos faltantes.
+          </div>
+        )}
         {/* Name & Cedula & Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">

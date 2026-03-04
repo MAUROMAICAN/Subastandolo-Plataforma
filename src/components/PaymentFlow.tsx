@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import {
   Loader2, Upload, CheckCircle, Copy, Clock, Building2, CreditCard,
   FileText, DollarSign, MapPin, ShieldCheck, AlertTriangle, Lock
@@ -38,6 +39,7 @@ const BANK_INFO = {
 const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: PaymentFlowProps) => {
   const { toast } = useToast();
   const { profile } = useAuth();
+  const { getSetting } = useSiteSettings();
   const [bcvRate, setBcvRate] = useState<number | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [rateLoading, setRateLoading] = useState(true);
@@ -47,24 +49,52 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   const [existingProof, setExistingProof] = useState<PaymentProof | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
+  // Load BCV rate: admin manual rate first, then external APIs
   useEffect(() => {
-    fetchBcvRate();
-    fetchExistingProof();
-  }, [auctionId]);
+    const loadRate = async () => {
+      setRateLoading(true);
+      try {
+        // 1. Try admin-configured manual rate from site_settings
+        const manualRate = getSetting("bcv_rate", "");
+        const commissionPct = parseFloat(getSetting("commission_percentage", "0") || "0");
+        if (!isNaN(commissionPct)) setCommission(commissionPct);
 
-  const fetchBcvRate = async () => {
-    setRateLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("get-bcv-rate");
-      if (error) throw error;
-      if (data?.rate) setBcvRate(data.rate);
-      if (data?.commission != null) setCommission(data.commission);
-    } catch {
-      toast({ title: "Error obteniendo tasa BCV", variant: "destructive" });
-    } finally {
-      setRateLoading(false);
-    }
-  };
+        if (manualRate) {
+          const parsed = parseFloat(manualRate);
+          if (!isNaN(parsed) && parsed > 0) {
+            setBcvRate(parsed);
+            setRateLoading(false);
+            return;
+          }
+        }
+
+        // 2. Fallback: pydolarve.org
+        try {
+          const res = await fetch("https://pydolarve.org/api/v2/dollar?page=bcv", { signal: AbortSignal.timeout(5000) });
+          if (res.ok) {
+            const data = await res.json();
+            const value = data?.monitors?.usd?.price;
+            if (value && !isNaN(Number(value))) { setBcvRate(Number(value)); setRateLoading(false); return; }
+          }
+        } catch { /* try next */ }
+
+        // 3. Last resort: ve.dolarapi.com
+        try {
+          const res2 = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
+          if (res2.ok) {
+            const data2 = await res2.json();
+            const value2 = data2?.promedio;
+            if (value2 && !isNaN(Number(value2))) { setBcvRate(Number(value2)); setRateLoading(false); return; }
+          }
+        } catch { /* no more fallbacks */ }
+
+      } finally {
+        setRateLoading(false);
+      }
+    };
+    loadRate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auctionId]);
 
   const fetchExistingProof = async () => {
     const { data } = await supabase
@@ -77,6 +107,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       .maybeSingle();
     if (data) setExistingProof(data as PaymentProof);
   };
+
+  useEffect(() => { fetchExistingProof(); }, [auctionId]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);

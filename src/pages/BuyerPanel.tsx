@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -691,6 +691,142 @@ const BuyerPanel = () => {
   }
 
   // Disputes list view
+  // Addresses view
+  if (view === "addresses") {
+    const AddressesView = () => {
+      const [editing, setEditing] = useState(false);
+      const [addrName, setAddrName] = useState((profile as any)?.full_name || "");
+      const [addrPhone, setAddrPhone] = useState((profile as any)?.phone || "");
+      const [addrState, setAddrState] = useState((profile as any)?.state || "");
+      const [addrCity, setAddrCity] = useState((profile as any)?.city || "");
+      const [saving, setSaving] = useState(false);
+
+      const STATES = ["Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", "Vargas", "Yaracuy", "Zulia"];
+
+      const handleSave = async () => {
+        if (!addrName.trim() || !addrCity.trim() || !addrState) return;
+        setSaving(true);
+        await supabase.from("profiles").update({
+          full_name: addrName.trim(),
+          phone: addrPhone.trim(),
+          city: addrCity.trim(),
+          state: addrState,
+        } as any).eq("id", user!.id);
+        setSaving(false);
+        setEditing(false);
+        const { toast } = await import("@/hooks/use-toast");
+        toast({ title: "¡Dirección guardada!" });
+      };
+
+      const hasAddress = (profile as any)?.city && (profile as any)?.state;
+
+      return (
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="container mx-auto px-4 py-4 max-w-2xl">
+            <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
+              <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+            </button>
+
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                Mis Direcciones de Envío
+              </h1>
+            </div>
+
+            {/* Info banner */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-5 text-xs text-primary dark:text-[#A6E300] flex items-start gap-2">
+              <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>Tu dirección guardada aquí se utilizará automáticamente al realizar nuevas compras para pre-llenar el formulario de envío.</span>
+            </div>
+
+            {/* Saved address card */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden mb-4">
+              <div className="bg-secondary/30 px-5 py-3 border-b border-border flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground dark:text-slate-300">Dirección Principal</span>
+                {!editing && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="text-xs text-primary hover:underline font-semibold"
+                  >
+                    {hasAddress ? "Editar" : "Agregar"}
+                  </button>
+                )}
+              </div>
+
+              {!editing ? (
+                hasAddress ? (
+                  <div className="px-5 py-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground dark:text-slate-400 w-20 text-xs shrink-0">Nombre</span>
+                      <span className="font-semibold">{(profile as any)?.full_name || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground dark:text-slate-400 w-20 text-xs shrink-0">Teléfono</span>
+                      <span className="font-semibold">{(profile as any)?.phone || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground dark:text-slate-400 w-20 text-xs shrink-0">Estado</span>
+                      <span className="font-semibold">{(profile as any)?.state}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground dark:text-slate-400 w-20 text-xs shrink-0">Ciudad</span>
+                      <span className="font-semibold">{(profile as any)?.city}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-5 py-8 text-center">
+                    <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground dark:text-slate-400">No tienes una dirección guardada aún.</p>
+                    <button onClick={() => setEditing(true)} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+                      + Agregar dirección
+                    </button>
+                  </div>
+                )
+              ) : (
+                <div className="px-5 py-4 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Nombre completo</label>
+                      <Input value={addrName} onChange={e => setAddrName(e.target.value)} placeholder="Tu nombre" className="rounded-lg" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Teléfono</label>
+                      <Input value={addrPhone} onChange={e => setAddrPhone(e.target.value)} placeholder="0412-0000000" className="rounded-lg" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Estado</label>
+                      <select value={addrState} onChange={e => setAddrState(e.target.value)} className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                        <option value="">Selecciona estado...</option>
+                        {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Ciudad</label>
+                      <Input value={addrCity} onChange={e => setAddrCity(e.target.value)} placeholder="Tu ciudad" className="rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button onClick={handleSave} disabled={saving} className="flex-1 bg-primary text-primary-foreground rounded-xl font-bold text-sm">
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                      Guardar Dirección
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditing(false)} className="rounded-xl">
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+      );
+    };
+    return <AddressesView />;
+  }
+
+  // Disputes list view
   if (view === "disputes") {
     return (
       <div className="min-h-screen bg-background">
@@ -1103,6 +1239,27 @@ const BuyerPanel = () => {
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-primary ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Mis Direcciones */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
+            onClick={() => setView("addresses")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Mis Direcciones</p>
+                <p className="text-xs text-muted-foreground">
+                  {(profile as any)?.city && (profile as any)?.state
+                    ? `${(profile as any).city}, ${(profile as any).state}`
+                    : "Configura tu dirección de envío"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
             </CardContent>
           </Card>
 
