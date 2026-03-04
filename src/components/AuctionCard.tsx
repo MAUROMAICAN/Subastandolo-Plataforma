@@ -120,14 +120,14 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
         {/* ── INFO ZONE ── */}
         <div className="flex flex-col flex-1 px-3 pt-2.5 pb-2.5">
           {/* Title */}
-          <h3 className="font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white/90 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white/90 group-hover:text-primary dark:group-hover:text-white transition-colors">
             {auction.title}
           </h3>
 
           {/* Dealer Link */}
           {dealer && (
             <div
-              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
