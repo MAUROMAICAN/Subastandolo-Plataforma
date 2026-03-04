@@ -535,8 +535,8 @@ const AuctionDetail = () => {
 
             {/* Winner label for non-winners */}
             {isEnded && auction.winner_name && (!user || auction.winner_id !== user.id) && (
-              <div className="flex items-center gap-2.5 text-sm text-primary bg-primary/5 border border-primary/10 rounded-xl px-4 py-3.5">
-                <Trophy className="h-5 w-5" />
+              <div className="flex items-center gap-2.5 text-sm text-foreground dark:text-gray-200 bg-secondary/80 dark:bg-white/10 border border-border rounded-xl px-4 py-3.5">
+                <Trophy className="h-5 w-5 text-yellow-500" />
                 <span className="font-bold">Ganador: {maskName(auction.winner_name)}</span>
               </div>
             )}
