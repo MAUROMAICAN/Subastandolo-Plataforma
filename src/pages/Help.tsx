@@ -92,7 +92,7 @@ const FAQAccordion = ({ faqs, prefix }: { faqs: typeof dealerFaqs; prefix: strin
       >
         <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline hover:bg-secondary/30 gap-3">
           <div className="flex items-center gap-2.5 text-left">
-            <faq.icon className="h-4 w-4 text-primary shrink-0" />
+            <faq.icon className="h-4 w-4 text-primary dark:text-gray-300 shrink-0" />
             {faq.question}
           </div>
         </AccordionTrigger>
@@ -118,7 +118,7 @@ const Help = () => {
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-2">
-            <HelpCircle className="h-7 w-7 text-primary" />
+            <HelpCircle className="h-7 w-7 text-primary dark:text-white" />
           </div>
           <h1 className="text-3xl font-heading font-bold">Centro de Ayuda</h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
@@ -150,8 +150,8 @@ const Help = () => {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground space-y-2 text-justify">
                 <p>
-                  En {siteName}, tu seguridad es nuestra prioridad. Nunca le pagas directamente al vendedor: 
-                  tu dinero queda resguardado por la plataforma hasta que confirmes que recibiste el producto 
+                  En {siteName}, tu seguridad es nuestra prioridad. Nunca le pagas directamente al vendedor:
+                  tu dinero queda resguardado por la plataforma hasta que confirmes que recibiste el producto
                   en perfecto estado. Aquí resolvemos todas tus dudas.
                 </p>
               </CardContent>
@@ -200,7 +200,7 @@ const Help = () => {
             <Card className="border border-primary/20 bg-primary/5 rounded-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                  <BookOpen className="h-5 w-5 text-primary dark:text-white" />
                   🚀 Guía del Dealer — Vende con confianza
                 </CardTitle>
               </CardHeader>
@@ -223,7 +223,7 @@ const Help = () => {
             <Card className="border border-primary/20 bg-primary/5 rounded-sm">
               <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 shrink-0">
-                  <BookOpen className="h-6 w-6 text-primary" />
+                  <BookOpen className="h-6 w-6 text-primary dark:text-white" />
                 </div>
                 <div className="flex-1 text-center sm:text-left space-y-1">
                   <h3 className="font-heading font-bold text-sm">📋 Políticas de Publicación</h3>
@@ -269,7 +269,7 @@ const Help = () => {
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 rounded-sm overflow-hidden">
           <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <HelpCircle className="h-7 w-7 text-primary" />
+              <HelpCircle className="h-7 w-7 text-primary dark:text-white" />
             </div>
             <div className="space-y-1.5 max-w-md">
               <h3 className="font-heading font-bold text-base">¿Necesitas más ayuda?</h3>
