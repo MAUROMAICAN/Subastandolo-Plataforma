@@ -230,7 +230,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Descripción del Producto *</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Describe detalladamente el producto: condición, características, modelo, etc." rows={4} className="rounded-sm" maxLength={2000} />
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Describe detalladamente el producto: condición, características, modelo, etc." rows={8} className="rounded-sm" maxLength={2000} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Precio Inicial ($) *</Label>
