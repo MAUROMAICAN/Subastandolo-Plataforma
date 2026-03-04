@@ -78,6 +78,7 @@ const AuctionDetail = () => {
   const [bidAmount, setBidAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [bidding, setBidding] = useState(false);
+  const [showBidConfirm, setShowBidConfirm] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [shippingComplete, setShippingComplete] = useState(false);
@@ -458,24 +459,103 @@ const AuctionDetail = () => {
                     Finalizada
                   </div>
                 )}
-                {/* Inline quick-bid: input + button right in the price card */}
+                {/* eBay-style smart bid section */}
                 {!isEnded && user && !(auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now()) && (
-                  <div className="mt-4 flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Coloca tu monto"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      min={currentPrice + 1}
-                      className="rounded-xl h-12 flex-1 text-sm"
-                    />
-                    <Button
-                      onClick={handleBid}
-                      disabled={bidding}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-6 rounded-xl h-12 whitespace-nowrap shadow-md text-sm shrink-0"
-                    >
-                      {bidding ? <Loader2 className="h-4 w-4 animate-spin" /> : "¡PUJAR!"}
-                    </Button>
+                  <div className="mt-5 space-y-3">
+                    {/* Label */}
+                    <p className="text-xs font-semibold text-muted-foreground dark:text-slate-300 uppercase tracking-wider">
+                      Tu puja
+                    </p>
+
+                    {/* Suggestion pills */}
+                    {(() => {
+                      const min = Math.ceil(currentPrice) + 1;
+                      const suggestions = [min, min + 4, min + 9, min + 24];
+                      return (
+                        <div className="flex gap-2 flex-wrap">
+                          {suggestions.map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => { setBidAmount(String(s)); setShowBidConfirm(false); }}
+                              className={`px-3 py-1.5 rounded-full border text-sm font-semibold transition-all ${bidAmount === String(s)
+                                  ? "bg-accent text-accent-foreground border-accent shadow-md scale-105"
+                                  : "border-border text-foreground hover:border-accent hover:text-accent"
+                                }`}
+                            >
+                              ${s.toLocaleString("es-MX")}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Input */}
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">$</span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={bidAmount}
+                        onChange={(e) => { setBidAmount(e.target.value); setShowBidConfirm(false); }}
+                        min={currentPrice + 1}
+                        className="pl-7 rounded-xl h-12 text-lg font-semibold"
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground dark:text-slate-400">
+                      Ingresa ${(Math.ceil(currentPrice) + 1).toLocaleString("es-MX")} o más
+                    </p>
+
+                    {/* Confirm button or confirmation step */}
+                    {!showBidConfirm ? (
+                      <Button
+                        onClick={() => {
+                          const amt = parseFloat(bidAmount);
+                          if (isNaN(amt) || amt <= currentPrice) {
+                            toast({ title: "Puja inválida", description: `Debe ser mayor a $${currentPrice.toLocaleString("es-MX")}`, variant: "destructive" });
+                            return;
+                          }
+                          setShowBidConfirm(true);
+                        }}
+                        className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-xl text-sm shadow-md"
+                      >
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Confirmar puja
+                      </Button>
+                    ) : (
+                      <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Tu puja</p>
+                            <p className="text-2xl font-black text-foreground">${parseFloat(bidAmount).toLocaleString("es-MX")}</p>
+                            {bcvRate && bcvRate > 0 && (
+                              <p className="text-[11px] text-muted-foreground">Bs. {(parseFloat(bidAmount) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            )}
+                          </div>
+                          <button onClick={() => setShowBidConfirm(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <X className="h-5 w-5" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowBidConfirm(false)}
+                            className="rounded-xl h-11 font-semibold"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            onClick={async () => { setShowBidConfirm(false); await handleBid(); }}
+                            disabled={bidding}
+                            className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-xl h-11 shadow-md"
+                          >
+                            {bidding ? <Loader2 className="h-4 w-4 animate-spin" /> : "¡Sí, pujar!"}
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
+                          Al confirmar te comprometes a pagar si resultas ganador.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
                 {!isEnded && !user && (
