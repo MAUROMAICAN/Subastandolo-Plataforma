@@ -245,6 +245,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
               value={description}
               required
               maxLength={2000}
+              lang="es"
+              spellCheck={true}
               placeholder="Describe detalladamente el producto: condición, características, modelo, etc."
               rows={8}
               className="flex w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden"

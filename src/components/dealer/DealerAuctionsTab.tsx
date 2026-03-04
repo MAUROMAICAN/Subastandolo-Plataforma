@@ -465,6 +465,8 @@ export default function DealerAuctionsTab({
                                 onChange={(e) => setEditFields(f => ({ ...f, description: e.target.value }))}
                                 maxLength={2000}
                                 rows={5}
+                                lang="es"
+                                spellCheck={true}
                                 className="flex w-full rounded-sm border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
                               />
                             </div>
