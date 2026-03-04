@@ -565,6 +565,24 @@ const AuctionDetail = () => {
 
                     {/* Auto Ofertar */}
                     <div className="border border-dashed border-primary/30 dark:border-primary/20 rounded-xl p-4 space-y-2.5">
+                      {/* Input + button FIRST */}
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">$</span>
+                          <Input
+                            type="number"
+                            placeholder="Máximo"
+                            value={autoBidMax}
+                            onChange={(e) => setAutoBidMax(e.target.value)}
+                            min={currentPrice + 2}
+                            className="pl-7 rounded-xl text-sm h-10"
+                          />
+                        </div>
+                        <Button onClick={handleSetAutoBid} disabled={savingAutoBid} className="rounded-xl whitespace-nowrap px-5 h-10 font-bold text-sm">
+                          {savingAutoBid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : autoBidActive ? "Actualizar" : "Activar"}
+                        </Button>
+                      </div>
+                      {/* Title + cancel below */}
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-bold flex items-center gap-1.5 text-foreground">
                           <Zap className="h-4 w-4 text-primary dark:text-yellow-400" />
@@ -584,22 +602,6 @@ const AuctionDetail = () => {
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
                         ⚡ Establece un monto máximo y el sistema pujará automáticamente por ti de $1 en $1 hasta ese límite, sin que tengas que estar pendiente.
                       </p>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">$</span>
-                          <Input
-                            type="number"
-                            placeholder="Máximo"
-                            value={autoBidMax}
-                            onChange={(e) => setAutoBidMax(e.target.value)}
-                            min={currentPrice + 2}
-                            className="pl-7 rounded-xl text-sm h-10"
-                          />
-                        </div>
-                        <Button onClick={handleSetAutoBid} disabled={savingAutoBid} className="rounded-xl whitespace-nowrap px-5 h-10 font-bold text-sm">
-                          {savingAutoBid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : autoBidActive ? "Actualizar" : "Activar"}
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 )}
