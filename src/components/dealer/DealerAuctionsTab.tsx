@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,49 @@ export default function DealerAuctionsTab({
       fetchMyAuctions();
       toast({ title: "Subasta eliminada" });
     }
+  };
+
+  // ── Inline edit state ──────────────────────────────────────────
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFields, setEditFields] = useState<{
+    title: string; description: string; startingPrice: string; durationHours: string;
+  }>({ title: "", description: "", startingPrice: "", durationHours: "24" });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const startEdit = (auction: AuctionWithImages) => {
+    setEditFields({
+      title: auction.title,
+      description: auction.description || "",
+      startingPrice: String(auction.starting_price),
+      durationHours: String((auction as any).requested_duration_hours || 24),
+    });
+    setEditingId(auction.id);
+  };
+
+  const handleSaveEdit = async (auctionId: string) => {
+    if (!editFields.title.trim()) {
+      toast({ title: "El título es obligatorio", variant: "destructive" }); return;
+    }
+    setSavingEdit(true);
+    const { validateNoContactInfo } = await import("@/lib/contactDetector");
+    const contactError = validateNoContactInfo(editFields.title, editFields.description);
+    if (contactError) {
+      toast({ title: "⚠️ Contenido no permitido", description: contactError, variant: "destructive" });
+      setSavingEdit(false); return;
+    }
+    const { error } = await supabase.from("auctions").update({
+      title: editFields.title.trim(),
+      description: editFields.description.trim() || null,
+      starting_price: parseFloat(editFields.startingPrice) || 0,
+      requested_duration_hours: parseInt(editFields.durationHours) || 24,
+    } as any).eq("id", auctionId);
+    setSavingEdit(false);
+    if (error) {
+      toast({ title: "Error al guardar", description: error.message, variant: "destructive" }); return;
+    }
+    toast({ title: "✅ Publicación actualizada", description: "Los cambios han sido guardados." });
+    setEditingId(null);
+    fetchMyAuctions();
   };
 
   const handleReactivate = async (auction: AuctionWithImages) => {
@@ -390,30 +433,110 @@ export default function DealerAuctionsTab({
                       )}
 
                       {/* Actions */}
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {auction.status === "pending" && (
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(auction.id)} className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-sm text-xs h-7">
-                            <Trash2 className="h-3 w-3 mr-1" /> Eliminar
-                          </Button>
+                      <div className="space-y-3 pt-1">
+                        {/* Inline Edit Form — only for pending auctions */}
+                        {editingId === auction.id && (
+                          <div className="bg-card border border-primary/30 rounded-sm p-4 space-y-3 animate-fade-in">
+                            <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                              <Edit3 className="h-3.5 w-3.5" /> Editar publicación
+                            </p>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Título *</Label>
+                              <Input
+                                value={editFields.title}
+                                onChange={(e) => setEditFields(f => ({ ...f, title: e.target.value }))}
+                                maxLength={200}
+                                className="rounded-sm text-xs h-8"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Descripción</Label>
+                              <textarea
+                                value={editFields.description}
+                                onChange={(e) => setEditFields(f => ({ ...f, description: e.target.value }))}
+                                maxLength={2000}
+                                rows={5}
+                                className="flex w-full rounded-sm border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Precio Inicial ($)</Label>
+                                <Input
+                                  type="number" min="1" step="0.01"
+                                  value={editFields.startingPrice}
+                                  onChange={(e) => setEditFields(f => ({ ...f, startingPrice: e.target.value }))}
+                                  className="rounded-sm text-xs h-8"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Duración deseada</Label>
+                                <select
+                                  value={editFields.durationHours}
+                                  onChange={(e) => setEditFields(f => ({ ...f, durationHours: e.target.value }))}
+                                  className="flex h-8 w-full rounded-sm border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                  {["1", "2", "3", "4", "5", "6", "12", "24", "48", "72", "96", "120", "144"].map(h => (
+                                    <option key={h} value={h}>{h === "24" ? "1 día" : h === "48" ? "2 días" : h === "72" ? "3 días" : h === "96" ? "4 días" : h === "120" ? "5 días" : h === "144" ? "6 días" : `${h}h`}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveEdit(auction.id)}
+                                disabled={savingEdit}
+                                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-xs h-7 font-bold"
+                              >
+                                {savingEdit ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />Guardando...</> : <><Save className="h-3 w-3 mr-1" />Guardar cambios</>}
+                              </Button>
+                              <Button
+                                size="sm" variant="outline"
+                                onClick={() => setEditingId(null)}
+                                className="rounded-sm text-xs h-7"
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
                         )}
-                        {(auction.status === "finalized" || auction.status === "rejected") && !auction.winner_id && auction.bids.length === 0 && (
-                          <Button variant="outline" size="sm" onClick={() => handleReactivate(auction)} className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7">
-                            <RotateCcw className="h-3 w-3 mr-1" /> Reactivar Producto
+
+                        <div className="flex flex-wrap gap-2">
+                          {auction.status === "pending" && (
+                            <>
+                              <Button
+                                variant="outline" size="sm"
+                                onClick={() => editingId === auction.id ? setEditingId(null) : startEdit(auction)}
+                                className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7"
+                              >
+                                <Edit3 className="h-3 w-3 mr-1" />
+                                {editingId === auction.id ? "Cerrar editor" : "Editar"}
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleDelete(auction.id)} className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-sm text-xs h-7">
+                                <Trash2 className="h-3 w-3 mr-1" /> Eliminar
+                              </Button>
+                            </>
+                          )}
+                          {(auction.status === "finalized" || auction.status === "rejected") && !auction.winner_id && auction.bids.length === 0 && (
+                            <Button variant="outline" size="sm" onClick={() => handleReactivate(auction)} className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7">
+                              <RotateCcw className="h-3 w-3 mr-1" /> Reactivar Producto
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onDuplicate({
+                              title: auction.title,
+                              description: auction.description || "",
+                              startingPrice: String(auction.starting_price),
+                              durationHours: String((auction as any).requested_duration_hours || 24),
+                            })}
+                            className="text-foreground border-border hover:bg-secondary/50 rounded-sm text-xs h-7"
+                          >
+                            <Copy className="h-3 w-3 mr-1" /> Publicación similar
                           </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onDuplicate({
-                            title: auction.title,
-                            description: auction.description || "",
-                            startingPrice: String(auction.starting_price),
-                            durationHours: String((auction as any).requested_duration_hours || 24),
-                          })}
-                          className="text-foreground border-border hover:bg-secondary/50 rounded-sm text-xs h-7"
-                        >
-                          <Copy className="h-3 w-3 mr-1" /> Publicación similar
-                        </Button>
+                        </div>
                       </div>
                     </div>
                   )}
