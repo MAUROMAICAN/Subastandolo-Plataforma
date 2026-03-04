@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -600,6 +600,96 @@ const BuyerPanel = () => {
     );
   }
 
+  // Purchases view
+  if (view === "purchases") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-4 max-w-3xl">
+          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
+            <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+          </button>
+
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Mis Compras
+            </h1>
+            <span className="text-xs text-muted-foreground">{wonAuctions.length} subasta{wonAuctions.length !== 1 ? "s" : ""} ganada{wonAuctions.length !== 1 ? "s" : ""}</span>
+          </div>
+
+          {loadingAuctions ? (
+            <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+          ) : wonAuctions.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Package className="h-8 w-8 text-primary/50" />
+              </div>
+              <div>
+                <p className="font-heading font-bold text-lg mb-1">Aún no has ganado subastas</p>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">Participa en nuestras subastas y gana increíbles productos.</p>
+              </div>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+              >
+                Explorar Subastas
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {wonAuctions.map(a => {
+                const isPending = a.payment_status === "pending";
+                const statusColors: Record<string, string> = {
+                  pending: "bg-yellow-500/10 text-yellow-600 border-yellow-400/30",
+                  paid: "bg-blue-500/10 text-blue-600 border-blue-400/30",
+                  approved: "bg-green-500/10 text-green-600 border-green-400/30",
+                  shipped: "bg-purple-500/10 text-purple-600 border-purple-400/30",
+                  delivered: "bg-primary/10 text-primary border-primary/30",
+                };
+                const statusLabels: Record<string, string> = {
+                  pending: "⏳ Pago pendiente",
+                  paid: "📄 Pago reportado",
+                  approved: "✅ Pago aprobado",
+                  shipped: "🚚 Enviado",
+                  delivered: "📦 Entregado",
+                };
+                const statusColor = statusColors[a.payment_status] || statusColors.pending;
+                const statusLabel = statusLabels[a.payment_status] || "Pendiente";
+
+                return (
+                  <div key={a.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
+                    {/* Image */}
+                    {a.image_url && (
+                      <img src={a.image_url} alt={a.title} className="h-16 w-16 rounded-lg object-contain bg-secondary shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-heading font-bold text-sm truncate">{a.title}</p>
+                      <p className="text-xs text-muted-foreground">${a.current_price.toLocaleString("es-MX")} USD</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(a.end_time).toLocaleDateString("es-VE")}</p>
+                      <span className={`inline-flex items-center mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/mi-compra/${a.id}`)}
+                      className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${isPending
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "bg-secondary text-foreground hover:bg-secondary/80"
+                        }`}
+                    >
+                      {isPending ? "Pagar" : "Ver"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   // Disputes list view
   if (view === "disputes") {
     return (
@@ -997,6 +1087,25 @@ const BuyerPanel = () => {
 
         {/* Action cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {/* Mis Compras */}
+          <Card
+            className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary transition-colors group bg-primary/5"
+            onClick={() => setView("purchases")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Mis Compras</p>
+                <p className="text-xs text-muted-foreground">
+                  {loadingAuctions ? "Cargando..." : wonAuctions.length > 0 ? `${wonAuctions.length} subasta${wonAuctions.length !== 1 ? "s" : ""} ganada${wonAuctions.length !== 1 ? "s" : ""}` : "Ver tus subastas ganadas"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-primary ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
           {/* Disputes */}
           <Card
             className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"

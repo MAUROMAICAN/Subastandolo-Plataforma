@@ -36,15 +36,11 @@ import AdminBadge from "@/components/AdminBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewCard from "@/components/ReviewCard";
-import PaymentFlow from "@/components/PaymentFlow";
-import ShippingForm from "@/components/ShippingForm";
-import AuctionProgressTracker from "@/components/AuctionProgressTracker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin, Heart } from "lucide-react";
 import ReportAuctionButton from "@/components/ReportAuctionButton";
-import WinnerCelebration from "@/components/WinnerCelebration";
 import SEO from "@/components/SEO";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
@@ -82,7 +78,6 @@ const AuctionDetail = () => {
   const [showBidConfirm, setShowBidConfirm] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
-  const [shippingComplete, setShippingComplete] = useState(false);
   const [bidderWins, setBidderWins] = useState<Record<string, number>>({});
   const [bidderIsAdmin, setBidderIsAdmin] = useState<Record<string, boolean>>({});
   const [bidderManualTier, setBidderManualTier] = useState<Record<string, string | null>>({});
@@ -721,13 +716,33 @@ const AuctionDetail = () => {
               <ReportAuctionButton auctionId={auction.id} />
             </div>
 
-            {/* Winner Celebration */}
+            {/* Winner Banner → redirect to dedicated payment page */}
             {isEnded && user && auction.winner_id === user.id && (
-              <WinnerCelebration
-                auction={auction}
-                userId={user.id}
-                productImages={allImages}
-              />
+              <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 border-2 border-primary/30 rounded-xl p-5 space-y-4">
+                {/* Congrats header */}
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Trophy className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-primary">¡Felicidades!</p>
+                    <p className="font-heading font-bold text-base text-foreground leading-tight">
+                      Ganaste esta subasta por <span className="text-primary">${auction.current_price.toLocaleString("es-MX")} USD</span>
+                    </p>
+                  </div>
+                </div>
+                {/* CTA */}
+                <Button
+                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl text-sm shadow-lg"
+                  onClick={() => navigate(`/mi-compra/${auction.id}`)}
+                >
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Completar Pago y Datos de Envío
+                </Button>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Tienes 24-48 horas para reportar tu pago.
+                </p>
+              </div>
             )}
 
             {/* Winner label for non-winners */}

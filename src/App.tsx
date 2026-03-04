@@ -48,6 +48,7 @@ const DealerProfile = lazy(() => import("./pages/DealerProfile"));
 const MarketplaceHome = lazy(() => import("./pages/MarketplaceHome"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const CheckoutTienda = lazy(() => import("./pages/CheckoutTienda"));
+const MiCompra = lazy(() => import("./pages/MiCompra"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +141,7 @@ const App = () => {
                         <Route path="/producto/:id" element={<ProductDetail />} />
                         <Route path="/checkout-tienda/:productId" element={<ProtectedRoute authOnly><CheckoutTienda /></ProtectedRoute>} />
                         <Route path="/demo/badges" element={<BadgeDemo />} />
+                        <Route path="/mi-compra/:id" element={<ProtectedRoute authOnly><MiCompra /></ProtectedRoute>} />
                         <Route path="/disputes" element={<ProtectedRoute authOnly><DisputeCenter /></ProtectedRoute>} />
                         <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<Help />} />
