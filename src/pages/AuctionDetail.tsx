@@ -409,12 +409,19 @@ const AuctionDetail = () => {
                       <User className="h-6 w-6 text-muted-foreground" />
                     )}
                   </div>
-                  {/* All info in one column */}
+                  {/* Info - fills remaining space */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
-                      <span className="truncate hover:underline hover:text-primary dark:hover:text-white transition-colors">{dealer.name}</span>
-                      {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
+                    {/* Top row: name+badge left, ventas right */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-bold text-foreground text-sm min-w-0">
+                        <span className="truncate hover:underline hover:text-primary dark:hover:text-white transition-colors">{dealer.name}</span>
+                        {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-semibold shrink-0">
+                        {dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}
+                      </span>
                     </div>
+                    {/* Tier */}
                     {(() => {
                       const tier = getDealerTier(dealer?.salesCount || 0);
                       return (
@@ -423,9 +430,9 @@ const AuctionDetail = () => {
                         </span>
                       );
                     })()}
-                    <div className="flex items-center gap-3 mt-2">
+                    {/* Reputation bar — full width */}
+                    <div className="mt-2">
                       <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
-                      <span className="text-[10px] text-muted-foreground font-medium shrink-0">{dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}</span>
                     </div>
                   </div>
                 </Link>
@@ -464,7 +471,7 @@ const AuctionDetail = () => {
                   <div className="mt-5 space-y-3">
                     {/* Label */}
                     <p className="text-xs font-semibold text-muted-foreground dark:text-slate-300 uppercase tracking-wider">
-                      Tu puja
+                      Puja sugerida
                     </p>
 
                     {/* Suggestion pills */}
@@ -478,8 +485,8 @@ const AuctionDetail = () => {
                               key={s}
                               onClick={() => { setBidAmount(String(s)); setShowBidConfirm(false); }}
                               className={`px-3 py-1.5 rounded-full border text-sm font-semibold transition-all ${bidAmount === String(s)
-                                  ? "bg-accent text-accent-foreground border-accent shadow-md scale-105"
-                                  : "border-border text-foreground hover:border-accent hover:text-accent"
+                                ? "bg-accent text-accent-foreground border-accent shadow-md scale-105"
+                                : "border-border text-foreground hover:border-accent hover:text-accent"
                                 }`}
                             >
                               ${s.toLocaleString("es-MX")}
@@ -518,8 +525,7 @@ const AuctionDetail = () => {
                         }}
                         className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-xl text-sm shadow-md"
                       >
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        Confirmar puja
+                        Confirmar Oferta
                       </Button>
                     ) : (
                       <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 space-y-3">
@@ -583,7 +589,7 @@ const AuctionDetail = () => {
                         <span className="text-destructive font-semibold">Finalizada</span>
                       ) : (
                         <span className="text-foreground flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> En vivo
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> En vivo
                         </span>
                       )}
                     </td>
