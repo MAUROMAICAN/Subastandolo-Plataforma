@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       injectRegister: false,
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,png,svg,webp,woff2}"],
         globIgnores: ["**/favicon.ico", "**/sounds/**"],
