@@ -219,146 +219,11 @@ const DealerDashboard = () => {
     );
   }
 
-  // Dealer identity header
-  const renderDealerHeader = () => {
-    if (!dealer?.isVerified) return null;
-    if (dealer.accountStatus === "banned") return (
-      <div className="mb-6 bg-destructive/10 border border-destructive/30 rounded-sm p-5 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Ban className="h-6 w-6 text-destructive" />
-          <div>
-            <p className="text-sm font-bold text-destructive">Cuenta Suspendida</p>
-            <p className="text-xs text-muted-foreground">Tu cuenta ha sido suspendida por el equipo de administración. Contacta soporte para más información.</p>
-          </div>
-        </div>
-      </div>
-    );
-    if (dealer.accountStatus === "paused") return (
-      <div className="mb-6 bg-warning/10 border border-warning/30 rounded-sm p-5 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Pause className="h-6 w-6 text-warning" />
-          <div>
-            <p className="text-sm font-bold text-warning">Cuenta Pausada Temporalmente</p>
-            <p className="text-xs text-muted-foreground">Tu cuenta está pausada temporalmente. Contacta soporte para más información.</p>
-          </div>
-        </div>
-      </div>
-    );
-    if (dealer.accountStatus === "under_review") return (
-      <div className="mb-6 bg-primary/10 border border-primary/30 rounded-sm p-5 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className="h-6 w-6 text-primary" />
-          <div>
-            <p className="text-sm font-bold text-primary">Cuenta en Revisión de Seguridad</p>
-            <p className="text-xs text-muted-foreground">Tu cuenta está siendo revisada por nuestro departamento de seguridad. Este proceso puede tomar entre 24-72 horas.</p>
-          </div>
-        </div>
-      </div>
-    );
-
-    const effectiveSalesCount = dealer.manualTier
-      ? (DEALER_TIERS.find(t => t.key === dealer.manualTier)?.minSales || 0)
-      : dealer.salesCount;
-    const tier = getDealerTier(effectiveSalesCount);
-    const salesCount = dealer.salesCount;
-    const tierThresholds = [
-      { label: "Bronce", min: 10 }, { label: "Plata", min: 50 }, { label: "Oro", min: 100 },
-      { label: "Platinum", min: 500 }, { label: "Ruby Estelar", min: 1000 },
-    ];
-    const nextTier = tierThresholds.find(t => salesCount < t.min) || null;
-
-    return (
-      <div className={`mb-6 bg-card border ${tier.colors.border} rounded-sm p-4 sm:p-5 animate-fade-in overflow-hidden`}>
-        {/* Mobile: stacked layout */}
-        <div className="flex items-center gap-3 sm:hidden">
-          <div className="relative shrink-0">
-            <Avatar className="h-14 w-14 border-2 border-border shadow-sm">
-              {dealerAvatarUrl && <AvatarImage src={dealerAvatarUrl} alt={dealer.name} className="object-cover" />}
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                {(dealer.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-1 -right-1">
-              <VerifiedBadge size="sm" salesCount={effectiveSalesCount} showTooltip={false} />
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-heading font-bold truncate">{dealer.name}</h2>
-              <span className={`text-[9px] ${tier.colors.bg} border ${tier.colors.border} ${tier.colors.text} rounded-sm px-1.5 py-0.5 font-semibold whitespace-nowrap shrink-0`}>
-                {tier.label}
-              </span>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {salesCount} {salesCount === 1 ? "venta" : "ventas"} completada{salesCount !== 1 ? "s" : ""}
-            </p>
-            <div className="mt-1">
-              <ReputationThermometer
-                percentage={dealerStats.totalReviews > 0 ? dealerStats.positivePercentage : 0}
-                totalReviews={dealerStats.totalReviews}
-                size="sm"
-              />
-            </div>
-            {nextTier && (
-              <div className="mt-1.5">
-                <div className="flex justify-between text-[9px] text-muted-foreground mb-0.5">
-                  <span>→ {nextTier.label}</span>
-                  <span>{salesCount}/{nextTier.min}</span>
-                </div>
-                <div className="h-1 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((salesCount / nextTier.min) * 100, 100)}%`, background: tier.colors.fill }} />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop: original layout with full avatar upload */}
-        <div className="hidden sm:flex items-start gap-4">
-          <div className="relative shrink-0">
-            <ProfileAvatarUpload avatarUrl={dealerAvatarUrl} userName={dealer.name} onAvatarChange={(url) => setDealerAvatarUrl(url)} size="md" />
-            <div className="absolute -bottom-1 -right-1">
-              <VerifiedBadge size="sm" salesCount={effectiveSalesCount} showTooltip={false} />
-            </div>
-          </div>
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-heading font-bold truncate">{dealer.name}</h2>
-              <span className={`text-[11px] ${tier.colors.bg} border ${tier.colors.border} ${tier.colors.text} rounded-sm px-2.5 py-0.5 font-semibold whitespace-nowrap`}>
-                Verificado {tier.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-xs text-muted-foreground truncate">
-                {salesCount} {salesCount === 1 ? "venta" : "ventas"} completada{salesCount !== 1 ? "s" : ""}
-              </p>
-              <ReputationThermometer
-                percentage={dealerStats.totalReviews > 0 ? dealerStats.positivePercentage : 0}
-                totalReviews={dealerStats.totalReviews}
-                size="sm"
-              />
-            </div>
-            {nextTier && (
-              <div className="mt-2.5 max-w-xs">
-                <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                  <span>Progreso a {nextTier.label}</span>
-                  <span>{salesCount}/{nextTier.min}</span>
-                </div>
-                <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((salesCount / nextTier.min) * 100, 100)}%`, background: tier.colors.fill }} />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const tabs = [
     { key: "dashboard", label: "Dashboard", icon: BarChart3 },
     { key: "store", label: "Tienda Directa", icon: Store },
-    { key: "store-orders", label: "Ventas(Tienda)", icon: Package },
+    { key: "store-orders", label: "Ventas Tienda", icon: Package },
     { key: "auctions", label: "Mis Subastas", icon: Package },
     { key: "create", label: "Crear Subasta", icon: Plus },
     { key: "shipments", label: "Envíos", icon: Truck },
@@ -367,103 +232,233 @@ const DealerDashboard = () => {
     { key: "levels", label: "Niveles", icon: Trophy },
   ];
 
+  // ── Compute tier info for header ──────────────────────────────────────────
+  const effectiveSalesCount = dealer?.isVerified
+    ? (dealer.manualTier ? (DEALER_TIERS.find(t => t.key === dealer.manualTier)?.minSales || 0) : dealer.salesCount)
+    : 0;
+  const tier = getDealerTier(effectiveSalesCount);
+  const salesCount = dealer?.salesCount || 0;
+  const tierThresholds = [
+    { label: "Bronce", min: 10 }, { label: "Plata", min: 50 }, { label: "Oro", min: 100 },
+    { label: "Platinum", min: 500 }, { label: "Ruby Estelar", min: 1000 },
+  ];
+  const nextTier = tierThresholds.find(t => salesCount < t.min) || null;
+  const progressPct = nextTier ? Math.min((salesCount / nextTier.min) * 100, 100) : 100;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <BackButton />
-      <main className="container mx-auto px-4 py-6 max-w-5xl">
-        {renderDealerHeader()}
 
-        <div className="flex items-center justify-between mb-6 gap-2">
-          <h1 className="text-lg sm:text-xl font-heading font-bold truncate">Panel de Dealer</h1>
-          <Button onClick={() => setActiveTab("create")} className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-sm text-xs font-bold shrink-0">
-            <Plus className="h-4 w-4 mr-1" /> <span className="hidden xs:inline">Nuevo</span> Producto
+      <main className="container mx-auto px-3 sm:px-4 py-4 max-w-6xl">
+
+        {/* ── STATUS BANNERS ── */}
+        {dealer?.accountStatus === "banned" && (
+          <div className="mb-4 bg-destructive/10 border border-destructive/30 rounded-2xl p-4 flex items-center gap-3">
+            <Ban className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-destructive">Cuenta Suspendida</p>
+              <p className="text-xs text-muted-foreground">Tu cuenta ha sido suspendida. Contacta soporte.</p>
+            </div>
+          </div>
+        )}
+        {dealer?.accountStatus === "under_review" && (
+          <div className="mb-4 bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-primary">Cuenta en Revisión</p>
+              <p className="text-xs text-muted-foreground">Revisión de seguridad activa (24–72 h).</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── HERO HEADER ── */}
+        {dealer?.isVerified && (
+          <div className="relative mb-5 rounded-2xl overflow-hidden border border-border shadow-lg">
+            {/* Gradient band */}
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
+              style={{ background: `linear-gradient(135deg, ${tier.colors.fill} 0%, transparent 60%)` }}
+            />
+            {/* Accent top bar */}
+            <div className="h-1 w-full" style={{ background: tier.colors.fill }} />
+
+            <div className="bg-card px-4 sm:px-6 py-4 sm:py-5">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  <div className="hidden sm:block">
+                    <ProfileAvatarUpload avatarUrl={dealerAvatarUrl} userName={dealer.name} onAvatarChange={url => setDealerAvatarUrl(url)} size="md" />
+                  </div>
+                  <div className="sm:hidden">
+                    <Avatar className="h-14 w-14 border-2 shadow-md" style={{ borderColor: tier.colors.fill }}>
+                      {dealerAvatarUrl && <AvatarImage src={dealerAvatarUrl} alt={dealer.name} className="object-cover" />}
+                      <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
+                        {(dealer.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  {/* Tier badge overlay */}
+                  <div className="absolute -bottom-1 -right-1 ring-2 ring-background rounded-full">
+                    <VerifiedBadge size="sm" salesCount={effectiveSalesCount} showTooltip={false} />
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-lg sm:text-xl font-heading font-black truncate">{dealer.name}</h1>
+                    <span
+                      className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap"
+                      style={{ color: tier.colors.fill, borderColor: tier.colors.fill + "55", background: tier.colors.fill + "15" }}
+                    >
+                      ✓ {tier.label}
+                    </span>
+                  </div>
+
+                  {/* Stat pills */}
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
+                      <Trophy className="h-3 w-3 text-amber-500" />
+                      {salesCount} venta{salesCount !== 1 ? "s" : ""}
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
+                      <span className="w-2 h-2 rounded-full" style={{ background: dealerStats.totalReviews > 0 ? (dealerStats.positivePercentage >= 80 ? "#22c55e" : dealerStats.positivePercentage >= 50 ? "#eab308" : "#ef4444") : "#6b7280" }} />
+                      {dealerStats.totalReviews > 0 ? `${dealerStats.positivePercentage}% positivo` : "Sin reseñas"}
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
+                      <BarChart3 className="h-3 w-3 text-primary" />
+                      {dealerStats.totalReviews} reseña{dealerStats.totalReviews !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {/* Progress to next tier */}
+                  {nextTier && (
+                    <div className="mt-3 max-w-sm">
+                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                        <span>Próximo nivel: <strong className="text-foreground">{nextTier.label}</strong></span>
+                        <span>{salesCount} / {nextTier.min}</span>
+                      </div>
+                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${progressPct}%`, background: tier.colors.fill }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {!nextTier && (
+                    <p className="mt-2 text-[11px] font-semibold" style={{ color: tier.colors.fill }}>
+                      🏆 ¡Nivel máximo alcanzado!
+                    </p>
+                  )}
+                </div>
+
+                {/* CTA */}
+                <Button
+                  onClick={() => setActiveTab("create")}
+                  className="shrink-0 hidden sm:flex rounded-xl gap-1.5 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md"
+                  size="sm"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Nueva Subasta
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MOBILE CTA ── */}
+        <div className="flex sm:hidden items-center justify-between mb-4">
+          <p className="text-sm font-heading font-bold text-foreground">Panel de Dealer</p>
+          <Button
+            onClick={() => setActiveTab("create")}
+            size="sm"
+            className="rounded-xl gap-1 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nueva Subasta
           </Button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-0 mb-6 border-b border-border overflow-x-auto scrollbar-none -mx-4 px-4">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-            >
-              <tab.icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(" ").pop()}</span>
-            </button>
-          ))}
+        {/* ── TAB NAVIGATION ── */}
+        <div className="mb-5">
+          {/* Scrollable pill tabs */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${activeTab === tab.key
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                  : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+              >
+                <tab.icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(" ").pop()}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {activeTab === "dashboard" && (
-          <DealerDashboardTab auctions={auctions} setActiveTab={setActiveTab} setStatusFilter={setStatusFilter} sections={sections} />
-        )}
-
-        {activeTab === "store" && user?.id && (
-          <DealerStoreTab dealerId={user.id} setActiveTab={setActiveTab} />
-        )}
-
-        {activeTab === "store-create" && user?.id && (
-          <DealerStoreCreateTab
-            dealerId={user.id}
-            setActiveTab={setActiveTab}
-            onCreated={fetchMyAuctions} // We can reuse the refresh fetcher later or create a specific one for store.
-          />
-        )}
-
-        {activeTab.startsWith("store-edit-") && user?.id && (
-          <DealerStoreEditTab
-            dealerId={user.id}
-            productId={activeTab.replace("store-edit-", "")}
-            setActiveTab={setActiveTab}
-            onUpdated={fetchMyAuctions}
-          />
-        )}
-
-        {activeTab === "store-orders" && user?.id && (
-          <DealerStoreOrdersTab dealerId={user.id} />
-        )}
-
-        {activeTab === "create" && (
-          <DealerCreateTab
-            isGoldPlus={isGoldPlus}
-            dealerAccountStatus={dealer?.accountStatus || "active"}
-            onCreated={fetchMyAuctions}
-            setActiveTab={setActiveTab}
-            initialData={duplicateData || undefined}
-            onInitialDataConsumed={() => setDuplicateData(null)}
-          />
-        )}
-
-        {activeTab === "auctions" && (
-          <DealerAuctionsTab
-            auctions={auctions} loading={loading} statusFilter={statusFilter} setStatusFilter={setStatusFilter}
-            expandedAuction={expandedAuction} setExpandedAuction={setExpandedAuction}
-            winnerProfiles={winnerProfiles} shippingInfoMap={shippingInfoMap}
-            trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber}
-            trackingFile={trackingFile} setTrackingFile={setTrackingFile}
-            trackingCompany={trackingCompany} setTrackingCompany={setTrackingCompany}
-            submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
-            fetchMyAuctions={fetchMyAuctions}
-            onDuplicate={(data) => { setDuplicateData(data); setActiveTab("create"); }}
-          />
-        )}
-
-        {activeTab === "shipments" && (
-          <DealerShipmentsTab
-            auctions={auctions} winnerProfiles={winnerProfiles} shippingInfoMap={shippingInfoMap}
-            trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber}
-            trackingFile={trackingFile} setTrackingFile={setTrackingFile}
-            trackingCompany={trackingCompany} setTrackingCompany={setTrackingCompany}
-            submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
-            fetchMyAuctions={fetchMyAuctions}
-          />
-        )}
-
-        {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
-        {activeTab === "payment" && <DealerPaymentTab />}
-        {activeTab === "wallet" && <DealerWalletTab />}
+        {/* ── TAB CONTENT ── */}
+        <div className="rounded-2xl">
+          {activeTab === "dashboard" && (
+            <DealerDashboardTab auctions={auctions} setActiveTab={setActiveTab} setStatusFilter={setStatusFilter} sections={sections} />
+          )}
+          {activeTab === "store" && user?.id && (
+            <DealerStoreTab dealerId={user.id} setActiveTab={setActiveTab} />
+          )}
+          {activeTab === "store-create" && user?.id && (
+            <DealerStoreCreateTab dealerId={user.id} setActiveTab={setActiveTab} onCreated={fetchMyAuctions} />
+          )}
+          {activeTab.startsWith("store-edit-") && user?.id && (
+            <DealerStoreEditTab
+              dealerId={user.id}
+              productId={activeTab.replace("store-edit-", "")}
+              setActiveTab={setActiveTab}
+              onUpdated={fetchMyAuctions}
+            />
+          )}
+          {activeTab === "store-orders" && user?.id && (
+            <DealerStoreOrdersTab dealerId={user.id} />
+          )}
+          {activeTab === "create" && (
+            <DealerCreateTab
+              isGoldPlus={isGoldPlus}
+              dealerAccountStatus={dealer?.accountStatus || "active"}
+              onCreated={fetchMyAuctions}
+              setActiveTab={setActiveTab}
+              initialData={duplicateData || undefined}
+              onInitialDataConsumed={() => setDuplicateData(null)}
+            />
+          )}
+          {activeTab === "auctions" && (
+            <DealerAuctionsTab
+              auctions={auctions} loading={loading} statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+              expandedAuction={expandedAuction} setExpandedAuction={setExpandedAuction}
+              winnerProfiles={winnerProfiles} shippingInfoMap={shippingInfoMap}
+              trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber}
+              trackingFile={trackingFile} setTrackingFile={setTrackingFile}
+              trackingCompany={trackingCompany} setTrackingCompany={setTrackingCompany}
+              submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
+              fetchMyAuctions={fetchMyAuctions}
+              onDuplicate={(data) => { setDuplicateData(data); setActiveTab("create"); }}
+            />
+          )}
+          {activeTab === "shipments" && (
+            <DealerShipmentsTab
+              auctions={auctions} winnerProfiles={winnerProfiles} shippingInfoMap={shippingInfoMap}
+              trackingNumber={trackingNumber} setTrackingNumber={setTrackingNumber}
+              trackingFile={trackingFile} setTrackingFile={setTrackingFile}
+              trackingCompany={trackingCompany} setTrackingCompany={setTrackingCompany}
+              submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
+              fetchMyAuctions={fetchMyAuctions}
+            />
+          )}
+          {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
+          {activeTab === "payment" && <DealerPaymentTab />}
+          {activeTab === "wallet" && <DealerWalletTab />}
+        </div>
       </main>
       <Footer />
     </div>
