@@ -399,41 +399,39 @@ const AuctionDetail = () => {
             {/* Dealer info */}
             {dealer && (
               <div className="bg-card border border-border rounded-xl px-5 py-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                  <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-                    <div className="w-12 h-12 rounded-full border border-border bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                      {dealer.avatarUrl ? (
-                        <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="h-6 w-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5 font-bold text-foreground text-sm sm:text-base">
-                        <span className="truncate hover:underline hover:text-primary dark:hover:text-white transition-colors">{dealer.name}</span>
-                        {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
-                      </div>
-
-                      {(() => {
-                        const tier = getDealerTier(dealer?.salesCount || 0);
-                        return (
-                          <span className={`text-xs font-semibold ${tier.colors.text} mt-0.5`}>
-                            {tier.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </Link>
-
-                  <div className="flex flex-col items-start sm:items-end justify-center shrink-0 pl-[52px] sm:pl-0 sm:border-l sm:border-border sm:pl-4">
-                    <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
-                    <span className="text-[10px] text-muted-foreground mt-1 font-medium">{dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}</span>
+                <Link to={`/dealer/${dealerUserId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                  {/* Avatar */}
+                  <div className="w-12 h-12 rounded-full border border-border bg-secondary flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                    {dealer.avatarUrl ? (
+                      <img src={dealer.avatarUrl} alt={dealer.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    )}
                   </div>
-                </div>
+                  {/* All info in one column */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
+                      <span className="truncate hover:underline hover:text-primary dark:hover:text-white transition-colors">{dealer.name}</span>
+                      {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
+                    </div>
+                    {(() => {
+                      const tier = getDealerTier(dealer?.salesCount || 0);
+                      return (
+                        <span className={`text-xs font-semibold ${tier.colors.text} block mt-0.5`}>
+                          {tier.label}
+                        </span>
+                      );
+                    })()}
+                    <div className="flex items-center gap-3 mt-2">
+                      <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" />
+                      <span className="text-[10px] text-muted-foreground font-medium shrink-0">{dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}</span>
+                    </div>
+                  </div>
+                </Link>
               </div>
             )}
 
-            {/* Price highlight */}
+            {/* Price highlight + quick bid */}
             {!isScheduled && (
               <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">
@@ -449,7 +447,7 @@ const AuctionDetail = () => {
                   </span>
                 </div>
                 {!isEnded && (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3.5 w-3.5" />
                     <span>Termina en</span>
                     <Countdown endTime={auction.end_time} />
@@ -458,6 +456,33 @@ const AuctionDetail = () => {
                 {isEnded && (
                   <div className="mt-2 inline-flex items-center gap-1.5 bg-destructive/10 dark:bg-white/10 text-destructive dark:text-white text-xs font-semibold px-3 py-1 rounded-lg">
                     Finalizada
+                  </div>
+                )}
+                {/* Inline quick-bid: input + button right in the price card */}
+                {!isEnded && user && !(auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now()) && (
+                  <div className="mt-4 flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Coloca tu monto"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      min={currentPrice + 1}
+                      className="rounded-xl h-12 flex-1 text-sm"
+                    />
+                    <Button
+                      onClick={handleBid}
+                      disabled={bidding}
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-6 rounded-xl h-12 whitespace-nowrap shadow-md text-sm shrink-0"
+                    >
+                      {bidding ? <Loader2 className="h-4 w-4 animate-spin" /> : "¡PUJAR!"}
+                    </Button>
+                  </div>
+                )}
+                {!isEnded && !user && (
+                  <div className="mt-4">
+                    <a href="/auth" className="block w-full text-center bg-accent text-accent-foreground font-bold py-3 rounded-xl text-sm shadow-md hover:bg-accent/90 transition-colors">
+                      Inicia sesión para pujar
+                    </a>
                   </div>
                 )}
               </div>
@@ -654,29 +679,9 @@ const AuctionDetail = () => {
               );
             })()}
 
-            {/* Bid action */}
+            {/* Auto-bid + disclaimers */}
             {!isScheduled && !isEnded && user && !(auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now()) && (
               <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm">
-                <h3 className="font-heading font-bold text-base flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                  </div>
-                  Hacer una puja
-                </h3>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Coloca tu monto"
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
-                    min={currentPrice + 1}
-                    className="rounded-lg h-11"
-                  />
-                  <Button onClick={handleBid} disabled={bidding} className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-8 rounded-lg h-11 whitespace-nowrap shadow-md text-sm">
-                    {bidding ? <Loader2 className="h-4 w-4 animate-spin" /> : "¡PUJAR!"}
-                  </Button>
-                </div>
-
                 {/* Auto-bid */}
                 <div className="bg-primary/5 border border-primary/15 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-between">
@@ -708,7 +713,6 @@ const AuctionDetail = () => {
                     </Button>
                   </div>
                 </div>
-
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   ⚠️ Al pujar, te comprometes a <strong className="text-foreground">pagar el monto de tu puja</strong> si resultas ganador.
                   El incumplimiento puede afectar tu reputación y restringir tu acceso a futuras subastas.
@@ -716,14 +720,6 @@ const AuctionDetail = () => {
                 <p className="text-[10px] text-muted-foreground leading-relaxed flex items-start gap-1">
                   <span>💱</span>
                   <span>El monto final se paga en <strong className="text-foreground">bolívares (Bs)</strong> a la tasa oficial del <strong className="text-foreground">Banco Central de Venezuela (BCV)</strong> vigente al momento de cerrar la subasta.</span>
-                </p>
-              </div>
-            )}
-
-            {!isEnded && !user && (
-              <div className="bg-card border border-border rounded-xl p-5 text-center">
-                <p className="text-sm text-muted-foreground">
-                  <a href="/auth" className="text-primary hover:underline font-bold">Inicia sesión</a> para pujar
                 </p>
               </div>
             )}
