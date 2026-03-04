@@ -8,6 +8,8 @@ export interface DealerInfo {
   manualTier: string | null;
   accountStatus: string;
   avatarUrl: string | null;
+  city: string | null;
+  state: string | null;
 }
 
 /**
@@ -33,7 +35,7 @@ export function useVerifiedDealers(userIds: string[]) {
       setLoading(true);
 
       const [profilesRes, verificationsRes, salesRes] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, avatar_url").in("id", uniqueIds),
+        supabase.from("profiles").select("id, full_name, avatar_url, city, state").in("id", uniqueIds),
         supabase
           .from("dealer_verification")
           .select("user_id, status, business_name, manual_tier, account_status")
@@ -82,6 +84,8 @@ export function useVerifiedDealers(userIds: string[]) {
           manualTier: dealerData?.manualTier || null,
           accountStatus: dealerData?.accountStatus || "active",
           avatarUrl: (p as any).avatar_url || null,
+          city: (p as any).city || null,
+          state: (p as any).state || null,
         };
       }
 

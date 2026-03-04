@@ -42,7 +42,7 @@ import AuctionProgressTracker from "@/components/AuctionProgressTracker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin } from "lucide-react";
 import ReportAuctionButton from "@/components/ReportAuctionButton";
 import WinnerCelebration from "@/components/WinnerCelebration";
 import SEO from "@/components/SEO";
@@ -421,15 +421,23 @@ const AuctionDetail = () => {
                         {dealer?.salesCount || 0} {dealer?.salesCount === 1 ? 'venta' : 'ventas'}
                       </span>
                     </div>
-                    {/* Tier */}
-                    {(() => {
+                    {/* Tier badge as "insignia" pill */}
+                    {dealer.isVerified && (() => {
                       const tier = getDealerTier(dealer?.salesCount || 0);
                       return (
-                        <span className={`text-xs font-semibold ${tier.colors.text} block mt-0.5`}>
-                          {tier.label}
-                        </span>
+                        <div className={`mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${tier.colors.bg} ${tier.colors.border} border`}>
+                          <VerifiedBadge size="sm" salesCount={dealer.salesCount} showTooltip={false} />
+                          <span className={tier.colors.text}>{tier.label}</span>
+                        </div>
                       );
                     })()}
+                    {/* Location */}
+                    {(dealer.city || dealer.state) && (
+                      <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{[dealer.city, dealer.state].filter(Boolean).join(", ")}</span>
+                      </div>
+                    )}
                     {/* Reputation bar — full width */}
                     <div className="mt-2">
                       <ReputationThermometer percentage={dealerStats.positivePercentage} totalReviews={dealerStats.totalReviews} size="sm" fullWidth />
