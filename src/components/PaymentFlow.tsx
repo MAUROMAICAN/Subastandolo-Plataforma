@@ -29,7 +29,7 @@ interface PaymentProof {
 
 const BANK_INFO = {
   bank: "BANESCO Banco Universal",
-  account: "0134-0178-17-1781043753",
+  account: "01340178171781043753",
   accountRaw: "01340178171781043753",
   rif: "J413098075",
   name: "UNIFORMES KRONUS C.A",
@@ -229,7 +229,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
         {/* Account fields */}
         <div className="px-5 py-3 space-y-2">
           {[
-            { label: "N° de Cuenta", value: BANK_INFO.account, copyValue: BANK_INFO.accountRaw, mono: true },
+            { label: "N° de Cuenta", value: BANK_INFO.accountRaw, copyValue: BANK_INFO.accountRaw, mono: true },
             { label: "RIF", value: BANK_INFO.rif, copyValue: BANK_INFO.rif, mono: true },
             { label: "A nombre de", value: BANK_INFO.name, copyValue: BANK_INFO.name, mono: false },
           ].map(({ label, value, copyValue, mono }) => (
