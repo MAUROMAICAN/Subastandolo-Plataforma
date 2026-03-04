@@ -449,67 +449,75 @@ const Auth = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-dark px-6">
         <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-400">
+          {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-brand-lime/5 border border-brand-lime/20 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lime/10 flex items-center justify-center">
-                  <CircleCheck className="h-9 w-9 text-brand-lime" />
+                  <Mail className="h-9 w-9 text-brand-lime" />
                 </div>
               </div>
               <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-brand-lime flex items-center justify-center">
-                <Sparkles className="h-3.5 w-3.5 text-brand-dark" />
+                <CircleCheck className="h-3.5 w-3.5 text-brand-dark" />
               </div>
             </div>
           </div>
+
+          {/* Title */}
           <div className="text-center mb-6 space-y-2">
-            <p className="text-brand-lime/60 text-xs font-medium tracking-widest uppercase">Cuenta creada</p>
-            <h3 className="text-2xl font-heading font-bold text-white">¡Registro exitoso!</h3>
-            <p className="text-sm text-white/50 leading-relaxed">
-              Enviamos un enlace de confirmación a<br />
-              <span className="text-brand-lime font-medium">{email}</span>
+            <p className="text-brand-lime/60 text-xs font-medium tracking-widest uppercase">Último paso</p>
+            <h3 className="text-2xl font-heading font-bold text-white">¡Revisa tu correo!</h3>
+            <p className="text-sm text-white/60 leading-relaxed">
+              Enviamos un enlace de activación a<br />
+              <span className="text-brand-lime font-semibold">{email}</span>
             </p>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 space-y-2.5">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-brand-lime/10 flex items-center justify-center shrink-0">
-                <Mail className="h-3.5 w-3.5 text-brand-lime" />
-              </div>
-              <p className="text-xs text-white/60">Revisa tu bandeja de entrada y <span className="text-white/80 font-medium">carpeta de spam</span>.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-brand-lime/10 flex items-center justify-center shrink-0">
-                <ShieldCheck className="h-3.5 w-3.5 text-brand-lime" />
-              </div>
-              <p className="text-xs text-white/60">Haz clic en el enlace para activar tu cuenta.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-brand-lime/10 flex items-center justify-center shrink-0">
-                <RefreshCw className="h-3.5 w-3.5 text-brand-lime" />
-              </div>
-              <p className="text-xs text-white/60">El enlace expira en <span className="text-white/80 font-medium">24 horas</span>.</p>
-            </div>
+
+          {/* Instruction card */}
+          <div className="bg-brand-lime/10 border border-brand-lime/25 rounded-2xl p-5 mb-6">
+            <p className="text-brand-lime font-bold text-sm mb-3 flex items-center gap-2">
+              <Mail className="h-4 w-4" /> ¿Qué debes hacer ahora?
+            </p>
+            <ol className="space-y-2.5 list-none">
+              <li className="flex items-start gap-2.5 text-xs text-white/70">
+                <span className="w-5 h-5 rounded-full bg-brand-lime/20 text-brand-lime font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span>Abre tu correo <strong className="text-white/90">{email}</strong></span>
+              </li>
+              <li className="flex items-start gap-2.5 text-xs text-white/70">
+                <span className="w-5 h-5 rounded-full bg-brand-lime/20 text-brand-lime font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span>Busca el correo de <strong className="text-white/90">Subastandolo</strong> (revisa spam si no aparece)</span>
+              </li>
+              <li className="flex items-start gap-2.5 text-xs text-white/70">
+                <span className="w-5 h-5 rounded-full bg-brand-lime/20 text-brand-lime font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <span>Haz clic en <strong className="text-white/90">"Confirmar correo"</strong> y luego inicia sesión aquí</span>
+              </li>
+            </ol>
           </div>
+
+          {/* Actions */}
           <div className="flex flex-col gap-3">
             <Button
-              onClick={() => handleResendEmail("signup")}
+              onClick={() => { setView("login-email"); setPassword(""); }}
               className="w-full h-14 bg-brand-lime text-brand-dark hover:bg-brand-lime/90 font-bold rounded-2xl text-sm shadow-lg active:scale-[0.98] transition-all"
-              disabled={loading || resendCooldown > 0}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "Reenviar correo"}
+              <CircleCheck className="h-4 w-4 mr-2" />
+              Ya confirmé → Iniciar sesión
             </Button>
             <Button
-              onClick={() => { setView("login-email"); setPassword(""); }}
+              onClick={() => handleResendEmail("signup")}
               variant="ghost"
-              className="w-full text-white/40 hover:text-white/70 hover:bg-transparent text-sm"
+              className="w-full text-white/40 hover:text-white/70 hover:bg-white/5 text-sm rounded-2xl h-11"
+              disabled={loading || resendCooldown > 0}
             >
-              Ya confirmé → Iniciar sesión
+              <RefreshCw className={`h-3.5 w-3.5 mr-2 ${loading ? "animate-spin" : ""}`} />
+              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "No recibí el correo — reenviar"}
             </Button>
           </div>
         </div>
       </div>
     );
   }
+
 
   // ── Resend verification ──
   if (view === "resend") {
