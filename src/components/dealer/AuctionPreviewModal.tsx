@@ -1,7 +1,20 @@
 import { useState } from "react";
 import { useBCVRate } from "@/hooks/useBCVRate";
-import { X, ChevronLeft, ChevronRight, Clock, Images, Calendar, AlertTriangle, Sparkles } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Clock, User, AlertTriangle, Eye } from "lucide-react";
 import type { AuctionWithImages } from "./types";
+
+const DescriptionToggle = ({ text, maxLength = 120 }: { text: string; maxLength?: number }) => {
+    const [expanded, setExpanded] = useState(false);
+    if (text.length <= maxLength) return <span>{text}</span>;
+    return (
+        <span>
+            {expanded ? text : `${text.slice(0, maxLength).trimEnd()}…`}
+            <button onClick={() => setExpanded(!expanded)} className="ml-1 text-primary font-medium hover:underline text-xs">
+                {expanded ? "Ver menos" : "Ver más"}
+            </button>
+        </span>
+    );
+};
 
 interface Props {
     auction: AuctionWithImages;
@@ -12,222 +25,242 @@ export default function AuctionPreviewModal({ auction, onClose }: Props) {
     const bcvRate = useBCVRate();
     const [currentImage, setCurrentImage] = useState(0);
 
-    const images: string[] = [];
-    if (auction.image_url) images.push(auction.image_url);
+    // Build image list
+    const allImages: string[] = [];
+    if (auction.image_url) allImages.push(auction.image_url);
     auction.images.forEach((img: any) => {
         const url = img.image_url;
-        if (url && url !== auction.image_url) images.push(url);
+        if (url && url !== auction.image_url) allImages.push(url);
     });
 
-    const displayPrice = auction.current_price > 0 ? auction.current_price : auction.starting_price;
-    const hasBids = auction.current_price > 0;
+    const displayPrice = auction.starting_price; // pending = no bids yet
+    const durationH = (auction as any).requested_duration_hours;
+
     const fmtUSD = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtBs = (n: number) => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    const durationH = (auction as any).requested_duration_hours;
-    const durationLabel = durationH
-        ? durationH < 24
-            ? `${durationH}h`
-            : `${Math.round(durationH / 24)} día${Math.round(durationH / 24) !== 1 ? "s" : ""}`
-        : null;
-
-    const prev = () => setCurrentImage(i => (i - 1 + images.length) % images.length);
-    const next = () => setCurrentImage(i => (i + 1) % images.length);
 
     return (
         /* Backdrop */
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
-            style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(16px)" }}
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
             onClick={onClose}
         >
-            {/* Modal shell */}
+            {/* Modal card — uses the same bg as the rest of the site */}
             <div
-                className="relative w-full max-w-2xl max-h-[94vh] overflow-y-auto rounded-3xl flex flex-col animate-fade-in"
-                style={{
-                    background: "linear-gradient(160deg, hsl(222 47% 9%) 0%, hsl(222 30% 13%) 100%)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset",
-                }}
+                className="relative w-full max-w-5xl rounded-2xl bg-background border border-border shadow-2xl my-auto animate-fade-in"
                 onClick={e => e.stopPropagation()}
             >
-
-                {/* ── Pending banner ── */}
-                <div
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-t-3xl"
-                    style={{ background: "linear-gradient(90deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.06) 100%)", borderBottom: "1px solid rgba(245,158,11,0.18)" }}
-                >
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                    <p className="text-[11px] text-amber-300/80 font-medium">
-                        <span className="font-bold text-amber-400">Vista previa</span> — pendiente de revisión por el administrador
+                {/* ── Top bar: Preview watermark + Close ── */}
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-border rounded-t-2xl bg-amber-500/8">
+                    <Eye className="h-4 w-4 text-amber-500 shrink-0" />
+                    <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        Vista previa — así verán tu publicación los compradores una vez aprobada
                     </p>
                     <button
                         onClick={onClose}
-                        className="ml-auto h-7 w-7 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all shrink-0"
+                        className="ml-auto h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                {/* ── Image gallery ── */}
-                <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-                    {images.length > 0 ? (
-                        <>
-                            <img
-                                src={images[currentImage]}
-                                alt={`Foto ${currentImage + 1}`}
-                                className="w-full h-full object-cover transition-opacity duration-300"
-                            />
-                            {/* subtle bottom gradient for text readability */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                {/* ── Replica of AuctionDetail main content ── */}
+                <div className="p-5 sm:p-7">
+                    {/* Breadcrumb (decorative) */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                            <ChevronLeft className="h-3 w-3" /> Inicio
+                        </span>
+                        <span className="text-border">/</span>
+                        <span className="text-foreground truncate font-medium">{auction.title}</span>
+                    </div>
 
-                            {/* Nav buttons */}
-                            {images.length > 1 && (
-                                <>
-                                    <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center text-white transition-all" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                                        <ChevronLeft className="h-5 w-5" />
-                                    </button>
-                                    <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center text-white transition-all" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                                        <ChevronRight className="h-5 w-5" />
-                                    </button>
-                                </>
-                            )}
+                    {/* Two-column layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                            {/* Dot indicators */}
-                            {images.length > 1 && (
-                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                    {images.map((_, i) => (
+                        {/* ── LEFT: Image gallery ── */}
+                        <div className="space-y-3">
+                            <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm">
+                                {allImages.length > 0 ? (
+                                    <>
+                                        <img
+                                            src={allImages[currentImage]}
+                                            alt={auction.title}
+                                            className="w-full h-full object-contain p-4"
+                                        />
+                                        {allImages.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={() => setCurrentImage(i => (i - 1 + allImages.length) % allImages.length)}
+                                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 hover:bg-card border border-border/50 text-foreground flex items-center justify-center shadow-md transition-colors"
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setCurrentImage(i => (i + 1) % allImages.length)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 hover:bg-card border border-border/50 text-foreground flex items-center justify-center shadow-md transition-colors"
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </button>
+                                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-foreground/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
+                                                    {currentImage + 1} / {allImages.length}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Sin imagen</div>
+                                )}
+                            </div>
+
+                            {/* Thumbnails */}
+                            {allImages.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto pb-1">
+                                    {allImages.map((url, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setCurrentImage(i)}
-                                            className={`rounded-full transition-all duration-300 ${i === currentImage ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40"}`}
-                                        />
+                                            className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${i === currentImage ? "border-primary shadow-md" : "border-border hover:border-primary/50"}`}
+                                        >
+                                            <img src={url} alt="" className="w-full h-full object-cover" />
+                                        </button>
                                     ))}
                                 </div>
                             )}
-
-                            {/* Image counter pill */}
-                            <div className="absolute top-3 right-3 text-[10px] font-bold text-white/80 px-2.5 py-1 rounded-full" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                {currentImage + 1} / {images.length}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/20 text-sm" style={{ background: "rgba(255,255,255,0.03)" }}>
-                            Sin imágenes
                         </div>
-                    )}
-                </div>
 
-                {/* ── Thumbnail strip ── */}
-                {images.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto px-5 pt-3 pb-1 scrollbar-none">
-                        {images.map((url, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setCurrentImage(i)}
-                                className={`shrink-0 w-12 h-12 rounded-xl overflow-hidden transition-all duration-200 ${i === currentImage ? "ring-2 ring-white/60 scale-105" : "opacity-40 hover:opacity-70"}`}
-                            >
-                                <img src={url} alt="" className="w-full h-full object-cover" />
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* ── Content ── */}
-                <div className="flex flex-col gap-5 px-6 py-5">
-
-                    {/* Title */}
-                    <h2 className="text-xl font-bold leading-snug text-white tracking-tight">{auction.title}</h2>
-
-                    {/* Price block */}
-                    <div
-                        className="rounded-2xl p-4"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                    >
-                        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
-                            {hasBids ? "Puja actual" : "Precio inicial"}
-                        </p>
-                        <div className="flex items-end gap-3 flex-wrap">
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-sm font-bold text-white/50">US$</span>
-                                <span
-                                    className="text-4xl font-black tracking-tight text-white"
-                                    style={{ fontVariantNumeric: "tabular-nums" }}
-                                >
-                                    {fmtUSD(displayPrice)}
-                                </span>
+                        {/* ── RIGHT: Info ── */}
+                        <div className="space-y-5">
+                            {/* Title */}
+                            <div className="flex items-start gap-3 flex-wrap">
+                                <h1 className="text-2xl font-heading font-bold leading-tight">{auction.title}</h1>
+                                {(auction as any).operation_number && (
+                                    <span className="text-[10px] font-mono bg-secondary text-muted-foreground px-2.5 py-1 rounded-lg border border-border mt-1">
+                                        {(auction as any).operation_number}
+                                    </span>
+                                )}
                             </div>
-                            {hasBids && (
-                                <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "#34d399", border: "1px solid rgba(52,211,153,0.3)" }}>
-                                    Pujado
-                                </span>
-                            )}
+
+                            {/* Dealer info placeholder */}
+                            <div className="bg-card border border-border rounded-xl px-5 py-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full border border-border bg-secondary flex items-center justify-center shrink-0 shadow-sm">
+                                        <User className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
+                                            <span>Tu tienda</span>
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Verificado</span>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground mt-0.5">Tus ventas · Tu reputación</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Price highlight — shows "Precio inicial" because it's pending */}
+                            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+                                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Precio inicial</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-sm text-foreground">US$</span>
+                                    <span className="text-4xl font-black text-foreground tracking-tight">
+                                        {Math.floor(displayPrice).toLocaleString("en-US")}
+                                    </span>
+                                    <span className="text-sm text-foreground">
+                                        {(displayPrice % 1).toFixed(2).substring(1)}
+                                    </span>
+                                </div>
+                                {bcvRate && bcvRate > 0 && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Bs. {fmtBs(displayPrice * bcvRate)}
+                                    </p>
+                                )}
+                                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>Termina en</span>
+                                    <span className="font-mono font-bold text-foreground">
+                                        {durationH
+                                            ? durationH < 24
+                                                ? `${durationH}h 00min`
+                                                : `${Math.round(durationH / 24)}d 00h`
+                                            : "—"}
+                                    </span>
+                                    <span className="text-muted-foreground/50">(tiempo estimado)</span>
+                                </div>
+                            </div>
+
+                            {/* Info table */}
+                            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                                <table className="w-full text-sm">
+                                    <tbody>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium w-1/3">Estado</td>
+                                            <td className="px-4 py-3 font-medium">
+                                                <span className="flex items-center gap-1.5 text-foreground">
+                                                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> En vivo
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Precio inicial</td>
+                                            <td className="px-4 py-3">
+                                                <span className="font-semibold text-foreground">US$ {fmtUSD(auction.starting_price)}</span>
+                                                {bcvRate && bcvRate > 0 && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bs. {fmtBs(auction.starting_price * bcvRate)}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Puja actual</td>
+                                            <td className="px-4 py-3">
+                                                <span className="font-bold text-foreground text-lg">US$ {fmtUSD(auction.starting_price)}</span>
+                                                {bcvRate && bcvRate > 0 && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        Bs. {fmtBs(auction.starting_price * bcvRate)}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Tiempo restante</td>
+                                            <td className="px-4 py-3 font-mono font-bold text-foreground">
+                                                {durationH
+                                                    ? durationH < 24
+                                                        ? `00h ${durationH}m 00s`
+                                                        : `${Math.round(durationH / 24) * 24}h 00m 00s`
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Total de pujas</td>
+                                            <td className="px-4 py-3 font-semibold">0</td>
+                                        </tr>
+                                        <tr className="border-b border-border">
+                                            <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Fotos</td>
+                                            <td className="px-4 py-3 font-semibold">{allImages.length}</td>
+                                        </tr>
+                                        {auction.description && (
+                                            <tr>
+                                                <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium align-top">Descripción</td>
+                                                <td className="px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+                                                    <DescriptionToggle text={auction.description} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Preview note */}
+                            <div className="flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-500/8 px-4 py-3">
+                                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                                    <strong>Vista previa.</strong> Esta publicación aún está pendiente de revisión. El tiempo real del contador y la actividad de pujas comenzarán una vez que el administrador la apruebe.
+                                </p>
+                            </div>
                         </div>
-                        {bcvRate && bcvRate > 0 && (
-                            <p className="text-sm font-semibold mt-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
-                                Bs.&nbsp;{fmtBs(displayPrice * bcvRate)}
-                                <span className="ml-2 text-[10px] font-normal" style={{ color: "rgba(255,255,255,0.25)" }}>
-                                    Tasa BCV {bcvRate.toFixed(2)} Bs/$
-                                </span>
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Info chips */}
-                    <div className="flex flex-wrap gap-2">
-                        {durationLabel && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.65)" }}>
-                                <Clock className="h-3 w-3" />
-                                {durationLabel}
-                            </div>
-                        )}
-                        {images.length > 0 && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.65)" }}>
-                                <Images className="h-3 w-3" />
-                                {images.length} foto{images.length !== 1 ? "s" : ""}
-                            </div>
-                        )}
-                        {(auction as any).start_time && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.65)" }}>
-                                <Calendar className="h-3 w-3" />
-                                {new Date((auction as any).start_time).toLocaleString("es-VE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Description */}
-                    {auction.description && (
-                        <div
-                            className="rounded-2xl p-4"
-                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-                        >
-                            <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
-                                Descripción
-                            </p>
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(255,255,255,0.7)" }}>
-                                {auction.description}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Admin notes */}
-                    {(auction as any).admin_notes && (
-                        <div className="rounded-2xl p-4 flex gap-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-xs font-bold text-amber-400 mb-1">Notas del Administrador</p>
-                                <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>{(auction as any).admin_notes}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Footer note */}
-                    <div className="flex items-center justify-center gap-2 pt-1 pb-2">
-                        <Sparkles className="h-3 w-3" style={{ color: "rgba(255,255,255,0.2)" }} />
-                        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-                            La apariencia final puede variar una vez aprobada
-                        </p>
-                        <Sparkles className="h-3 w-3" style={{ color: "rgba(255,255,255,0.2)" }} />
                     </div>
                 </div>
             </div>
