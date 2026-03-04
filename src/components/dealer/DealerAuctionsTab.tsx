@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { maskName } from "@/lib/utils";
 import type { AuctionWithImages, WinnerProfile } from "./types";
+import AuctionPreviewModal from "./AuctionPreviewModal";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pendiente", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
@@ -65,6 +66,9 @@ export default function DealerAuctionsTab({
     if (statusFilter === "finalized") return auctions.filter(a => a.status === "finalized" && !(a as any).archived_at);
     return auctions.filter(a => a.status === statusFilter);
   }, [auctions, statusFilter]);
+
+  // ── Preview state ────────────────────────────────────────────
+  const [previewAuction, setPreviewAuction] = useState<AuctionWithImages | null>(null);
 
   const handleDelete = async (auctionId: string) => {
     const { error } = await supabase.from("auctions").delete().eq("id", auctionId);
@@ -147,6 +151,11 @@ export default function DealerAuctionsTab({
 
   return (
     <div className="space-y-4">
+      {/* Preview Modal */}
+      {previewAuction && (
+        <AuctionPreviewModal auction={previewAuction} onClose={() => setPreviewAuction(null)} />
+      )}
+
       {/* Status filter pills */}
       <div className="flex flex-wrap gap-2">
         {[
@@ -535,6 +544,14 @@ export default function DealerAuctionsTab({
                             className="text-foreground border-border hover:bg-secondary/50 rounded-sm text-xs h-7"
                           >
                             <Copy className="h-3 w-3 mr-1" /> Publicación similar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPreviewAuction(auction)}
+                            className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7"
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Vista previa
                           </Button>
                         </div>
                       </div>
