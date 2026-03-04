@@ -31,7 +31,7 @@ import {
   Lock, ShieldCheck, User, MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Database } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   open: { label: "Abierta", color: "bg-amber-500/10 text-amber-600 border-amber-200", icon: AlertTriangle },
@@ -41,6 +41,14 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 };
 
 type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile";
+
+export interface StoreOrder extends Tables<"marketplace_orders"> {
+  dealer: { name: string } | null;
+  product: {
+    title: string;
+    images: { image_url: string; display_order: number }[];
+  } | null;
+}
 
 const BuyerPanel = () => {
   const { user, profile, isDealer, isAdmin, loading: authLoading, refreshProfile } = useAuth();
@@ -58,6 +66,11 @@ const BuyerPanel = () => {
   const [loadingAuctions, setLoadingAuctions] = useState(true);
   const [selectedAuctionForDispute, setSelectedAuctionForDispute] = useState<Tables<"auctions"> | null>(null);
   const [favoriteAuctions, setFavoriteAuctions] = useState<Tables<"auctions">[]>([]);
+
+  // Tienda (Marketplace Orders)
+  const [storeOrders, setStoreOrders] = useState<StoreOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [purchasesTab, setPurchasesTab] = useState<"subastas" | "tienda">("subastas");
 
   const siteName = getSetting("site_name", "SUBASTANDOLO");
 
@@ -79,6 +92,40 @@ const BuyerPanel = () => {
       setLoadingAuctions(false);
     };
     fetchWon();
+  }, [user]);
+
+  // Fetch Marketplace Orders
+  useEffect(() => {
+    if (!user) return;
+    const fetchOrders = async () => {
+      setLoadingOrders(true);
+      try {
+        const { data } = await supabase
+          .from("marketplace_orders")
+          .select(`
+            *,
+            dealer:profiles!dealer_id(name),
+            product:marketplace_products(title, images:marketplace_product_images(image_url, display_order))
+          `)
+          .eq("buyer_id", user.id)
+          .order("created_at", { ascending: false });
+
+        // Enrich
+        const enriched = (data || []).map((o: any) => ({
+          ...o,
+          product: {
+            ...o.product,
+            images: o.product?.images?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+          }
+        }));
+        setStoreOrders(enriched);
+      } catch (err) {
+        console.error("Error fetching store orders:", err);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+    fetchOrders();
   }, [user]);
 
   // Fetch favorite auctions
@@ -237,39 +284,192 @@ const BuyerPanel = () => {
           Seguridad de la Cuenta
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border border-border rounded-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-heading font-bold">Cambiar Contraseña</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={onSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Nueva contraseña</label>
-                  <PasswordInput
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="h-10 rounded-sm"
-                  />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Mis Compras Section */}
+            <Card className="border border-border rounded-sm shadow-sm overflow-hidden">
+              <CardHeader className="pb-0 pt-5 px-5 flex flex-row items-center justify-between border-b border-border bg-secondary/20">
+                <CardTitle className="text-base font-heading font-bold flex items-center gap-2 mb-4">
+                  <Package className="h-4 w-4 text-primary" />
+                  Mis Compras
+                </CardTitle>
+                <div className="flex bg-background rounded-md p-1 border border-border/50 mb-4 h-9">
+                  <button
+                    onClick={() => setPurchasesTab("subastas")}
+                    className={`text-xs px-3 font-semibold rounded-sm transition-colors ${purchasesTab === "subastas" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Subastas
+                  </button>
+                  <button
+                    onClick={() => setPurchasesTab("tienda")}
+                    className={`text-xs px-3 font-semibold rounded-sm transition-colors ${purchasesTab === "tienda" ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Tienda
+                  </button>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Confirmar nueva contraseña</label>
-                  <PasswordInput
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="h-10 rounded-sm"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-primary text-primary-foreground rounded-sm font-bold" disabled={updating}>
-                  {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Actualizar Contraseña"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-0">
+
+                {purchasesTab === "subastas" && (
+                  <>
+                    <div className="p-4 border-b border-border bg-muted/10 flex justify-between items-center text-xs text-muted-foreground">
+                      <span>Total ganadas: <strong className="text-foreground">{winsCount}</strong></span>
+                    </div>
+                    {loadingAuctions ? (
+                      <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : wonAuctions.length === 0 ? (
+                      <div className="text-center p-8 bg-muted/10">
+                        <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-foreground">Aún no has ganado subastas</p>
+                        <p className="text-xs text-muted-foreground mt-1 mb-4">¡Anímate a participar y consigue grandes ofertas!</p>
+                        <Button size="sm" onClick={() => navigate("/#subastas")} className="rounded-sm text-xs h-8">Ver Subastas Activas</Button>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {wonAuctions.map((auction) => {
+                          const endDate = new Date(auction.end_time);
+                          const dateStr = endDate.toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" });
+
+                          const statusLabel =
+                            auction.delivery_status === "delivered" || auction.delivered_at ? "Entregado" :
+                              auction.delivery_status === "shipped" || auction.tracking_number ? "En camino" :
+                                auction.payment_status === "verified" ? "Pago verificado" :
+                                  auction.payment_status === "under_review" ? "Pago en revisión" :
+                                    auction.payment_status === "escrow" ? "En escrow" :
+                                      "Pago pendiente";
+
+                          const statusColor =
+                            auction.delivery_status === "delivered" || auction.delivered_at ? "text-emerald-600" :
+                              auction.delivery_status === "shipped" || auction.tracking_number ? "text-primary" :
+                                auction.payment_status === "verified" ? "text-primary" :
+                                  "text-amber-600";
+
+                          const statusDesc =
+                            auction.delivery_status === "delivered" || auction.delivered_at ? "Asumimos que ya recibiste la compra" :
+                              auction.delivery_status === "shipped" || auction.tracking_number ? "Tu producto está en camino" :
+                                auction.payment_status === "verified" ? "El dealer preparará tu envío" :
+                                  auction.payment_status === "under_review" ? "Estamos revisando tu comprobante" :
+                                    "Sube tu comprobante de pago";
+
+                          return (
+                            <div key={auction.id} className="p-5 flex flex-col sm:flex-row gap-4 hover:bg-muted/5 transition-colors group cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
+                              <div className="h-20 w-20 bg-secondary/30 rounded-sm overflow-hidden shrink-0 border border-border flex items-center justify-center">
+                                {auction.image_url ? <img src={auction.image_url} alt={auction.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <p className="font-heading font-bold text-sm text-foreground hover:text-primary transition-colors line-clamp-1 truncate block">
+                                    {auction.title}
+                                  </p>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">{dateStr}</span>
+                                </div>
+
+                                <p className={`text-xs font-semibold ${statusColor}`}>{statusLabel}</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{statusDesc}</p>
+
+                                <div className="flex items-end justify-between mt-3">
+                                  <p className="font-bold text-sm">Precio final: <span className="text-accent">${auction.current_price} USD</span></p>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {purchasesTab === "tienda" && (
+                  loadingOrders ? (
+                    <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : storeOrders.length === 0 ? (
+                    <div className="text-center p-8 bg-muted/10">
+                      <Store className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-foreground">Aún no tienes pedidos en la Tienda</p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4">Compra productos directos a precio fijo.</p>
+                      <Button size="sm" onClick={() => navigate("/tienda")} className="rounded-sm bg-accent hover:bg-accent/90 text-accent-foreground text-xs h-8">Visitar Tienda</Button>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {storeOrders.map((order) => {
+                        const mainImg = order.product?.images?.[0]?.image_url;
+                        return (
+                          <div key={order.id} className="p-5 flex flex-col sm:flex-row gap-4 hover:bg-muted/5 transition-colors group cursor-pointer" onClick={() => navigate(`/checkout-tienda/${order.product_id}`)}>
+                            <div className="h-20 w-20 bg-secondary/30 rounded-sm overflow-hidden shrink-0 border border-border flex items-center justify-center">
+                              {mainImg ? <img src={mainImg} alt={order.product?.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <Store className="h-6 w-6 text-muted-foreground/30" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <p className="font-heading font-bold text-sm text-foreground hover:text-accent transition-colors line-clamp-1">
+                                  {order.product?.title || "Producto"}
+                                </p>
+                                <span className="text-[10px] text-muted-foreground shrink-0">{new Date(order.created_at).toLocaleDateString("es-VE")}</span>
+                              </div>
+
+                              <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                                <Store className="h-3 w-3" /> Dealer: {order.dealer?.name || "Vendedor"}
+                              </p>
+
+                              <div className="flex items-center justify-between mt-3">
+                                <p className="font-bold text-sm text-foreground">${order.total_price_usd.toLocaleString("es-MX", { minimumFractionDigits: 2 })} USD</p>
+                                <div className="flex items-center gap-2">
+                                  {order.payment_status === 'pending' || order.payment_status === 'under_review' ? (
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-warning/10 text-warning border-warning/20">Pago Revisión</Badge>
+                                  ) : order.shipping_status === 'shipped' ? (
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/20">Enviado</Badge>
+                                  ) : order.shipping_status === 'delivered' ? (
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-success/10 text-success border-success/20">Entregado</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-secondary text-foreground">Por Enviar</Badge>
+                                  )}
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border rounded-sm shadow-sm overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-heading font-bold">Cambiar Contraseña</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={onSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Nueva contraseña</label>
+                    <PasswordInput
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="h-10 rounded-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Confirmar nueva contraseña</label>
+                    <PasswordInput
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="h-10 rounded-sm"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground rounded-sm font-bold" disabled={updating}>
+                    {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Actualizar Contraseña"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
 
           <Card className="border border-border rounded-sm bg-muted/20">
             <CardHeader className="pb-3">
@@ -636,94 +836,6 @@ const BuyerPanel = () => {
             </span>
           </div>
         </div>
-
-        {/* === WON AUCTIONS — MercadoLibre style === */}
-        {!loadingAuctions && wonAuctions.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-base font-heading font-bold mb-3 flex items-center gap-2">
-              <Package className="h-4 w-4 text-primary" />
-              Mis Compras
-              <Badge variant="secondary" className="ml-1 text-[10px]">{wonAuctions.length}</Badge>
-            </h2>
-
-            {/* Reviews CTA */}
-            <div className="bg-card border border-border rounded-sm p-4 mb-3 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold">Opina sobre tus productos</p>
-                <button onClick={() => navigate("/mi-panel")} className="text-xs text-primary hover:underline">Ir a mis opiniones</button>
-              </div>
-              <Star className="h-6 w-6 text-amber-400" />
-            </div>
-
-            {/* Purchase cards grouped by date */}
-            <div className="space-y-3">
-              {wonAuctions.map(a => {
-                const endDate = new Date(a.end_time);
-                const dateStr = endDate.toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" });
-
-                const statusLabel =
-                  a.delivery_status === "delivered" || a.delivered_at ? "Entregado" :
-                    a.delivery_status === "shipped" || a.tracking_number ? "En camino" :
-                      a.payment_status === "verified" ? "Pago verificado" :
-                        a.payment_status === "under_review" ? "Pago en revisión" :
-                          a.payment_status === "escrow" ? "En escrow" :
-                            "Pago pendiente";
-
-                const statusColor =
-                  a.delivery_status === "delivered" || a.delivered_at ? "text-emerald-600" :
-                    a.delivery_status === "shipped" || a.tracking_number ? "text-primary" :
-                      a.payment_status === "verified" ? "text-primary" :
-                        "text-amber-600";
-
-                const statusDesc =
-                  a.delivery_status === "delivered" || a.delivered_at ? "Asumimos que ya recibiste la compra" :
-                    a.delivery_status === "shipped" || a.tracking_number ? "Tu producto está en camino" :
-                      a.payment_status === "verified" ? "El dealer preparará tu envío" :
-                        a.payment_status === "under_review" ? "Estamos revisando tu comprobante" :
-                          "Sube tu comprobante de pago";
-
-                return (
-                  <div
-                    key={a.id}
-                    className="bg-card border border-border rounded-sm overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
-                    onClick={() => navigate(`/auction/${a.id}`)}
-                  >
-                    {/* Date header */}
-                    <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-secondary/20">
-                      <p className="text-xs font-medium text-foreground">{dateStr}</p>
-                      <span className="text-[11px] text-primary font-medium hover:underline">Ver detalle</span>
-                    </div>
-
-                    {/* Product row */}
-                    <div className="p-4 flex items-center gap-3">
-                      {a.image_url ? (
-                        <img src={a.image_url} alt={a.title} className="w-16 h-16 rounded-sm object-cover border border-border shrink-0" />
-                      ) : (
-                        <div className="w-16 h-16 rounded-sm bg-muted border border-border flex items-center justify-center shrink-0">
-                          <Package className="h-6 w-6 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-semibold ${statusColor}`}>{statusLabel}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{statusDesc}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate font-medium">{a.title}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">${a.current_price.toLocaleString("es-MX")} USD</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {loadingAuctions && (
-          <div className="mb-6 bg-card border border-border rounded-sm p-8 flex items-center justify-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Cargando compras...</span>
-          </div>
-        )}
 
         {/* Action cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">

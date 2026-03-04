@@ -15,11 +15,15 @@ import ReputationThermometer from "@/components/ReputationThermometer";
 import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert } from "lucide-react";
+import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert, Store } from "lucide-react";
 
 import type { AuctionWithImages, WinnerProfile } from "@/components/dealer/types";
 import DealerDashboardTab from "@/components/dealer/DealerDashboardTab";
 import DealerCreateTab from "@/components/dealer/DealerCreateTab";
+import DealerStoreTab from "@/components/dealer/DealerStoreTab";
+import DealerStoreCreateTab from "@/components/dealer/DealerStoreCreateTab";
+import DealerStoreEditTab from "@/components/dealer/DealerStoreEditTab";
+import DealerStoreOrdersTab from "@/components/dealer/DealerStoreOrdersTab";
 import DealerAuctionsTab from "@/components/dealer/DealerAuctionsTab";
 import DealerShipmentsTab from "@/components/dealer/DealerShipmentsTab";
 import DealerLevelsTab from "@/components/dealer/DealerLevelsTab";
@@ -350,6 +354,8 @@ const DealerDashboard = () => {
 
   const tabs = [
     { key: "dashboard", label: "Dashboard", icon: BarChart3 },
+    { key: "store", label: "Tienda Directa", icon: Store },
+    { key: "store-orders", label: "Ventas(Tienda)", icon: Package },
     { key: "auctions", label: "Mis Subastas", icon: Package },
     { key: "create", label: "Crear Subasta", icon: Plus },
     { key: "shipments", label: "Envíos", icon: Truck },
@@ -389,6 +395,31 @@ const DealerDashboard = () => {
 
         {activeTab === "dashboard" && (
           <DealerDashboardTab auctions={auctions} setActiveTab={setActiveTab} setStatusFilter={setStatusFilter} sections={sections} />
+        )}
+
+        {activeTab === "store" && user?.id && (
+          <DealerStoreTab dealerId={user.id} setActiveTab={setActiveTab} />
+        )}
+
+        {activeTab === "store-create" && user?.id && (
+          <DealerStoreCreateTab
+            dealerId={user.id}
+            setActiveTab={setActiveTab}
+            onCreated={fetchMyAuctions} // We can reuse the refresh fetcher later or create a specific one for store.
+          />
+        )}
+
+        {activeTab.startsWith("store-edit-") && user?.id && (
+          <DealerStoreEditTab
+            dealerId={user.id}
+            productId={activeTab.replace("store-edit-", "")}
+            setActiveTab={setActiveTab}
+            onUpdated={fetchMyAuctions}
+          />
+        )}
+
+        {activeTab === "store-orders" && user?.id && (
+          <DealerStoreOrdersTab dealerId={user.id} />
         )}
 
         {activeTab === "create" && (

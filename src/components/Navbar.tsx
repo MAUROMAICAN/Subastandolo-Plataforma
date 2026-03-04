@@ -124,6 +124,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
         <div className="container mx-auto px-4">
           <nav className="flex items-center gap-1 h-10 text-[13px]">
             <Link to="/" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Inicio</Link>
+            <Link to="/tienda" className="px-3 py-1.5 text-accent hover:text-white hover:bg-white/10 transition-colors font-bold rounded-sm flex items-center gap-1"><Store className="h-3.5 w-3.5" />Tienda</Link>
             <a href="/#subastas" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Subastas</a>
             <Link to="/como-funciona" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Cómo Funciona</Link>
             <Link to="/nosotros" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Nosotros</Link>
@@ -194,6 +195,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
             )}
             <div className="border-t border-border/50 my-1" />
             <Link to="/" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
+            <Link to="/tienda" className="px-3 py-2 rounded-lg text-accent font-bold hover:bg-secondary flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}><Store className="h-4 w-4" />Tienda</Link>
             <a href="/#subastas" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Subastas</a>
             <Link to="/como-funciona" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Cómo Funciona</Link>
             <Link to="/nosotros" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>

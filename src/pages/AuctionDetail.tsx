@@ -12,7 +12,7 @@ const DescriptionToggle = ({ text, maxLength = 120 }: { text: string; maxLength?
       {expanded ? text : `${text.slice(0, maxLength).trimEnd()}…`}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="ml-1 text-primary font-medium hover:underline text-xs"
+        className="ml-1 text-foreground dark:text-white font-medium hover:underline text-xs"
       >
         {expanded ? "Ver menos" : "Ver más"}
       </button>
@@ -454,7 +454,7 @@ const AuctionDetail = () => {
                   </div>
                 )}
                 {isEnded && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 bg-destructive/10 text-destructive text-xs font-semibold px-3 py-1 rounded-lg">
+                  <div className="mt-2 inline-flex items-center gap-1.5 bg-destructive/10 dark:bg-white/10 text-destructive dark:text-white text-xs font-semibold px-3 py-1 rounded-lg">
                     Finalizada
                   </div>
                 )}
@@ -469,13 +469,13 @@ const AuctionDetail = () => {
                     <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium w-1/3">Estado</td>
                     <td className="px-4 py-3 font-medium">
                       {isScheduled ? (
-                        <span className="text-primary flex items-center gap-1.5">
+                        <span className="text-foreground dark:text-gray-200 flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5" /> Próximamente
                         </span>
                       ) : isEnded ? (
-                        <span className="text-destructive font-semibold">Finalizada</span>
+                        <span className="text-destructive dark:text-white font-semibold">Finalizada</span>
                       ) : (
-                        <span className="text-primary flex items-center gap-1.5">
+                        <span className="text-foreground dark:text-gray-200 flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> En vivo
                         </span>
                       )}
@@ -488,7 +488,7 @@ const AuctionDetail = () => {
                   {!isScheduled && (
                     <tr className="border-b border-border">
                       <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Puja actual</td>
-                      <td className="px-4 py-3 font-bold text-primary text-lg">${currentPrice.toLocaleString("es-MX")}</td>
+                      <td className="px-4 py-3 font-bold text-foreground text-lg">${currentPrice.toLocaleString("es-MX")}</td>
                     </tr>
                   )}
                   {!isScheduled && (
@@ -581,7 +581,7 @@ const AuctionDetail = () => {
             {/* Scheduled notice */}
             {isScheduled && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 space-y-2 text-center">
-                <h3 className="font-heading font-bold text-sm flex items-center justify-center gap-1.5 text-primary">
+                <h3 className="font-heading font-bold text-sm flex items-center justify-center gap-1.5 text-primary dark:text-gray-200">
                   <Clock className="h-4 w-4" />
                   Próximamente
                 </h3>
@@ -593,7 +593,7 @@ const AuctionDetail = () => {
 
             {!isScheduled && !isEnded && auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now() && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 space-y-2 text-center">
-                <h3 className="font-heading font-bold text-sm flex items-center justify-center gap-1.5 text-primary">
+                <h3 className="font-heading font-bold text-sm flex items-center justify-center gap-1.5 text-primary dark:text-gray-200">
                   <Clock className="h-4 w-4" />
                   Subasta programada
                 </h3>
@@ -665,8 +665,8 @@ const AuctionDetail = () => {
                 <div className="bg-primary/5 border border-primary/15 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-semibold flex items-center gap-1.5">
-                      <Zap className="h-3.5 w-3.5 text-primary" />
-                      Auto-Puja
+                      <Zap className="h-3.5 w-3.5 text-primary dark:text-yellow-400" />
+                      <span className="dark:text-white">Auto-Puja</span>
                       {autoBidActive && <span className="text-[10px] font-normal text-muted-foreground ml-1">(activa hasta ${autoBidActive.max_amount.toLocaleString("es-MX")})</span>}
                     </h4>
                     {autoBidActive && (
@@ -809,9 +809,9 @@ const AuctionDetail = () => {
             )}
           </div>
         </div>
-      </main>
+      </main >
       <Footer />
-    </div>
+    </div >
   );
 };
 
