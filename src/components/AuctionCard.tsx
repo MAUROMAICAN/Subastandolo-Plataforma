@@ -37,7 +37,7 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
   return (
     <Link to={`/auction/${auction.id}`} className="group block h-full">
-      <div className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-card border border-white/5 shadow-md hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
+      <div className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-card border border-border shadow-sm hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
 
         {/* ── IMAGE ZONE ── */}
         <div className="relative aspect-square overflow-hidden bg-muted/10">
@@ -45,7 +45,7 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             <img
               src={auction.image_url}
               alt={auction.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               loading="lazy"
             />
           ) : (
@@ -53,9 +53,6 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               Sin imagen
             </div>
           )}
-
-          {/* Deep gradient: covers bottom 60% of the image for guaranteed contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.1) 60%, transparent 100%)' }} />
 
           {/* ── TOP-LEFT: Status badge ── */}
           <div className="absolute top-2 left-2 z-10">
@@ -94,40 +91,38 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               </span>
             </div>
           )}
-
-          {/* ── BOTTOM OF IMAGE: Price overlaid ── */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-3 pt-8">
-            {/* Extended badge */}
-            {(auction as any).is_extended && (
-              <div className="mb-1.5 inline-flex items-center gap-1 bg-amber-500/90 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
-                <Zap className="h-2.5 w-2.5" /> Extendida
-              </div>
-            )}
-
-            {/* Price */}
-            <div className="flex flex-col">
-              <div className="flex items-baseline gap-0.5">
-                <span className="text-white/80 text-[10px] font-bold" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>US$</span>
-                <span className="text-white text-xl font-black tracking-tight leading-none" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8)' }}>
-                  {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                {hasBids && !isEnded && (
-                  <span className="ml-1.5 text-[8px] font-bold uppercase tracking-wide text-emerald-300 border border-emerald-400/30 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
-                    Pujado
-                  </span>
-                )}
-              </div>
-              {bcvRate && bcvRate > 0 && (
-                <span className="text-white/65 text-[10px] font-medium mt-0.5" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
-                  Bs.&nbsp;{(displayPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── INFO ZONE ── */}
         <div className="flex flex-col flex-1 px-3 pt-2.5 pb-2.5">
+
+          {/* Extended badge */}
+          {(auction as any).is_extended && (
+            <div className="mb-1.5 inline-flex items-center gap-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-400/30 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full w-fit">
+              <Zap className="h-2.5 w-2.5" /> Extendida
+            </div>
+          )}
+
+          {/* Price */}
+          <div className="flex flex-col mb-1">
+            <div className="flex items-baseline gap-0.5 flex-wrap">
+              <span className="text-muted-foreground text-[10px] font-bold">US$</span>
+              <span className="text-foreground text-xl font-black tracking-tight leading-none">
+                {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              {hasBids && !isEnded && (
+                <span className="ml-1.5 text-[8px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                  Pujado
+                </span>
+              )}
+            </div>
+            {bcvRate && bcvRate > 0 && (
+              <span className="text-muted-foreground text-[10px] font-medium mt-0.5">
+                Bs.&nbsp;{(displayPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            )}
+          </div>
+
           {/* Title */}
           <h3 className="font-semibold text-[11px] sm:text-sm leading-snug line-clamp-2 text-foreground dark:text-white/90 group-hover:text-primary dark:group-hover:text-white transition-colors">
             {auction.title}
