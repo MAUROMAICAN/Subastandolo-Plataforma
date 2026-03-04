@@ -4,6 +4,7 @@ import { Trophy, Heart, Zap, Timer } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
+import { useBCVRate } from "@/hooks/useBCVRate";
 
 interface DealerInfo {
   name: string;
@@ -20,6 +21,7 @@ interface AuctionCardProps {
 
 const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionCardProps) => {
   const { user } = useAuth();
+  const bcvRate = useBCVRate();
   const isEnded = auction.status !== "scheduled" && new Date(auction.end_time).getTime() <= Date.now();
   const startTime = (auction as any).start_time;
   const isScheduled = auction.status === "scheduled" || (startTime && new Date(startTime).getTime() > Date.now());
@@ -103,14 +105,21 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             )}
 
             {/* Price */}
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-white/80 text-[10px] font-bold" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>US$</span>
-              <span className="text-white text-xl font-black tracking-tight leading-none" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8)' }}>
-                {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              {hasBids && !isEnded && (
-                <span className="ml-1.5 text-[8px] font-bold uppercase tracking-wide text-emerald-300 border border-emerald-400/30 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
-                  Pujado
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-white/80 text-[10px] font-bold" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>US$</span>
+                <span className="text-white text-xl font-black tracking-tight leading-none" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8)' }}>
+                  {displayPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                {hasBids && !isEnded && (
+                  <span className="ml-1.5 text-[8px] font-bold uppercase tracking-wide text-emerald-300 border border-emerald-400/30 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                    Pujado
+                  </span>
+                )}
+              </div>
+              {bcvRate && bcvRate > 0 && (
+                <span className="text-white/65 text-[10px] font-medium mt-0.5" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                  Bs.&nbsp;{(displayPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               )}
             </div>

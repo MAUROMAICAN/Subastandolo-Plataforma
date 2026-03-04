@@ -48,6 +48,7 @@ import WinnerCelebration from "@/components/WinnerCelebration";
 import SEO from "@/components/SEO";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
+import { useBCVRate } from "@/hooks/useBCVRate";
 import confetti from "canvas-confetti";
 
 
@@ -68,6 +69,7 @@ const AuctionDetail = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const bcvRate = useBCVRate();
 
   const [auction, setAuction] = useState<Tables<"auctions"> | null>(null);
   const [bids, setBids] = useState<Tables<"bids">[]>([]);
@@ -483,12 +485,26 @@ const AuctionDetail = () => {
                   </tr>
                   <tr className="border-b border-border">
                     <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Precio inicial</td>
-                    <td className="px-4 py-3 font-semibold">${auction.starting_price.toLocaleString("es-MX")}</td>
+                    <td className="px-4 py-3">
+                      <span className="font-semibold text-foreground">US$ {auction.starting_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      {bcvRate && bcvRate > 0 && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Bs. {(auction.starting_price * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                   {!isScheduled && (
                     <tr className="border-b border-border">
                       <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Puja actual</td>
-                      <td className="px-4 py-3 font-bold text-foreground text-lg">${currentPrice.toLocaleString("es-MX")}</td>
+                      <td className="px-4 py-3">
+                        <span className="font-bold text-foreground text-lg">US$ {currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        {bcvRate && bcvRate > 0 && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Bs. {(currentPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   )}
                   {!isScheduled && (
