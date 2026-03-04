@@ -52,7 +52,7 @@ export default function AuctionPreviewModal({ auction, onClose }: Props) {
                 onClick={e => e.stopPropagation()}
             >
                 {/* ── Top bar: Preview watermark + Close ── */}
-                <div className="flex items-center gap-2 px-5 py-3 border-b border-border rounded-t-2xl bg-amber-500/8">
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-amber-400/30 rounded-t-2xl bg-amber-500/10">
                     <Eye className="h-4 w-4 text-amber-500 shrink-0" />
                     <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
                         Vista previa — así verán tu publicación los compradores una vez aprobada
@@ -254,7 +254,7 @@ export default function AuctionPreviewModal({ auction, onClose }: Props) {
                             </div>
 
                             {/* Preview note */}
-                            <div className="flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-500/8 px-4 py-3">
+                            <div className="flex items-start gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3">
                                 <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                                 <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
                                     <strong>Vista previa.</strong> Esta publicación aún está pendiente de revisión. El tiempo real del contador y la actividad de pujas comenzarán una vez que el administrador la apruebe.
