@@ -11,18 +11,24 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 const notifTypeConfig: Record<string, { color: string; label: string; emoji: string }> = {
-    outbid: { color: "bg-red-500/10 text-red-600 border-red-200", label: "Sobrepujado", emoji: "⚡" },
-    auction_won: { color: "bg-green-500/10 text-green-600 border-green-200", label: "¡Ganaste!", emoji: "🏆" },
-    new_bid: { color: "bg-blue-500/10 text-blue-600 border-blue-200", label: "Nueva puja", emoji: "📈" },
-    payment_verified: { color: "bg-green-500/10 text-green-600 border-green-200", label: "Pago verificado", emoji: "✅" },
-    auction_finalized: { color: "bg-gray-500/10 text-gray-600 border-gray-200", label: "Finalizada", emoji: "🔔" },
+    // Auction related
+    outbid: { color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200", label: "Sobrepujado", emoji: "⚡" },
+    auction_won: { color: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200", label: "¡Ganaste!", emoji: "🏆" },
+    new_bid: { color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200", label: "Nueva puja", emoji: "📈" },
+    payment_verified: { color: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200", label: "Pago verificado", emoji: "✅" },
+    dispute_update: { color: "bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-200", label: "Disputa actualizada", emoji: "⚠️" },
+    item_shipped: { color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200", label: "Enviado", emoji: "📦" },
+    item_delivered: { color: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200", label: "Entregado", emoji: "✅" },
+    auction_finalized: { color: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-200", label: "Finalizada", emoji: "🔔" },
+
+    // Admin/System
     admin_custom: { color: "bg-primary/10 text-primary border-primary/20", label: "Admin", emoji: "📢" },
     admin_notification: { color: "bg-primary/10 text-primary border-primary/20", label: "Admin", emoji: "📢" },
     promo: { color: "bg-accent/10 text-accent-foreground border-accent/20", label: "Promoción", emoji: "🎉" },
     announcement: { color: "bg-accent/10 text-accent-foreground border-accent/20", label: "Anuncio", emoji: "📣" },
-    urgent: { color: "bg-red-500/10 text-red-600 border-red-200", label: "Urgente", emoji: "🚨" },
-    maintenance: { color: "bg-orange-500/10 text-orange-600 border-orange-200", label: "Mantenimiento", emoji: "🔧" },
-    info: { color: "bg-blue-500/10 text-blue-600 border-blue-200", label: "Info", emoji: "ℹ️" },
+    urgent: { color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200", label: "Urgente", emoji: "🚨" },
+    maintenance: { color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200", label: "Mantenimiento", emoji: "🔧" },
+    info: { color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200", label: "Info", emoji: "ℹ️" },
 };
 
 const NotificationsPage = () => {
@@ -77,8 +83,8 @@ const NotificationsPage = () => {
                     <button
                         onClick={() => setFilter("all")}
                         className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${filter === "all"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                             }`}
                     >
                         Todas ({notifications.length})
@@ -86,8 +92,8 @@ const NotificationsPage = () => {
                     <button
                         onClick={() => setFilter("unread")}
                         className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${filter === "unread"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                             }`}
                     >
                         Sin leer ({unreadCount})

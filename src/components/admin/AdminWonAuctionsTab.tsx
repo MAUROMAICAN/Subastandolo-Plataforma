@@ -144,14 +144,14 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   };
 
   const deliveryLabel = (status: string) => {
-    const map: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" },
-      ready_to_ship: { label: "Listo para enviar", class: "bg-blue-500/10 text-blue-600 border-blue-200" },
-      shipped: { label: "Enviado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
-      in_transit: { label: "En tránsito", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
-      delivered: { label: "Entregado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
+    const SHIPPING_STATUSES: Record<string, { label: string; class: string }> = {
+      pending: { label: "Pendiente", class: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-200" },
+      ready_to_ship: { label: "Listo para enviar", class: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200" },
+      shipped: { label: "Enviado", class: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200" },
+      delivered: { label: "Entregado", class: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200" },
+      returned: { label: "Devuelto", class: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200" }
     };
-    return map[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
+    return SHIPPING_STATUSES[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
   };
 
   const toggleSort = (field: SortField) => {

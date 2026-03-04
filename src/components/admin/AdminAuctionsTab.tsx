@@ -489,14 +489,14 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                 const paymentSteps = [
                   { key: "pending", label: "Pendiente", icon: "⏳", color: "text-muted-foreground bg-muted" },
                   { key: "under_review", label: "En Revisión", icon: "🔍", color: "text-amber-600 bg-amber-500/10" },
-                  { key: "verified", label: "Verificado", icon: "✓", color: "text-blue-600 bg-blue-500/10" },
-                  { key: "escrow", label: "Custodia", icon: "🔐", color: "text-orange-600 bg-orange-500/10" },
-                  { key: "released", label: "Liberado", icon: "💸", color: "text-primary dark:text-accent bg-primary/10" },
-                  { key: "refunded", label: "Reembolsado", icon: "↩️", color: "text-destructive bg-destructive/10" },
+                  { key: "verified", label: "Verificado", icon: "✓", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10" },
+                  { key: "escrow", label: "Custodia", icon: "🔐", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10" },
+                  { key: "released", label: "Liberado", icon: "💸", color: "text-green-600 dark:text-green-400 bg-green-500/10" },
+                  { key: "refunded", label: "Reembolsado", icon: "↩️", color: "text-gray-600 dark:text-gray-400 bg-gray-500/10" },
                 ];
                 const deliverySteps = [
                   { key: "pending", label: "Pendiente", icon: "📦", color: "text-muted-foreground bg-muted" },
-                  { key: "ready_to_ship", label: "Listo", icon: "📋", color: "text-blue-600 bg-blue-500/10" },
+                  { key: "ready_to_ship", label: "Listo", icon: "📋", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10" },
                   { key: "shipped", label: "Enviado", icon: "🚚", color: "text-amber-600 bg-amber-500/10" },
                   { key: "delivered", label: "Entregado", icon: "✅", color: "text-primary dark:text-accent bg-primary/10" },
                 ];

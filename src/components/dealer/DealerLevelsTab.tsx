@@ -59,19 +59,18 @@ export default function DealerLevelsTab({ dealer }: Props) {
               const isCurrentTier = dealer?.isVerified && getDealerTier(dealer.salesCount).key === tier.key;
               const rangeText = tier.key === "nuevo" ? "0 – 9" :
                 tier.key === "bronce" ? "10 – 49" :
-                tier.key === "plata" ? "50 – 99" :
-                tier.key === "oro" ? "100 – 499" :
-                tier.key === "platinum" ? "500 – 999" :
-                "1,000+";
+                  tier.key === "plata" ? "50 – 99" :
+                    tier.key === "oro" ? "100 – 499" :
+                      tier.key === "platinum" ? "500 – 999" :
+                        "1,000+";
 
               return (
                 <div
                   key={tier.key}
-                  className={`flex items-center gap-3 rounded-sm px-4 py-3 transition-colors ${
-                    isCurrentTier
+                  className={`flex items-center gap-3 rounded-sm px-4 py-3 transition-colors ${isCurrentTier
                       ? `${tier.colors.bg} border-2 ${tier.colors.border}`
                       : "border border-border hover:bg-secondary/30"
-                  }`}
+                    }`}
                 >
                   <div className="shrink-0">
                     <VerifiedBadge size="md" salesCount={tier.minSales} showTooltip={false} />
@@ -132,18 +131,18 @@ export default function DealerLevelsTab({ dealer }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { emoji: "🔵", color: "text-blue-500", name: "Nuevo", desc: "Insignia de verificación básica azul. Los compradores saben que eres un dealer legítimo." },
-              { emoji: "🟤", color: "text-orange-600", name: "Bronce", desc: "Insignia bronce. Demuestras experiencia inicial con al menos 10 ventas completadas." },
-              { emoji: "⚪", color: "text-slate-400", name: "Plata", desc: "Insignia plata. Dealer consolidado con historial sólido de ventas." },
-              { emoji: "🟡", color: "text-amber-500", name: "Oro", desc: "Diamante dorado premium con animación de brillo. Máxima confianza para compradores." },
-              { emoji: "💜", color: "text-violet-500", name: "Platinum", desc: "Diamante negro con detalles dorados exclusivos. Elite entre los dealers." },
-              { emoji: "💎", color: "text-pink-500", name: "Ruby Estelar", desc: "El nivel más alto. Diamante morado con dorado. Leyenda entre los dealers con 1,000+ ventas." },
-            ].map((item, i) => (
+              { emoji: "🔵", color: "text-blue-500 dark:text-blue-400", name: "Nuevo", desc: "Insignia de verificación básica azul. Los compradores saben que eres un dealer legítimo." },
+              { emoji: "🟤", color: "text-orange-600 dark:text-orange-400", name: "Bronce", desc: "Insignia bronce. Demuestras experiencia inicial con al menos 10 ventas completadas." },
+              { emoji: "⚪", color: "text-slate-500 dark:text-slate-400", name: "Plata", desc: "Insignia de plata. Ya tienes buena rotación con más de 50 ventas." },
+              { emoji: "🟡", color: "text-amber-500 dark:text-amber-400", name: "Oro", desc: "Insignia dorada. Eres un dealer consolidado con 100+ ventas y gran prestigio." },
+              { emoji: "⚫", color: "text-gray-900 dark:text-gray-300", name: "Platinum", desc: "Insignia negra premium. Eres un peso pesado del sitio con más de 500 ventas." },
+              { emoji: "💎", color: "text-pink-500 dark:text-pink-400", name: "Ruby Estelar", desc: "El nivel más alto. Diamante morado con dorado. Leyenda entre los dealers con 1,000+ ventas." },
+            ].map((lvl, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className={`${item.color} font-bold shrink-0`}>{item.emoji}</span>
-                <div><span className="font-semibold">{item.name}:</span> <span className="text-muted-foreground">{item.desc}</span></div>
+                <span className={`${lvl.color} font-bold shrink-0`}>{lvl.emoji}</span>
+                <div><span className="font-semibold">{lvl.name}:</span> <span className="text-muted-foreground">{lvl.desc}</span></div>
               </div>
             ))}
           </div>
