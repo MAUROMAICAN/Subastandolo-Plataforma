@@ -22,11 +22,11 @@ const AuthCallback = () => {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-          window.location.replace("/home");
+          window.location.replace("/");
         } else {
           // Fallback if no session found immediately
           setTimeout(() => {
-            window.location.replace("/home");
+            window.location.replace("/");
           }, 1500);
         }
       }

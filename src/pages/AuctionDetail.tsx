@@ -468,27 +468,27 @@ const AuctionDetail = () => {
               <table className="w-full text-sm">
                 <tbody>
                   <tr className="border-b border-border">
-                    <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium w-1/3">Estado</td>
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium w-1/3">Estado</td>
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {isScheduled ? (
-                        <span className="text-foreground dark:text-gray-200 flex items-center gap-1.5">
+                        <span className="text-foreground flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5" /> Próximamente
                         </span>
                       ) : isEnded ? (
-                        <span className="text-destructive dark:text-white font-semibold">Finalizada</span>
+                        <span className="text-destructive font-semibold">Finalizada</span>
                       ) : (
-                        <span className="text-foreground dark:text-gray-200 flex items-center gap-1.5">
+                        <span className="text-foreground flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> En vivo
                         </span>
                       )}
                     </td>
                   </tr>
                   <tr className="border-b border-border">
-                    <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Precio inicial</td>
+                    <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium">Precio inicial</td>
                     <td className="px-4 py-3">
                       <span className="font-semibold text-foreground">US$ {auction.starting_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {bcvRate && bcvRate > 0 && (
-                        <div className="text-xs text-muted-foreground mt-0.5">
+                        <div className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">
                           Bs. {(auction.starting_price * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       )}
@@ -496,11 +496,11 @@ const AuctionDetail = () => {
                   </tr>
                   {!isScheduled && (
                     <tr className="border-b border-border">
-                      <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Puja actual</td>
+                      <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium">Puja actual</td>
                       <td className="px-4 py-3">
                         <span className="font-bold text-foreground text-lg">US$ {currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         {bcvRate && bcvRate > 0 && (
-                          <div className="text-xs text-muted-foreground mt-0.5">
+                          <div className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">
                             Bs. {(currentPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         )}
@@ -509,24 +509,24 @@ const AuctionDetail = () => {
                   )}
                   {!isScheduled && (
                     <tr className="border-b border-border">
-                      <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Tiempo restante</td>
+                      <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium">Tiempo restante</td>
                       <td className="px-4 py-3"><Countdown endTime={auction.end_time} /></td>
                     </tr>
                   )}
                   {!isScheduled && (
                     <tr className="border-b border-border">
-                      <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Total de pujas</td>
-                      <td className="px-4 py-3 font-semibold">{bids.length}</td>
+                      <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium">Total de pujas</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{bids.length}</td>
                     </tr>
                   )}
                   <tr className="border-b border-border">
-                    <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium">Fotos</td>
-                    <td className="px-4 py-3 font-semibold">{allImages.length}</td>
+                    <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium">Fotos</td>
+                    <td className="px-4 py-3 font-semibold text-foreground">{allImages.length}</td>
                   </tr>
                   {auction.description && (
                     <tr>
-                      <td className="px-4 py-3 text-muted-foreground bg-muted/50 font-medium align-top">Descripción</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+                      <td className="px-4 py-3 text-muted-foreground dark:text-slate-300 bg-muted/30 dark:bg-white/5 font-medium align-top">Descripción</td>
+                      <td className="px-4 py-3 text-sm text-foreground dark:text-slate-200 leading-relaxed">
                         <DescriptionToggle text={auction.description} />
                       </td>
                     </tr>
@@ -731,23 +731,23 @@ const AuctionDetail = () => {
             {/* Bid History */}
             {bids.length > 0 && (
               <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                  <h3 className="font-heading font-bold text-sm">Historial de Pujas</h3>
+                <div className="bg-muted/30 dark:bg-white/5 px-4 py-3 border-b border-border">
+                  <h3 className="font-heading font-bold text-sm text-foreground">Historial de Pujas</h3>
                 </div>
                 <div className="max-h-64 overflow-y-auto overflow-x-auto">
                   <table className="w-full text-sm table-fixed">
                     <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="px-2 sm:px-4 py-2.5 text-left text-xs text-muted-foreground font-medium w-8">#</th>
-                        <th className="px-2 sm:px-4 py-2.5 text-left text-xs text-muted-foreground font-medium">Postor</th>
-                        <th className="px-2 sm:px-4 py-2.5 text-right text-xs text-muted-foreground font-medium w-20 sm:w-24">Monto</th>
+                      <tr className="border-b border-border bg-muted/20 dark:bg-white/5">
+                        <th className="px-2 sm:px-4 py-2.5 text-left text-xs text-muted-foreground dark:text-slate-300 font-medium w-8">#</th>
+                        <th className="px-2 sm:px-4 py-2.5 text-left text-xs text-muted-foreground dark:text-slate-300 font-medium">Postor</th>
+                        <th className="px-2 sm:px-4 py-2.5 text-right text-xs text-muted-foreground dark:text-slate-300 font-medium w-20 sm:w-24">Monto</th>
                       </tr>
                     </thead>
                     <tbody>
                       {bids.map((bid, index) => (
-                        <tr key={bid.id} className={`border-b border-border last:border-0 transition-colors ${index === 0 ? "bg-primary/5" : "hover:bg-muted/30"}`}>
-                          <td className="px-2 sm:px-4 py-2.5 text-muted-foreground">{index === 0 ? "👑" : index + 1}</td>
-                          <td className="px-2 sm:px-4 py-2.5">
+                        <tr key={bid.id} className={`border-b border-border last:border-0 transition-colors ${index === 0 ? "bg-primary/5" : "hover:bg-muted/20"}`}>
+                          <td className="px-2 sm:px-4 py-2.5 text-muted-foreground dark:text-slate-400">{index === 0 ? "👑" : index + 1}</td>
+                          <td className="px-2 sm:px-4 py-2.5 text-foreground">
                             <span className="inline-flex items-center gap-1 max-w-full overflow-hidden">
                               <span className="truncate font-medium">{maskName(bid.bidder_name)}</span>
                               {bidderIsAdmin[bid.user_id] && <AdminBadge size="sm" />}
@@ -768,13 +768,13 @@ const AuctionDetail = () => {
               <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="w-full bg-muted/50 px-4 py-3 border-b border-border flex items-center justify-between hover:bg-muted/70 transition-colors"
+                  className="w-full bg-muted/30 dark:bg-white/5 px-4 py-3 border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
                 >
-                  <h3 className="font-heading font-bold text-sm flex items-center gap-1.5">
+                  <h3 className="font-heading font-bold text-sm text-foreground flex items-center gap-1.5">
                     <Star className="h-4 w-4 text-warning" />
                     {canReviewDealer ? "Calificar al Vendedor" : "Calificar al Comprador"}
                   </h3>
-                  <span className="text-xs text-muted-foreground">{showReviewForm ? "▲" : "▼"}</span>
+                  <span className="text-xs text-muted-foreground dark:text-slate-400">{showReviewForm ? "▲" : "▼"}</span>
                 </button>
                 {showReviewForm && (
                   <div className="p-4">
@@ -792,8 +792,8 @@ const AuctionDetail = () => {
             {/* Existing Reviews */}
             {auctionReviews.length > 0 && (
               <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                  <h3 className="font-heading font-bold text-sm flex items-center gap-1.5">
+                <div className="bg-muted/30 dark:bg-white/5 px-4 py-3 border-b border-border">
+                  <h3 className="font-heading font-bold text-sm text-foreground flex items-center gap-1.5">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     Calificaciones ({auctionReviews.length})
                   </h3>
