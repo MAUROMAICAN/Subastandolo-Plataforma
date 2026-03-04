@@ -104,7 +104,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
           <Truck className="h-4 w-4 text-primary" />
           Datos de Envío
         </h3>
-        <p className="text-[10px] text-muted-foreground mt-0.5">
+        <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-0.5">
           Completa tus datos antes de proceder al pago
         </p>
       </div>
@@ -112,7 +112,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
         {/* Name & Cedula & Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Nombre completo (quien retira)</label>
+            <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Nombre completo (quien retira)</label>
             <Input
               placeholder="Nombre y Apellido"
               value={fullName}
@@ -121,7 +121,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Cédula</label>
+            <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Cédula</label>
             <Input
               placeholder="V-12345678"
               value={cedula}
@@ -130,7 +130,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Teléfono</label>
+            <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Teléfono</label>
             <Input
               placeholder="0412-1234567"
               value={phone}
@@ -142,7 +142,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
 
         {/* Shipping company */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Agencia de Envíos</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Agencia de Envíos</label>
           <select
             value={company}
             onChange={(e) => setCompany(e.target.value)}
@@ -157,7 +157,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
 
         {/* Address */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <label className="text-xs font-medium text-muted-foreground dark:text-slate-300 flex items-center gap-1">
             <MapPin className="h-3 w-3" /> Dirección de la Agencia
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -194,7 +194,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
             onChange={(e) => setDisclaimer(e.target.checked)}
             className="mt-0.5 rounded border-input"
           />
-          <span className="text-[11px] text-muted-foreground leading-relaxed">
+          <span className="text-[11px] text-muted-foreground dark:text-slate-400 leading-relaxed">
             Al enviar estos datos, acepto que la plataforma y el Dealer quedan libres de toda responsabilidad
             por daños, pérdidas o retrasos ocasionados por la empresa de encomiendas. El Dealer se compromete
             a entregar el producto en la agencia en perfecto estado y proporcionar el número de guía.

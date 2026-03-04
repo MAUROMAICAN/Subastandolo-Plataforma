@@ -144,7 +144,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
     const statusMap: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
       pending: { label: "En revisión", color: "text-amber-700 bg-amber-50 dark:bg-amber-900/20 border-amber-300", icon: <Clock className="h-4 w-4" /> },
       approved: { label: "Pago Aprobado ✓", color: "text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300", icon: <CheckCircle className="h-4 w-4" /> },
-      rejected: { label: "Rechazado", color: "text-destructive bg-destructive/5 border-destructive/20", icon: <FileText className="h-4 w-4" /> },
+      rejected: { label: "Rechazado", color: "text-destructive dark:text-white bg-destructive/10 dark:bg-white/10 border-destructive/30 dark:border-white/20", icon: <FileText className="h-4 w-4" /> },
     };
     const s = statusMap[existingProof.status] || statusMap.pending;
     return (
@@ -158,7 +158,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             {s.icon}
             <span className="font-bold">{s.label}</span>
           </div>
-          <div className="text-xs text-muted-foreground space-y-1.5 bg-secondary/30 rounded-xl p-3">
+          <div className="text-xs text-muted-foreground dark:text-slate-400 space-y-1.5 bg-secondary/30 dark:bg-white/5 rounded-xl p-3">
             <p>Referencia: <span className="font-mono font-semibold text-foreground">{existingProof.reference_number}</span></p>
             <p>Monto: <span className="font-semibold text-foreground">Bs. {existingProof.amount_bs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}</span></p>
             <p>Tasa BCV aplicada: <span className="font-semibold text-foreground">{existingProof.bcv_rate.toFixed(2)} Bs/$</span></p>
@@ -273,7 +273,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="bg-secondary/50 px-5 py-3 border-b border-border flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5 text-primary" />
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Monto a Transferir</p>
+          <p className="text-xs font-bold text-muted-foreground dark:text-slate-300 uppercase tracking-widest">Monto a Transferir</p>
         </div>
         <div className="px-5 py-4 space-y-3">
           <p className="text-3xl font-black text-primary">
@@ -297,7 +297,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
               </p>
             </div>
           ) : (
-            <p className="text-xs text-destructive">No se pudo obtener la tasa. Intenta de nuevo más tarde.</p>
+            <p className="text-xs text-destructive dark:text-white/70">No se pudo obtener la tasa. Intenta de nuevo más tarde.</p>
           )}
 
           {showCommission && commission > 0 && (
@@ -324,10 +324,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="bg-secondary/50 px-5 py-3 border-b border-border flex items-center gap-2">
           <Upload className="h-3.5 w-3.5 text-primary" />
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Subir Comprobante</p>
+          <p className="text-xs font-bold text-muted-foreground dark:text-slate-300 uppercase tracking-widest">Subir Comprobante</p>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground dark:text-slate-400 leading-relaxed">
             Realiza la transferencia y carga aquí el comprobante. Nuestro equipo lo verificará y notificará al vendedor.
           </p>
 
@@ -379,13 +379,13 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
       {/* FOOTER DISCLAIMERS */}
       <div className="rounded-xl bg-secondary/20 border border-border px-4 py-3 space-y-1.5">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-[11px] text-muted-foreground dark:text-slate-400 leading-relaxed">
           🔒 <strong className="text-foreground">Tu compra está protegida.</strong> El pago queda en custodia hasta confirmar la entrega del producto.
         </p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-[11px] text-muted-foreground dark:text-slate-400 leading-relaxed">
           💱 El monto en Bs. se calcula a la tasa oficial BCV vigente al cierre de la subasta.
         </p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-[11px] text-muted-foreground dark:text-slate-400 leading-relaxed">
           📞 ¿Problemas? Contacta al equipo de <strong className="text-foreground">Soporte de Subastandolo</strong>, nunca directamente al vendedor.
         </p>
       </div>

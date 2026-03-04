@@ -52,20 +52,18 @@ const AuctionProgressTracker = ({ paymentStatus, deliveryStatus, trackingNumber 
             return (
               <div key={step.key} className="flex flex-col items-center gap-1.5 z-10 flex-1">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                    isComplete
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${isComplete
                       ? "bg-[hsl(152,55%,38%)] border-[hsl(152,55%,38%)] text-white"
                       : isCurrent
-                      ? "bg-[hsl(152,60%,94%)] border-[hsl(152,55%,38%)] text-[hsl(152,55%,38%)] ring-4 ring-[hsl(152,55%,38%)]/20 animate-pulse"
-                      : "bg-card border-border text-muted-foreground"
-                  }`}
+                        ? "bg-[hsl(152,60%,94%)] dark:bg-[hsl(152,40%,20%)] border-[hsl(152,55%,38%)] text-[hsl(152,55%,38%)] dark:text-[#A6E300] ring-4 ring-[hsl(152,55%,38%)]/20 animate-pulse"
+                        : "bg-card dark:bg-white/5 border-border dark:border-white/15 text-muted-foreground dark:text-white/40"
+                    }`}
                 >
                   {isComplete ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                 </div>
                 <span
-                  className={`text-[10px] text-center leading-tight font-medium max-w-[72px] ${
-                    isComplete ? "text-[hsl(152,55%,38%)]" : isCurrent ? "text-foreground font-bold" : "text-muted-foreground"
-                  }`}
+                  className={`text-[10px] text-center leading-tight font-medium max-w-[72px] ${isComplete ? "text-[hsl(152,55%,38%)]" : isCurrent ? "text-foreground dark:text-white font-bold" : "text-muted-foreground dark:text-white/40"
+                    }`}
                 >
                   {step.label}
                 </span>
@@ -89,13 +87,12 @@ const AuctionProgressTracker = ({ paymentStatus, deliveryStatus, trackingNumber 
               {/* Connector + icon */}
               <div className="flex flex-col items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 shrink-0 transition-all ${
-                    isComplete
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 shrink-0 transition-all ${isComplete
                       ? "bg-[hsl(152,55%,38%)] border-[hsl(152,55%,38%)] text-white"
                       : isCurrent
-                      ? "bg-[hsl(152,60%,94%)] border-[hsl(152,55%,38%)] text-[hsl(152,55%,38%)] ring-2 ring-[hsl(152,55%,38%)]/20"
-                      : "bg-card border-border text-muted-foreground"
-                  }`}
+                        ? "bg-[hsl(152,60%,94%)] dark:bg-[hsl(152,40%,20%)] border-[hsl(152,55%,38%)] text-[hsl(152,55%,38%)] dark:text-[#A6E300] ring-2 ring-[hsl(152,55%,38%)]/20"
+                        : "bg-card dark:bg-white/5 border-border dark:border-white/15 text-muted-foreground dark:text-white/40"
+                    }`}
                 >
                   {isComplete ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                 </div>
@@ -104,9 +101,8 @@ const AuctionProgressTracker = ({ paymentStatus, deliveryStatus, trackingNumber 
                 )}
               </div>
               <span
-                className={`text-xs pb-4 ${
-                  isComplete ? "text-[hsl(152,55%,38%)] font-medium" : isCurrent ? "text-foreground font-bold" : "text-muted-foreground"
-                }`}
+                className={`text-xs pb-4 ${isComplete ? "text-[hsl(152,55%,38%)] font-medium" : isCurrent ? "text-foreground dark:text-white font-bold" : "text-muted-foreground dark:text-white/40"
+                  }`}
               >
                 {step.label}
               </span>
@@ -116,7 +112,7 @@ const AuctionProgressTracker = ({ paymentStatus, deliveryStatus, trackingNumber 
       </div>
 
       {/* Status description */}
-      <div className="bg-secondary/40 rounded-sm px-3 py-2.5 text-xs text-muted-foreground text-center">
+      <div className="bg-secondary/40 dark:bg-white/5 rounded-sm px-3 py-2.5 text-xs text-muted-foreground dark:text-slate-300 text-center">
         {currentStepData.description}
       </div>
 
