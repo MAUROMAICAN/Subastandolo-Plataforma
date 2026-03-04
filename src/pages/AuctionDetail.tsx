@@ -562,6 +562,45 @@ const AuctionDetail = () => {
                         </p>
                       </div>
                     )}
+
+                    {/* Auto Ofertar */}
+                    <div className="border border-dashed border-primary/30 dark:border-primary/20 rounded-xl p-4 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold flex items-center gap-1.5 text-foreground">
+                          <Zap className="h-4 w-4 text-primary dark:text-yellow-400" />
+                          Auto Ofertar
+                          {autoBidActive && (
+                            <span className="text-[10px] font-normal text-muted-foreground ml-1">
+                              (activa — máx. ${autoBidActive.max_amount.toLocaleString("es-MX")})
+                            </span>
+                          )}
+                        </h4>
+                        {autoBidActive && (
+                          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 text-destructive hover:text-destructive" onClick={handleCancelAutoBid} disabled={savingAutoBid}>
+                            {savingAutoBid ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar"}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        ⚡ Establece un monto máximo y el sistema pujará automáticamente por ti de $1 en $1 hasta ese límite, sin que tengas que estar pendiente.
+                      </p>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">$</span>
+                          <Input
+                            type="number"
+                            placeholder="Máximo"
+                            value={autoBidMax}
+                            onChange={(e) => setAutoBidMax(e.target.value)}
+                            min={currentPrice + 2}
+                            className="pl-7 rounded-xl text-sm h-10"
+                          />
+                        </div>
+                        <Button onClick={handleSetAutoBid} disabled={savingAutoBid} className="rounded-xl whitespace-nowrap px-5 h-10 font-bold text-sm">
+                          {savingAutoBid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : autoBidActive ? "Actualizar" : "Activar"}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {!isEnded && !user && (
@@ -765,47 +804,15 @@ const AuctionDetail = () => {
               );
             })()}
 
-            {/* Auto-bid + disclaimers */}
+            {/* Legal disclaimers */}
             {!isScheduled && !isEnded && user && !(auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now()) && (
-              <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm">
-                {/* Auto-bid */}
-                <div className="bg-primary/5 border border-primary/15 rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold flex items-center gap-1.5">
-                      <Zap className="h-3.5 w-3.5 text-primary dark:text-yellow-400" />
-                      <span className="dark:text-white">Auto-Puja</span>
-                      {autoBidActive && <span className="text-[10px] font-normal text-muted-foreground ml-1">(activa hasta ${autoBidActive.max_amount.toLocaleString("es-MX")})</span>}
-                    </h4>
-                    {autoBidActive && (
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 text-destructive hover:text-destructive" onClick={handleCancelAutoBid} disabled={savingAutoBid}>
-                        {savingAutoBid ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar"}
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    El sistema pujará automáticamente por ti (de $1 en $1) hasta tu monto máximo.
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Monto máximo ($)"
-                      value={autoBidMax}
-                      onChange={(e) => setAutoBidMax(e.target.value)}
-                      min={currentPrice + 2}
-                      className="rounded-lg text-sm"
-                    />
-                    <Button onClick={handleSetAutoBid} disabled={savingAutoBid} size="sm" className="rounded-lg whitespace-nowrap px-4">
-                      {savingAutoBid ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : autoBidActive ? "Actualizar" : "Activar"}
-                    </Button>
-                  </div>
-                </div>
+              <div className="space-y-1.5 px-1">
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  ⚠️ Al pujar, te comprometes a <strong className="text-foreground">pagar el monto de tu puja</strong> si resultas ganador.
-                  El incumplimiento puede afectar tu reputación y restringir tu acceso a futuras subastas.
+                  ⚠️ Al pujar, te comprometes a <strong className="text-foreground">pagar el monto de tu puja</strong> si resultas ganador. El incumplimiento puede afectar tu reputación y restringir tu acceso a futuras subastas.
                 </p>
                 <p className="text-[10px] text-muted-foreground leading-relaxed flex items-start gap-1">
                   <span>💱</span>
-                  <span>El monto final se paga en <strong className="text-foreground">bolívares (Bs)</strong> a la tasa oficial del <strong className="text-foreground">Banco Central de Venezuela (BCV)</strong> vigente al momento de cerrar la subasta.</span>
+                  <span>El monto final se paga en <strong className="text-foreground">bolívares (Bs)</strong> a la tasa oficial del <strong className="text-foreground">BCV</strong> vigente al cierre de la subasta.</span>
                 </p>
               </div>
             )}
