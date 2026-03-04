@@ -8,7 +8,7 @@ import {
   Loader2, Trash2, Image as ImageIcon, Eye, Clock, CheckCircle,
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
-  Edit3, Save, RotateCcw
+  Edit3, Save, RotateCcw, Copy
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ interface Props {
   submittingTracking: string | null;
   handleSubmitTracking: (auctionId: string) => Promise<void>;
   fetchMyAuctions: () => void;
+  onDuplicate: (data: { title: string; description: string; startingPrice: string; durationHours: string }) => void;
 }
 
 export default function DealerAuctionsTab({
@@ -54,7 +55,7 @@ export default function DealerAuctionsTab({
   expandedAuction, setExpandedAuction, winnerProfiles, shippingInfoMap,
   trackingNumber, setTrackingNumber, trackingFile, setTrackingFile,
   trackingCompany, setTrackingCompany, submittingTracking, handleSubmitTracking,
-  fetchMyAuctions,
+  fetchMyAuctions, onDuplicate,
 }: Props) {
   const { toast } = useToast();
 
@@ -389,7 +390,7 @@ export default function DealerAuctionsTab({
                       )}
 
                       {/* Actions */}
-                      <div className="flex gap-2 pt-1">
+                      <div className="flex flex-wrap gap-2 pt-1">
                         {auction.status === "pending" && (
                           <Button variant="outline" size="sm" onClick={() => handleDelete(auction.id)} className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-sm text-xs h-7">
                             <Trash2 className="h-3 w-3 mr-1" /> Eliminar
@@ -400,6 +401,19 @@ export default function DealerAuctionsTab({
                             <RotateCcw className="h-3 w-3 mr-1" /> Reactivar Producto
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onDuplicate({
+                            title: auction.title,
+                            description: auction.description || "",
+                            startingPrice: String(auction.starting_price),
+                            durationHours: String((auction as any).requested_duration_hours || 24),
+                          })}
+                          className="text-foreground border-border hover:bg-secondary/50 rounded-sm text-xs h-7"
+                        >
+                          <Copy className="h-3 w-3 mr-1" /> Publicación similar
+                        </Button>
                       </div>
                     </div>
                   )}

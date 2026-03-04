@@ -53,6 +53,9 @@ const DealerDashboard = () => {
   const [trackingCompany, setTrackingCompany] = useState<Record<string, string>>({});
   const [submittingTracking, setSubmittingTracking] = useState<string | null>(null);
 
+  // Duplicate auction draft state
+  const [duplicateData, setDuplicateData] = useState<{ title: string; description: string; startingPrice: string; durationHours: string } | null>(null);
+
   const isGoldPlus = (() => {
     if (!dealer?.isVerified) return false;
     const effectiveSalesCount = dealer.manualTier
@@ -428,6 +431,8 @@ const DealerDashboard = () => {
             dealerAccountStatus={dealer?.accountStatus || "active"}
             onCreated={fetchMyAuctions}
             setActiveTab={setActiveTab}
+            initialData={duplicateData || undefined}
+            onInitialDataConsumed={() => setDuplicateData(null)}
           />
         )}
 
@@ -441,6 +446,7 @@ const DealerDashboard = () => {
             trackingCompany={trackingCompany} setTrackingCompany={setTrackingCompany}
             submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
             fetchMyAuctions={fetchMyAuctions}
+            onDuplicate={(data) => { setDuplicateData(data); setActiveTab("create"); }}
           />
         )}
 

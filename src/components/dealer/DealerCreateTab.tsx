@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,16 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Upload, AlertTriangle, Headphones } from "lucide-react";
+import { Plus, Loader2, Upload, AlertTriangle, Headphones, Copy } from "lucide-react";
 
 interface Props {
   isGoldPlus: boolean;
   dealerAccountStatus: string;
   onCreated: () => void;
   setActiveTab: (tab: string) => void;
+  initialData?: { title: string; description: string; startingPrice: string; durationHours: string };
+  onInitialDataConsumed?: () => void;
 }
 
-export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCreated, setActiveTab }: Props) {
+export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCreated, setActiveTab, initialData, onInitialDataConsumed }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,6 +35,20 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isDuplicate, setIsDuplicate] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title);
+      setDescription(initialData.description);
+      setStartingPrice(initialData.startingPrice);
+      setAuctionDuration(initialData.durationHours);
+      setIsDuplicate(true);
+      onInitialDataConsumed?.();
+    }
+    // Only run on mount with initial data
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -166,7 +182,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           auctionId: data.id,
           auctionTitle: data.title,
         },
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     setActiveTab("auctions");
@@ -195,6 +211,15 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           <Badge variant="outline" className="mt-1 text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/25">
             ⚡ Publicación Directa
           </Badge>
+        )}
+        {isDuplicate && (
+          <div className="mt-3 flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-sm p-3">
+            <Copy className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-semibold text-amber-600 dark:text-amber-400">📋 Borrador basado en una publicación anterior</p>
+              <p className="text-muted-foreground mt-0.5">El título, descripción y precio han sido copiados. <strong className="text-foreground">Debes realizar cambios</strong> (ej. nuevas fotos, ajustar precio o descripción) antes de enviarla a revisión.</p>
+            </div>
+          </div>
         )}
       </CardHeader>
       <CardContent>
@@ -262,7 +287,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
               Seleccionar fotos ({imageFiles.length}/10)
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
             </label>
-            
+
             {imageFiles.length > 0 && (
               <>
                 <p className="text-[10px] text-muted-foreground">Arrastra las imágenes para reordenar. La primera será la principal.</p>
@@ -275,9 +300,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={() => handleDrop(index)}
                       onDragEnd={handleDragEnd}
-                      className={`relative group aspect-square rounded-sm overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${
-                        dragOverIndex === index ? "border-primary scale-105" : dragIndex === index ? "border-primary/50 opacity-50" : "border-border"
-                      }`}
+                      className={`relative group aspect-square rounded-sm overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${dragOverIndex === index ? "border-primary scale-105" : dragIndex === index ? "border-primary/50 opacity-50" : "border-border"
+                        }`}
                     >
                       <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover pointer-events-none" />
                       <span className="absolute top-1 left-1 w-5 h-5 bg-background/80 text-foreground rounded-full flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
