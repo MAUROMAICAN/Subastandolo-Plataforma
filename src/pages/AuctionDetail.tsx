@@ -260,15 +260,24 @@ const AuctionDetail = () => {
       setBidAmount("");
 
       if (previousLeaderId && previousLeaderId !== user.id) {
+        // Push notification (existing)
         supabase.functions.invoke("send-push-notification", {
+          body: { type: "outbid", targetUserId: previousLeaderId, auctionId: auction.id, auctionTitle: auction.title },
+        }).catch(() => { });
+
+        // Email notification — userId resolved server-side by Edge Function
+        supabase.functions.invoke("notify-outbid", {
           body: {
-            type: "outbid",
-            targetUserId: previousLeaderId,
-            auctionId: auction.id,
+            userId: previousLeaderId,
             auctionTitle: auction.title,
+            auctionId: auction.id,
+            newBid: amount,
+            imageUrl: auction.image_url || null,
           },
         }).catch(() => { });
       }
+
+
     }
     setBidding(false);
   };

@@ -185,15 +185,32 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
     setTitle(""); setDescription(""); setStartingPrice(""); setAuctionDuration("24"); setStartDate(""); setImageFiles([]);
 
     if (data) {
+      // Push notification (existing)
       supabase.functions.invoke("send-push-notification", {
-        body: {
-          type: "new_auction",
-          targetUserId: user?.id,
-          auctionId: data.id,
-          auctionTitle: data.title,
-        },
+        body: { type: "new_auction", targetUserId: user?.id, auctionId: data.id, auctionTitle: data.title },
       }).catch(() => { });
+
+      // Email to followers — userIds resolved server-side by Edge Function
+      if (autoApprove) {
+        supabase.from("dealer_follows" as any).select("follower_id").eq("dealer_id", user.id).then(async ({ data: follows }) => {
+          if (!follows || (follows as any[]).length === 0) return;
+          const followerIds = (follows as any[]).map(f => f.follower_id);
+          supabase.functions.invoke("notify-new-auction", {
+            body: {
+              followerIds,
+              dealerUserId: user.id,
+              auctionTitle: data.title,
+              auctionId: data.id,
+              startingPrice: data.starting_price,
+              imageUrl: uploadedUrls[0] || null,
+              endsAt: data.end_time,
+            },
+          }).catch(() => { });
+        });
+      }
+
     }
+
 
     setActiveTab("auctions");
     onCreated();

@@ -111,6 +111,23 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       setReference("");
       setProofFile(null);
       fetchExistingProof();
+
+      // Notify dealer via email (fire-and-forget)
+      supabase.from("auctions").select("created_by, title, image_url").eq("id", auctionId).single().then(({ data: auc }) => {
+        if (auc?.created_by) {
+          supabase.functions.invoke("notify-payment-received", {
+            body: {
+              dealerUserId: auc.created_by,
+              buyerName: profile?.full_name || "El comprador",
+              auctionTitle: auc.title,
+              auctionId,
+              amountUsd,
+              imageUrl: auc.image_url || null,
+            },
+          }).catch(() => { });
+        }
+      });
+
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
