@@ -5,7 +5,7 @@ const corsHeaders = {
 
 const RESEND_API = "https://api.resend.com/emails";
 const APP_URL = "https://subastandolo.com";
-const LOGO_URL = "https://subastandolo.com/logo-dark.png";
+const LOGO_URL = "https://subastandolo.com/logo.png";
 const FAKE_AUCTION_URL = `${APP_URL}/subasta/test-123`;
 const FAKE_IMAGE = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80";
 
@@ -29,18 +29,22 @@ function layout(accentColor: string, accentDark: string, emoji: string, heading:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${heading}</title>
+  <style>:root { color-scheme: light only; }</style>
 </head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background:#f3f4f6;padding:32px 16px;">
     <tr><td align="center">
       <table width="100%" style="max-width:580px;" cellpadding="0" cellspacing="0">
 
-        <!-- LOGO HEADER -->
+        <!-- LOGO HEADER (white+green logo on dark - no dark mode issues) -->
         <tr>
-          <td style="background:#ffffff;padding:24px 32px;border-radius:12px 12px 0 0;text-align:center;border-bottom:1px solid #e5e7eb;">
-            <img src="${LOGO_URL}" alt="Subastandolo" width="180" height="auto"
-              style="height:40px;width:auto;max-width:200px;display:inline-block;border:0;vertical-align:middle;" />
+          <td bgcolor="#111827" style="background-color:#111827;padding:28px 32px;border-radius:12px 12px 0 0;text-align:center;">
+            <img src="${LOGO_URL}" alt="Subastandolo"
+              width="160"
+              style="width:160px;max-width:160px;height:auto;display:block;margin:0 auto;border:0;outline:0;" />
           </td>
         </tr>
 
