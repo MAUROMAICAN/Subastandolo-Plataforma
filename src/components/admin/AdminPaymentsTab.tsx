@@ -69,7 +69,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
     }
   };
 
-  const handlePaymentAction = async (proofId: string, auctionId: string, action: "approved" | "rejected") => {
+  const handlePaymentAction = async (proofId: string, auctionId: string, buyerUserId: string, auctionTitle: string, imageUrl: string | null, action: "approved" | "rejected") => {
     setProcessingPayment(proofId);
     const { error } = await supabase.from("payment_proofs").update({
       status: action, reviewed_by: user!.id, reviewed_at: new Date().toISOString(),
@@ -78,8 +78,11 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       if (action === "approved") {
-        supabase.functions.invoke("notify-payment-verified", { body: { auction_id: auctionId } }).catch(err => console.error("Error notifying dealer:", err));
-        toast({ title: "✅ Pago aprobado — Dealer notificado (48h para enviar)" });
+        // Notify buyer — email resolved server-side
+        supabase.functions.invoke("notify-payment-approved", {
+          body: { buyerUserId, auctionTitle, auctionId, imageUrl },
+        }).catch(() => { });
+        toast({ title: "✅ Pago aprobado — Comprador notificado por email" });
       } else {
         toast({ title: "❌ Pago rechazado" });
       }
@@ -87,6 +90,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
     }
     setProcessingPayment(null);
   };
+
 
   return (
     <div className="space-y-4">
@@ -140,10 +144,10 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
                       <div className="flex items-center justify-center gap-1">
                         {proof.status === "pending" ? (
                           <>
-                            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-[10px] h-7 px-2.5" onClick={() => handlePaymentAction(proof.id, proof.auction_id, "approved")} disabled={processingPayment === proof.id}>
+                            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-[10px] h-7 px-2.5" onClick={() => handlePaymentAction(proof.id, proof.auction_id, proof.buyer_id, proof.auction_title, proof.image_url || null, "approved")} disabled={processingPayment === proof.id}>
                               {processingPayment === proof.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3 mr-1" />}Validar
                             </Button>
-                            <Button size="sm" variant="outline" className="text-destructive border-destructive/30 rounded-sm text-[10px] h-7 px-2.5" onClick={() => handlePaymentAction(proof.id, proof.auction_id, "rejected")} disabled={processingPayment === proof.id}>
+                            <Button size="sm" variant="outline" className="text-destructive border-destructive/30 rounded-sm text-[10px] h-7 px-2.5" onClick={() => handlePaymentAction(proof.id, proof.auction_id, proof.buyer_id, proof.auction_title, proof.image_url || null, "rejected")} disabled={processingPayment === proof.id}>
                               <XCircle className="h-3 w-3 mr-1" /> Rechazar
                             </Button>
                           </>
