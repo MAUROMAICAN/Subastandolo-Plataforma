@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -755,6 +755,52 @@ const BuyerPanel = () => {
     );
   }
 
+  // Favoritos view
+  if (view === "favoritos") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-4 max-w-4xl">
+          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
+            <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+          </button>
+
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-400" />
+              Mis Favoritos
+            </h1>
+            <span className="text-xs text-muted-foreground">{favoriteAuctions.length} subasta{favoriteAuctions.length !== 1 ? "s" : ""}</span>
+          </div>
+
+          {favoriteIds.size === 0 || favoriteAuctions.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+                <Heart className="h-8 w-8 text-red-400/50" />
+              </div>
+              <div>
+                <p className="font-heading font-bold text-lg mb-1">Aún no tienes subastas favoritas</p>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">Presiona el <strong>corazón ♥</strong> en cualquier subasta para guardarla aquí.</p>
+              </div>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+              >
+                Explorar Subastas
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              {favoriteAuctions.map(a => (
+                <AuctionCard key={a.id} auction={a} isFavorite={true} onToggleFavorite={toggleFavorite} />
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   // Dealers view
   if (view === "dealers") {
     return (
@@ -964,6 +1010,25 @@ const BuyerPanel = () => {
                 <p className="font-heading font-bold text-sm">Mis Disputas</p>
                 <p className="text-xs text-muted-foreground">
                   {openDisputes > 0 ? `${openDisputes} disputa(s) activa(s)` : "Sin disputas activas"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Mis Favoritos */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-red-400/40 transition-colors group"
+            onClick={() => setView("favoritos")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 transition-colors">
+                <Heart className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Mis Favoritos</p>
+                <p className="text-xs text-muted-foreground">
+                  {favoriteAuctions.length > 0 ? `${favoriteAuctions.length} subasta${favoriteAuctions.length !== 1 ? "s" : ""} guardada${favoriteAuctions.length !== 1 ? "s" : ""}` : "Guarda tus subastas favoritas"}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />

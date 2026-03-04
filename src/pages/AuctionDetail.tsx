@@ -42,7 +42,7 @@ import AuctionProgressTracker from "@/components/AuctionProgressTracker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin, Heart } from "lucide-react";
 import ReportAuctionButton from "@/components/ReportAuctionButton";
 import WinnerCelebration from "@/components/WinnerCelebration";
 import SEO from "@/components/SEO";
@@ -50,6 +50,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
 import { useBCVRate } from "@/hooks/useBCVRate";
 import confetti from "canvas-confetti";
+import { useFavorites } from "@/hooks/useFavorites";
 
 
 const fireConfetti = () => {
@@ -95,6 +96,7 @@ const AuctionDetail = () => {
   const dealer = useVerifiedDealer(dealerUserId);
   const { reviews: auctionReviews } = useAuctionReviews(id);
   const { dealerStats } = useUserReviews(dealerUserId);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     if (!id) return;
@@ -342,6 +344,16 @@ const AuctionDetail = () => {
           {/* Left: Image gallery */}
           <div className="space-y-3">
             <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm">
+              {/* Favorite heart button */}
+              {user && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(id!); }}
+                  className="absolute top-3 right-3 z-20 h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm border border-white/15 text-white/80 hover:text-red-400 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/70 shadow-lg"
+                  title={isFavorite(id!) ? "Quitar de favoritos" : "Guardar en favoritos"}
+                >
+                  <Heart className={`h-4 w-4 transition-colors ${isFavorite(id!) ? "fill-red-400 text-red-400" : ""}`} />
+                </button>
+              )}
               {allImages.length > 0 ? (
                 <>
                   <img src={allImages[currentImage]} alt={auction.title} className="w-full h-full object-contain p-4" />
