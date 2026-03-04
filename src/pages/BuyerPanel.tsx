@@ -7,6 +7,7 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useBuyerWins } from "@/hooks/useBuyerStats";
 import { useUserReviews } from "@/hooks/useReviews";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useDealerFollows } from "@/hooks/useDealerFollows";
 import BuyerBadge from "@/components/BuyerBadge";
 import AdminBadge from "@/components/AdminBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
@@ -28,7 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
   ChevronRight, ImageIcon, Store, Download, Star, Heart, Plus, Package,
-  Lock, ShieldCheck, User, MapPin
+  Lock, ShieldCheck, User, MapPin, Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -40,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -56,6 +57,7 @@ const BuyerPanel = () => {
   const { winsCount } = useBuyerWins(user?.id);
   const { buyerStats } = useUserReviews(user?.id);
   const { favoriteIds, isFavorite, toggleFavorite } = useFavorites();
+  const { followedDealers, loadingList: loadingDealers, toggleFollow } = useDealerFollows();
   const navigate = useNavigate();
   const { disputes, loading: disputesLoading, requestAdminIntervention, createDispute } = useDisputes();
   const [view, setView] = useState<PanelView>("overview");
@@ -753,6 +755,116 @@ const BuyerPanel = () => {
     );
   }
 
+  // Dealers view
+  if (view === "dealers") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-4 max-w-4xl">
+          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
+            <ArrowLeft className="h-3 w-3" /> Volver a mi panel
+          </button>
+
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Mis Dealers Favoritos
+            </h1>
+            <span className="text-xs text-muted-foreground">{followedDealers.length} dealer{followedDealers.length !== 1 ? "s" : ""}</span>
+          </div>
+
+          {loadingDealers ? (
+            <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+          ) : followedDealers.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-8 w-8 text-primary/50" />
+              </div>
+              <div>
+                <p className="font-heading font-bold text-lg mb-1">Aún no sigues ningún dealer</p>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">Visita el perfil de un dealer y presiona <strong>"Seguir dealer"</strong> para agregarlo aquí.</p>
+              </div>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+              >
+                Explorar Subastas
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {followedDealers.map(d => {
+                const name = d.profile?.full_name || "Dealer";
+                const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                const since = new Date(d.created_at).toLocaleDateString("es-VE", { month: "short", year: "numeric" });
+                return (
+                  <div
+                    key={d.dealer_id}
+                    className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
+                  >
+                    {/* Cover strip */}
+                    <div className="h-14 bg-gradient-to-r from-slate-800 to-slate-900 relative">
+                      {d.live_auctions > 0 && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-md border border-white/15 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">
+                          <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#A6E300" }} /><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#A6E300" }} /></span>
+                          {d.live_auctions} en vivo
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="px-4 pb-4">
+                      {/* Avatar */}
+                      <div className="-mt-7 mb-3">
+                        <div className="w-14 h-14 rounded-full border-2 border-background bg-secondary flex items-center justify-center overflow-hidden shadow-md">
+                          {d.profile?.avatar_url ? (
+                            <img src={d.profile.avatar_url} alt={name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-base font-black text-secondary-foreground">{initials}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Name + Badge */}
+                      <div className="mb-1">
+                        <p className="font-heading font-bold text-sm leading-tight truncate">{name}</p>
+                        {d.is_verified && (
+                          <span className="text-[10px] font-semibold text-primary">✓ Verificado · {d.sales_count} ventas</span>
+                        )}
+                      </div>
+
+                      {/* Location + since */}
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-3">
+                        {d.profile?.city && <><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{d.profile.city}{d.profile.state ? `, ${d.profile.state}` : ""}</span><span className="mx-1 text-border">·</span></>}
+                        <span>Desde {since}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/dealer/${d.dealer_id}`)}
+                          className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors text-center"
+                        >
+                          Ver perfil
+                        </button>
+                        <button
+                          onClick={() => toggleFollow(d.dealer_id)}
+                          className="px-3 py-2 rounded-xl border border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
+                          title="Dejar de seguir"
+                        >
+                          <Heart className="h-3.5 w-3.5 fill-primary text-primary hover:fill-destructive hover:text-destructive transition-colors" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   // Overview
   const openDisputes = disputes.filter(d => d.status === "open" || d.status === "mediation").length;
 
@@ -852,6 +964,25 @@ const BuyerPanel = () => {
                 <p className="font-heading font-bold text-sm">Mis Disputas</p>
                 <p className="text-xs text-muted-foreground">
                   {openDisputes > 0 ? `${openDisputes} disputa(s) activa(s)` : "Sin disputas activas"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Mis Dealers */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
+            onClick={() => setView("dealers")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Mis Dealers</p>
+                <p className="text-xs text-muted-foreground">
+                  {followedDealers.length > 0 ? `${followedDealers.length} dealer${followedDealers.length !== 1 ? "s" : ""} favorito${followedDealers.length !== 1 ? "s" : ""}` : "Sigue tus dealers favoritos"}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />

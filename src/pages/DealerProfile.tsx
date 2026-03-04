@@ -10,11 +10,14 @@ import VerifiedBadge, { getDealerTier } from "@/components/VerifiedBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, MapPin, Star, User, Calendar, ShieldCheck, MessageCircle } from "lucide-react";
+import { Loader2, MapPin, Star, User, Calendar, ShieldCheck, MessageCircle, Heart } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useDealerFollows } from "@/hooks/useDealerFollows";
 
 export default function DealerProfile() {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
     const [dealerInfo, setDealerInfo] = useState<any | null>(null);
@@ -22,6 +25,7 @@ export default function DealerProfile() {
 
     const dealer = useVerifiedDealer(id);
     const { reviews, dealerStats, loading: reviewsLoading } = useUserReviews(id);
+    const { isFollowing, loadingFollow, toggleFollow } = useDealerFollows(id);
 
     useEffect(() => {
         if (!id) return;
@@ -125,6 +129,25 @@ export default function DealerProfile() {
                                     <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-foreground">{displayName}</h1>
                                     {isDealer && <VerifiedBadge size="lg" salesCount={dealer.salesCount} />}
                                 </div>
+
+                                {/* Follow button — only for logged-in users who are not the dealer themselves */}
+                                {user && user.id !== id && (
+                                    <button
+                                        onClick={() => toggleFollow(id!)}
+                                        disabled={loadingFollow}
+                                        className={`mt-2 mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${isFollowing
+                                                ? "bg-primary/10 border-primary/30 text-primary hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
+                                                : "bg-card border-border text-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary"
+                                            }`}
+                                    >
+                                        {loadingFollow ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Heart className={`h-4 w-4 transition-all ${isFollowing ? "fill-primary text-primary" : ""}`} />
+                                        )}
+                                        {isFollowing ? "Siguiendo" : "Seguir dealer"}
+                                    </button>
+                                )}
 
                                 {dealerInfo?.business_name && dealerInfo.business_name !== profile.full_name && (
                                     <p className="text-sm text-muted-foreground font-medium mb-2">Representante Legal: {profile.full_name}</p>
