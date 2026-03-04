@@ -77,7 +77,7 @@ const Countdown = ({ endTime, onEnd, large }: CountdownProps) => {
             } ${unit.isSeconds && tick
               ? "bg-primary/15 border-primary/40 text-primary scale-105 border"
               : isCritical
-                ? "bg-destructive/10 border border-destructive/30 text-destructive"
+                ? "bg-destructive/15 dark:bg-red-500/20 border border-destructive/40 dark:border-red-400/40 text-destructive dark:text-red-400"
                 : isUrgent
                   ? "bg-orange-500/15 border border-orange-400/40 text-orange-600 dark:text-orange-300"
                   : "bg-secondary dark:bg-white/10 border border-border dark:border-white/15 text-foreground dark:text-white"
