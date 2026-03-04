@@ -79,8 +79,8 @@ const Countdown = ({ endTime, onEnd, large }: CountdownProps) => {
               : isCritical
                 ? "bg-destructive/10 border border-destructive/30 text-destructive"
                 : isUrgent
-                  ? "bg-accent/10 border border-accent/30 text-accent-foreground"
-                  : "bg-secondary border border-border text-foreground"
+                  ? "bg-orange-500/15 border border-orange-400/40 text-orange-600 dark:text-orange-300"
+                  : "bg-secondary dark:bg-white/10 border border-border dark:border-white/15 text-foreground dark:text-white"
             }`}>
             {String(unit.value).padStart(2, "0")}
           </span>
