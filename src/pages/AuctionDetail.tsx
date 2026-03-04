@@ -807,10 +807,10 @@ const AuctionDetail = () => {
             {/* Legal disclaimers */}
             {!isScheduled && !isEnded && user && !(auction && (auction as any).start_time && new Date((auction as any).start_time).getTime() > Date.now()) && (
               <div className="space-y-1.5 px-1">
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   ⚠️ Al pujar, te comprometes a <strong className="text-foreground">pagar el monto de tu puja</strong> si resultas ganador. El incumplimiento puede afectar tu reputación y restringir tu acceso a futuras subastas.
                 </p>
-                <p className="text-[10px] text-muted-foreground leading-relaxed flex items-start gap-1">
+                <p className="text-xs text-muted-foreground leading-relaxed flex items-start gap-1">
                   <span>💱</span>
                   <span>El monto final se paga en <strong className="text-foreground">bolívares (Bs)</strong> a la tasa oficial del <strong className="text-foreground">BCV</strong> vigente al cierre de la subasta.</span>
                 </p>
