@@ -117,7 +117,7 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               )}
             </div>
             {bcvRate && bcvRate > 0 && (
-              <span className="text-muted-foreground text-[10px] font-medium mt-0.5">
+              <span className="text-muted-foreground dark:text-slate-400 text-[10px] font-medium mt-0.5">
                 Bs.&nbsp;{(displayPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             )}
@@ -131,15 +131,15 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
           {/* Dealer Link */}
           {dealer && (
             <div
-              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 window.location.href = `/dealer/${auction.created_by}`;
               }}
             >
-              <div className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                <span className="text-[8px] font-bold text-secondary-foreground">{dealer.name.substring(0, 1)}</span>
+              <div className="w-4 h-4 rounded-full bg-secondary dark:bg-white/15 flex items-center justify-center overflow-hidden shrink-0">
+                <span className="text-[8px] font-bold text-secondary-foreground dark:text-white">{dealer.name.substring(0, 1)}</span>
               </div>
               <span className="truncate font-medium hover:underline">{dealer.name}</span>
             </div>
@@ -147,9 +147,9 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
           {/* Countdown */}
           {!isEnded && (
-            <div className="mt-2 flex items-center justify-center gap-1.5 bg-primary/5 border border-primary/15 rounded-lg py-1.5 px-2">
-              <Timer className="h-3 w-3 text-primary/70 shrink-0 hidden sm:block" />
-              <span className="font-mono text-[10px] sm:text-xs font-bold text-foreground/90 tracking-wide">
+            <div className="mt-2 flex items-center justify-center gap-1.5 bg-primary/5 dark:bg-white/5 border border-primary/15 dark:border-white/10 rounded-lg py-1.5 px-2">
+              <Timer className="h-3 w-3 text-primary/70 dark:text-white/50 shrink-0 hidden sm:block" />
+              <span className="font-mono text-[10px] sm:text-xs font-bold text-foreground/90 dark:text-white tracking-wide">
                 {startTime && isScheduled ? (
                   <Countdown endTime={startTime} />
                 ) : isLive ? (

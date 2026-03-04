@@ -84,7 +84,9 @@ const Countdown = ({ endTime, onEnd, large }: CountdownProps) => {
             }`}>
             {String(unit.value).padStart(2, "0")}
           </span>
-          <span className={`font-medium ml-0.5 ${large ? "text-xs" : "text-[9px]"} ${isCritical ? "text-destructive/70" : isUrgent ? "text-accent-foreground/70" : "text-muted-foreground"
+          <span className={`font-medium ml-0.5 ${large ? "text-xs" : "text-[9px]"} ${isCritical ? "text-destructive/80 dark:text-red-400/80"
+              : isUrgent ? "text-orange-600/70 dark:text-orange-300/70"
+                : "text-muted-foreground dark:text-white/50"
             }`}>
             {unit.label}
           </span>
