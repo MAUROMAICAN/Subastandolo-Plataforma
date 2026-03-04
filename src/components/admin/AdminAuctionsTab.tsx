@@ -333,7 +333,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                   onClick={() => navigate(`/auction/${auction.id}`)}
                 >
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{auction.title}</h4>
+                    <h4 className="font-medium text-sm truncate group-hover:text-primary dark:group-hover:text-white transition-colors">{auction.title}</h4>
                     <Badge variant="outline" className="text-[10px]">{auction.status}</Badge>
                     {isArchived && <Badge variant="secondary" className="text-[10px]">Archivada</Badge>}
                     {(auction as any).is_extended && (

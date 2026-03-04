@@ -206,7 +206,7 @@ const BuyerPanel = () => {
 
     return (
       <main className="container mx-auto px-4 py-4 max-w-3xl">
-        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
+        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
           <ArrowLeft className="h-3 w-3" /> Volver a mi panel
         </button>
         <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
@@ -275,7 +275,7 @@ const BuyerPanel = () => {
 
     return (
       <main className="container mx-auto px-4 py-4 max-w-3xl">
-        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
+        <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
           <ArrowLeft className="h-3 w-3" /> Volver a mi panel
         </button>
 
@@ -359,7 +359,7 @@ const BuyerPanel = () => {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <p className="font-heading font-bold text-sm text-foreground hover:text-primary transition-colors line-clamp-1 truncate block">
+                                  <p className="font-heading font-bold text-sm text-foreground hover:text-primary dark:hover:text-white transition-colors line-clamp-1 truncate block">
                                     {auction.title}
                                   </p>
                                   <span className="text-[10px] text-muted-foreground shrink-0">{dateStr}</span>
@@ -519,7 +519,7 @@ const BuyerPanel = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-4 max-w-3xl">
-          <button onClick={() => { setView("disputes"); setSelectedDispute(null); }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4">
+          <button onClick={() => { setView("disputes"); setSelectedDispute(null); }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-4">
             <ArrowLeft className="h-3 w-3" /> Volver a disputas
           </button>
 
@@ -604,7 +604,7 @@ const BuyerPanel = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-4 max-w-3xl">
-          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4">
+          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-4">
             <ArrowLeft className="h-3 w-3" /> Volver a mi panel
           </button>
 
@@ -691,7 +691,7 @@ const BuyerPanel = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-4 max-w-3xl">
-          <button onClick={() => setView("disputes")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4">
+          <button onClick={() => setView("disputes")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-4">
             <ArrowLeft className="h-3 w-3" /> Volver a disputas
           </button>
           <h1 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
@@ -763,7 +763,7 @@ const BuyerPanel = () => {
       <BackButton />
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-6">
-          <button onClick={() => navigate("/")} className="hover:text-primary transition-colors flex items-center gap-1">
+          <button onClick={() => navigate("/")} className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-1">
             <ArrowLeft className="h-3 w-3" /> Inicio
           </button>
           <span>/</span>

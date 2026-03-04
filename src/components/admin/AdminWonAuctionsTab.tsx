@@ -300,7 +300,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                           {a.image_url && (
                             <img src={a.image_url} alt={a.title} className="w-8 h-8 rounded-sm object-cover border border-border shrink-0 group-hover:opacity-80 transition-opacity" />
                           )}
-                          <p className="font-medium truncate max-w-[180px] group-hover:text-primary transition-colors">{a.title}</p>
+                          <p className="font-medium truncate max-w-[180px] group-hover:text-primary dark:group-hover:text-white transition-colors">{a.title}</p>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">

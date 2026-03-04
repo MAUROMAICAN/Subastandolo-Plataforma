@@ -327,7 +327,7 @@ const AuctionDetail = () => {
       <main className="container mx-auto px-4 py-4">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
-          <button onClick={() => navigate("/")} className="hover:text-primary transition-colors flex items-center gap-1">
+          <button onClick={() => navigate("/")} className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-1">
             <ArrowLeft className="h-3 w-3" /> Inicio
           </button>
           <span className="text-border">/</span>
@@ -408,7 +408,7 @@ const AuctionDetail = () => {
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5 font-bold text-foreground text-sm sm:text-base">
-                        <span className="truncate hover:underline hover:text-primary transition-colors">{dealer.name}</span>
+                        <span className="truncate hover:underline hover:text-primary dark:hover:text-white transition-colors">{dealer.name}</span>
                         {dealer.isVerified && <VerifiedBadge size="sm" salesCount={dealer.salesCount} />}
                       </div>
 
