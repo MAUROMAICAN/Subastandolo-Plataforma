@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2, LayoutTemplate, Globe } from "lucide-react";
+import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2, LayoutTemplate, Globe, RefreshCw, TrendingUp } from "lucide-react";
 import type { BannerImage, SiteSetting, SiteSection } from "./types";
 
 // Convert HSL string "H S% L%" to hex color
@@ -82,6 +82,8 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [savingBanner, setSavingBanner] = useState(false);
   const [localSections, setLocalSections] = useState(siteSections);
+  const [updatingBcv, setUpdatingBcv] = useState(false);
+  const [lastBcvUpdate, setLastBcvUpdate] = useState<string | null>(null);
 
   // Sync props
   useEffect(() => { setBanners(initialBanners); setLocalSections(siteSections); }, [initialBanners, siteSections]);
@@ -144,6 +146,21 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
   const handleSectionUpdate = async (id: string, field: string, value: string) => {
     await supabase.from("site_sections").update({ [field]: value } as any).eq("id", id);
     toast({ title: "Sección actualizada" });
+  };
+
+  const handleAutoUpdateBcv = async () => {
+    setUpdatingBcv(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("auto-update-bcv-rate");
+      if (error) throw error;
+      setLastBcvUpdate(new Date().toLocaleTimeString("es-VE"));
+      toast({ title: `✅ Tasa BCV actualizada: Bs. ${data?.rate?.toFixed(2)} / $ (${data?.source})` });
+      fetchAllData();
+    } catch (e: any) {
+      toast({ title: "Error actualizando tasa BCV", description: e.message, variant: "destructive" });
+    } finally {
+      setUpdatingBcv(false);
+    }
   };
 
   const handleUploadSettingImage = async (file: File, settingKey: string) => {
@@ -335,6 +352,58 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        {/* BCV RATE */}
+        <AccordionItem value="bcv" className="border border-border rounded-sm overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
+            <div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary dark:text-accent" /> Tasa BCV (Bolívar / USD)</div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+            {/* Current rate display */}
+            <div className="bg-secondary/20 border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground dark:text-slate-400 mb-0.5">Tasa actual en sistema</p>
+                <p className="text-2xl font-black text-foreground">
+                  Bs. {editingSettings["bcv_rate"] || "—"}
+                  <span className="text-sm font-medium text-muted-foreground ml-1">/ $</span>
+                </p>
+                {lastBcvUpdate && <p className="text-[10px] text-primary dark:text-[#A6E300] mt-1">Última actualización: {lastBcvUpdate}</p>}
+              </div>
+              <Button
+                onClick={handleAutoUpdateBcv}
+                disabled={updatingBcv}
+                className="bg-primary text-primary-foreground rounded-xl font-bold text-xs h-10 px-4 shrink-0"
+              >
+                {updatingBcv
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                {updatingBcv ? "Actualizando..." : "Actualizar BCV Ahora"}
+              </Button>
+            </div>
+
+            {/* Manual override */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground dark:text-slate-300 font-medium">
+                Tasa manual (override) — deja vacío para usar la tasa auto-detectada
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editingSettings["bcv_rate"] || ""}
+                  onChange={(e) => setEditingSettings(p => ({ ...p, bcv_rate: e.target.value }))}
+                  className="rounded-xl text-sm h-10 max-w-[180px] font-mono"
+                  placeholder="Ej: 91.50"
+                />
+                <span className="text-xs text-muted-foreground dark:text-slate-400">Bs. por 1 USD</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground dark:text-slate-500">
+                Al guardar cambios arriba, este valor se guarda en el sistema. Usa "Actualizar BCV Ahora" para obtener la tasa oficial automáticamente.
+              </p>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="sections" className="border border-border rounded-sm overflow-hidden">
           <AccordionTrigger className="px-4 py-3 text-sm font-heading font-bold hover:no-underline hover:bg-secondary/30">
             <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-primary dark:text-accent" /> Secciones de la Página<Badge variant="outline" className="text-[10px] ml-1">{localSections.length}</Badge></div>
@@ -425,7 +494,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </div>
+    </div >
   );
 };
 
