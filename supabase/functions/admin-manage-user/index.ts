@@ -27,15 +27,16 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.error('Auth claims error:', claimsError?.message);
+    const { data: { user: callerUser }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !callerUser?.id) {
+      console.error('Auth error:', userError?.message);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const adminId = claimsData.claims.sub;
+    const adminId = callerUser.id;
+
 
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,

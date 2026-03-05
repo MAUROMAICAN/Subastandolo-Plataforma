@@ -5,7 +5,20 @@ import type { User, Session } from "@supabase/supabase-js";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: { full_name: string; phone: string | null; city?: string | null; state?: string | null; manual_buyer_tier?: string | null; avatar_url?: string | null } | null;
+  profile: {
+    full_name: string;
+    phone: string | null;
+    city?: string | null;
+    state?: string | null;
+    manual_buyer_tier?: string | null;
+    avatar_url?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    username?: string | null;
+    cedula_number?: string | null;
+    cedula_photo_url?: string | null;
+    public_id?: string | null;
+  } | null;
   isAdmin: boolean;
   isDealer: boolean;
   loading: boolean;
@@ -64,10 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(async () => {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("full_name, phone, city, state, manual_buyer_tier, avatar_url")
+              .select("full_name, phone, city, state, manual_buyer_tier, avatar_url, first_name, last_name, username, cedula_number, cedula_photo_url, public_id")
               .eq("id", session.user.id)
               .single();
-            setProfile(profileData);
+            setProfile(profileData as any);
 
             const { data: rolesData } = await supabase
               .from("user_roles")
@@ -119,10 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name, phone, city, state, manual_buyer_tier, avatar_url")
+      .select("full_name, phone, city, state, manual_buyer_tier, avatar_url, first_name, last_name, username, cedula_number, cedula_photo_url, public_id")
       .eq("id", user.id)
       .single();
-    if (profileData) setProfile(profileData);
+    if (profileData) setProfile(profileData as any);
   };
 
   const signOut = async () => {
