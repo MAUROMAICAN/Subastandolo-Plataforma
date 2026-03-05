@@ -262,10 +262,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             { label: "RIF", value: BANK_INFO.rif, copyValue: BANK_INFO.rif, mono: true },
             { label: "A nombre de", value: BANK_INFO.name, copyValue: BANK_INFO.name, mono: false },
           ].map(({ label, value, copyValue, mono }) => (
-            <div key={label} className="flex items-center justify-between bg-secondary/40 rounded-xl px-4 py-2.5 gap-3">
+            <div key={label} className="flex items-center justify-between bg-secondary/40 dark:bg-white/5 rounded-xl px-4 py-2.5 gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
-                <p className={`text-sm font-bold text-foreground ${mono ? "font-mono tracking-wider" : ""}`}>{value}</p>
+                <p className="text-[10px] font-semibold text-muted-foreground dark:text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                <p className={`text-sm font-bold text-foreground dark:text-white ${mono ? "font-mono tracking-wider" : ""}`}>{value}</p>
               </div>
               <button
                 onClick={() => copyToClipboard(copyValue, label)}
@@ -288,13 +288,13 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           <p className="text-xs font-bold text-muted-foreground dark:text-slate-300 uppercase tracking-widest">Monto a Transferir</p>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <p className="text-3xl font-black text-primary">
+          <p className="text-3xl font-black text-primary dark:text-[#A6E300]">
             ${amountUsd.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-            <span className="text-base font-semibold text-muted-foreground ml-1">USD</span>
+            <span className="text-base font-semibold text-muted-foreground dark:text-slate-400 ml-1">USD</span>
           </p>
 
           {rateLoading ? (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground dark:text-slate-400 flex items-center gap-1.5">
               <Loader2 className="h-3 w-3 animate-spin" /> Obteniendo tasa BCV...
             </p>
           ) : bcvRate && amountBs ? (
@@ -314,7 +314,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
           {showCommission && commission > 0 && (
             <div className="border-t border-border pt-3 space-y-2">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Desglose</p>
+              <p className="text-[10px] font-bold text-muted-foreground dark:text-slate-400 uppercase tracking-widest">Desglose</p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
                   { l: "Total", v: `$${amountUsd.toFixed(2)}`, hi: false },
@@ -344,7 +344,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Número de Referencia *</label>
+            <label className="text-xs font-semibold text-foreground dark:text-white">Número de Referencia *</label>
             <Input
               placeholder="Ej: 00123456789"
               value={reference}
@@ -354,7 +354,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Imagen / Captura del Comprobante *</label>
+            <label className="text-xs font-semibold text-foreground dark:text-white">Imagen / Captura del Comprobante *</label>
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors group">
               <input
                 type="file"
@@ -369,8 +369,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
                 </div>
               ) : (
                 <>
-                  <Upload className="h-6 w-6 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                  <span className="text-sm text-muted-foreground">Toca para seleccionar imagen o PDF</span>
+                  <Upload className="h-6 w-6 text-muted-foreground/40 dark:text-slate-500 group-hover:text-primary/60 transition-colors" />
+                  <span className="text-sm text-muted-foreground dark:text-slate-400">Toca para seleccionar imagen o PDF</span>
                 </>
               )}
             </label>

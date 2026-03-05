@@ -34,10 +34,10 @@ type ReviewData = {
 };
 
 const PAYMENT_STEPS = [
-    { key: "pending", label: "Pago pendiente", icon: Clock, color: "text-amber-500   dark:text-amber-400" },
-    { key: "under_review", label: "En revisión", icon: Loader2, color: "text-blue-500    dark:text-blue-400" },
+    { key: "pending", label: "Pago pendiente", icon: Clock, color: "text-amber-500 dark:text-amber-400" },
+    { key: "under_review", label: "En revisión", icon: Loader2, color: "text-blue-500 dark:text-blue-300" },
     { key: "verified", label: "Pago verificado", icon: CheckCircle, color: "text-primary dark:text-[#A6E300]" },
-    { key: "shipped", label: "Enviado", icon: Truck, color: "text-purple-500  dark:text-purple-400" },
+    { key: "shipped", label: "Enviado", icon: Truck, color: "text-purple-500 dark:text-purple-300" },
     { key: "delivered", label: "Entregado", icon: Package, color: "text-primary dark:text-[#A6E300]" },
 ];
 
@@ -62,7 +62,6 @@ const MiCompra = () => {
     const [hoveredStar, setHoveredStar] = useState<number | null>(null);
     const [imgIdx, setImgIdx] = useState(0);
 
-    // Auth guard
     useEffect(() => {
         if (!authLoading && !user) navigate("/auth");
     }, [user, authLoading, navigate]);
@@ -140,7 +139,7 @@ const MiCompra = () => {
                 <Navbar />
                 <div className="flex flex-col items-center justify-center py-32 gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Cargando tu compra...</p>
+                    <p className="text-sm text-muted-foreground dark:text-slate-400">Cargando tu compra...</p>
                 </div>
             </div>
         );
@@ -166,16 +165,19 @@ const MiCompra = () => {
             <Navbar />
 
             <main className="container mx-auto px-4 py-4 max-w-2xl pb-24">
+
                 {/* Breadcrumb */}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
-                    <button onClick={() => navigate("/mi-panel")} className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-slate-400 mb-5">
+                    <button onClick={() => navigate("/mi-panel")}
+                        className="hover:text-primary dark:hover:text-[#A6E300] transition-colors flex items-center gap-1">
                         <ArrowLeft className="h-3 w-3" /> Mi Panel
                     </button>
-                    <span>/</span>
-                    <button onClick={() => navigate("/mi-panel")} className="hover:text-primary dark:hover:text-white transition-colors">
+                    <span className="dark:text-slate-600">/</span>
+                    <button onClick={() => navigate("/mi-panel")}
+                        className="hover:text-primary dark:hover:text-[#A6E300] transition-colors">
                         Mis Compras
                     </button>
-                    <span>/</span>
+                    <span className="dark:text-slate-600">/</span>
                     <span className="text-foreground font-medium truncate max-w-[120px]">{auction.title}</span>
                 </div>
 
@@ -183,8 +185,8 @@ const MiCompra = () => {
                 <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm mb-5">
                     {/* Trophy bar */}
                     <div className="bg-gradient-to-r from-primary/15 via-accent/8 to-primary/15 border-b border-border px-5 py-4 flex items-center gap-3">
-                        <div className="h-11 w-11 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <Trophy className="h-5 w-5 text-primary" />
+                        <div className="h-11 w-11 rounded-full bg-primary/20 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0">
+                            <Trophy className="h-5 w-5 text-primary dark:text-[#A6E300]" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-primary dark:text-[#A6E300]">¡Felicidades, ganaste!</p>
@@ -199,13 +201,13 @@ const MiCompra = () => {
 
                     {/* Product image gallery */}
                     {images.length > 0 && (
-                        <div className="bg-secondary/20 dark:bg-secondary/10 py-5 px-4 flex flex-col items-center gap-3">
+                        <div className="bg-secondary/20 dark:bg-white/5 py-5 px-4 flex flex-col items-center gap-3">
                             <img src={heroImg || ""} alt={auction.title} className="h-44 object-contain rounded-xl" />
                             {images.length > 1 && (
                                 <div className="flex gap-1.5">
                                     {images.map((img, i) => (
                                         <button key={i} onClick={() => setImgIdx(i)}
-                                            className={`h-10 w-10 rounded-lg object-cover border-2 overflow-hidden transition-all ${i === imgIdx ? "border-primary scale-110" : "border-border opacity-60"}`}>
+                                            className={`h-10 w-10 rounded-lg object-cover border-2 overflow-hidden transition-all ${i === imgIdx ? "border-primary dark:border-[#A6E300] scale-110" : "border-border opacity-60"}`}>
                                             <img src={img} alt="" className="h-full w-full object-cover" />
                                         </button>
                                     ))}
@@ -215,10 +217,11 @@ const MiCompra = () => {
                     )}
 
                     {/* Status chip */}
-                    <div className="px-5 py-3 border-t border-border bg-secondary/10 flex items-center gap-2">
+                    <div className="px-5 py-3 border-t border-border bg-secondary/10 dark:bg-white/5 flex items-center gap-2">
                         <StepIcon className={`h-4 w-4 shrink-0 ${currentStep.color} ${currentStep.key === "under_review" ? "animate-spin" : ""}`} />
                         <span className={`text-sm font-bold ${currentStep.color}`}>{currentStep.label}</span>
-                        <button onClick={() => setRefreshKey(k => k + 1)} className="ml-auto text-muted-foreground hover:text-primary transition-colors" title="Actualizar">
+                        <button onClick={() => setRefreshKey(k => k + 1)}
+                            className="ml-auto text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-[#A6E300] transition-colors" title="Actualizar">
                             <RefreshCw className="h-3.5 w-3.5" />
                         </button>
                     </div>
@@ -235,21 +238,22 @@ const MiCompra = () => {
 
                 {/* === TRACKING NUMBER (when shipped) === */}
                 {auction.tracking_number && (
-                    <div className="mb-5 bg-purple-500/5 border border-purple-400/20 rounded-2xl p-4">
+                    <div className="mb-5 bg-purple-500/5 dark:bg-purple-400/5 border border-purple-400/20 rounded-2xl p-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <Truck className="h-4 w-4 text-purple-400" />
-                            <span className="text-sm font-bold text-purple-400 dark:text-purple-300">Tu pedido está en camino</span>
+                            <Truck className="h-4 w-4 text-purple-500 dark:text-purple-300" />
+                            <span className="text-sm font-bold text-purple-600 dark:text-purple-300">Tu pedido está en camino</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <code className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono text-foreground">
                                 {auction.tracking_number}
                             </code>
-                            <button onClick={copyTracking} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors">
+                            <button onClick={copyTracking}
+                                className="p-2 rounded-lg border border-border hover:bg-secondary dark:hover:bg-white/10 transition-colors text-foreground dark:text-slate-300">
                                 <Copy className="h-4 w-4" />
                             </button>
                             {(auction as any).tracking_url && (
                                 <a href={(auction as any).tracking_url} target="_blank" rel="noopener noreferrer"
-                                    className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors">
+                                    className="p-2 rounded-lg border border-border hover:bg-secondary dark:hover:bg-white/10 transition-colors text-foreground dark:text-slate-300">
                                     <ExternalLink className="h-4 w-4" />
                                 </a>
                             )}
@@ -264,7 +268,7 @@ const MiCompra = () => {
 
                 {/* === CONFIRM DELIVERY === */}
                 {canConfirmDelivery && (
-                    <div className="mb-5 bg-primary/5 border border-primary/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="mb-5 bg-primary/5 dark:bg-[#A6E300]/5 border border-primary/20 dark:border-[#A6E300]/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div className="flex-1">
                             <p className="font-bold text-sm text-foreground">¿Ya recibiste tu producto?</p>
                             <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">
@@ -284,7 +288,7 @@ const MiCompra = () => {
 
                 {/* === DELIVERED BANNER === */}
                 {isDelivered && (
-                    <div className="mb-5 bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 flex items-center gap-3">
+                    <div className="mb-5 bg-primary/5 dark:bg-[#A6E300]/5 border border-primary/20 dark:border-[#A6E300]/20 rounded-2xl px-5 py-4 flex items-center gap-3">
                         <CheckCircle className="h-8 w-8 text-primary dark:text-[#A6E300] shrink-0" />
                         <div>
                             <p className="font-bold text-sm text-primary dark:text-[#A6E300]">¡Compra completada con éxito!</p>
@@ -298,12 +302,11 @@ const MiCompra = () => {
                 {/* === REVIEW SECTION === */}
                 {(isDelivered || showReviewForm) && !review && (
                     <div className="mb-5 bg-card border border-border rounded-2xl overflow-hidden">
-                        <div className="bg-amber-500/10 border-b border-amber-400/20 px-5 py-3 flex items-center gap-2">
-                            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                            <p className="font-bold text-sm text-amber-600 dark:text-amber-400">Cuéntanos tu experiencia</p>
+                        <div className="bg-amber-500/10 dark:bg-amber-400/10 border-b border-amber-400/20 px-5 py-3 flex items-center gap-2">
+                            <Star className="h-4 w-4 text-amber-500 dark:text-amber-400 fill-amber-400" />
+                            <p className="font-bold text-sm text-amber-700 dark:text-amber-300">Cuéntanos tu experiencia</p>
                         </div>
                         <div className="p-5 space-y-4">
-                            {/* Star rating */}
                             <div className="flex items-center gap-1">
                                 {[1, 2, 3, 4, 5].map(star => (
                                     <button key={star}
@@ -312,7 +315,7 @@ const MiCompra = () => {
                                         onClick={() => setRating(star)}
                                         className="transition-transform hover:scale-110"
                                     >
-                                        <Star className={`h-8 w-8 ${(hoveredStar ?? rating) >= star ? "fill-amber-400 text-amber-400" : "text-border"}`} />
+                                        <Star className={`h-8 w-8 ${(hoveredStar ?? rating) >= star ? "fill-amber-400 text-amber-400" : "text-border dark:text-slate-600"}`} />
                                     </button>
                                 ))}
                                 <span className="text-sm text-muted-foreground dark:text-slate-400 ml-2">
@@ -323,7 +326,7 @@ const MiCompra = () => {
                                 value={comment}
                                 onChange={e => setComment(e.target.value)}
                                 placeholder="Describe tu experiencia con el dealer, la calidad del producto y el tiempo de entrega..."
-                                className="w-full min-h-[90px] rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 dark:text-white dark:placeholder:text-slate-500"
+                                className="w-full min-h-[90px] rounded-xl border border-input bg-background dark:bg-zinc-900 px-3 py-2 text-sm resize-none text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
                             />
                             <Button
                                 onClick={handleSubmitReview}
@@ -339,16 +342,16 @@ const MiCompra = () => {
 
                 {/* Show submitted review */}
                 {review && (
-                    <div className="mb-5 bg-amber-500/5 border border-amber-400/20 rounded-2xl p-4 flex items-start gap-3">
+                    <div className="mb-5 bg-amber-500/5 dark:bg-amber-400/5 border border-amber-400/20 rounded-2xl p-4 flex items-start gap-3">
                         <Star className="h-5 w-5 text-amber-400 fill-amber-400 shrink-0 mt-0.5" />
                         <div>
                             <div className="flex items-center gap-1 mb-1">
                                 {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`h-3.5 w-3.5 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-border"}`} />
+                                    <Star key={i} className={`h-3.5 w-3.5 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-border dark:text-slate-600"}`} />
                                 ))}
                             </div>
                             <p className="text-sm text-foreground">{review.comment}</p>
-                            <p className="text-[10px] text-muted-foreground dark:text-slate-500 mt-1">Reseña enviada</p>
+                            <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-1">Reseña enviada</p>
                         </div>
                     </div>
                 )}
@@ -356,14 +359,14 @@ const MiCompra = () => {
                 {/* === SHIPPING INFO (saved) === */}
                 {shippingInfo && (
                     <div className="mb-5 bg-card border border-border rounded-2xl overflow-hidden">
-                        <div className="bg-secondary/30 px-5 py-3 border-b border-border flex items-center justify-between">
+                        <div className="bg-secondary/30 dark:bg-white/5 px-5 py-3 border-b border-border flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-primary" />
+                                <MapPin className="h-4 w-4 text-primary dark:text-[#A6E300]" />
                                 <span className="text-sm font-bold text-foreground">Datos de Envío</span>
                             </div>
-                            <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">Guardado</Badge>
+                            <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary dark:text-[#A6E300] border-primary/20 dark:border-[#A6E300]/30">Guardado</Badge>
                         </div>
-                        <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                             {[
                                 { label: "Nombre", value: shippingInfo.full_name },
                                 { label: "Cédula", value: shippingInfo.cedula },
@@ -374,7 +377,7 @@ const MiCompra = () => {
                                 { label: "Oficina", value: shippingInfo.office_name },
                             ].map(({ label, value }) => value ? (
                                 <div key={label}>
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-slate-500 block">{label}</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-slate-400 block mb-0.5">{label}</span>
                                     <span className="font-semibold text-foreground">{value}</span>
                                 </div>
                             ) : null)}
@@ -388,7 +391,7 @@ const MiCompra = () => {
                         <div className="flex items-center gap-2 mb-3">
                             <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center shrink-0">1</span>
                             <h2 className="font-heading font-bold text-base text-foreground">Datos de Envío</h2>
-                            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-400/30 ml-auto">Pendiente</Badge>
+                            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-400/30 ml-auto">Pendiente</Badge>
                         </div>
                         <ShippingForm
                             auctionId={auction.id}
@@ -402,12 +405,10 @@ const MiCompra = () => {
                 {(shippingDone || shippingInfo || auction.payment_status !== "pending") && (
                     <div className="mb-5">
                         <div className="flex items-center gap-2 mb-3">
-                            <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center shrink-0">
-                                {shippingInfo ? "2" : "2"}
-                            </span>
+                            <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center shrink-0">2</span>
                             <h2 className="font-heading font-bold text-base text-foreground">Comprobante de Pago</h2>
                             {isVerified && (
-                                <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20 ml-auto">Verificado ✓</Badge>
+                                <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary dark:text-[#A6E300] border-primary/20 dark:border-[#A6E300]/30 ml-auto">Verificado ✓</Badge>
                             )}
                         </div>
                         <PaymentFlow
@@ -420,8 +421,8 @@ const MiCompra = () => {
 
                 {/* === OPEN DISPUTE === */}
                 {isVerified && !isDelivered && (
-                    <div className="mb-5 border border-border rounded-2xl p-4 flex items-start gap-3 bg-secondary/10">
-                        <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="mb-5 border border-border rounded-2xl p-4 flex items-start gap-3 bg-secondary/10 dark:bg-white/5">
+                        <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
                         <div className="flex-1">
                             <p className="text-sm font-bold text-foreground">¿Problema con tu pedido?</p>
                             <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">Si el producto no llegó o no coincide con la descripción, puedes abrir una disputa.</p>
@@ -429,7 +430,7 @@ const MiCompra = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-xl text-xs border-amber-400/30 text-amber-600 hover:bg-amber-500/10 shrink-0"
+                            className="rounded-xl text-xs border-amber-400/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 dark:hover:bg-amber-400/10 shrink-0"
                             onClick={() => navigate("/mi-panel")}
                         >
                             <Shield className="h-3.5 w-3.5 mr-1" /> Disputa
@@ -441,7 +442,7 @@ const MiCompra = () => {
                 <div className="flex gap-3 pt-2">
                     <Button
                         variant="outline"
-                        className="flex-1 rounded-xl"
+                        className="flex-1 rounded-xl text-foreground dark:text-white"
                         onClick={() => navigate("/mi-panel")}
                     >
                         <Package className="h-4 w-4 mr-2" />
@@ -450,7 +451,7 @@ const MiCompra = () => {
                     <Button
                         variant="outline"
                         size="icon"
-                        className="rounded-xl"
+                        className="rounded-xl text-foreground dark:text-white"
                         onClick={() => setRefreshKey(k => k + 1)}
                         title="Actualizar estado"
                     >
