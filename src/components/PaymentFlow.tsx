@@ -60,22 +60,22 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           }
         }
 
-        // 2. Fallback: pydolarve.org
+        // 2. Fallback: ve.dolarapi.com (official BCV rate)
         try {
-          const res = await fetch("https://pydolarve.org/api/v2/dollar?page=bcv", { signal: AbortSignal.timeout(5000) });
+          const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
           if (res.ok) {
             const data = await res.json();
-            const value = data?.monitors?.usd?.price;
+            const value = data?.promedio ?? data?.venta;
             if (value && !isNaN(Number(value))) { setBcvRate(Number(value)); setRateLoading(false); return; }
           }
         } catch { /* try next */ }
 
-        // 3. Last resort: ve.dolarapi.com
+        // 3. Last resort: open.er-api.com (USD→VES)
         try {
-          const res2 = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
+          const res2 = await fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(5000) });
           if (res2.ok) {
             const data2 = await res2.json();
-            const value2 = data2?.promedio;
+            const value2 = data2?.rates?.VES ?? data2?.rates?.VEF;
             if (value2 && !isNaN(Number(value2))) { setBcvRate(Number(value2)); setRateLoading(false); return; }
           }
         } catch { /* no more fallbacks */ }

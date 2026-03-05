@@ -7,7 +7,15 @@ const corsHeaders = {
 };
 
 /**
- * Fetches live BCV rate from external sources and upserts to site_settings.
+ * Fetches the live BCV (Banco Central de Venezuela) exchange rate from
+ * multiple reliable sources and upserts it to site_settings.
+ *
+ * Sources tried in order (first success wins):
+ *  1. ve.dolarapi.com  — official/BCV rate (most reliable, free, no auth)
+ *  2. bcv-api.rafnixg.dev — BCV-specific API (free, no auth required)
+ *  3. open.er-api.com — global exchange rate, USD→VES
+ *  4. api.exchangerate-api.com — additional fallback, USD→VES
+ *
  * Called by the admin panel "Actualizar BCV" button or a scheduled cron.
  */
 serve(async (req) => {
@@ -20,67 +28,138 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const endpoints = [
-        {
-            url: "https://pydolarve.org/api/v2/dollar?page=bcv",
-            extract: (d: any) => d?.monitors?.usd?.price,
-            name: "pydolarve.org",
-        },
-        {
-            url: "https://ve.dolarapi.com/v1/dolares/oficial",
-            extract: (d: any) => d?.promedio,
-            name: "ve.dolarapi.com",
-        },
-    ];
-
+    const errors: string[] = [];
     let rate: number | null = null;
     let source = "";
 
-    for (const ep of endpoints) {
-        try {
-            const res = await fetch(ep.url, {
-                signal: AbortSignal.timeout(6000),
-                headers: { "User-Agent": "Subastandolo/1.0" },
-            });
-            if (!res.ok) continue;
+    // ── Source 1: ve.dolarapi.com (tasa oficial BCV) ──────────────────────
+    try {
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", {
+            signal: AbortSignal.timeout(7000),
+            headers: { "Accept": "application/json", "User-Agent": "Subastandolo/2.0" },
+        });
+        if (res.ok) {
             const data = await res.json();
-            const value = ep.extract(data);
+            const value = data?.promedio ?? data?.venta ?? data?.compra;
             if (value && !isNaN(Number(value)) && Number(value) > 0) {
                 rate = Number(value);
-                source = ep.name;
-                break;
+                source = "ve.dolarapi.com";
+            } else {
+                errors.push("dolarapi.com: no valid rate in response");
+            }
+        } else {
+            errors.push(`dolarapi.com HTTP ${res.status}`);
+        }
+    } catch (e) {
+        errors.push(`dolarapi.com: ${(e as Error).message}`);
+    }
+
+    // ── Source 2: bcv-api.rafnixg.dev ─────────────────────────────────────
+    if (!rate) {
+        try {
+            const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+            const res = await fetch(`https://bcv-api.rafnixg.dev/rates/${today}`, {
+                signal: AbortSignal.timeout(7000),
+                headers: { "Accept": "application/json", "User-Agent": "Subastandolo/2.0" },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                // Response shape: { date, rates: { USD: number, EUR: number, ... } }
+                const usdRate = data?.rates?.USD ?? data?.USD ?? data?.usd;
+                if (usdRate && !isNaN(Number(usdRate)) && Number(usdRate) > 0) {
+                    rate = Number(usdRate);
+                    source = "bcv-api.rafnixg.dev";
+                } else {
+                    errors.push("rafnixg.dev: no valid USD rate in response");
+                }
+            } else {
+                errors.push(`rafnixg.dev HTTP ${res.status}`);
             }
         } catch (e) {
-            console.error(`Error fetching from ${ep.name}:`, e);
+            errors.push(`rafnixg.dev: ${(e as Error).message}`);
+        }
+    }
+
+    // ── Source 3: open.er-api.com (free, no key, USD→VES) ─────────────────
+    if (!rate) {
+        try {
+            const res = await fetch("https://open.er-api.com/v6/latest/USD", {
+                signal: AbortSignal.timeout(7000),
+                headers: { "Accept": "application/json" },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const value = data?.rates?.VES ?? data?.rates?.VEF;
+                if (value && !isNaN(Number(value)) && Number(value) > 0) {
+                    rate = Number(value);
+                    source = "open.er-api.com";
+                } else {
+                    errors.push("open.er-api.com: VES/VEF not found in rates");
+                }
+            } else {
+                errors.push(`open.er-api.com HTTP ${res.status}`);
+            }
+        } catch (e) {
+            errors.push(`open.er-api.com: ${(e as Error).message}`);
+        }
+    }
+
+    // ── Source 4: exchangerate-api.com free tier ───────────────────────────
+    if (!rate) {
+        try {
+            const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD", {
+                signal: AbortSignal.timeout(7000),
+                headers: { "Accept": "application/json" },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const value = data?.rates?.VES ?? data?.rates?.VEF;
+                if (value && !isNaN(Number(value)) && Number(value) > 0) {
+                    rate = Number(value);
+                    source = "exchangerate-api.com";
+                } else {
+                    errors.push("exchangerate-api.com: VES/VEF not found in rates");
+                }
+            } else {
+                errors.push(`exchangerate-api.com HTTP ${res.status}`);
+            }
+        } catch (e) {
+            errors.push(`exchangerate-api.com: ${(e as Error).message}`);
         }
     }
 
     if (!rate) {
+        console.error("All BCV rate sources failed:", JSON.stringify(errors));
         return new Response(
-            JSON.stringify({ error: "Could not fetch rate from any source", rate: null }),
+            JSON.stringify({
+                error: "No se pudo obtener la tasa BCV de ninguna fuente",
+                sources_tried: errors,
+            }),
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 
-    // Upsert to site_settings (realtime will push to all connected clients)
-    const { error } = await supabase
+    // ── Upsert to site_settings (realtime pushes to all clients) ───────────
+    const { error: dbError } = await supabase
         .from("site_settings")
         .upsert(
             {
                 setting_key: "bcv_rate",
                 setting_value: rate.toFixed(2),
-                setting_label: `Tasa BCV (auto-actualizada desde ${source})`,
+                setting_label: `Tasa BCV (auto desde ${source})`,
             },
             { onConflict: "setting_key" }
         );
 
-    if (error) {
-        console.error("DB upsert error:", error);
+    if (dbError) {
+        console.error("DB upsert error:", dbError);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: dbError.message }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
+
+    console.log(`BCV rate updated: ${rate} (from ${source})`);
 
     return new Response(
         JSON.stringify({ rate, source, updated_at: new Date().toISOString() }),
