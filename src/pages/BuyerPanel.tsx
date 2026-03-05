@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
-  ChevronRight, ImageIcon, Store, Download, Star, Heart, Plus, Package,
+  ChevronRight, ImageIcon, Store, Star, Heart, Plus, Package,
   Lock, ShieldCheck, User, MapPin, Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -1454,22 +1454,7 @@ const BuyerPanel = () => {
             </Card>
           )}
 
-          {/* Descargar App */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => navigate("/instalar")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Download className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Descargar App</p>
-                <p className="text-xs text-muted-foreground">Instala la app en tu dispositivo</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
+
 
           {/* Perfil */}
           <Card
