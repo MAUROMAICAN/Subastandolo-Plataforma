@@ -93,7 +93,6 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
                       <div><span className="text-muted-foreground">Estado:</span> <Badge variant="outline" className="text-[10px] ml-1">{details.dealer.status}</Badge></div>
                       <div><span className="text-muted-foreground">Cuenta:</span> <Badge variant="outline" className="text-[10px] ml-1">{details.dealer.account_status}</Badge></div>
                       <div><span className="text-muted-foreground">Balance:</span> <strong>${details.dealer.dealer_balance?.toFixed(2)}</strong></div>
-                      {details.dealer.cedula_number && <div><span className="text-muted-foreground">Cédula:</span> <strong>{details.dealer.cedula_number}</strong></div>}
                       {details.dealer.instagram_url && <div><span className="text-muted-foreground">Instagram:</span> {details.dealer.instagram_url}</div>}
                     </div>
                   </AccordionContent>

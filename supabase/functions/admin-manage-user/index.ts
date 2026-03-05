@@ -77,8 +77,8 @@ Deno.serve(async (req) => {
       if (createError) {
         // Provide helpful message if user already exists
         if (createError.message?.includes('already been registered')) {
-          return new Response(JSON.stringify({ 
-            error: 'Este correo ya está registrado. Usa la opción "Promover" en la lista de usuarios para cambiar su rol.' 
+          return new Response(JSON.stringify({
+            error: 'Este correo ya está registrado. Usa la opción "Promover" en la lista de usuarios para cambiar su rol.'
           }), {
             status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
 
     if (action === 'get_user_details') {
       const { data: userData } = await adminClient.auth.admin.getUserById(userId);
-      const { data: profileData } = await adminClient.from('profiles').select('*').eq('id', userId).single();
+      const { data: rawProfile } = await adminClient.from('profiles').select('*').eq('id', userId).single();
       const { data: rolesData } = await adminClient.from('user_roles').select('role').eq('user_id', userId);
       const { data: dealerData } = await adminClient.from('dealer_verification').select('*').eq('user_id', userId).maybeSingle();
       const { data: bidsData } = await adminClient.from('bids').select('id, amount, auction_id, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50);
@@ -197,6 +197,18 @@ Deno.serve(async (req) => {
       const { data: reviewsGiven } = await adminClient.from('reviews').select('id, rating, comment, review_type, created_at').eq('reviewer_id', userId).order('created_at', { ascending: false }).limit(20);
       const { data: disputes } = await adminClient.from('disputes').select('id, status, category, created_at, resolution').or(`buyer_id.eq.${userId},dealer_id.eq.${userId}`).order('created_at', { ascending: false }).limit(20);
       const { data: paymentProofs } = await adminClient.from('payment_proofs').select('id, amount_usd, status, created_at, auction_id').eq('buyer_id', userId).order('created_at', { ascending: false }).limit(20);
+
+      // ⚠️ PRIVACY: Strip sensitive identity fields before returning to admin
+      const safeProfile = rawProfile ? (() => {
+        const { cedula_number, cedula_photo_url, ...rest } = rawProfile as any;
+        return rest;
+      })() : null;
+
+      // Strip cedula from dealer data too
+      const safeDealer = dealerData ? (() => {
+        const { cedula_number, cedula_photo_url, ...rest } = dealerData as any;
+        return rest;
+      })() : null;
 
       return new Response(JSON.stringify({
         auth: {
@@ -207,9 +219,9 @@ Deno.serve(async (req) => {
           banned: !!userData?.user?.banned_until,
           banned_until: userData?.user?.banned_until,
         },
-        profile: profileData,
+        profile: safeProfile,
         roles: (rolesData || []).map((r: any) => r.role),
-        dealer: dealerData,
+        dealer: safeDealer,
         bids: bidsData || [],
         won_auctions: wonAuctions || [],
         reviews_received: reviewsReceived || [],
