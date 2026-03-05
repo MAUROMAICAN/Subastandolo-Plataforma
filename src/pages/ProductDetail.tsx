@@ -188,7 +188,7 @@ export default function ProductDetail() {
                                 <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
                                 <div className="flex items-end gap-3">
                                     <p className="text-4xl font-black text-foreground">${finalPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                                    <Badge variant="outline" className="mb-1.5 bg-success/10 text-success border-success/30 font-bold">Precio Fijo</Badge>
+                                    <Badge variant="outline" className="mb-1.5 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold">Precio Fijo</Badge>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +203,7 @@ export default function ProductDetail() {
                                 </div>
                                 <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
                                     <span className="text-muted-foreground">Disponibilidad:</span>
-                                    <span className={`font-bold ${product.stock > 0 ? 'text-success' : 'text-destructive'}`}>
+                                    <span className={`font-bold ${product.stock > 0 ? 'text-success dark:text-[#A6E300]' : 'text-destructive dark:text-red-400'}`}>
                                         {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
                                     </span>
                                 </div>
@@ -251,11 +251,11 @@ export default function ProductDetail() {
                                 {/* Trust Badges */}
                                 <div className="mt-4 space-y-3">
                                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                        <ShieldCheck className="h-5 w-5 text-success shrink-0" />
+                                        <ShieldCheck className="h-5 w-5 text-success dark:text-[#A6E300] shrink-0" />
                                         <p className="leading-tight"><strong className="text-foreground">Compra Protegida</strong><br />Recibes el producto que esperabas o te devolvemos tu dinero.</p>
                                     </div>
                                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                        <Truck className="h-5 w-5 text-primary shrink-0" />
+                                        <Truck className="h-5 w-5 text-primary dark:text-[#A6E300] shrink-0" />
                                         <p className="leading-tight"><strong className="text-foreground">Envío a todo el país</strong><br />Acuerda con el vendedor el método de envío más conveniente.</p>
                                     </div>
                                 </div>

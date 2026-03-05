@@ -21,9 +21,9 @@ import AuctionPreviewModal from "./AuctionPreviewModal";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pendiente", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
-  in_review: { label: "En Revisión", color: "bg-primary/10 text-primary border-primary/20", icon: Eye },
-  approved: { label: "Aprobada", color: "bg-primary/10 text-primary border-primary/20", icon: CheckCircle },
-  active: { label: "Activa", color: "bg-primary/10 text-primary border-primary/20", icon: TrendingUp },
+  in_review: { label: "En Revisión", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: Eye },
+  approved: { label: "Aprobada", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: CheckCircle },
+  active: { label: "Activa", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: TrendingUp },
   paused: { label: "Pausada", color: "bg-warning/10 text-warning border-warning/20", icon: Pause },
   rejected: { label: "Rechazada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle },
   finalized: { label: "Finalizada", color: "bg-muted text-muted-foreground border-border", icon: Trophy },
@@ -179,7 +179,7 @@ export default function DealerAuctionsTab({
       </div>
 
       {loading ? (
-        <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300] mx-auto" />
       ) : filteredAuctions.length === 0 ? (
         <p className="text-muted-foreground text-center py-8 text-sm">No hay subastas en esta categoría.</p>
       ) : (
@@ -231,14 +231,14 @@ export default function DealerAuctionsTab({
 
                         if (deliveryStatus === "delivered") {
                           return (
-                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20">
                               <CheckCircle className="h-3 w-3 mr-1" /> Entregado
                             </Badge>
                           );
                         }
                         if (deliveryStatus === "shipped") {
                           return (
-                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 animate-pulse">
+                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20 animate-pulse">
                               <Truck className="h-3 w-3 mr-1" /> En Camino
                             </Badge>
                           );
@@ -259,7 +259,7 @@ export default function DealerAuctionsTab({
                         }
                         if (paymentStatus === "verified") {
                           return (
-                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                            <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20">
                               <CheckCircle className="h-3 w-3 mr-1" /> Pago verificado
                             </Badge>
                           );
@@ -333,7 +333,7 @@ export default function DealerAuctionsTab({
                                   <tr key={bid.id} className={`border-b border-border last:border-0 ${index === 0 ? "bg-primary/5" : ""}`}>
                                     <td className="px-3 py-1.5">{index === 0 ? "👑" : index + 1}</td>
                                     <td className="px-3 py-1.5">{maskName(bid.bidder_name)}</td>
-                                    <td className="px-3 py-1.5 text-right font-bold text-primary">${bid.amount.toLocaleString("es-MX")}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold text-primary dark:text-[#A6E300]">${bid.amount.toLocaleString("es-MX")}</td>
                                     <td className="px-3 py-1.5 text-right text-muted-foreground">{new Date(bid.created_at).toLocaleDateString("es-MX")}</td>
                                   </tr>
                                 ))}
@@ -346,7 +346,7 @@ export default function DealerAuctionsTab({
                       {/* Winner info */}
                       {(auction.status === "finalized" || (auction.status === "active" && isEnded)) && auction.winner_id && winner && (
                         <div className="bg-primary/5 border border-primary/10 rounded-sm p-3 space-y-2">
-                          <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-primary dark:text-[#A6E300] flex items-center gap-1.5">
                             <Trophy className="h-3.5 w-3.5" /> Ganador de la Subasta
                           </p>
                           <div className="space-y-1 text-xs">
@@ -363,7 +363,7 @@ export default function DealerAuctionsTab({
                           {(auction as any).delivery_status === "ready_to_ship" && !(auction as any).tracking_number && (
                             <div className="bg-accent/5 border border-accent/20 rounded-sm p-4 space-y-3 mt-2">
                               <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                                <Truck className="h-4 w-4 text-primary" /> Confirmar Envío
+                                <Truck className="h-4 w-4 text-primary dark:text-[#A6E300]" /> Confirmar Envío
                               </p>
                               <p className="text-[10px] text-muted-foreground">
                                 Completa los datos del envío para notificar al comprador automáticamente.
@@ -432,7 +432,7 @@ export default function DealerAuctionsTab({
 
                           {(auction as any).tracking_number && (
                             <div className="bg-primary/5 border border-primary/20 rounded-sm p-3 mt-2">
-                              <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                              <p className="text-xs font-bold text-primary dark:text-[#A6E300] flex items-center gap-1.5">
                                 <CheckCircle className="h-3.5 w-3.5" /> Envío registrado
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">Guía: <span className="font-mono font-bold text-foreground">{(auction as any).tracking_number}</span></p>
@@ -446,7 +446,7 @@ export default function DealerAuctionsTab({
                         {/* Inline Edit Form — only for pending auctions */}
                         {editingId === auction.id && (
                           <div className="bg-card border border-primary/30 rounded-sm p-4 space-y-3 animate-fade-in">
-                            <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-primary dark:text-[#A6E300] flex items-center gap-1.5">
                               <Edit3 className="h-3.5 w-3.5" /> Editar publicación
                             </p>
                             <div className="space-y-1">
@@ -519,7 +519,7 @@ export default function DealerAuctionsTab({
                               <Button
                                 variant="outline" size="sm"
                                 onClick={() => editingId === auction.id ? setEditingId(null) : startEdit(auction)}
-                                className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7"
+                                className="text-primary border-primary/30 dark:text-[#A6E300] hover:bg-primary/10 rounded-sm text-xs h-7"
                               >
                                 <Edit3 className="h-3 w-3 mr-1" />
                                 {editingId === auction.id ? "Cerrar editor" : "Editar"}
@@ -530,7 +530,7 @@ export default function DealerAuctionsTab({
                             </>
                           )}
                           {(auction.status === "finalized" || auction.status === "rejected") && !auction.winner_id && auction.bids.length === 0 && (
-                            <Button variant="outline" size="sm" onClick={() => handleReactivate(auction)} className="text-primary border-primary/30 hover:bg-primary/10 rounded-sm text-xs h-7">
+                            <Button variant="outline" size="sm" onClick={() => handleReactivate(auction)} className="text-primary border-primary/30 dark:text-[#A6E300] hover:bg-primary/10 rounded-sm text-xs h-7">
                               <RotateCcw className="h-3 w-3 mr-1" /> Reactivar Producto
                             </Button>
                           )}

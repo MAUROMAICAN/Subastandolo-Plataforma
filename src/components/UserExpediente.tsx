@@ -55,7 +55,7 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" />
           </div>
         ) : error ? (
           <div className="text-center py-8 text-destructive text-sm">{error}</div>
@@ -74,8 +74,8 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
               )}
               {details.auth?.banned && (
                 <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 col-span-2">
-                  <p className="text-xs font-bold text-destructive">🚫 CUENTA SUSPENDIDA</p>
-                  {details.auth.banned_until && <p className="text-[10px] text-destructive/80">Hasta: {details.auth.banned_until}</p>}
+                  <p className="text-xs font-bold text-destructive dark:text-red-400">🚫 CUENTA SUSPENDIDA</p>
+                  {details.auth.banned_until && <p className="text-[10px] text-destructive/80 dark:text-red-400">Hasta: {details.auth.banned_until}</p>}
                 </div>
               )}
             </div>

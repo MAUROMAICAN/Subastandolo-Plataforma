@@ -179,7 +179,7 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                                     </div>
                                 ))}
                                 {images.length < 5 && (
-                                    <label className="aspect-square border-2 border-dashed border-border hover:border-primary rounded-sm flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary">
+                                    <label className="aspect-square border-2 border-dashed border-border hover:border-primary dark:hover:border-[#A6E300] rounded-sm flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary dark:hover:text-[#A6E300]">
                                         <ImagePlus className="h-6 w-6 mb-1" />
                                         <span className="text-xs font-medium">Añadir foto</span>
                                         <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" multiple onChange={handleImageUpload} />

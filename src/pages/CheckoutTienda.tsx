@@ -80,7 +80,7 @@ export default function CheckoutTienda() {
                 setAddress((profile as any).address || "");
                 setCity(profile.city || "");
                 setState(profile.state || "");
-                setPhone((profile as any).phone_number || "");
+                setPhone((profile as any).phone || (profile as any).phone_number || "");
             }
         } catch (err: any) {
             toast({ title: "Atención", description: err.message, variant: "destructive" });
@@ -92,8 +92,15 @@ export default function CheckoutTienda() {
 
     const handleCreateOrder = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!address || !city || !state || !phone) {
-            toast({ title: "Datos Incompletos", description: "Por favor, completa todos los datos de envío.", variant: "destructive" });
+
+        const missing = [];
+        if (!state) missing.push("Estado/Provincia");
+        if (!city) missing.push("Ciudad");
+        if (!address) missing.push("Dirección Completa");
+        if (!phone) missing.push("Teléfono");
+
+        if (missing.length > 0) {
+            toast({ title: "Información Incompleta", description: `Por favor, completa los siguientes campos de envío: ${missing.join(", ")}`, variant: "destructive" });
             return;
         }
 
@@ -119,11 +126,11 @@ export default function CheckoutTienda() {
             let receiptUrl = null;
             if (paymentImage) {
                 const fileExt = paymentImage.name.split('.').pop();
-                const fileName = `marketplace/${user?.id}/${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage.from("payment-receipts").upload(fileName, paymentImage);
+                const fileName = `${user?.id}/marketplace-order-${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(fileName, paymentImage);
                 if (uploadError) throw uploadError;
 
-                const { data: { publicUrl } } = supabase.storage.from("payment-receipts").getPublicUrl(fileName);
+                const { data: { publicUrl } } = supabase.storage.from("payment-proofs").getPublicUrl(fileName);
                 receiptUrl = publicUrl;
             }
 
@@ -186,25 +193,25 @@ export default function CheckoutTienda() {
                             {/* Sección 1: Envío */}
                             <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
                                 <div className="bg-secondary/40 px-6 py-4 border-b border-border">
-                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary h-6 w-6 rounded-full flex items-center justify-center text-xs">1</div> Datos de Envío</h2>
+                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">1</div> Datos de Envío</h2>
                                 </div>
                                 <CardContent className="p-6 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="font-bold">Estado / Provincia <span className="text-destructive">*</span></Label>
+                                            <Label className="font-bold">Estado / Provincia <span className="text-destructive dark:text-red-400">*</span></Label>
                                             <Input value={state} onChange={e => setState(e.target.value)} placeholder="Ej. Miranda" required className="bg-secondary/20" />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="font-bold">Ciudad <span className="text-destructive">*</span></Label>
+                                            <Label className="font-bold">Ciudad <span className="text-destructive dark:text-red-400">*</span></Label>
                                             <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Ej. Caracas" required className="bg-secondary/20" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold">Dirección Completa <span className="text-destructive">*</span></Label>
+                                        <Label className="font-bold">Dirección Completa <span className="text-destructive dark:text-red-400">*</span></Label>
                                         <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle, Avenida, Edificio, Piso, Número" required className="bg-secondary/20" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold">Teléfono de Contacto <span className="text-destructive">*</span></Label>
+                                        <Label className="font-bold">Teléfono de Contacto <span className="text-destructive dark:text-red-400">*</span></Label>
                                         <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" placeholder="0414..." required className="bg-secondary/20" />
                                     </div>
                                 </CardContent>
@@ -213,7 +220,7 @@ export default function CheckoutTienda() {
                             {/* Sección 2: Pago */}
                             <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
                                 <div className="bg-secondary/40 px-6 py-4 border-b border-border">
-                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary h-6 w-6 rounded-full flex items-center justify-center text-xs">2</div> Información de Pago</h2>
+                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">2</div> Información de Pago</h2>
                                 </div>
                                 <CardContent className="p-6 space-y-4">
                                     <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg flex gap-3 text-sm text-accent-foreground mb-4">

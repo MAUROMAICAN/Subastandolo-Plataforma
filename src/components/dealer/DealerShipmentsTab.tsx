@@ -165,10 +165,10 @@ export default function DealerShipmentsTab({
                 <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/30 font-bold">📦 Pendiente</Badge>
               )}
               {a.delivery_status === "shipped" && (
-                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">🚚 En Camino</Badge>
+                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20">🚚 En Camino</Badge>
               )}
               {a.delivery_status === "delivered" && (
-                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">✅ Entregado</Badge>
+                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20">✅ Entregado</Badge>
               )}
               {["pending", "under_review"].includes(a.payment_status) && (
                 <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/20">⏳ Esperando pago</Badge>
@@ -264,8 +264,8 @@ export default function DealerShipmentsTab({
 
           {a.dealer_ship_deadline && showForm && (
             <div className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-sm border ${new Date(a.dealer_ship_deadline).getTime() < Date.now()
-                ? "bg-destructive/5 border-destructive/20 text-destructive"
-                : "bg-secondary/30 border-border text-muted-foreground"
+              ? "bg-destructive/5 border-destructive/20 text-destructive"
+              : "bg-secondary/30 border-border text-muted-foreground"
               }`}>
               <Clock className="h-3.5 w-3.5 shrink-0" />
               <span>Plazo de envío: <strong>{new Date(a.dealer_ship_deadline).toLocaleString("es-MX")}</strong></span>
@@ -276,7 +276,7 @@ export default function DealerShipmentsTab({
           {showForm && (
             <div className="bg-card border-2 border-dashed border-primary/30 rounded-sm p-4 space-y-3">
               <p className="text-sm font-heading font-bold text-foreground flex items-center gap-1.5">
-                <Truck className="h-4 w-4 text-primary" /> Confirmar Envío
+                <Truck className="h-4 w-4 text-primary dark:text-[#A6E300]" /> Confirmar Envío
               </p>
 
               <div className="space-y-1">
@@ -329,7 +329,7 @@ export default function DealerShipmentsTab({
           {a.tracking_number && editingTracking !== auction.id && (
             <div className="bg-primary/5 border border-primary/20 rounded-sm p-3 space-y-1.5">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                <p className="text-xs font-bold text-primary dark:text-[#A6E300] flex items-center gap-1.5">
                   <CheckCircle className="h-3.5 w-3.5" /> Envío Registrado
                 </p>
                 <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground" onClick={() => handleEditTracking(auction.id, a)}>
@@ -339,7 +339,7 @@ export default function DealerShipmentsTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                 <div><span className="text-muted-foreground">Guía:</span> <strong className="font-mono">{a.tracking_number}</strong></div>
                 {a.tracking_photo_url && (
-                  <a href={a.tracking_photo_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                  <a href={a.tracking_photo_url} target="_blank" rel="noopener noreferrer" className="text-primary dark:text-[#A6E300] hover:underline flex items-center gap-1">
                     <ImageIcon className="h-3 w-3" /> Ver comprobante
                   </a>
                 )}
@@ -370,7 +370,7 @@ export default function DealerShipmentsTab({
                     <img src={URL.createObjectURL(editTrackingData[auction.id].file!)} alt="Preview" className="h-20 rounded-sm border border-border object-cover mt-1" />
                   )}
                   {!editTrackingData[auction.id]?.file && a.tracking_photo_url && (
-                    <a href={a.tracking_photo_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-1 mt-1">
+                    <a href={a.tracking_photo_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary dark:text-[#A6E300] hover:underline flex items-center gap-1 mt-1">
                       <ImageIcon className="h-3 w-3" /> Foto actual
                     </a>
                   )}
@@ -392,15 +392,15 @@ export default function DealerShipmentsTab({
   return (
     <div className="space-y-6 animate-fade-in">
       <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-        <Truck className="h-5 w-5 text-primary" /> Gestión de Envíos
+        <Truck className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Gestión de Envíos
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Pendientes de Envío", count: pendingShip.length, color: "text-warning", icon: Package },
           { label: "Esperando Pago", count: awaitingPayment.length, color: "text-warning", icon: Clock },
-          { label: "En Camino", count: shipped.length, color: "text-primary", icon: Truck },
-          { label: "Entregados", count: delivered.length, color: "text-primary", icon: CheckCircle },
+          { label: "En Camino", count: shipped.length, color: "text-primary dark:text-[#A6E300]", icon: Truck },
+          { label: "Entregados", count: delivered.length, color: "text-primary dark:text-[#A6E300]", icon: CheckCircle },
         ].map((s, i) => (
           <Card key={i} className="border border-border rounded-sm">
             <CardContent className="p-3 text-center">
@@ -416,7 +416,7 @@ export default function DealerShipmentsTab({
       <Card className="border border-primary/20 bg-primary/5 rounded-sm">
         <CardContent className="p-4 space-y-3">
           <h3 className="text-sm font-heading font-bold flex items-center gap-2">
-            <Package className="h-4 w-4 text-primary" /> 📦 Guía de Embalaje Seguro
+            <Package className="h-4 w-4 text-primary dark:text-[#A6E300]" /> 📦 Guía de Embalaje Seguro
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
             <div className="bg-card border border-border rounded-sm p-3 space-y-1.5">
@@ -464,7 +464,7 @@ export default function DealerShipmentsTab({
       {shipped.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-heading font-bold flex items-center gap-1.5">
-            <Truck className="h-4 w-4 text-primary" /> En Camino ({shipped.length})
+            <Truck className="h-4 w-4 text-primary dark:text-[#A6E300]" /> En Camino ({shipped.length})
           </h3>
           {shipped.map(a => renderShipmentCard(a, false))}
         </div>
@@ -473,7 +473,7 @@ export default function DealerShipmentsTab({
       {delivered.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-heading font-bold flex items-center gap-1.5">
-            <CheckCircle className="h-4 w-4 text-primary" /> Entregados ({delivered.length})
+            <CheckCircle className="h-4 w-4 text-primary dark:text-[#A6E300]" /> Entregados ({delivered.length})
           </h3>
           {delivered.map(a => renderShipmentCard(a, false))}
         </div>

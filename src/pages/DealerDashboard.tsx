@@ -215,7 +215,7 @@ const DealerDashboard = () => {
   if (authLoading || (!isDealer && !isAdmin)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary dark:text-[#A6E300]" />
       </div>
     );
   }
@@ -265,9 +265,9 @@ const DealerDashboard = () => {
         )}
         {dealer?.accountStatus === "under_review" && (
           <div className="mb-4 bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-center gap-3">
-            <ShieldAlert className="h-5 w-5 text-primary shrink-0" />
+            <ShieldAlert className="h-5 w-5 text-primary dark:text-[#A6E300] shrink-0" />
             <div>
-              <p className="text-sm font-bold text-primary">Cuenta en Revisión</p>
+              <p className="text-sm font-bold text-primary dark:text-[#A6E300]">Cuenta en Revisión</p>
               <p className="text-xs text-muted-foreground">Revisión de seguridad activa (24–72 h).</p>
             </div>
           </div>
@@ -328,7 +328,7 @@ const DealerDashboard = () => {
                       {dealerStats.totalReviews > 0 ? `${dealerStats.positivePercentage}% positivo` : "Sin reseñas"}
                     </span>
                     <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
-                      <BarChart3 className="h-3 w-3 text-primary" />
+                      <BarChart3 className="h-3 w-3 text-primary dark:text-[#A6E300]" />
                       {dealerStats.totalReviews} reseña{dealerStats.totalReviews !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -410,10 +410,10 @@ const DealerDashboard = () => {
                       }
                     }}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${isRestricted
-                        ? "opacity-50 cursor-not-allowed bg-secondary/30 text-muted-foreground"
-                        : activeTab === tab.key
-                          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "opacity-50 cursor-not-allowed bg-secondary/30 text-muted-foreground"
+                      : activeTab === tab.key
+                        ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
                       }`}
                   >
                     <tab.icon className="h-3.5 w-3.5" />

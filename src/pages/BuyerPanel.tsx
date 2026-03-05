@@ -35,10 +35,10 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tables, Database } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  open: { label: "Abierta", color: "bg-amber-500/10 text-amber-600 border-amber-200", icon: AlertTriangle },
-  mediation: { label: "En Mediación", color: "bg-primary/10 text-primary border-primary/20", icon: Scale },
-  resolved: { label: "Resuelta", color: "bg-primary/10 text-primary border-primary/20", icon: CheckCircle },
-  refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive border-destructive/20", icon: Shield },
+  open: { label: "Abierta", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30", icon: AlertTriangle },
+  mediation: { label: "En Mediación", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: Scale },
+  resolved: { label: "Resuelta", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: CheckCircle },
+  refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive dark:text-white border-destructive/20 dark:border-white/20", icon: Shield },
 };
 
 type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses";
@@ -212,7 +212,7 @@ const BuyerPanel = () => {
           <ArrowLeft className="h-3 w-3" /> Volver a mi panel
         </button>
         <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
-          <User className="h-5 w-5 text-primary" />
+          <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
           Mi Perfil
         </h1>
         <Card className="border border-border rounded-sm">
@@ -282,7 +282,7 @@ const BuyerPanel = () => {
         </button>
 
         <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
-          <Lock className="h-5 w-5 text-primary" />
+          <Lock className="h-5 w-5 text-primary dark:text-[#A6E300]" />
           Seguridad de la Cuenta
         </h1>
 
@@ -293,7 +293,7 @@ const BuyerPanel = () => {
             <Card className="border border-border rounded-sm shadow-sm overflow-hidden">
               <CardHeader className="pb-0 pt-5 px-5 flex flex-row items-center justify-between border-b border-border bg-secondary/20">
                 <CardTitle className="text-base font-heading font-bold flex items-center gap-2 mb-4">
-                  <Package className="h-4 w-4 text-primary" />
+                  <Package className="h-4 w-4 text-primary dark:text-[#A6E300]" />
                   Mis Compras
                 </CardTitle>
                 <div className="flex bg-background rounded-md p-1 border border-border/50 mb-4 h-9">
@@ -319,7 +319,7 @@ const BuyerPanel = () => {
                       <span>Total ganadas: <strong className="text-foreground">{winsCount}</strong></span>
                     </div>
                     {loadingAuctions ? (
-                      <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                      <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" /></div>
                     ) : wonAuctions.length === 0 ? (
                       <div className="text-center p-8 bg-muted/10">
                         <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -342,10 +342,10 @@ const BuyerPanel = () => {
                                       "Pago pendiente";
 
                           const statusColor =
-                            auction.delivery_status === "delivered" || auction.delivered_at ? "text-emerald-600" :
-                              auction.delivery_status === "shipped" || auction.tracking_number ? "text-primary" :
-                                auction.payment_status === "verified" ? "text-primary" :
-                                  "text-amber-600";
+                            auction.delivery_status === "delivered" || auction.delivered_at ? "text-emerald-600 dark:text-[#A6E300]" :
+                              auction.delivery_status === "shipped" || auction.tracking_number ? "text-primary dark:text-[#A6E300]" :
+                                auction.payment_status === "verified" ? "text-primary dark:text-[#A6E300]" :
+                                  "text-amber-600 dark:text-amber-400";
 
                           const statusDesc =
                             auction.delivery_status === "delivered" || auction.delivered_at ? "Asumimos que ya recibiste la compra" :
@@ -385,7 +385,7 @@ const BuyerPanel = () => {
 
                 {purchasesTab === "tienda" && (
                   loadingOrders ? (
-                    <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" /></div>
                   ) : storeOrders.length === 0 ? (
                     <div className="text-center p-8 bg-muted/10">
                       <Store className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -418,15 +418,15 @@ const BuyerPanel = () => {
                                 <p className="font-bold text-sm text-foreground">${order.total_price_usd.toLocaleString("es-MX", { minimumFractionDigits: 2 })} USD</p>
                                 <div className="flex items-center gap-2">
                                   {order.payment_status === 'pending' || order.payment_status === 'under_review' ? (
-                                    <Badge variant="outline" className="text-[10px] h-5 bg-warning/10 text-warning border-warning/20">Pago Revisión</Badge>
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-warning/10 text-warning dark:text-amber-400 border-warning/20">Pago Revisión</Badge>
                                   ) : order.shipping_status === 'shipped' ? (
-                                    <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/20">Enviado</Badge>
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20">Enviado</Badge>
                                   ) : order.shipping_status === 'delivered' ? (
-                                    <Badge variant="outline" className="text-[10px] h-5 bg-success/10 text-success border-success/20">Entregado</Badge>
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-success/10 text-success dark:text-[#A6E300] border-success/20">Entregado</Badge>
                                   ) : (
-                                    <Badge variant="outline" className="text-[10px] h-5 bg-secondary text-foreground">Por Enviar</Badge>
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-secondary text-foreground dark:text-white">Por Enviar</Badge>
                                   )}
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 dark:text-slate-500 shrink-0" />
                                 </div>
                               </div>
                             </div>
@@ -506,7 +506,7 @@ const BuyerPanel = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary dark:text-[#A6E300]" /></div>
       </div>
     );
   }
@@ -613,7 +613,7 @@ const BuyerPanel = () => {
     const orderStatuses: Record<string, { label: string; color: string }> = {
       pending: { label: "Pago pendiente", color: "bg-amber-500/10 text-amber-600 border-amber-400/30 dark:text-amber-400" },
       under_review: { label: "En revisión", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400" },
-      verified: { label: "Pago verificado", color: "bg-primary/10 text-primary border-primary/30" },
+      verified: { label: "Pago verificado", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]" },
       shipped: { label: "Enviado 🚚", color: "bg-purple-500/10 text-purple-600 border-purple-400/30 dark:text-purple-400" },
       delivered: { label: "Entregado ✓", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]" },
     };
@@ -628,7 +628,7 @@ const BuyerPanel = () => {
 
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
+              <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               Mis Compras
             </h1>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -661,7 +661,7 @@ const BuyerPanel = () => {
           {/* === SUBASTAS TAB === */}
           {purchasesTab === "subastas" && (
             loadingAuctions ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary dark:text-[#A6E300]" /></div>
             ) : wonAuctions.length === 0 ? (
               <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -741,7 +741,7 @@ const BuyerPanel = () => {
           {/* === TIENDA TAB === */}
           {purchasesTab === "tienda" && (
             loadingOrders ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary dark:text-[#A6E300]" /></div>
             ) : storeOrders.length === 0 ? (
               <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
@@ -1108,7 +1108,7 @@ const BuyerPanel = () => {
 
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-400" />
+              <Heart className="h-5 w-5 text-red-500 dark:text-[#A6E300]" />
               Mis Favoritos
             </h1>
             <span className="text-xs text-muted-foreground">{favoriteAuctions.length} subasta{favoriteAuctions.length !== 1 ? "s" : ""}</span>
@@ -1116,8 +1116,8 @@ const BuyerPanel = () => {
 
           {favoriteIds.size === 0 || favoriteAuctions.length === 0 ? (
             <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-                <Heart className="h-8 w-8 text-red-400/50" />
+              <div className="w-16 h-16 rounded-full bg-red-500/10 dark:bg-[#A6E300]/10 flex items-center justify-center">
+                <Heart className="h-8 w-8 text-red-500/50 dark:text-[#A6E300]/50" />
               </div>
               <div>
                 <p className="font-heading font-bold text-lg mb-1">Aún no tienes subastas favoritas</p>
@@ -1399,16 +1399,16 @@ const BuyerPanel = () => {
 
           {/* Mis Favoritos */}
           <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-red-400/40 transition-colors group"
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
             onClick={() => setView("favoritos")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 transition-colors">
-                <Heart className="h-5 w-5 text-red-400" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Heart className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mis Favoritos</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                   {favoriteAuctions.length > 0 ? `${favoriteAuctions.length} subasta${favoriteAuctions.length !== 1 ? "s" : ""} guardada${favoriteAuctions.length !== 1 ? "s" : ""}` : "Guarda tus subastas favoritas"}
                 </p>
               </div>

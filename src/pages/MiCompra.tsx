@@ -52,7 +52,6 @@ const MiCompra = () => {
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
     const [review, setReview] = useState<ReviewData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [shippingDone, setShippingDone] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [confirmingDelivery, setConfirmingDelivery] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
@@ -86,7 +85,6 @@ const MiCompra = () => {
         setAuction(auc);
         setImages(imgs?.map(i => i.image_url) || (auc.image_url ? [auc.image_url] : []));
         setShippingInfo(ship as ShippingInfo | null);
-        setShippingDone(!!ship);
         setReview(rev as ReviewData | null);
         setLoading(false);
     };
@@ -396,28 +394,26 @@ const MiCompra = () => {
                         <ShippingForm
                             auctionId={auction.id}
                             userId={user!.id}
-                            onComplete={() => { setShippingDone(true); setRefreshKey(k => k + 1); }}
+                            onComplete={() => setRefreshKey(k => k + 1)}
                         />
                     </div>
                 )}
 
                 {/* === STEP 2: PAYMENT === */}
-                {(shippingDone || shippingInfo || auction.payment_status !== "pending") && (
-                    <div className="mb-5">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center shrink-0">2</span>
-                            <h2 className="font-heading font-bold text-base text-foreground">Comprobante de Pago</h2>
-                            {isVerified && (
-                                <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary dark:text-[#A6E300] border-primary/20 dark:border-[#A6E300]/30 ml-auto">Verificado ✓</Badge>
-                            )}
-                        </div>
-                        <PaymentFlow
-                            auctionId={auction.id}
-                            amountUsd={auction.current_price}
-                            userId={user!.id}
-                        />
+                <div className="mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center shrink-0">2</span>
+                        <h2 className="font-heading font-bold text-base text-foreground">Comprobante de Pago</h2>
+                        {isVerified && (
+                            <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary dark:text-[#A6E300] border-primary/20 dark:border-[#A6E300]/30 ml-auto">Verificado ✓</Badge>
+                        )}
                     </div>
-                )}
+                    <PaymentFlow
+                        auctionId={auction.id}
+                        amountUsd={auction.current_price}
+                        userId={user!.id}
+                    />
+                </div>
 
                 {/* === OPEN DISPUTE === */}
                 {isVerified && !isDelivered && (

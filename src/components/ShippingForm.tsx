@@ -12,7 +12,7 @@ interface ShippingFormProps {
   onComplete: () => void;
 }
 
-const SHIPPING_COMPANIES = ["Tealca", "Zoom", "MRW", "Domesa", "Liberty Express", "Otra"];
+const SHIPPING_COMPANIES = ["Tealca", "Zoom", "MRW", "Domesa", "Liberty Express", "Entrega Personalizada", "Otra"];
 
 const STATES = [
   "Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo",
@@ -36,6 +36,7 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
   const [existing, setExisting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [prefilledFromProfile, setPrefilledFromProfile] = useState(false);
+  const [customDeliveryMode, setCustomDeliveryMode] = useState<"none" | "delivery" | "pickup">("none");
 
   // Pre-fill from profile
   useEffect(() => {
@@ -65,8 +66,19 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
   }, [auctionId, userId, onComplete]);
 
   const handleSubmit = async () => {
-    if (!fullName.trim() || !cedula.trim() || !phone.trim() || !company || !state || !city.trim() || !officeName.trim()) {
-      toast({ title: "Completa todos los campos", variant: "destructive" });
+    const missing = [];
+    if (!fullName.trim()) missing.push("Nombre");
+    if (!cedula.trim()) missing.push("Cédula");
+    if (!phone.trim()) missing.push("Teléfono");
+    if (!company) missing.push("Agencia o Tipo de Entrega");
+    if (company === "Entrega Personalizada" && customDeliveryMode === "none") missing.push("Modalidad (Delivery o Personal)");
+    if (!state) missing.push("Estado/Provincia");
+    if (!city.trim()) missing.push("Ciudad");
+
+    if (company !== "Entrega Personalizada" && !officeName.trim()) missing.push("Oficina");
+
+    if (missing.length > 0) {
+      toast({ title: "Información Incompleta", description: `Faltan campos: ${missing.join(", ")}`, variant: "destructive" });
       return;
     }
     if (!disclaimer) {
@@ -76,16 +88,24 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
 
     setSubmitting(true);
     try {
+      const finalCompany = company === "Entrega Personalizada"
+        ? `Entrega Personalizada (${customDeliveryMode === 'delivery' ? 'Delivery' : 'Personal'})`
+        : company;
+
+      const finalOfficeName = company === "Entrega Personalizada"
+        ? "Pendiente (Acordado por chat)"
+        : officeName.trim();
+
       const { error } = await supabase.from("shipping_info").insert({
         auction_id: auctionId,
         buyer_id: userId,
         full_name: fullName.trim(),
         cedula: cedula.trim(),
         phone: phone.trim(),
-        shipping_company: company,
+        shipping_company: finalCompany,
         state,
         city: city.trim(),
-        office_name: officeName.trim(),
+        office_name: finalOfficeName,
         disclaimer_accepted: true,
       });
       if (error) throw error;
@@ -170,10 +190,15 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
 
         {/* Shipping company */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Agencia de Envíos</label>
+          <label className="text-xs font-medium text-muted-foreground dark:text-slate-300">Método de Envío o Entrega</label>
           <select
             value={company}
-            onChange={(e) => setCompany(e.target.value)}
+            onChange={(e) => {
+              setCompany(e.target.value);
+              if (e.target.value !== "Entrega Personalizada") {
+                setCustomDeliveryMode("none");
+              }
+            }}
             className="flex h-10 w-full rounded-sm border border-input bg-background dark:bg-zinc-900 dark:text-white px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="" className="dark:bg-zinc-900">Seleccionar agencia...</option>
@@ -181,12 +206,33 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
               <option key={c} value={c} className="dark:bg-zinc-900">{c}</option>
             ))}
           </select>
+
+          {company === "Entrega Personalizada" && (
+            <div className="flex gap-2 pt-2 animate-fade-in">
+              <Button
+                type="button"
+                variant={customDeliveryMode === "delivery" ? "default" : "outline"}
+                onClick={() => setCustomDeliveryMode("delivery")}
+                className={`flex-1 rounded-sm text-xs h-9 ${customDeliveryMode === 'delivery' ? 'bg-primary text-primary-foreground' : ''}`}
+              >
+                Delivery
+              </Button>
+              <Button
+                type="button"
+                variant={customDeliveryMode === "pickup" ? "default" : "outline"}
+                onClick={() => setCustomDeliveryMode("pickup")}
+                className={`flex-1 rounded-sm text-xs h-9 ${customDeliveryMode === 'pickup' ? 'bg-primary text-primary-foreground' : ''}`}
+              >
+                Entrega Personal
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Address */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground dark:text-slate-300 flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> Dirección de la Agencia
+            <MapPin className="h-3 w-3" /> Ubicación
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <select
@@ -206,12 +252,18 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
               className="rounded-sm"
             />
           </div>
-          <Input
-            placeholder="Nombre de la oficina/sucursal"
-            value={officeName}
-            onChange={(e) => setOfficeName(e.target.value)}
-            className="rounded-sm mt-2"
-          />
+          {company === "Entrega Personalizada" && customDeliveryMode !== "none" ? (
+            <div className="mt-2 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-sm border border-amber-500/20 leading-relaxed font-medium">
+              Aviso: El punto de encuentro o los datos de {customDeliveryMode === 'delivery' ? 'delivery' : 'entrega'} exactos se acordarán por chat privado una vez que el pago sea verificado. Tu dinero quedará en resguardo hasta que confirmes la recepción del producto.
+            </div>
+          ) : company !== "Entrega Personalizada" ? (
+            <Input
+              placeholder="Nombre de la oficina/sucursal de agencia"
+              value={officeName}
+              onChange={(e) => setOfficeName(e.target.value)}
+              className="rounded-sm mt-2"
+            />
+          ) : null}
         </div>
 
         {/* Disclaimer */}

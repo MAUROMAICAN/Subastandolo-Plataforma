@@ -22,8 +22,8 @@ const notifTypeConfig: Record<string, { color: string; label: string; emoji: str
     auction_finalized: { color: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-200", label: "Finalizada", emoji: "🔔" },
 
     // Admin/System
-    admin_custom: { color: "bg-primary/10 text-primary border-primary/20", label: "Admin", emoji: "📢" },
-    admin_notification: { color: "bg-primary/10 text-primary border-primary/20", label: "Admin", emoji: "📢" },
+    admin_custom: { color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", label: "Admin", emoji: "📢" },
+    admin_notification: { color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", label: "Admin", emoji: "📢" },
     promo: { color: "bg-accent/10 text-accent-foreground border-accent/20", label: "Promoción", emoji: "🎉" },
     announcement: { color: "bg-accent/10 text-accent-foreground border-accent/20", label: "Anuncio", emoji: "📣" },
     urgent: { color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200", label: "Urgente", emoji: "🚨" },
@@ -63,7 +63,7 @@ const NotificationsPage = () => {
                     </Button>
                     <div className="flex-1">
                         <h1 className="text-lg font-heading font-bold flex items-center gap-2">
-                            <Bell className="h-5 w-5 text-primary" />
+                            <Bell className="h-5 w-5 text-primary dark:text-[#A6E300]" />
                             Centro de Notificaciones
                         </h1>
                         <p className="text-xs text-muted-foreground">
@@ -149,7 +149,7 @@ const NotificationsPage = () => {
                                                 {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: es })}
                                             </span>
                                             {notif.link && notif.link !== "/" && (
-                                                <span className="text-[10px] text-primary flex items-center gap-0.5">
+                                                <span className="text-[10px] text-primary dark:text-[#A6E300] flex items-center gap-0.5">
                                                     <ExternalLink className="h-3 w-3" /> Ver detalles
                                                 </span>
                                             )}
@@ -164,7 +164,7 @@ const NotificationsPage = () => {
                                                 className="w-7 h-7 rounded-lg bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"
                                                 title="Marcar como leída"
                                             >
-                                                <MailOpen className="h-3.5 w-3.5 text-primary" />
+                                                <MailOpen className="h-3.5 w-3.5 text-primary dark:text-[#A6E300]" />
                                             </button>
                                         )}
                                         <button
@@ -172,7 +172,7 @@ const NotificationsPage = () => {
                                             className="w-7 h-7 rounded-lg bg-destructive/10 hover:bg-destructive/20 flex items-center justify-center transition-colors"
                                             title="Eliminar"
                                         >
-                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                            <Trash2 className="h-3.5 w-3.5 text-destructive dark:text-red-400" />
                                         </button>
                                     </div>
                                 </div>

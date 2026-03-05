@@ -651,7 +651,7 @@ const AuctionDetail = () => {
                           <Clock className="h-3.5 w-3.5" /> Próximamente
                         </span>
                       ) : isEnded ? (
-                        <span className="text-destructive font-semibold">Finalizada</span>
+                        <span className="text-destructive dark:text-white font-semibold">Finalizada</span>
                       ) : (
                         <span className="text-foreground flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> En vivo
@@ -777,7 +777,7 @@ const AuctionDetail = () => {
                 ) : (
                   <Button
                     variant="outline"
-                    className="w-full border-destructive/30 text-destructive hover:bg-destructive/5 rounded-xl"
+                    className="w-full border-destructive/30 text-destructive dark:text-white dark:border-white/30 hover:bg-destructive/5 dark:hover:bg-white/10 rounded-xl"
                     onClick={() => setShowDisputeForm(true)}
                   >
                     <AlertTriangle className="h-4 w-4 mr-2" />
@@ -835,7 +835,7 @@ const AuctionDetail = () => {
               return (
                 <div className={`border rounded-xl p-4 space-y-2 ${isLeading ? "bg-accent/10 border-accent/30" : "bg-muted/50 border-border"}`}>
                   <h4 className="text-xs font-heading font-bold flex items-center gap-1.5">
-                    <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                    <TrendingUp className="h-3.5 w-3.5 text-primary dark:text-[#A6E300]" />
                     Mis pujas en esta subasta
                   </h4>
                   <div className="flex items-center gap-6 text-sm">
@@ -845,7 +845,7 @@ const AuctionDetail = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground text-[10px] block">Mi puja más alta</span>
-                      <p className="font-bold text-primary font-mono text-base">${highestBid.toLocaleString("es-MX")}</p>
+                      <p className="font-bold text-primary dark:text-[#A6E300] font-mono text-base">${highestBid.toLocaleString("es-MX")}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground text-[10px] block">Estado</span>
@@ -897,7 +897,7 @@ const AuctionDetail = () => {
                               <BuyerBadge size="sm" winsCount={bidderWins[bid.user_id] || 0} isAdmin={!!bidderIsAdmin[bid.user_id]} manualTier={bidderManualTier[bid.user_id]} />
                             </span>
                           </td>
-                          <td className="px-2 sm:px-4 py-2.5 text-right font-bold text-primary font-mono whitespace-nowrap">${bid.amount.toLocaleString("es-MX")}</td>
+                          <td className="px-2 sm:px-4 py-2.5 text-right font-bold text-primary dark:text-[#A6E300] font-mono whitespace-nowrap">${bid.amount.toLocaleString("es-MX")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -914,7 +914,7 @@ const AuctionDetail = () => {
                   className="w-full bg-muted/30 dark:bg-white/5 px-4 py-3 border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
                 >
                   <h3 className="font-heading font-bold text-sm text-foreground flex items-center gap-1.5">
-                    <Star className="h-4 w-4 text-warning" />
+                    <Star className="h-4 w-4 text-warning dark:text-yellow-400" />
                     {canReviewDealer ? "Calificar al Vendedor" : "Calificar al Comprador"}
                   </h3>
                   <span className="text-xs text-muted-foreground dark:text-slate-400">{showReviewForm ? "▲" : "▼"}</span>
@@ -937,7 +937,7 @@ const AuctionDetail = () => {
               <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                 <div className="bg-muted/30 dark:bg-white/5 px-4 py-3 border-b border-border">
                   <h3 className="font-heading font-bold text-sm text-foreground flex items-center gap-1.5">
-                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <MessageSquare className="h-4 w-4 text-primary dark:text-[#A6E300]" />
                     Calificaciones ({auctionReviews.length})
                   </h3>
                 </div>

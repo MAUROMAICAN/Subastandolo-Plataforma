@@ -224,7 +224,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
         }
     };
 
-    if (loading) return <div className="flex justify-center p-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    if (loading) return <div className="flex justify-center p-10"><Loader2 className="h-8 w-8 animate-spin text-primary dark:text-[#A6E300]" /></div>;
 
     return (
         <div className="max-w-3xl mx-auto animate-fade-in">
@@ -241,7 +241,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                 <CardContent className="p-6">
                     <div className="mb-6">
                         <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-                            Editar Producto <Badge className="bg-primary/20 text-primary hover:bg-primary/20">{title}</Badge>
+                            Editar Producto <Badge className="bg-primary/20 text-primary dark:text-[#A6E300] hover:bg-primary/20">{title}</Badge>
                         </h2>
                     </div>
 
@@ -272,7 +272,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                                 ))}
                                 {/* Add Button */}
                                 {(existingImages.length + images.length) < 5 && (
-                                    <label className="aspect-square border-2 border-dashed border-border hover:border-primary rounded-sm flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary">
+                                    <label className="aspect-square border-2 border-dashed border-border hover:border-primary dark:hover:border-[#A6E300] rounded-sm flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary dark:hover:text-[#A6E300]">
                                         <ImagePlus className="h-6 w-6 mb-1" />
                                         <span className="text-[10px] font-medium text-center px-2">Añadir foto<br />(Max 5)</span>
                                         <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" multiple onChange={handleImageUpload} />
@@ -322,7 +322,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                         <div className="space-y-3 pt-4 border-t border-border">
                             <div className="flex items-center justify-between">
                                 <Label className="font-bold">Variantes Guardadas</Label>
-                                <Button type="button" variant="outline" size="sm" onClick={addAttribute} className="h-8 rounded-sm text-xs border-primary text-primary hover:bg-primary/10">
+                                <Button type="button" variant="outline" size="sm" onClick={addAttribute} className="h-8 rounded-sm text-xs border-primary text-primary dark:border-[#A6E300] dark:text-[#A6E300] hover:bg-primary/10">
                                     <PlusCircle className="h-3 w-3 mr-1" /> Añadir Nueva Variante
                                 </Button>
                             </div>

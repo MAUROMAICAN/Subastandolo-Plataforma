@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { Trophy, PartyPopper, Clock, Gift, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import AuctionProgressTracker from "@/components/AuctionProgressTracker";
 import ShippingForm from "@/components/ShippingForm";
 import PaymentFlow from "@/components/PaymentFlow";
@@ -98,7 +97,7 @@ const WinnerCelebration = ({ auction, userId, productImages }: WinnerCelebration
               </p>
 
               <div className="inline-flex items-baseline gap-1 bg-primary/10 border border-primary/20 rounded-sm px-4 py-2">
-                <span className="text-3xl sm:text-4xl font-heading font-black text-primary">
+                <span className="text-3xl sm:text-4xl font-heading font-black text-primary dark:text-[#A6E300]">
                   ${auction.current_price.toLocaleString("es-MX")}
                 </span>
                 <span className="text-sm text-muted-foreground font-medium">USD</span>
@@ -143,7 +142,7 @@ const WinnerCelebration = ({ auction, userId, productImages }: WinnerCelebration
       {/* Collapsible details toggle */}
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary py-2 transition-colors"
+        className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary dark:hover:text-[#A6E300] py-2 transition-colors"
       >
         <span>{showDetails ? "Ocultar formularios" : "Mostrar formularios de envío y pago"}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showDetails ? "rotate-180" : ""}`} />

@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import type { Tables } from "@/integrations/supabase/types";
 import {
   Loader2, Upload, CheckCircle, Copy, Clock, Building2, CreditCard,
   FileText, DollarSign, ShieldCheck, AlertTriangle, Lock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+
+type PaymentProof = Tables<"payment_proofs">;
 
 interface PaymentFlowProps {
   auctionId: string;
@@ -117,24 +120,27 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   };
 
   const handleSubmit = async () => {
-    if (!proofFile || !reference.trim() || !bcvRate) {
-      toast({ title: "Completa todos los campos", variant: "destructive" });
+    if (!proofFile) {
+      toast({ title: "Falta el comprobante", variant: "destructive" });
       return;
     }
     setSubmitting(true);
     try {
+      const currentRate = bcvRate || 0;
+      const amountBs = currentRate ? amountUsd * currentRate : 0;
+
       const ext = proofFile.name.split(".").pop();
       const filePath = `${userId}/${auctionId}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(filePath, proofFile);
       if (uploadError) throw uploadError;
-      const amountBs = amountUsd * bcvRate;
+
       const { error: insertError } = await supabase.from("payment_proofs").insert({
         auction_id: auctionId,
         buyer_id: userId,
         amount_usd: amountUsd,
         amount_bs: amountBs,
-        bcv_rate: bcvRate,
-        reference_number: reference.trim(),
+        bcv_rate: currentRate,
+        reference_number: reference,
         proof_url: filePath,
       });
       if (insertError) throw insertError;
@@ -344,7 +350,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground dark:text-white">Número de Referencia *</label>
+            <label className="text-xs font-semibold text-foreground dark:text-white">Número de Referencia (Opcional)</label>
             <Input
               placeholder="Ej: 00123456789"
               value={reference}
@@ -355,31 +361,24 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground dark:text-white">Imagen / Captura del Comprobante *</label>
-            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors group">
+            <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5 overflow-hidden">
               <input
                 type="file"
-                accept="image/*,.pdf"
-                className="hidden"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                accept="image/*,application/pdf"
+                className="block w-full text-sm text-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setProofFile(e.target.files[0]);
+                  }
+                }}
               />
-              {proofFile ? (
-                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                  <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                  <span className="truncate max-w-[200px]">{proofFile.name}</span>
-                </div>
-              ) : (
-                <>
-                  <Upload className="h-6 w-6 text-muted-foreground/40 dark:text-slate-500 group-hover:text-primary/60 transition-colors" />
-                  <span className="text-sm text-muted-foreground dark:text-slate-400">Toca para seleccionar imagen o PDF</span>
-                </>
-              )}
-            </label>
+            </div>
           </div>
 
           <Button
             onClick={handleSubmit}
-            disabled={submitting || !reference.trim() || !proofFile || !bcvRate}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black rounded-xl h-11 text-sm"
+            disabled={submitting || !proofFile}
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black rounded-xl h-11 text-sm shadow-md"
           >
             {submitting
               ? <Loader2 className="h-4 w-4 animate-spin mr-2" />

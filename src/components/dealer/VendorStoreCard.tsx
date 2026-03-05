@@ -76,7 +76,7 @@ export default function VendorStoreCard({ dealerId, dealerName }: VendorStoreCar
                                 <p className="font-heading font-bold text-lg leading-none truncate">{dealerName}</p>
                                 {isVerified && <VerifiedBadge size="sm" salesCount={salesCount} />}
                             </div>
-                            <Button variant="secondary" size="sm" className="h-8 px-4 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+                            <Button variant="secondary" size="sm" className="h-8 px-4 text-xs font-bold text-primary dark:text-[#A6E300] bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
                                 Seguir
                             </Button>
                         </div>
@@ -131,7 +131,7 @@ export default function VendorStoreCard({ dealerId, dealerName }: VendorStoreCar
             {/* Action Link */}
             <Link
                 to={`/dealer/${dealerId}`}
-                className="block w-full text-center py-2.5 bg-secondary/30 hover:bg-secondary/60 text-primary font-bold text-sm rounded-lg transition-colors"
+                className="block w-full text-center py-2.5 bg-secondary/30 hover:bg-secondary/60 text-primary dark:text-[#A6E300] font-bold text-sm rounded-lg transition-colors"
             >
                 Ir a la página del vendedor
             </Link>

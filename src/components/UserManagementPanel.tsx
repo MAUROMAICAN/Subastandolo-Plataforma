@@ -280,7 +280,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
       {/* Header */}
       <div>
         <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
+          <Users className="h-5 w-5 text-primary dark:text-[#A6E300]" />
           Gestión de Usuarios
         </h1>
         <p className="text-xs text-muted-foreground dark:text-gray-300 mt-0.5">
@@ -299,11 +299,10 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
             <button
               key={opt.key}
               onClick={() => setRoleFilter(opt.key)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
-                roleFilter === opt.key
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${roleFilter === opt.key
                   ? "bg-primary text-primary-foreground"
                   : "bg-card hover:bg-secondary/50 text-muted-foreground"
-              }`}
+                }`}
             >
               <opt.icon className="h-3.5 w-3.5" />
               {opt.label}
@@ -417,7 +416,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
+              <Shield className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               Promover a Administrador
             </DialogTitle>
           </DialogHeader>
@@ -440,7 +439,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-heading font-bold">Permisos</p>
-                  <Button variant="ghost" size="sm" className="text-[10px] h-6 text-primary" onClick={() => setSelectedPermissions(ADMIN_PERMISSIONS.map(p => p.key))}>
+                  <Button variant="ghost" size="sm" className="text-[10px] h-6 text-primary dark:text-[#A6E300]" onClick={() => setSelectedPermissions(ADMIN_PERMISSIONS.map(p => p.key))}>
                     Seleccionar todos
                   </Button>
                 </div>
@@ -453,7 +452,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
                         <Checkbox checked={isSelected} className="pointer-events-none" />
                         <span className="text-base">{perm.emoji}</span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${isSelected ? "text-primary" : ""}`}>{perm.label}</p>
+                          <p className={`text-sm font-medium ${isSelected ? "text-primary dark:text-[#A6E300]" : ""}`}>{perm.label}</p>
                           <p className="text-[11px] text-muted-foreground">{perm.description}</p>
                         </div>
                       </button>
@@ -479,7 +478,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-primary" /> Asignar Nivel
+              <Award className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Asignar Nivel
             </DialogTitle>
           </DialogHeader>
           {tierDialog && (
@@ -515,7 +514,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
       <Dialog open={!!phoneDialog} onOpenChange={open => { if (!open) { setPhoneDialog(null); setNewPhone(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Phone className="h-5 w-5 text-primary" /> Editar Teléfono</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Phone className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Editar Teléfono</DialogTitle>
           </DialogHeader>
           {phoneDialog && (
             <div className="space-y-4">
@@ -549,7 +548,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
       <Dialog open={!!passwordDialog} onOpenChange={open => { if (!open) { setPasswordDialog(null); setNewPassword(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary" /> Restablecer Contraseña</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Restablecer Contraseña</DialogTitle>
           </DialogHeader>
           {passwordDialog && (
             <div className="space-y-4">
@@ -563,7 +562,7 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
                   <Input type="text" placeholder="Escribe o genera una contraseña" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="flex-1" />
                   <Button type="button" variant="outline" size="sm" onClick={() => setNewPassword(generateSecurePassword())}>Generar</Button>
                 </div>
-                {newPassword.length > 0 && newPassword.length < 8 && <p className="text-[11px] text-destructive">Mínimo 8 caracteres</p>}
+                {newPassword.length > 0 && newPassword.length < 8 && <p className="text-[11px] text-destructive dark:text-red-400">Mínimo 8 caracteres</p>}
                 <p className="text-[11px] text-muted-foreground">⚠️ Presiona "Generar" para una contraseña segura. Envíasela al usuario.</p>
               </div>
             </div>

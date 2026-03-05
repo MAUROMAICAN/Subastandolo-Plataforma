@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Copy, CheckCircle, Building2, CreditCard, Clock, Package, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -36,16 +36,16 @@ const WonAuctionCard = ({ auction, userId, onNavigate }: WonAuctionCardProps) =>
         <div className="min-w-0 flex-1">
           <p className="font-heading font-bold text-sm truncate">{a.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Precio final: <span className="font-bold text-primary">${a.current_price.toLocaleString("es-MX")}</span>
+            Precio final: <span className="font-bold text-primary dark:text-[#A6E300]">${a.current_price.toLocaleString("es-MX")}</span>
           </p>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline" className={
-              a.payment_status === "verified" ? "bg-primary/10 text-primary border-primary/20" :
-              a.payment_status === "under_review" ? "bg-amber-500/10 text-amber-600 border-amber-200" :
-              "bg-muted text-muted-foreground border-border"
+              a.payment_status === "verified" ? "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20" :
+                a.payment_status === "under_review" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30" :
+                  "bg-muted text-muted-foreground border-border"
             }>
               {a.payment_status === "verified" ? "Pago Verificado" :
-               a.payment_status === "under_review" ? "Pago en Revisión" : "Pago Pendiente"}
+                a.payment_status === "under_review" ? "Pago en Revisión" : "Pago Pendiente"}
             </Badge>
           </div>
         </div>
