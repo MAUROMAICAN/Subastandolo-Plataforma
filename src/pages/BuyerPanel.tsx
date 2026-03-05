@@ -29,8 +29,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
   ChevronRight, ImageIcon, Store, Star, Heart, Plus, Package,
-  Lock, ShieldCheck, User, MapPin, Users
+  Lock, ShieldCheck, User, MapPin, Users, CreditCard, Camera
 } from "lucide-react";
+import ProfileCompletionBar from "@/components/ProfileCompletionBar";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, Database } from "@/integrations/supabase/types";
 
@@ -180,71 +181,220 @@ const BuyerPanel = () => {
   };
 
   const ProfileView = () => {
-    const [fullName, setFullName] = useState(profile?.full_name || "");
-    const [phone, setPhone] = useState(profile?.phone || "");
-    const [city, setCity] = useState(profile?.city || "");
-    const [state, setState] = useState(profile?.state || "");
+    const [fullName, setFullName] = useState((profile as any)?.full_name || "");
+    const [phone, setPhone] = useState((profile as any)?.phone || "");
+    const [city, setCity] = useState((profile as any)?.city || "");
+    const [profileState, setProfileState] = useState((profile as any)?.state || "");
+    const [cedulaNumber, setCedulaNumber] = useState((profile as any)?.cedula_number || "");
+    const [cedulaPhotoUrl, setCedulaPhotoUrl] = useState<string | null>((profile as any)?.cedula_photo_url || null);
+    const [cedulaFile, setCedulaFile] = useState<File | null>(null);
+    const [cedulaPreview, setCedulaPreview] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
     const [updating, setUpdating] = useState(false);
     const { toast } = useToast();
+
+    // Build a synthetic profile object for the completion bar
+    const liveProfile = {
+      full_name: fullName,
+      avatar_url: (profile as any)?.avatar_url,
+      city,
+      state: profileState,
+      cedula_number: cedulaNumber,
+      cedula_photo_url: cedulaPhotoUrl,
+    };
+
+    const handleCedulaFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setCedulaFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setCedulaPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    };
+
+    const uploadCedulaPhoto = async (): Promise<string | null> => {
+      if (!cedulaFile || !user) return cedulaPhotoUrl;
+      const ext = cedulaFile.name.split(".").pop();
+      const path = `cedula/${user.id}/cedula.${ext}`;
+      const { error } = await supabase.storage
+        .from("profile-docs")
+        .upload(path, cedulaFile, { upsert: true });
+      if (error) { toast({ title: "Error subiendo foto de cédula", description: error.message, variant: "destructive" }); return null; }
+      const { data: urlData } = supabase.storage.from("profile-docs").getPublicUrl(path);
+      return urlData.publicUrl;
+    };
 
     const onSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setUpdating(true);
+      setUploading(true);
+
+      let finalCedulaUrl = cedulaPhotoUrl;
+      if (cedulaFile) {
+        finalCedulaUrl = await uploadCedulaPhoto();
+      }
+
+      setUploading(false);
+
       const { error } = await supabase.from("profiles").update({
         full_name: fullName,
         phone,
         city,
-        state
-      }).eq("id", user!.id);
+        state: profileState,
+        cedula_number: cedulaNumber || null,
+        cedula_photo_url: finalCedulaUrl || null,
+      } as any).eq("id", user!.id);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "¡Actualizado!", description: "Tu perfil ha sido guardado." });
+        setCedulaPhotoUrl(finalCedulaUrl);
+        toast({ title: "✅ ¡Perfil actualizado!", description: "Tus datos han sido guardados." });
         await refreshProfile();
       }
       setUpdating(false);
     };
 
+    const STATES = ["Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", "Vargas", "Yaracuy", "Zulia"];
+
     return (
-      <main className="container mx-auto px-4 py-4 max-w-3xl">
+      <main className="container mx-auto px-4 py-4 max-w-2xl">
         <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
           <ArrowLeft className="h-3 w-3" /> Volver a mi panel
         </button>
-        <h1 className="text-xl font-heading font-bold mb-6 flex items-center gap-2">
+
+        <h1 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
           <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
           Mi Perfil
         </h1>
-        <Card className="border border-border rounded-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-heading font-bold">Datos Personales y Ubicación</CardTitle>
+
+        {/* Completion bar */}
+        <Card className="border border-border rounded-xl mb-5 p-5">
+          <ProfileCompletionBar profile={liveProfile} />
+        </Card>
+
+        {/* Avatar */}
+        <Card className="border border-border rounded-xl mb-5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-heading font-bold flex items-center gap-2">
+              <Camera className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+              Foto de Perfil
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="flex items-center gap-4">
+            <ProfileAvatarUpload
+              avatarUrl={(profile as any)?.avatar_url || null}
+              userName={(profile as any)?.full_name || "Usuario"}
+              onAvatarChange={async () => { await refreshProfile(); }}
+              size="md"
+            />
+            <div className="text-xs text-muted-foreground">
+              <p>Sube una foto clara de tu rostro.</p>
+              <p className="mt-1 text-[10px]">Formatos: JPG, PNG, WebP · Máx 2MB</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Personal data form */}
+        <form onSubmit={onSubmit} className="space-y-4">
+          <Card className="border border-border rounded-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading font-bold flex items-center gap-2">
+                <User className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                Datos Personales
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Nombre completo</label>
-                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                  <label className="text-xs font-medium text-muted-foreground">Nombre completo *</label>
+                  <Input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="Tu nombre completo" className="rounded-lg" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Teléfono</label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412-0000000" className="rounded-lg" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Estado (Departamento / Provincia) *</label>
-                  <Input value={state} onChange={(e) => setState(e.target.value)} required placeholder="Ej. Distrito Capital" />
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Estado *</label>
+                  <select value={profileState} onChange={e => setProfileState(e.target.value)} required className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                    <option value="">Selecciona estado...</option>
+                    {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Ciudad *</label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} required placeholder="Ej. Caracas" />
+                  <Input value={city} onChange={e => setCity(e.target.value)} required placeholder="Tu ciudad" className="rounded-lg" />
                 </div>
               </div>
-              <Button type="submit" disabled={updating} className="w-full sm:w-auto mt-4">
-                {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Guardar Cambios"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Identity / cedula */}
+          <Card className="border border-border rounded-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading font-bold flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                Identidad (Cédula)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Número de Cédula *</label>
+                <Input
+                  value={cedulaNumber}
+                  onChange={e => setCedulaNumber(e.target.value.toUpperCase())}
+                  placeholder="Ej: V-12345678"
+                  className="rounded-lg font-mono"
+                  maxLength={15}
+                />
+                <p className="text-[10px] text-muted-foreground">Formato: V-XXXXXXXX o E-XXXXXXXX</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Foto de tu Cédula *</label>
+                {(cedulaPreview || cedulaPhotoUrl) ? (
+                  <div className="relative w-full max-w-xs">
+                    <img
+                      src={cedulaPreview || cedulaPhotoUrl!}
+                      alt="Cédula"
+                      className="w-full rounded-xl border border-border object-cover max-h-40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setCedulaFile(null); setCedulaPreview(null); }}
+                      className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-xs px-2 py-1 rounded-lg border border-border"
+                    >
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border hover:border-primary dark:hover:border-[#A6E300] rounded-xl p-6 cursor-pointer transition-colors">
+                    <CreditCard className="h-8 w-8 text-muted-foreground/50" />
+                    <span className="text-xs text-muted-foreground text-center">
+                      Toca para subir foto de cédula<br />
+                      <span className="text-[10px]">JPG, PNG · Máx 5MB</span>
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleCedulaFile}
+                    />
+                  </label>
+                )}
+                <p className="text-[10px] text-muted-foreground">
+                  📌 Tu cédula se usa solo para verificar identidad y se almacena de forma segura.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button type="submit" disabled={updating} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm h-11">
+            {updating ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" />{uploading ? "Subiendo foto..." : "Guardando..."}</>
+            ) : "Guardar Perfil"}
+          </Button>
+        </form>
       </main>
     );
   };
@@ -1461,15 +1611,18 @@ const BuyerPanel = () => {
             className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
             onClick={() => setView("profile")}
           >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Mi Perfil</p>
+                  <p className="text-xs text-muted-foreground">Datos personales y verificación</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
               </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mi Perfil</p>
-                <p className="text-xs text-muted-foreground">Datos personales y ubicación</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+              <ProfileCompletionBar profile={profile as any} compact onGoToProfile={() => setView("profile")} />
             </CardContent>
           </Card>
 
