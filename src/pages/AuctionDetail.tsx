@@ -718,29 +718,37 @@ const AuctionDetail = () => {
 
             {/* Winner Banner → redirect to dedicated payment page */}
             {isEnded && user && auction.winner_id === user.id && (
-              <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 border-2 border-primary/30 rounded-xl p-5 space-y-4">
+              <div className="bg-gradient-to-br from-primary/15 via-accent/8 to-primary/15 border-2 border-primary/40 rounded-2xl p-5 space-y-4 shadow-lg">
                 {/* Congrats header */}
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 animate-bounce">
                     <Trophy className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-primary">¡Felicidades!</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-primary dark:text-[#A6E300]">¡Felicidades, eres el ganador!</p>
                     <p className="font-heading font-bold text-base text-foreground leading-tight">
-                      Ganaste esta subasta por <span className="text-primary">${auction.current_price.toLocaleString("es-MX")} USD</span>
+                      Pagás <span className="text-primary dark:text-[#A6E300]">${auction.current_price.toLocaleString("es-MX")} USD</span>
                     </p>
+                    {auction.payment_status && auction.payment_status !== "pending" && (
+                      <p className="text-xs text-primary/70 dark:text-[#A6E300]/70 mt-0.5 font-medium">
+                        Pago: {auction.payment_status === "under_review" ? "En revisión ⏳" :
+                          auction.payment_status === "verified" ? "Verificado ✅" :
+                            auction.payment_status === "shipped" ? "Enviado 🚚" :
+                              auction.payment_status}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {/* CTA */}
-                <Button
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl text-sm shadow-lg"
+                <button
+                  className="w-full h-13 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl text-base shadow-lg hover:shadow-primary/30 transition-all hover:scale-[1.01] flex items-center justify-center gap-2"
                   onClick={() => navigate(`/mi-compra/${auction.id}`)}
                 >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Completar Pago y Datos de Envío
-                </Button>
-                <p className="text-[11px] text-muted-foreground text-center">
-                  Tienes 24-48 horas para reportar tu pago.
+                  <Trophy className="h-5 w-5" />
+                  Completar mi Compra →
+                </button>
+                <p className="text-[11px] text-muted-foreground dark:text-slate-400 text-center">
+                  Tienes 24-48 horas para reportar tu pago. · <span className="text-primary dark:text-[#A6E300] font-semibold">Tus datos se guardaron</span>
                 </p>
               </div>
             )}

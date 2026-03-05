@@ -6,10 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import {
   Loader2, Upload, CheckCircle, Copy, Clock, Building2, CreditCard,
-  FileText, DollarSign, MapPin, ShieldCheck, AlertTriangle, Lock
+  FileText, DollarSign, ShieldCheck, AlertTriangle, Lock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "react-router-dom";
 
 interface PaymentFlowProps {
   auctionId: string;
@@ -201,25 +200,6 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             </Button>
           )}
         </div>
-      </div>
-    );
-  }
-
-  // ── Location gate ──────────────────────────────────────────────────────────
-  const canPay = Boolean(profile?.city && profile?.state);
-  if (!canPay) {
-    return (
-      <div className="bg-card border border-destructive/30 rounded-2xl p-6 text-center space-y-4">
-        <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-          <MapPin className="h-6 w-6 text-destructive" />
-        </div>
-        <h3 className="font-heading font-bold text-lg">Información Incompleta</h3>
-        <p className="text-sm text-muted-foreground">
-          ⚠️ Actualiza tu Ciudad y Estado en tu perfil para proceder con el pago.
-        </p>
-        <Link to="/mi-panel">
-          <Button className="font-bold rounded-xl">Ir a mi Perfil</Button>
-        </Link>
       </div>
     );
   }
