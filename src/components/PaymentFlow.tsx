@@ -20,16 +20,6 @@ interface PaymentFlowProps {
   showCommission?: boolean;
 }
 
-interface PaymentProof {
-  id: string;
-  status: string;
-  reference_number: string;
-  amount_bs: number;
-  bcv_rate: number;
-  created_at: string;
-  proof_url: string;
-}
-
 const BANK_INFO = {
   bank: "BANESCO Banco Universal",
   account: "01340178171781043753",
@@ -140,10 +130,21 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
         amount_usd: amountUsd,
         amount_bs: amountBs,
         bcv_rate: currentRate,
-        reference_number: reference,
+        reference_number: reference.trim() || "",
         proof_url: filePath,
       });
-      if (insertError) throw insertError;
+      if (insertError) {
+        // Clean up the orphaned file from storage before throwing
+        await supabase.storage.from("payment-proofs").remove([filePath]).catch(() => { });
+        // Provide a friendlier message for RLS violations
+        if (insertError.code === "42501" || insertError.message?.includes("row-level security")) {
+          throw new Error(
+            "No se pudo registrar el comprobante. Asegúrate de que eres el ganador de esta subasta y que la subasta haya finalizado. Si el problema persiste, contacta a soporte."
+          );
+        }
+        throw insertError;
+      }
+
       toast({ title: "¡Comprobante enviado!", description: "Tu pago será verificado pronto." });
       setReference("");
       setProofFile(null);
@@ -166,7 +167,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       });
 
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error al enviar comprobante", description: err.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
