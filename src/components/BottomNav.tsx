@@ -43,12 +43,11 @@ const BottomNav = forwardRef<HTMLElement>((_, ref) => {
             <button
               key={tab.path}
               onClick={() => handleClick(tab.path)}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors ${
-                active ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors ${active ? "text-primary dark:text-[#A6E300]" : "text-muted-foreground"
+                }`}
             >
               {active && (
-                <div className="absolute top-0 left-1/3 right-1/3 h-[2px] bg-primary rounded-b-full" />
+                <div className="absolute top-0 left-1/3 right-1/3 h-[2px] bg-primary dark:bg-[#A6E300] rounded-b-full" />
               )}
               <tab.icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.5} />
               <span className={`text-[10px] leading-tight ${active ? "font-bold" : "font-medium"}`}>

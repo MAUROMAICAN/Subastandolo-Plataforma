@@ -55,9 +55,9 @@ const Menu = () => {
 
   const dealerItems: MenuItem[] = isDealer
     ? [
-        { label: "Panel Dealer", icon: Store, to: "/dealer" },
-        { label: "Solicitar ser Dealer", icon: Gavel, to: "/dealer/apply" },
-      ]
+      { label: "Panel Dealer", icon: Store, to: "/dealer" },
+      { label: "Solicitar ser Dealer", icon: Gavel, to: "/dealer/apply" },
+    ]
     : [{ label: "Vender en Subastandolo", icon: Store, to: "/dealer/apply" }];
 
   const adminItems: MenuItem[] = isAdmin
@@ -104,7 +104,7 @@ const Menu = () => {
               {profile?.avatar_url && (
                 <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ""} className="object-cover" />
               )}
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+              <AvatarFallback className="bg-primary/10 dark:bg-[#A6E300]/10 text-primary dark:text-[#A6E300] font-bold text-lg">
                 {(profile?.full_name || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -136,7 +136,7 @@ const Menu = () => {
           </div>
         </div>
       </main>
-      <div className="sm:hidden h-14" />
+      <div className="sm:hidden h-16" />
       <BottomNav />
       <div className="hidden sm:block"><Footer /></div>
     </div>
