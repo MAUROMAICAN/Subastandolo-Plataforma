@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -189,6 +189,8 @@ const BuyerPanel = () => {
     const [cedulaPhotoUrl, setCedulaPhotoUrl] = useState<string | null>((profile as any)?.cedula_photo_url || null);
     const [cedulaFile, setCedulaFile] = useState<File | null>(null);
     const [cedulaPreview, setCedulaPreview] = useState<string | null>(null);
+    const [cedulaFileName, setCedulaFileName] = useState<string | null>(null);
+    const cedulaFileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [updating, setUpdating] = useState(false);
     const { toast } = useToast();
@@ -207,6 +209,7 @@ const BuyerPanel = () => {
       const file = e.target.files?.[0];
       if (!file) return;
       setCedulaFile(file);
+      setCedulaFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => setCedulaPreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -352,6 +355,15 @@ const BuyerPanel = () => {
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Foto de tu Cédula *</label>
+                {/* Hidden input – Android-safe pattern */}
+                <input
+                  ref={cedulaFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleCedulaFile}
+                />
+
                 {(cedulaPreview || cedulaPhotoUrl) ? (
                   <div className="relative w-full max-w-xs">
                     <img
@@ -361,26 +373,34 @@ const BuyerPanel = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => { setCedulaFile(null); setCedulaPreview(null); }}
+                      onClick={() => { setCedulaFile(null); setCedulaPreview(null); setCedulaFileName(null); }}
                       className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-xs px-2 py-1 rounded-lg border border-border"
                     >
                       Cambiar
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border hover:border-primary dark:hover:border-[#A6E300] rounded-xl p-6 cursor-pointer transition-colors">
-                    <CreditCard className="h-8 w-8 text-muted-foreground/50" />
-                    <span className="text-xs text-muted-foreground text-center">
-                      Toca para subir foto de cédula<br />
-                      <span className="text-[10px]">JPG, PNG · Máx 5MB</span>
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleCedulaFile}
-                    />
-                  </label>
+                  <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => cedulaFileInputRef.current?.click()}
+                        className="shrink-0 py-2.5 px-4 rounded-lg text-xs font-black bg-primary text-primary-foreground hover:bg-primary/80 active:scale-95 transition-all dark:bg-[#A6E300] dark:text-black"
+                      >
+                        Seleccionar foto
+                      </button>
+                      <span className="text-xs min-w-0 truncate">
+                        {cedulaFileName ? (
+                          <span className="text-emerald-500 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                            <span className="shrink-0">✓</span>
+                            <span className="truncate">{cedulaFileName}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Ningún archivo seleccionado</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 )}
                 <p className="text-[10px] text-muted-foreground">
                   📌 Tu cédula se usa solo para verificar identidad y se almacena de forma segura.
