@@ -602,88 +602,203 @@ const BuyerPanel = () => {
 
   // Purchases view
   if (view === "purchases") {
+    const auctionStatuses: Record<string, { label: string; color: string; dot: string }> = {
+      pending: { label: "Pago pendiente", color: "bg-amber-500/10 text-amber-600 border-amber-400/30 dark:text-amber-400", dot: "bg-amber-400" },
+      under_review: { label: "En revisión", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400", dot: "bg-blue-400" },
+      verified: { label: "Pago verificado", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]", dot: "bg-primary" },
+      paid: { label: "Pago reportado", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400", dot: "bg-blue-400" },
+      shipped: { label: "Enviado 🚚", color: "bg-purple-500/10 text-purple-600 border-purple-400/30 dark:text-purple-400", dot: "bg-purple-400" },
+      delivered: { label: "Entregado ✓", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]", dot: "bg-primary" },
+    };
+    const orderStatuses: Record<string, { label: string; color: string }> = {
+      pending: { label: "Pago pendiente", color: "bg-amber-500/10 text-amber-600 border-amber-400/30 dark:text-amber-400" },
+      under_review: { label: "En revisión", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400" },
+      verified: { label: "Pago verificado", color: "bg-primary/10 text-primary border-primary/30" },
+      shipped: { label: "Enviado 🚚", color: "bg-purple-500/10 text-purple-600 border-purple-400/30 dark:text-purple-400" },
+      delivered: { label: "Entregado ✓", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]" },
+    };
+
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-4 max-w-3xl">
-          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6">
+        <main className="container mx-auto px-4 py-4 max-w-2xl pb-24">
+          <button onClick={() => setView("overview")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary dark:hover:text-white mb-6 transition-colors">
             <ArrowLeft className="h-3 w-3" /> Volver a mi panel
           </button>
 
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <h1 className="text-xl font-heading font-bold flex items-center gap-2">
               <Package className="h-5 w-5 text-primary" />
               Mis Compras
             </h1>
-            <span className="text-xs text-muted-foreground">{wonAuctions.length} subasta{wonAuctions.length !== 1 ? "s" : ""} ganada{wonAuctions.length !== 1 ? "s" : ""}</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{wonAuctions.length} subasta{wonAuctions.length !== 1 ? "s" : ""}</span>
+              <span>·</span>
+              <span>{storeOrders.length} tienda</span>
+            </div>
           </div>
 
-          {loadingAuctions ? (
-            <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
-          ) : wonAuctions.length === 0 ? (
-            <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Package className="h-8 w-8 text-primary/50" />
-              </div>
-              <div>
-                <p className="font-heading font-bold text-lg mb-1">Aún no has ganado subastas</p>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">Participa en nuestras subastas y gana increíbles productos.</p>
-              </div>
-              <button
-                onClick={() => navigate("/")}
-                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
-              >
-                Explorar Subastas
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {wonAuctions.map(a => {
-                const isPending = a.payment_status === "pending";
-                const statusColors: Record<string, string> = {
-                  pending: "bg-yellow-500/10 text-yellow-600 border-yellow-400/30",
-                  paid: "bg-blue-500/10 text-blue-600 border-blue-400/30",
-                  approved: "bg-green-500/10 text-green-600 border-green-400/30",
-                  shipped: "bg-purple-500/10 text-purple-600 border-purple-400/30",
-                  delivered: "bg-primary/10 text-primary border-primary/30",
-                };
-                const statusLabels: Record<string, string> = {
-                  pending: "⏳ Pago pendiente",
-                  paid: "📄 Pago reportado",
-                  approved: "✅ Pago aprobado",
-                  shipped: "🚚 Enviado",
-                  delivered: "📦 Entregado",
-                };
-                const statusColor = statusColors[a.payment_status] || statusColors.pending;
-                const statusLabel = statusLabels[a.payment_status] || "Pendiente";
+          {/* Tabs */}
+          <div className="flex bg-secondary/50 dark:bg-secondary/20 rounded-xl p-1 gap-1 mb-6 border border-border">
+            <button
+              onClick={() => setPurchasesTab("subastas")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${purchasesTab === "subastas"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"}`}
+            >
+              🏆 Subastas {wonAuctions.length > 0 && <span className="ml-1.5 bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full">{wonAuctions.length}</span>}
+            </button>
+            <button
+              onClick={() => setPurchasesTab("tienda")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${purchasesTab === "tienda"
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"}`}
+            >
+              🏪 Tienda {storeOrders.length > 0 && <span className="ml-1.5 bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full">{storeOrders.length}</span>}
+            </button>
+          </div>
 
-                return (
-                  <div key={a.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-                    {/* Image */}
-                    {a.image_url && (
-                      <img src={a.image_url} alt={a.title} className="h-16 w-16 rounded-lg object-contain bg-secondary shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-heading font-bold text-sm truncate">{a.title}</p>
-                      <p className="text-xs text-muted-foreground">${a.current_price.toLocaleString("es-MX")} USD</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(a.end_time).toLocaleDateString("es-VE")}</p>
-                      <span className={`inline-flex items-center mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
-                        {statusLabel}
-                      </span>
+          {/* === SUBASTAS TAB === */}
+          {purchasesTab === "subastas" && (
+            loadingAuctions ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+            ) : wonAuctions.length === 0 ? (
+              <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Package className="h-8 w-8 text-primary/50" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold text-lg mb-1">Aún no has ganado subastas</p>
+                  <p className="text-sm text-muted-foreground dark:text-slate-400 max-w-xs mx-auto">¡Participa en nuestras subastas y gana increíbles productos!</p>
+                </div>
+                <button
+                  onClick={() => navigate("/")}
+                  className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+                >
+                  Explorar Subastas
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {wonAuctions.map(a => {
+                  const st = auctionStatuses[a.delivery_status === "delivered" ? "delivered" : a.delivery_status === "shipped" ? "shipped" : a.payment_status] || auctionStatuses.pending;
+                  const isPending = a.payment_status === "pending";
+                  return (
+                    <div key={a.id} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors group">
+                      <div className="flex items-center gap-4 p-4">
+                        {/* Image */}
+                        <div className="h-18 w-18 shrink-0 rounded-xl overflow-hidden bg-secondary/30 flex items-center justify-center border border-border" style={{ height: "72px", width: "72px" }}>
+                          {a.image_url
+                            ? <img src={a.image_url} alt={a.title} className="h-full w-full object-contain" />
+                            : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                        </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-heading font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{a.title}</p>
+                          <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">{new Date(a.end_time).toLocaleDateString("es-VE")}</p>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className="font-black text-sm text-foreground">${a.current_price.toLocaleString("es-MX")} <span className="text-[10px] font-normal text-muted-foreground">USD</span></span>
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                              {st.label}
+                            </span>
+                          </div>
+                        </div>
+                        {/* CTA */}
+                        <button
+                          onClick={() => navigate(`/mi-compra/${a.id}`)}
+                          className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isPending
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90 animate-pulse-slow"
+                            : "bg-secondary text-foreground hover:bg-secondary/80"}`}
+                        >
+                          {isPending ? "💳 Pagar" : "Ver →"}
+                        </button>
+                      </div>
+                      {/* Progress bar mini */}
+                      <div className="px-4 pb-3">
+                        <div className="flex items-center gap-1">
+                          {["pending", "under_review", "verified", "shipped", "delivered"].map((step, idx) => {
+                            const current = a.delivery_status === "delivered" ? 4 :
+                              a.delivery_status === "shipped" ? 3 :
+                                a.payment_status === "verified" ? 2 :
+                                  a.payment_status === "under_review" ? 1 : 0;
+                            return (
+                              <div key={step} className={`h-1 flex-1 rounded-full transition-all ${idx <= current ? "bg-primary" : "bg-border"}`} />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between mt-1 text-[9px] text-muted-foreground dark:text-slate-500">
+                          <span>Pago</span><span>Revisión</span><span>Verificado</span><span>Enviado</span><span>Entregado</span>
+                        </div>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => navigate(`/mi-compra/${a.id}`)}
-                      className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${isPending
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-secondary text-foreground hover:bg-secondary/80"
-                        }`}
-                    >
-                      {isPending ? "Pagar" : "Ver"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )
+          )}
+
+          {/* === TIENDA TAB === */}
+          {purchasesTab === "tienda" && (
+            loadingOrders ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+            ) : storeOrders.length === 0 ? (
+              <div className="bg-card border border-border rounded-2xl p-12 text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Store className="h-8 w-8 text-accent/50" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold text-lg mb-1">Aún no tienes pedidos en la Tienda</p>
+                  <p className="text-sm text-muted-foreground dark:text-slate-400 max-w-xs mx-auto">Compra productos directos a precio fijo.</p>
+                </div>
+                <button
+                  onClick={() => navigate("/tienda")}
+                  className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-accent-foreground text-sm font-bold hover:bg-accent/90 transition-colors"
+                >
+                  Visitar Tienda
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {storeOrders.map(order => {
+                  const mainImg = order.product?.images?.[0]?.image_url;
+                  const st = orderStatuses[order.shipping_status === "delivered" ? "delivered" :
+                    order.shipping_status === "shipped" ? "shipped" :
+                      order.payment_status === "verified" ? "verified" :
+                        order.payment_status === "under_review" ? "under_review" : "pending"]
+                    || orderStatuses.pending;
+                  return (
+                    <div key={order.id} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/30 transition-colors group">
+                      <div className="flex items-center gap-4 p-4">
+                        <div className="h-18 w-18 shrink-0 rounded-xl overflow-hidden bg-secondary/30 flex items-center justify-center border border-border" style={{ height: "72px", width: "72px" }}>
+                          {mainImg
+                            ? <img src={mainImg} alt={order.product?.title} className="h-full w-full object-contain" />
+                            : <Store className="h-6 w-6 text-muted-foreground/30" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-heading font-bold text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">{order.product?.title || "Producto"}</p>
+                          <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                            <Store className="h-3 w-3" />{order.dealer?.name || "Dealer"}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className="font-black text-sm text-foreground">${order.total_price_usd.toLocaleString("es-MX", { minimumFractionDigits: 2 })} <span className="text-[10px] font-normal text-muted-foreground">USD</span></span>
+                            <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
+                              {st.label}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/checkout-tienda/${order.product_id}`)}
+                          className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold bg-secondary text-foreground hover:bg-secondary/80 transition-all"
+                        >
+                          Ver →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </main>
       </div>
