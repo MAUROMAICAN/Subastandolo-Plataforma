@@ -14,45 +14,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Settings, Save, Loader2, Palette, FileText, ImagePlus, PenLine, Eye, Pause, Trash2, LayoutTemplate, Globe, RefreshCw, TrendingUp } from "lucide-react";
 import type { BannerImage, SiteSetting, SiteSection } from "./types";
 
-// Convert HSL string "H S% L%" to hex color
-const hslToHex = (hsl: string): string => {
-  try {
-    const parts = hsl.replace(/%/g, "").split(/\s+/).map(Number);
-    if (parts.length < 3 || parts.some(isNaN)) return "#808080";
-    let [h, s, l] = parts;
-    s /= 100; l /= 100;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n: number) => {
-      const k = (n + h / 30) % 12;
-      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-      return Math.round(255 * color).toString(16).padStart(2, "0");
-    };
-    return `#${f(0)}${f(8)}${f(4)}`;
-  } catch { return "#808080"; }
-};
-
-// Convert hex color to HSL string "H S% L%"
-const hexToHsl = (hex: string): string => {
-  try {
-    const r = parseInt(hex.slice(1, 3), 16) / 255;
-    const g = parseInt(hex.slice(3, 5), 16) / 255;
-    const b = parseInt(hex.slice(5, 7), 16) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0;
-    const l = (max + min) / 2;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-        case g: h = ((b - r) / d + 2) / 6; break;
-        case b: h = ((r - g) / d + 4) / 6; break;
-      }
-    }
-    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-  } catch { return "0 0% 50%"; }
-};
-
 
 interface Props {
   siteSettings: SiteSetting[];
@@ -247,44 +208,7 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
               </div>
             </div>
 
-            {/* Colors */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border pb-1">Colores del Tema</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { key: 'primary_color', label: 'Color Primario (General)' },
-                  { key: 'secondary_color', label: 'Color Secundario' },
-                  { key: 'accent_color', label: 'Color de Acento (Botones, Destacados)' },
-                  { key: 'background_color', label: 'Color de Fondo Global' }
-                ].map(setting => (
-                  <div key={setting.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2 bg-secondary/10 rounded-sm border border-transparent hover:border-border transition-colors">
-                    <Label className="text-xs w-full sm:w-48 shrink-0">{setting.label}</Label>
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        type="color"
-                        value={hslToHex(editingSettings[setting.key] || "0 0% 50%")}
-                        onChange={(e) => setEditingSettings(p => ({ ...p, [setting.key]: hexToHsl(e.target.value) }))}
-                        className="w-8 h-8 rounded border border-border cursor-pointer p-0 bg-transparent shrink-0"
-                        title="Seleccionar color"
-                      />
-                      <Input
-                        value={hslToHex(editingSettings[setting.key] || "0 0% 50%")}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) setEditingSettings(p => ({ ...p, [setting.key]: hexToHsl(val) }));
-                        }}
-                        className="rounded-sm text-xs font-mono uppercase h-8 w-24"
-                        placeholder="#A6E300"
-                        maxLength={7}
-                      />
-                      <span className="text-[10px] text-muted-foreground font-mono hidden sm:block ml-2 w-24 truncate">
-                        {editingSettings[setting.key]}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Colors are managed directly in src/index.css — not editable from admin */}
           </AccordionContent>
         </AccordionItem>
 
