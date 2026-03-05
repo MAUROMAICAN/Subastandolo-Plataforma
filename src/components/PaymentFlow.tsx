@@ -215,13 +215,13 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-300 mb-1">
               ⚠️ Lee atentamente antes de pagar
             </p>
-            <p className="text-xs text-amber-700/80 dark:text-amber-300/80 leading-relaxed">
+            <p className="text-xs text-amber-700/80 dark:text-amber-200/80 leading-relaxed">
               Para <strong>garantizar y resguardar tu compra</strong>, realiza el pago <strong>únicamente</strong> a la cuenta
               oficial de Subastandolo que aparece abajo. <br />
-              <strong className="text-amber-800 dark:text-amber-300">
+              <strong className="text-amber-800 dark:text-amber-200">
                 ❌ NO transfieras directamente al Vendedor / Dealer bajo ninguna circunstancia.
               </strong>{" "}
               Hacerlo invalida la protección de tu compra y Subastandolo no podrá responder por tu pago.
@@ -236,9 +236,9 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
         <div className="h-1 w-full bg-gradient-to-r from-primary via-accent to-primary" />
 
         {/* Header */}
-        <div className="bg-primary/5 px-5 py-3 border-b border-primary/10 flex items-center gap-2">
-          <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+        <div className="bg-primary/5 dark:bg-white/5 px-5 py-3 border-b border-primary/10 dark:border-white/10 flex items-center gap-2">
+          <Lock className="h-3.5 w-3.5 text-primary dark:text-[#A6E300] shrink-0" />
+          <span className="text-[10px] font-black text-primary dark:text-[#A6E300] uppercase tracking-widest">
             Cuenta Oficial · Única y exclusiva en la plataforma
           </span>
           <ShieldCheck className="h-4 w-4 text-emerald-500 ml-auto shrink-0" />
@@ -251,7 +251,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
           </div>
           <div>
             <p className="font-black text-base text-foreground leading-tight">BANESCO</p>
-            <p className="text-xs text-muted-foreground">Banco Universal · Transferencia en Bs.</p>
+            <p className="text-xs text-muted-foreground dark:text-slate-400">Banco Universal · Transferencia en Bs.</p>
           </div>
         </div>
 
@@ -283,7 +283,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
       {/* AMOUNT TO PAY */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="bg-secondary/50 px-5 py-3 border-b border-border flex items-center gap-2">
+        <div className="bg-secondary/50 dark:bg-white/5 px-5 py-3 border-b border-border flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5 text-primary" />
           <p className="text-xs font-bold text-muted-foreground dark:text-slate-300 uppercase tracking-widest">Monto a Transferir</p>
         </div>
@@ -298,12 +298,12 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
               <Loader2 className="h-3 w-3 animate-spin" /> Obteniendo tasa BCV...
             </p>
           ) : bcvRate && amountBs ? (
-            <div className="bg-secondary/40 rounded-xl px-4 py-3 space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wide">Equivalente en Bolívares (BCV)</p>
+            <div className="bg-secondary/40 dark:bg-white/5 rounded-xl px-4 py-3 space-y-1">
+              <p className="text-[10px] text-muted-foreground dark:text-slate-400 uppercase font-semibold tracking-wide">Equivalente en Bolívares (BCV)</p>
               <p className="text-2xl font-black text-foreground">
                 Bs. {amountBs.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground dark:text-slate-400">
                 Tasa del día: <strong className="text-foreground">{bcvRate.toFixed(2)} Bs/$</strong>
                 {" · "}La tasa se fija a la tasa oficial BCV vigente al cierre de la subasta.
               </p>
@@ -355,7 +355,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">Imagen / Captura del Comprobante *</label>
-            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors group">
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors group">
               <input
                 type="file"
                 accept="image/*,.pdf"
@@ -390,7 +390,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       </div>
 
       {/* FOOTER DISCLAIMERS */}
-      <div className="rounded-xl bg-secondary/20 border border-border px-4 py-3 space-y-1.5">
+      <div className="rounded-xl bg-secondary/20 dark:bg-white/5 border border-border px-4 py-3 space-y-1.5">
         <p className="text-[11px] text-muted-foreground dark:text-slate-400 leading-relaxed">
           🔒 <strong className="text-foreground">Tu compra está protegida.</strong> El pago queda en custodia hasta confirmar la entrega del producto.
         </p>

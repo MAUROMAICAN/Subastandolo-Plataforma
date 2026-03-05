@@ -174,11 +174,11 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
           <select
             value={company}
             onChange={(e) => setCompany(e.target.value)}
-            className="flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex h-10 w-full rounded-sm border border-input bg-background dark:bg-zinc-900 dark:text-white px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <option value="">Seleccionar agencia...</option>
+            <option value="" className="dark:bg-zinc-900">Seleccionar agencia...</option>
             {SHIPPING_COMPANIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c} className="dark:bg-zinc-900">{c}</option>
             ))}
           </select>
         </div>
@@ -192,11 +192,11 @@ const ShippingForm = ({ auctionId, userId, onComplete }: ShippingFormProps) => {
             <select
               value={state}
               onChange={(e) => setState(e.target.value)}
-              className="flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex h-10 w-full rounded-sm border border-input bg-background dark:bg-zinc-900 dark:text-white px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">Estado...</option>
+              <option value="" className="dark:bg-zinc-900">Estado...</option>
               {STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s} className="dark:bg-zinc-900">{s}</option>
               ))}
             </select>
             <Input
