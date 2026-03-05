@@ -345,11 +345,11 @@ const BuyerPanel = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Nombres *</label>
-                  <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Ej: Mauro José" className="rounded-lg" />
+                  <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Ej: Carlos Alberto" className="rounded-lg" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Apellidos *</label>
-                  <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Ej: Maican Castillo" className="rounded-lg" />
+                  <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Ej: González Pérez" className="rounded-lg" />
                 </div>
               </div>
 
@@ -363,7 +363,7 @@ const BuyerPanel = () => {
                   <Input
                     value={username}
                     onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
-                    placeholder="Ej: mauropro"
+                    placeholder="Ej: carlospro"
                     className="rounded-lg pl-7 font-mono"
                     maxLength={30}
                   />
