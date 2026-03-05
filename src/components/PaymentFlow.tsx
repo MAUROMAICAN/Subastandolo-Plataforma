@@ -376,12 +376,13 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground dark:text-white">Imagen / Captura del Comprobante *</label>
-            <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5 overflow-hidden space-y-2">
+            <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5">
+              {/* Native input hidden – triggered by custom button below (Android-safe) */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,application/pdf"
-                className="block w-full text-sm text-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-accent file:text-accent-foreground hover:file:bg-accent/90 cursor-pointer"
+                className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -390,12 +391,27 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
                   }
                 }}
               />
-              {/* Show selected filename even if state reset (Android bug resilience) */}
-              {(proofFileName || proofFile?.name) && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                  ✓ {proofFileName || proofFile?.name}
-                </p>
-              )}
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Custom trigger button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="shrink-0 py-2.5 px-4 rounded-lg text-xs font-black bg-accent text-accent-foreground hover:bg-accent/80 active:scale-95 transition-all"
+                >
+                  Seleccionar archivo
+                </button>
+                {/* Status text */}
+                <span className="text-xs min-w-0 truncate">
+                  {(proofFileName || proofFile?.name) ? (
+                    <span className="text-emerald-500 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <span className="shrink-0">✓</span>
+                      <span className="truncate">{proofFileName || proofFile?.name}</span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground italic">Ningún archivo seleccionado</span>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
 
