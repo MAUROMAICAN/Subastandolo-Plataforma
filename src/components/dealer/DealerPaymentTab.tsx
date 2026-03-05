@@ -93,7 +93,7 @@ export default function DealerPaymentTab() {
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-heading font-bold flex items-center gap-2">
-        <Banknote className="h-5 w-5 text-primary" />
+        <Banknote className="h-5 w-5 text-primary dark:text-[#A6E300]" />
         Configuración de Cobro
       </h2>
 
@@ -103,9 +103,9 @@ export default function DealerPaymentTab() {
       </div>
 
       {bankAccount?.is_verified && (
-        <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-sm p-3">
-          <CheckCircle className="h-4 w-4 text-primary" />
-          <span className="text-xs text-primary font-semibold">Cuenta verificada por el administrador</span>
+        <div className="flex items-center gap-2 bg-primary/10 dark:bg-[#A6E300]/10 border border-primary/20 rounded-sm p-3">
+          <CheckCircle className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+          <span className="text-xs text-primary dark:text-[#A6E300] font-semibold">Cuenta verificada por el administrador</span>
         </div>
       )}
       {bankAccount && !bankAccount.is_verified && (
@@ -116,7 +116,7 @@ export default function DealerPaymentTab() {
       )}
 
       {loadingBank ? (
-        <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" /></div>
       ) : (
         <Card className="border border-border rounded-sm">
           <CardHeader className="pb-3">

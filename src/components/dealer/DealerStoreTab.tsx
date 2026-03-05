@@ -66,7 +66,7 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
     };
 
     if (loading) {
-        return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+        return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary dark:text-[#A6E300]" /></div>;
     }
 
     return (

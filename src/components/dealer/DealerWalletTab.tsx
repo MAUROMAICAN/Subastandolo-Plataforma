@@ -62,29 +62,29 @@ export default function DealerWalletTab() {
 
   const statusMap: Record<string, { label: string; color: string; icon: string }> = {
     pending: { label: "Pendiente", color: "bg-warning/10 text-warning border-warning/20", icon: "⏳" },
-    approved: { label: "Aprobado", color: "bg-primary/10 text-primary border-primary/20", icon: "✅" },
+    approved: { label: "Aprobado", color: "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/20", icon: "✅" },
     rejected: { label: "Rechazado", color: "bg-destructive/10 text-destructive border-destructive/20", icon: "❌" },
   };
 
   if (walletLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card className="border border-primary/30 rounded-sm bg-primary/5 overflow-hidden">
+      <Card className="border border-primary/30 rounded-sm bg-primary/5 dark:bg-[#A6E300]/5 overflow-hidden">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-sm">
-              <Wallet className="h-8 w-8 text-primary" />
+            <div className="p-3 bg-primary/10 dark:bg-[#A6E300]/10 rounded-sm">
+              <Wallet className="h-8 w-8 text-primary dark:text-[#A6E300]" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Saldo Disponible</p>
-              <p className="text-3xl font-heading font-bold text-primary">${walletBalance.toFixed(2)}</p>
+              <p className="text-3xl font-heading font-bold text-primary dark:text-[#A6E300]">${walletBalance.toFixed(2)}</p>
             </div>
           </div>
           <Button
@@ -106,7 +106,7 @@ export default function DealerWalletTab() {
       <Card className="border border-border rounded-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-primary" />
+            <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             Historial de Retiros
           </CardTitle>
         </CardHeader>

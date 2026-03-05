@@ -32,7 +32,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Total Subastas", value: metrics.total, icon: Package, color: "text-primary", filter: "all" },
+          { label: "Total Subastas", value: metrics.total, icon: Package, color: "text-primary dark:text-[#A6E300]", filter: "all" },
           { label: "Activas", value: metrics.active, icon: TrendingUp, color: "text-success", filter: "active" },
           { label: "En Revisión", value: metrics.pending, icon: Clock, color: "text-warning", filter: "pending" },
           { label: "Finalizadas", value: metrics.finalized, icon: CheckCircle, color: "text-muted-foreground", filter: "finalized" },
@@ -55,16 +55,16 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         <Card className="border border-border rounded-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-primary" />
+              <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
               <p className="text-xs text-muted-foreground">Ingresos Totales</p>
             </div>
-            <p className="text-xl font-heading font-bold text-primary">${metrics.totalRevenue.toLocaleString("es-MX")}</p>
+            <p className="text-xl font-heading font-bold text-primary dark:text-[#A6E300]">${metrics.totalRevenue.toLocaleString("es-MX")}</p>
           </CardContent>
         </Card>
         <Card className="border border-border rounded-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Gavel className="h-4 w-4 text-primary" />
+              <Gavel className="h-4 w-4 text-primary dark:text-[#A6E300]" />
               <p className="text-xs text-muted-foreground">Total de Pujas</p>
             </div>
             <p className="text-xl font-heading font-bold">{metrics.totalBids}</p>
@@ -73,7 +73,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         <Card className="border border-border rounded-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="h-4 w-4 text-primary" />
+              <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
               <p className="text-xs text-muted-foreground">Precio Promedio</p>
             </div>
             <p className="text-xl font-heading font-bold">${metrics.avgPrice.toFixed(2)}</p>
@@ -85,7 +85,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       <Card className="border border-border rounded-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-heading">
-            <DollarSign className="h-4 w-4 text-primary" />
+            <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             Estructura de Costos
           </CardTitle>
         </CardHeader>

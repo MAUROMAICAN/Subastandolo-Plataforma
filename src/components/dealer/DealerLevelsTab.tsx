@@ -14,7 +14,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
     <div className="space-y-6 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 mb-3">
-          <Trophy className="h-6 w-6 text-primary" />
+          <Trophy className="h-6 w-6 text-primary dark:text-[#A6E300]" />
           <h2 className="text-xl font-heading font-bold">Sistema de Niveles</h2>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -49,7 +49,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
       <Card className="border border-border rounded-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
+            <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             Tabla de Niveles
           </CardTitle>
         </CardHeader>
@@ -68,8 +68,8 @@ export default function DealerLevelsTab({ dealer }: Props) {
                 <div
                   key={tier.key}
                   className={`flex items-center gap-3 rounded-sm px-4 py-3 transition-colors ${isCurrentTier
-                      ? `${tier.colors.bg} border-2 ${tier.colors.border}`
-                      : "border border-border hover:bg-secondary/30"
+                    ? `${tier.colors.bg} border-2 ${tier.colors.border}`
+                    : "border border-border hover:bg-secondary/30"
                     }`}
                 >
                   <div className="shrink-0">
@@ -79,7 +79,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-semibold ${tier.colors.text}`}>{tier.label}</span>
                       {isCurrentTier && (
-                        <span className="text-[9px] bg-primary text-primary-foreground rounded-sm px-1.5 py-0.5 font-bold uppercase">
+                        <span className="text-[9px] bg-accent text-accent-foreground rounded-sm px-1.5 py-0.5 font-bold uppercase">
                           Tu nivel
                         </span>
                       )}
@@ -99,7 +99,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
       <Card className="border border-border rounded-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <Eye className="h-4 w-4 text-primary" />
+            <Eye className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             ¿Cómo funciona?
           </CardTitle>
         </CardHeader>
@@ -112,7 +112,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
               { icon: Trophy, title: "Insignias premium", desc: "A partir de Oro, tu insignia cambia a un diamante exclusivo con animación de brillo." },
             ].map((item, i) => (
               <div key={i} className="flex gap-3 p-3 rounded-sm bg-secondary/30">
-                <item.icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <item.icon className="h-5 w-5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">{item.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
@@ -126,7 +126,7 @@ export default function DealerLevelsTab({ dealer }: Props) {
       <Card className="border border-border rounded-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-primary" />
+            <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             Beneficios por nivel
           </CardTitle>
         </CardHeader>

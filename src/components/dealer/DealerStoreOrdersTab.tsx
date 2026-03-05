@@ -101,7 +101,7 @@ export default function DealerStoreOrdersTab({ dealerId }: Props) {
     const filteredOrders = orders.filter(o => filter === "all" || o.shipping_status === filter);
 
     if (loading) {
-        return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+        return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary dark:text-[#A6E300]" /></div>;
     }
 
     return (
