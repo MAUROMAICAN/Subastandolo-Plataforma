@@ -953,7 +953,7 @@ const BuyerPanel = () => {
 
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
+              <Shield className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               Mis Disputas
             </h1>
             <Button size="sm" className="bg-primary text-primary-foreground rounded-sm text-xs" onClick={() => setView("new-dispute")}>
@@ -1154,7 +1154,7 @@ const BuyerPanel = () => {
 
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               Mis Dealers Favoritos
             </h1>
             <span className="text-xs text-muted-foreground">{followedDealers.length} dealer{followedDealers.length !== 1 ? "s" : ""}</span>
@@ -1340,12 +1340,12 @@ const BuyerPanel = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Mis Compras */}
           <Card
-            className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary transition-colors group bg-primary/5"
+            className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary transition-colors group bg-primary/5 dark:bg-[#A6E300]/5"
             onClick={() => setView("purchases")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors">
-                <Package className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/15 dark:bg-[#A6E300]/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 dark:group-hover:bg-[#A6E300]/25 transition-colors">
+                <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mis Compras</p>
@@ -1353,7 +1353,7 @@ const BuyerPanel = () => {
                   {loadingAuctions ? "Cargando..." : wonAuctions.length > 0 ? `${wonAuctions.length} subasta${wonAuctions.length !== 1 ? "s" : ""} ganada${wonAuctions.length !== 1 ? "s" : ""}` : "Ver tus subastas ganadas"}
                 </p>
               </div>
-              <ChevronRight className="h-4 w-4 text-primary ml-auto shrink-0" />
+              <ChevronRight className="h-4 w-4 text-primary dark:text-[#A6E300] ml-auto shrink-0" />
             </CardContent>
           </Card>
 
@@ -1363,8 +1363,8 @@ const BuyerPanel = () => {
             onClick={() => setView("addresses")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <MapPin className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <MapPin className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mis Direcciones</p>
@@ -1384,8 +1384,8 @@ const BuyerPanel = () => {
             onClick={() => setView("disputes")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Shield className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <Shield className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mis Disputas</p>
@@ -1403,7 +1403,7 @@ const BuyerPanel = () => {
             onClick={() => setView("favoritos")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
                 <Heart className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
@@ -1422,8 +1422,8 @@ const BuyerPanel = () => {
             onClick={() => setView("dealers")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Users className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <Users className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mis Dealers</p>
@@ -1460,8 +1460,8 @@ const BuyerPanel = () => {
             onClick={() => navigate("/instalar")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Download className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <Download className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Descargar App</p>
@@ -1477,8 +1477,8 @@ const BuyerPanel = () => {
             onClick={() => setView("profile")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <User className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Mi Perfil</p>
@@ -1494,8 +1494,8 @@ const BuyerPanel = () => {
             onClick={() => setView("security")}
           >
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <Lock className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <Lock className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm">Seguridad</p>
