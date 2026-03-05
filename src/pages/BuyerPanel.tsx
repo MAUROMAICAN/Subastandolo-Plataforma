@@ -181,7 +181,9 @@ const BuyerPanel = () => {
   };
 
   const ProfileView = () => {
-    const [fullName, setFullName] = useState((profile as any)?.full_name || "");
+    const [firstName, setFirstName] = useState((profile as any)?.first_name || "");
+    const [lastName, setLastName] = useState((profile as any)?.last_name || "");
+    const [username, setUsername] = useState((profile as any)?.username || "");
     const [phone, setPhone] = useState((profile as any)?.phone || "");
     const [city, setCity] = useState((profile as any)?.city || "");
     const [profileState, setProfileState] = useState((profile as any)?.state || "");
@@ -195,9 +197,12 @@ const BuyerPanel = () => {
     const [updating, setUpdating] = useState(false);
     const { toast } = useToast();
 
+    // Full name composed from first + last
+    const composedFullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+
     // Build a synthetic profile object for the completion bar
     const liveProfile = {
-      full_name: fullName,
+      full_name: composedFullName,
       avatar_url: (profile as any)?.avatar_url,
       city,
       state: profileState,
@@ -217,43 +222,59 @@ const BuyerPanel = () => {
 
     const uploadCedulaPhoto = async (): Promise<string | null> => {
       if (!cedulaFile || !user) return cedulaPhotoUrl;
-      const ext = cedulaFile.name.split(".").pop();
+      setUploading(true);
+      const ext = cedulaFile.name.split(".").pop() || "jpg";
       const path = `cedula/${user.id}/cedula.${ext}`;
       const { error } = await supabase.storage
         .from("profile-docs")
         .upload(path, cedulaFile, { upsert: true });
-      if (error) { toast({ title: "Error subiendo foto de cédula", description: error.message, variant: "destructive" }); return null; }
+      setUploading(false);
+      if (error) {
+        toast({ title: "⚠️ Error subiendo foto de cédula", description: error.message, variant: "destructive" });
+        return null; // Signal failure
+      }
       const { data: urlData } = supabase.storage.from("profile-docs").getPublicUrl(path);
-      return urlData.publicUrl;
+      return urlData.publicUrl + `?t=${Date.now()}`;
     };
 
     const onSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setUpdating(true);
-      setUploading(true);
 
+      // Upload cedula photo first — abort if it fails
       let finalCedulaUrl = cedulaPhotoUrl;
       if (cedulaFile) {
-        finalCedulaUrl = await uploadCedulaPhoto();
+        const uploaded = await uploadCedulaPhoto();
+        if (uploaded === null && cedulaFile) {
+          // Upload failed — don't save profile, show error
+          toast({ title: "No se guardó el perfil porque falló la subida de la foto de cédula.", variant: "destructive" });
+          setUpdating(false);
+          return;
+        }
+        finalCedulaUrl = uploaded;
+        setCedulaPhotoUrl(uploaded);
+        // Clear the file so preview persists but re-upload is not triggered
+        setCedulaFile(null);
       }
 
-      setUploading(false);
-
+      const fullName = composedFullName;
       const { error } = await supabase.from("profiles").update({
-        full_name: fullName,
-        phone,
-        city,
-        state: profileState,
-        cedula_number: cedulaNumber || null,
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        full_name: fullName || null,
+        username: username.trim() || null,
+        phone: phone.trim() || null,
+        city: city.trim() || null,
+        state: profileState || null,
+        cedula_number: cedulaNumber.trim() || null,
         cedula_photo_url: finalCedulaUrl || null,
       } as any).eq("id", user!.id);
 
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast({ title: "Error guardando perfil", description: error.message, variant: "destructive" });
       } else {
-        setCedulaPhotoUrl(finalCedulaUrl);
         toast({ title: "✅ ¡Perfil actualizado!", description: "Tus datos han sido guardados." });
-        await refreshProfile();
+        refreshProfile(); // Don't await — avoids form state reset
       }
       setUpdating(false);
     };
@@ -320,25 +341,52 @@ const BuyerPanel = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Name row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Nombre completo *</label>
-                  <Input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="Tu nombre completo" className="rounded-lg" />
+                  <label className="text-xs font-medium text-muted-foreground">Nombres *</label>
+                  <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Ej: Mauro José" className="rounded-lg" />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Apellidos *</label>
+                  <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Ej: Maican Castillo" className="rounded-lg" />
+                </div>
+              </div>
+
+              {/* Username */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                  <span className="text-primary dark:text-[#A6E300] font-bold">@</span> Nombre de Usuario (visible en tu perfil público)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">@</span>
+                  <Input
+                    value={username}
+                    onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
+                    placeholder="Ej: mauropro"
+                    className="rounded-lg pl-7 font-mono"
+                    maxLength={30}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">Este nombre aparecerá públicamente. Usa solo letras, números, puntos o guiones.</p>
+              </div>
+
+              {/* Phone + Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Teléfono</label>
                   <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412-0000000" className="rounded-lg" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Estado *</label>
-                  <select value={profileState} onChange={e => setProfileState(e.target.value)} required className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                  <select value={profileState} onChange={e => setProfileState(e.target.value)} className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm dark:bg-zinc-900 dark:text-white">
                     <option value="">Selecciona estado...</option>
                     {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Ciudad *</label>
-                  <Input value={city} onChange={e => setCity(e.target.value)} required placeholder="Tu ciudad" className="rounded-lg" />
+                  <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Tu ciudad" className="rounded-lg" />
                 </div>
               </div>
             </CardContent>
