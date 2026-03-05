@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +69,24 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
 
     // Collapsed/expand state for locked profile
     const [expanded, setExpanded] = useState(false);
+
+    // ――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+    // Sync form state whenever the profile prop changes.
+    // useState only initializes ONCE on mount — if `profile` was
+    // null/incomplete at mount time (auth still loading) the fields
+    // would stay empty even after auth finishes. useEffect fixes this.
+    // ――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+    useEffect(() => {
+        if (!profile) return;
+        setPhone(profile.phone || "");
+        setCity(profile.city || "");
+        setProfileState(profile.state || "");
+        setFirstName(profile.first_name || "");
+        setLastName(profile.last_name || "");
+        setUsername(profile.username || "");
+        setCedulaNumber(profile.cedula_number || "");
+        setCedulaPhotoUrl(profile.cedula_photo_url || null);
+    }, [profile]);
 
     const composedFullName = isLocked
         ? profile?.full_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(" ")
