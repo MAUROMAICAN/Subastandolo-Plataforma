@@ -35,7 +35,11 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   const [bcvRate, setBcvRate] = useState<number | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [rateLoading, setRateLoading] = useState(true);
-  const [reference, setReference] = useState("");
+  // Restore reference from sessionStorage in case Android caused a re-mount
+  const sessionKey = `payment_ref_${auctionId}`;
+  const [reference, setReference] = useState<string>(
+    () => sessionStorage.getItem(sessionKey) || ""
+  );
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofFileName, setProofFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,6 +155,7 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
       toast({ title: "¡Comprobante enviado!", description: "Tu pago será verificado pronto." });
       setReference("");
+      sessionStorage.removeItem(sessionKey);
       setProofFile(null);
       setProofFileName(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -361,7 +366,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
             <Input
               placeholder="Ej: 00123456789"
               value={reference}
-              onChange={(e) => setReference(e.target.value)}
+              onChange={(e) => {
+                setReference(e.target.value);
+                sessionStorage.setItem(sessionKey, e.target.value);
+              }}
               className="rounded-xl font-mono"
             />
           </div>

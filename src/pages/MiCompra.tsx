@@ -67,7 +67,10 @@ const MiCompra = () => {
 
     const fetchData = async () => {
         if (!id || !user) return;
-        setLoading(true);
+        // Android fix: only show full-page spinner on first load.
+        // Subsequent re-fetches (triggered by auth re-validation when returning
+        // from the Android gallery picker) happen silently to preserve PaymentFlow state.
+        if (!auction) setLoading(true);
         const { data: auc } = await supabase
             .from("auctions").select("*").eq("id", id).single();
 
