@@ -15,6 +15,7 @@ interface ProfileAvatarUploadProps {
   userName: string;
   onAvatarChange: (url: string | null) => void;
   size?: "sm" | "md" | "lg";
+  hidePolicies?: boolean;
 }
 
 const AVATAR_POLICIES = [
@@ -27,7 +28,7 @@ const AVATAR_POLICIES = [
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-export default function ProfileAvatarUpload({ avatarUrl, userName, onAvatarChange, size = "md" }: ProfileAvatarUploadProps) {
+export default function ProfileAvatarUpload({ avatarUrl, userName, onAvatarChange, size = "md", hidePolicies = false }: ProfileAvatarUploadProps) {
   const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
@@ -188,20 +189,21 @@ export default function ProfileAvatarUpload({ avatarUrl, userName, onAvatarChang
         )}
       </div>
 
-      {/* Content policy */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 max-w-[280px]">
-        <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1 mb-1.5">
-          <AlertTriangle className="h-3 w-3 shrink-0" /> Políticas de imagen
-        </p>
-        <ul className="space-y-0.5">
-          {AVATAR_POLICIES.map((p, i) => (
-            <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-              <span className="text-amber-600 shrink-0">•</span>
-              {p}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {!hidePolicies && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 max-w-[280px]">
+          <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1 mb-1.5">
+            <AlertTriangle className="h-3 w-3 shrink-0" /> Políticas de imagen
+          </p>
+          <ul className="space-y-0.5">
+            {AVATAR_POLICIES.map((p, i) => (
+              <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                <span className="text-amber-600 shrink-0">•</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

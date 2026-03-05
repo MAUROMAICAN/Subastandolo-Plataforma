@@ -29,11 +29,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
   ChevronRight, ImageIcon, Store, Star, Heart, Plus, Package,
-  Lock, ShieldCheck, User, MapPin, Users, CreditCard, Camera
+  Lock, ShieldCheck, User, MapPin, Users, CreditCard
 } from "lucide-react";
 import ProfileCompletionBar from "@/components/ProfileCompletionBar";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables, Database } from "@/integrations/supabase/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   open: { label: "Abierta", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30", icon: AlertTriangle },
@@ -276,26 +276,38 @@ const BuyerPanel = () => {
           <ProfileCompletionBar profile={liveProfile} />
         </Card>
 
-        {/* Avatar */}
-        <Card className="border border-border rounded-xl mb-5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-heading font-bold flex items-center gap-2">
-              <Camera className="h-4 w-4 text-primary dark:text-[#A6E300]" />
-              Foto de Perfil
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center gap-4">
-            <ProfileAvatarUpload
-              avatarUrl={(profile as any)?.avatar_url || null}
-              userName={(profile as any)?.full_name || "Usuario"}
-              onAvatarChange={async () => { await refreshProfile(); }}
-              size="md"
-            />
-            <div className="text-xs text-muted-foreground">
-              <p>Sube una foto clara de tu rostro.</p>
-              <p className="mt-1 text-[10px]">Formatos: JPG, PNG, WebP · Máx 2MB</p>
+        {/* Avatar — clean horizontal layout */}
+        <Card className="border border-border rounded-xl mb-5 overflow-hidden">
+          <div className="p-5 flex items-start gap-5">
+            {/* Left: avatar + buttons (policies hidden) */}
+            <div className="shrink-0">
+              <ProfileAvatarUpload
+                avatarUrl={(profile as any)?.avatar_url || null}
+                userName={(profile as any)?.full_name || "Usuario"}
+                onAvatarChange={async () => { await refreshProfile(); }}
+                size="md"
+                hidePolicies
+              />
             </div>
-          </CardContent>
+
+            {/* Right: name + status + compact policy note */}
+            <div className="flex-1 min-w-0 pt-1 space-y-2">
+              <div>
+                <p className="font-heading font-bold text-sm leading-tight truncate">
+                  {(profile as any)?.full_name || "Sin nombre"}
+                </p>
+                <p className={`text-[11px] mt-0.5 font-medium ${(profile as any)?.avatar_url ? "text-green-500 dark:text-[#A6E300]" : "text-muted-foreground"}`}>
+                  {(profile as any)?.avatar_url ? "✓ Foto guardada" : "Sin foto de perfil"}
+                </p>
+              </div>
+              <div className="bg-secondary/50 dark:bg-white/5 rounded-lg p-2.5 text-[10px] text-muted-foreground leading-relaxed space-y-0.5">
+                <p className="font-semibold text-foreground mb-1">📌 Políticas de imagen</p>
+                <p>• Solo fotos personales o logos de emprendimiento</p>
+                <p>• Sin cédulas, QR, redes sociales ni datos privados</p>
+                <p className="font-medium text-[10px]">JPG, PNG, WebP · Máx 2MB</p>
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Personal data form */}
