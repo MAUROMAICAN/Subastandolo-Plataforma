@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   const [rateLoading, setRateLoading] = useState(true);
   const [reference, setReference] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofFileName, setProofFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [existingProof, setExistingProof] = useState<PaymentProof | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -110,8 +112,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   };
 
   const handleSubmit = async () => {
-    if (!proofFile) {
-      toast({ title: "Falta el comprobante", variant: "destructive" });
+    // Android fix: state may have reset — fall back to the DOM input ref
+    const fileToUpload = proofFile ?? fileInputRef.current?.files?.[0] ?? null;
+    if (!fileToUpload) {
+      toast({ title: "Falta el comprobante", description: "Por favor selecciona el archivo nuevamente.", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -119,9 +123,9 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       const currentRate = bcvRate || 0;
       const amountBs = currentRate ? amountUsd * currentRate : 0;
 
-      const ext = proofFile.name.split(".").pop();
+      const ext = fileToUpload.name.split(".").pop();
       const filePath = `${userId}/${auctionId}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(filePath, proofFile);
+      const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(filePath, fileToUpload);
       if (uploadError) throw uploadError;
 
       const { error: insertError } = await supabase.from("payment_proofs").insert({
@@ -148,6 +152,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
       toast({ title: "¡Comprobante enviado!", description: "Tu pago será verificado pronto." });
       setReference("");
       setProofFile(null);
+      setProofFileName(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       fetchExistingProof();
 
       // Notify dealer via email (fire-and-forget)
@@ -362,23 +368,32 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground dark:text-white">Imagen / Captura del Comprobante *</label>
-            <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5 overflow-hidden">
+            <div className="border border-border rounded-xl p-3 bg-secondary/10 dark:bg-white/5 overflow-hidden space-y-2">
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*,application/pdf"
-                className="block w-full text-sm text-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                className="block w-full text-sm text-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-accent file:text-accent-foreground hover:file:bg-accent/90 cursor-pointer"
                 onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    setProofFile(e.target.files[0]);
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setProofFile(file);
+                    setProofFileName(file.name);
                   }
                 }}
               />
+              {/* Show selected filename even if state reset (Android bug resilience) */}
+              {(proofFileName || proofFile?.name) && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                  ✓ {proofFileName || proofFile?.name}
+                </p>
+              )}
             </div>
           </div>
 
           <Button
             onClick={handleSubmit}
-            disabled={submitting || !proofFile}
+            disabled={submitting || (!proofFile && !fileInputRef.current?.files?.length)}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black rounded-xl h-11 text-sm shadow-md"
           >
             {submitting
