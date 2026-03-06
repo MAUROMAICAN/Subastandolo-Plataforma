@@ -127,15 +127,20 @@ serve(async (req) => {
                         body: JSON.stringify({
                             message: {
                                 token: fcmToken,
-                                // DATA-ONLY: No 'notification' block.
-                                // When 'notification' is present, Android OS intercepts
-                                // the message and shows it with the DEFAULT channel,
-                                // ignoring channel_id, custom sound, and vibration.
-                                // With data-only, Capacitor's FCM plugin receives it
-                                // and displays via the correct versioned channel (v3)
-                                // which has sound + vibration configured in MainActivity.
+                                // Include top-level notification for standard display
+                                notification: {
+                                    title,
+                                    body: message,
+                                },
                                 android: {
-                                    priority: "high",           // Wake device from Doze
+                                    priority: "high",
+                                    // Specify channel_id in android.notification so OS uses custom sound/vibration
+                                    notification: {
+                                        channel_id: channelId,
+                                        sound: sound,
+                                        default_sound: false,
+                                        default_vibrate_timings: false,
+                                    },
                                     data: {
                                         title,
                                         body: message,
@@ -144,9 +149,6 @@ serve(async (req) => {
                                         sound,
                                         channel_id: channelId,
                                         vibrate: vibration.join(","),
-                                    },
-                                    fcm_options: {
-                                        analytics_label: type || "admin",
                                     },
                                 },
                                 apns: {

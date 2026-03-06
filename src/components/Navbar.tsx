@@ -151,7 +151,9 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
       </div>
 
       {/* Announcement Ticker */}
-      <AnnouncementTicker message={getSetting("announcement_bar", "")} />
+      <div className="hidden md:block">
+        <AnnouncementTicker message={getSetting("announcement_bar", "")} />
+      </div>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
