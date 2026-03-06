@@ -946,7 +946,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => { setView("register-details"); setValidationError(null); setPassword(""); }}
-                  className="w-full h-14 bg-white/5 border border-white/15 text-white/80 font-bold rounded-2xl text-sm tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-white/10"
+                  className="w-full h-14 bg-white/8 border border-white/30 text-white font-black rounded-2xl text-sm tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-white/15 hover:border-white/50"
                 >
                   Registrarme
                 </button>
