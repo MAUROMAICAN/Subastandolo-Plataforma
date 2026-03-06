@@ -11,10 +11,10 @@
   <meta name="google-site-verification" content="iXD3UXHlBEeFLBrn7DQRhCmqCcDyEXZ1eBz0z_ghM0Q" />
 
   <!-- PWA -->
-  <meta name="theme-color" content="#054594" />
+  <meta name="theme-color" content="#1a1a2e" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="SUBASTANDOLO" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
@@ -42,7 +42,24 @@
     content="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!">
 </head>
 
-<body style="margin: 0;">
+<body>
+  <!-- Splash: fondo oscuro inmediato antes de que React hidrate, evita flash de contenido viejo -->
+  <style>
+    html,
+    body {
+      background-color: #1a1a2e;
+      margin: 0;
+      padding: 0;
+    }
+
+    #root:empty::before {
+      content: '';
+      display: block;
+      width: 100%;
+      min-height: 100svh;
+      background-color: #1a1a2e;
+    }
+  </style>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
   <script>

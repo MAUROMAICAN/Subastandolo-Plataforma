@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => ({
         short_name: "SUBASTANDOLO",
         description: "Plataforma de subastas online SUBASTANDOLO",
         theme_color: "#1a1a2e",
-        background_color: "#ffffff",
+        background_color: "#1a1a2e",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
