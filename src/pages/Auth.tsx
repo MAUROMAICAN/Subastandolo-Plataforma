@@ -40,7 +40,12 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [cedula, setCedula] = useState("");
   const [phone, setPhone] = useState("");
+  const [estado, setEstado] = useState("");
+  const [ciudad, setCiudad] = useState("");
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -760,7 +765,7 @@ const Auth = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${view === "login-email" ? "bg-brand-dark" : "bg-background"}`}>
+    <div className="min-h-screen flex flex-col bg-brand-dark">
       {import.meta.env.DEV && (
         <div className="bg-blue-500/10 border-b border-blue-500/20 p-3 text-center">
           <p className="text-xs text-blue-800 dark:text-blue-400 mb-2 font-medium">Modo de Pruebas Local Detectado</p>
@@ -785,24 +790,24 @@ const Auth = () => {
           {/* ─────────────────────────────────── */}
           {view === "welcome-back" && (
             <div className="animate-in fade-in duration-300">
-              {/* Avatar / illustration */}
+              {/* Avatar */}
               <div className="flex flex-col items-center mb-10">
-                <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-primary/10 bg-muted mb-5 shadow-lg">
+                <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-brand-lime/15 bg-white/5 mb-5 shadow-lg">
                   {rememberedAvatar ? (
                     <img src={rememberedAvatar} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                      <User className="h-12 w-12 text-primary/40" />
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-lime/20 to-brand-lime/5">
+                      <User className="h-12 w-12 text-brand-lime/40" />
                     </div>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-muted-foreground tracking-widest uppercase mb-1">
+                <p className="text-sm font-semibold text-white/40 tracking-widest uppercase mb-1">
                   {getGreeting()},
                 </p>
-                <h2 className="text-4xl font-black text-foreground tracking-tight text-center">
+                <h2 className="text-4xl font-black text-white tracking-tight text-center">
                   {rememberedName || "Usuario"}!
                 </h2>
-                <p className="text-sm text-muted-foreground mt-2 font-medium text-center">{maskEmail(rememberedEmail)}</p>
+                <p className="text-sm text-white/30 mt-2 font-medium text-center">{maskEmail(rememberedEmail)}</p>
               </div>
 
               {/* Buttons */}
@@ -810,7 +815,6 @@ const Auth = () => {
                 <Button
                   onClick={() => {
                     setEmail(rememberedEmail);
-                    // If biometric available & enabled, try biometric first
                     if (biometricEnabled && biometricAvailable && !biometricChecking) {
                       autoPromptFiredRef.current = true;
                       void handleBiometricLogin();
@@ -818,7 +822,7 @@ const Auth = () => {
                       setView("password");
                     }
                   }}
-                  className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-2xl text-base tracking-wide shadow-lg active:scale-[0.98] transition-all"
+                  className="w-full h-14 bg-brand-lime text-brand-dark hover:bg-brand-lime/90 font-bold rounded-2xl text-base tracking-wide shadow-lg shadow-brand-lime/20 active:scale-[0.98] transition-all"
                 >
                   {biometricEnabled && !biometricFailed ? (
                     <><Fingerprint className="h-5 w-5 mr-2" />Ingresar con {biometryLabel}</>
@@ -827,14 +831,10 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (biometricEnabled && biometricAvailable && !biometricChecking && !biometricFailed) {
-                      setView("password");
-                    }
-                    // else fall back to password directly
                     setView("password");
                     setEmail(rememberedEmail);
                   }}
-                  className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors py-2"
+                  className="text-sm font-semibold text-white/40 hover:text-white/70 transition-colors py-2"
                 >
                   Usar contraseña
                 </button>
@@ -851,7 +851,7 @@ const Auth = () => {
                     localStorage.removeItem(BIOMETRIC_ATTEMPTS_KEY);
                     setView("login-email");
                   }}
-                  className="block w-full text-center text-xs font-semibold text-muted-foreground/60 hover:text-muted-foreground transition-colors py-1"
+                  className="block w-full text-center text-xs font-semibold text-white/25 hover:text-white/50 transition-colors py-1"
                 >
                   Este no es mi correo
                 </button>
@@ -880,9 +880,8 @@ const Auth = () => {
 
               {/* ── Línea decorativa ── */}
               <div className="flex items-center gap-3 mb-8">
-                <div className="flex-1 h-px bg-white/8" />
-                <div className="w-1.5 h-1.5 rounded-full bg-brand-lime/40" />
-                <div className="flex-1 h-px bg-white/8" />
+                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-white/10" />
               </div>
 
               {/* ── Formulario ── */}
@@ -901,7 +900,7 @@ const Auth = () => {
                 className="space-y-3"
               >
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-brand-lime transition-colors" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
                   <input
                     type="email"
                     placeholder="correo@ejemplo.com"
@@ -922,18 +921,18 @@ const Auth = () => {
                   {loading ? (
                     <><RefreshCw className="h-4 w-4 animate-spin" /> Verificando...</>
                   ) : (
-                    <>Continuar <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg></>
+                    <>Ingresar <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg></>
                   )}
                 </button>
-              </form>
 
-              {/* ── Footer legal ── */}
-              <p className="text-white/20 text-[10px] text-center mt-6 leading-relaxed px-4">
-                Al continuar aceptas nuestros{" "}
-                <a href="/terminos" className="text-white/40 hover:text-brand-lime transition-colors">Términos de uso</a>{" "}
-                y{" "}
-                <a href="/privacidad" className="text-white/40 hover:text-brand-lime transition-colors">Política de privacidad</a>
-              </p>
+                <button
+                  type="button"
+                  onClick={() => { setView("register-details"); setValidationError(null); setPassword(""); }}
+                  className="w-full h-14 bg-white/5 border border-white/15 text-white/80 font-bold rounded-2xl text-sm tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-white/10"
+                >
+                  Registrarme
+                </button>
+              </form>
             </div>
           )}
 
@@ -944,26 +943,31 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <button
                 onClick={() => setView(rememberedEmail ? "welcome-back" : "login-email")}
-                className="mb-6 p-2 -ml-2 rounded-full hover:bg-muted/50 text-muted-foreground transition-colors"
+                className="mb-6 p-2 -ml-2 rounded-full hover:bg-white/10 text-white/60 transition-colors"
                 aria-label="Volver"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
 
-              <div className="mb-8 text-center">
-                <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">
-                  Ingresa tu contraseña
-                </h2>
-                <p className="text-sm font-medium text-muted-foreground mt-2">{maskEmail(email)}</p>
+              {/* Logo */}
+              <div className="flex justify-center mb-6">
+                <img src="/logo_letras.svg" alt="Subastándolo" className="h-9 w-auto" />
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="mb-8 text-center">
+                <h2 className="text-2xl font-black text-white tracking-tight leading-tight">
+                  Ingresa tu contraseña
+                </h2>
+                <p className="text-sm font-medium text-white/40 mt-2">{maskEmail(email)}</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="relative">
                   <PasswordInput
                     placeholder="Contraseña"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 rounded-2xl border border-border/50 bg-muted/20 pl-4 pr-12 text-base font-medium focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all"
+                    className="h-14 rounded-2xl border border-white/10 bg-white/5 pl-4 pr-12 text-white placeholder:text-white/20 text-sm font-medium focus-visible:ring-1 focus-visible:ring-brand-lime/50 focus-visible:border-brand-lime/30 transition-all"
                     required
                     minLength={6}
                     autoComplete="current-password"
@@ -972,72 +976,69 @@ const Auth = () => {
                 </div>
 
                 {loginAttempts > 0 && !isLocked && (
-                  <p className="text-[11px] text-destructive/80 pl-1">
+                  <p className="text-[11px] text-red-400 pl-1">
                     Intento {loginAttempts}/{MAX_LOGIN_ATTEMPTS}
                   </p>
                 )}
 
                 {/* ── Biometric enrollment checkbox ── */}
                 {biometricAvailable && !biometricChecking && !biometricEnabled && (
-                  <div
-                    className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4"
-                  >
+                  <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-2xl p-4">
                     <Checkbox
                       id="enable-biometric"
                       checked={enableBiometricOnLogin}
                       onCheckedChange={(checked) => setEnableBiometricOnLogin(checked === true)}
                       className="mt-0.5 shrink-0"
                     />
-                    <label htmlFor="enable-biometric" className="text-sm text-foreground/80 font-medium leading-snug cursor-pointer select-none">
+                    <label htmlFor="enable-biometric" className="text-sm text-white/70 font-medium leading-snug cursor-pointer select-none">
                       <span className="flex items-center gap-1.5 mb-0.5">
-                        <Fingerprint className="h-4 w-4 text-primary" />
+                        <Fingerprint className="h-4 w-4 text-brand-lime" />
                         Iniciar sesión con {biometryLabel}
                       </span>
-                      <span className="text-xs text-muted-foreground font-normal">
+                      <span className="text-xs text-white/40 font-normal">
                         La próxima vez entrarás sin escribir tu contraseña.
                       </span>
                     </label>
                   </div>
                 )}
 
-                {/* Already biometric enabled hint */}
                 {biometricEnabled && !biometricFailed && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground pl-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                    <span>{biometryLabel} activa — <button type="button" className="text-primary hover:underline" onClick={() => setView("welcome-back")}>usar biometría</button></span>
+                  <div className="flex items-center gap-2 text-xs text-white/40 pl-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-brand-lime shrink-0" />
+                    <span>{biometryLabel} activa — <button type="button" className="text-brand-lime hover:underline" onClick={() => setView("welcome-back")}>usar biometría</button></span>
                   </div>
                 )}
 
                 {biometricFailed && (
-                  <div className="flex items-center gap-2 text-xs text-destructive/80 pl-1">
+                  <div className="flex items-center gap-2 text-xs text-red-400 pl-1">
                     <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-                    <span>Biometría bloqueada por 3 intentos. Ingresa tu contraseña.</span>
+                    <span>Biometría bloqueada. Ingresa tu contraseña.</span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center px-1 pt-1">
-                  <button type="button" onClick={() => setView("resend")} className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors">
+                  <button type="button" onClick={() => setView("resend")} className="text-xs font-semibold text-white/40 hover:text-white/70 transition-colors">
                     ¿No verificaste el correo?
                   </button>
-                  <button type="button" onClick={() => setView("forgot")} className="text-xs font-semibold text-primary hover:underline">
+                  <button type="button" onClick={() => setView("forgot")} className="text-xs font-semibold text-brand-lime hover:underline">
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>
 
                 {validationError && (
-                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-xs font-medium text-destructive">{validationError}</p>
+                  <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <ShieldAlert className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                    <p className="text-xs font-medium text-red-400">{validationError}</p>
                   </div>
                 )}
 
-                <Button
+                <button
                   type="submit"
-                  className="w-full h-14 bg-zinc-800 text-white hover:bg-zinc-700 font-bold rounded-2xl text-base tracking-wide shadow active:scale-[0.98] transition-all disabled:opacity-40"
+                  className="w-full h-14 bg-brand-lime text-brand-dark font-black rounded-2xl text-sm tracking-wide shadow-lg shadow-brand-lime/20 active:scale-[0.98] transition-all disabled:opacity-40 flex items-center justify-center"
                   disabled={loading || isLocked || password.length < 6}
                 >
-                  {loading ? "Ingresando..." : "Entrar"}
-                </Button>
+                  {loading ? "Ingresando..." : "Ingresar"}
+                </button>
               </form>
             </div>
           )}
@@ -1104,35 +1105,70 @@ const Auth = () => {
           {/* STEP 4: REGISTER DETAILS            */}
           {/* ─────────────────────────────────── */}
           {view === "register-details" && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 pb-4">
+              {/* Back */}
               <button
-                onClick={() => setView("register-email")}
-                className="mb-6 p-2 -ml-2 rounded-full hover:bg-muted/50 text-muted-foreground transition-colors"
+                onClick={() => setView("login-email")}
+                className="mb-4 p-2 -ml-2 rounded-full hover:bg-white/10 text-white/60 transition-colors"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
-              <div className="mb-6 text-center">
-                <h2 className="text-3xl font-black text-foreground tracking-tight">Casi listo</h2>
-                <p className="text-xs font-semibold text-primary/70 mt-1">Completa tus datos</p>
-                <p className="text-sm font-medium text-muted-foreground mt-1">{maskEmail(email)}</p>
+
+              {/* Logo */}
+              <div className="flex justify-center mb-4">
+                <img src="/logo_letras.svg" alt="Subastándolo" className="h-9 w-auto" />
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
-                  <Input
-                    placeholder="Tu nombre completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-14 rounded-2xl border border-border/50 bg-muted/20 pl-12 text-base font-medium focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
+              <div className="mb-5 text-center">
+                <p className="text-brand-lime/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-1">Nuevo usuario</p>
+                <h2 className="text-xl font-black text-white tracking-tight">Crea tu cuenta</h2>
+                <p className="text-xs text-white/30 mt-1">{email}</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-2.5">
+
+                {/* Nombres */}
+                <div className="relative group">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
+                  <input
+                    placeholder="Nombres"
+                    value={firstName}
+                    onChange={(e) => { setFirstName(e.target.value); setFullName(`${e.target.value} ${lastName}`.trim()); }}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
                     required
                     autoFocus
                   />
                 </div>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
-                  <Input
-                    placeholder="Teléfono móvil"
+
+                {/* Apellidos */}
+                <div className="relative group">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
+                  <input
+                    placeholder="Apellidos"
+                    value={lastName}
+                    onChange={(e) => { setLastName(e.target.value); setFullName(`${firstName} ${e.target.value}`.trim()); }}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                    required
+                  />
+                </div>
+
+                {/* Cédula */}
+                <div className="relative group">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" strokeWidth="2" /><path d="M16 10h2M16 14h2M6 10h6M6 14h4" strokeWidth="2" strokeLinecap="round" /></svg>
+                  <input
+                    placeholder="Cédula (ej. 12345678)"
+                    value={cedula}
+                    onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                    inputMode="numeric"
+                  />
+                </div>
+
+                {/* Teléfono */}
+                <div className="relative group">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
+                  <input
+                    placeholder="Teléfono (ej. 0412-1234567)"
                     value={phone}
                     onChange={(e) => {
                       let val = e.target.value.replace(/[^0-9+\-\s]/g, "");
@@ -1141,50 +1177,80 @@ const Auth = () => {
                       else if (digits.startsWith("580")) val = "+58" + digits.slice(3);
                       setPhone(val);
                     }}
-                    className="h-14 rounded-2xl border border-border/50 bg-muted/20 pl-12 text-base font-medium focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                    inputMode="tel"
                   />
                 </div>
+
+                {/* Estado */}
+                <div className="relative group">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <select
+                    value={estado}
+                    onChange={(e) => { setEstado(e.target.value); setCiudad(""); }}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white text-sm font-medium pl-10 pr-4 appearance-none transition-all"
+                    style={{ colorScheme: "dark" }}
+                  >
+                    <option value="" className="bg-[#1a1a2e] text-white/50">Estado</option>
+                    {["Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", "Vargas", "Yaracuy", "Zulia"].map(e => (
+                      <option key={e} value={e} className="bg-[#1a1a2e] text-white">{e}</option>
+                    ))}
+                  </select>
+                  <svg className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+
+                {/* Ciudad */}
+                <div className="relative group">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  <input
+                    placeholder="Ciudad / Municipio"
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                  />
+                </div>
+
+                {/* Contraseña */}
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <PasswordInput
-                    placeholder="Crea una contraseña"
+                    placeholder="Crea una contraseña (mín. 6 car.)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 rounded-2xl border border-border/50 bg-muted/20 pl-12 pr-12 text-base font-medium focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
+                    className="h-12 rounded-xl border border-white/10 bg-white/5 pl-10 pr-12 text-white placeholder:text-white/25 text-sm font-medium focus-visible:ring-1 focus-visible:ring-brand-lime/50 focus-visible:border-brand-lime/30 transition-all"
                     required
                     minLength={6}
                     autoComplete="new-password"
                   />
                 </div>
 
-                <div
-                  className="flex items-start gap-3 bg-muted/30 border border-border/40 rounded-2xl p-4"
-                >
+                {/* Términos */}
+                <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-3.5">
                   <Checkbox
                     id="terms"
                     checked={termsAccepted}
                     onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                     className="mt-0.5 shrink-0"
                   />
-                  <label htmlFor="terms" className="text-xs text-muted-foreground font-medium leading-relaxed cursor-pointer">
-                    Acepto los <Link to="/terminos" className="text-primary hover:underline font-bold" target="_blank">Términos y Condiciones</Link>
+                  <label htmlFor="terms" className="text-xs text-white/50 font-medium leading-relaxed cursor-pointer">
+                    Acepto los <Link to="/terminos" className="text-brand-lime hover:underline font-bold" target="_blank">Términos y Condiciones</Link>
                   </label>
                 </div>
 
                 {validationError && (
-                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-xs font-medium text-destructive">{validationError}</p>
+                  <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <ShieldAlert className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                    <p className="text-xs font-medium text-red-400">{validationError}</p>
                   </div>
                 )}
 
-                <Button
+                <button
                   type="submit"
-                  className="w-full h-14 bg-zinc-800 text-white hover:bg-zinc-700 font-bold rounded-2xl text-base tracking-wide shadow active:scale-[0.98] transition-all disabled:opacity-40"
-                  disabled={loading || !termsAccepted || password.length < 6 || !fullName.trim()}
+                  className="w-full h-13 py-3 bg-brand-lime text-brand-dark font-black rounded-xl text-sm tracking-wide shadow-lg shadow-brand-lime/20 active:scale-[0.98] transition-all disabled:opacity-40 flex items-center justify-center"
+                  disabled={loading || !termsAccepted || password.length < 6 || !firstName.trim() || !lastName.trim()}
                 >
-                  {loading ? "Creando..." : "Finalizar registro"}
-                </Button>
+                  {loading ? <><RefreshCw className="h-4 w-4 animate-spin mr-2" /> Creando cuenta...</> : "Crear cuenta"}
+                </button>
               </form>
             </div>
           )}
@@ -1192,22 +1258,14 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* ── Bottom toggle (login-email / register-email) ── */}
-      {(view === "login-email" || view === "register-email") && (
-        <div className="pb-8 pt-4 text-center px-6 border-t border-border/50">
+      {/* ── Bottom toggle visible solo en register-email ── */}
+      {view === "register-email" && (
+        <div className="pb-8 pt-4 text-center px-6 border-t border-white/10">
           <button
-            onClick={() => {
-              setView(view === "login-email" ? "register-email" : "login-email");
-              setValidationError(null);
-              setPassword("");
-            }}
-            className="flex items-center justify-center gap-2 mx-auto text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => { setView("login-email"); setValidationError(null); setPassword(""); }}
+            className="text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
           >
-            {view === "login-email" ? (
-              <>¿Primera vez aquí? <span className="text-primary font-bold ml-1">Crea tu cuenta ahora</span></>
-            ) : (
-              <>¿Ya tienes cuenta? <span className="text-primary font-bold ml-1">Inicia sesión</span></>
-            )}
+            ¿Ya tienes cuenta? <span className="text-brand-lime font-bold ml-1">Inicia sesión</span>
           </button>
         </div>
       )}
