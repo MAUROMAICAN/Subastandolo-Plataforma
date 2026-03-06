@@ -7,36 +7,34 @@ import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+
+    // Use versioned channel IDs — increment version suffix to force recreation
+    // when sound/vibration settings change (Android caches channels permanently)
+    static final String CH_BIDS = "subastandolo_bids_v3";
+    static final String CH_WINS = "subastandolo_wins_v3";
+    static final String CH_ADMIN = "subastandolo_admin_v3";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Fondo oscuro ANTES de que cargue el WebView (elimina flash blanco / página
-        // vieja)
         if (getWindow() != null) {
-            getWindow().setBackgroundDrawable(null);
             getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
         }
-
         super.onCreate(savedInstanceState);
-
-        // Limpiar caché del WebView para evitar rastros de contenido viejo
         if (getBridge() != null && getBridge().getWebView() != null) {
             WebView wv = getBridge().getWebView();
             wv.clearCache(true);
             wv.setBackgroundColor(Color.parseColor("#1a1a2e"));
         }
-
         createNotificationChannels();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // Asegurarse de que el fondo siga siendo oscuro al volver a la app
         if (getWindow() != null) {
             getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
         }
@@ -58,35 +56,43 @@ public class MainActivity extends BridgeActivity {
         // ── Canal 1: Pujas (sobrepuja) ──
         Uri soundBid = Uri.parse("android.resource://" + getPackageName() + "/raw/sobrepuja");
         NotificationChannel bidsChannel = new NotificationChannel(
-                "subastandolo_bids",
+                CH_BIDS,
                 "Pujas en Subastas",
                 NotificationManager.IMPORTANCE_HIGH);
         bidsChannel.setDescription("Avisos cuando alguien supera tu puja");
         bidsChannel.setSound(soundBid, audioAttrs);
         bidsChannel.enableVibration(true);
         bidsChannel.setVibrationPattern(new long[] { 0, 200, 100, 200, 100, 400 });
+        bidsChannel.enableLights(true);
+        bidsChannel.setLightColor(Color.parseColor("#c8f135"));
         nm.createNotificationChannel(bidsChannel);
 
         // ── Canal 2: Victorias (campanita) ──
         Uri soundWin = Uri.parse("android.resource://" + getPackageName() + "/raw/campanita");
         NotificationChannel winsChannel = new NotificationChannel(
-                "subastandolo_wins",
+                CH_WINS,
                 "Subastas Ganadas",
                 NotificationManager.IMPORTANCE_HIGH);
         winsChannel.setDescription("Cuando ganas una subasta o confirman tu pago");
         winsChannel.setSound(soundWin, audioAttrs);
         winsChannel.enableVibration(true);
         winsChannel.setVibrationPattern(new long[] { 0, 100, 50, 100, 50, 600 });
+        winsChannel.enableLights(true);
+        winsChannel.setLightColor(Color.parseColor("#c8f135"));
         nm.createNotificationChannel(winsChannel);
 
         // ── Canal 3: Admin / Avisos (administrador) ──
         Uri soundAdmin = Uri.parse("android.resource://" + getPackageName() + "/raw/administrador");
         NotificationChannel adminChannel = new NotificationChannel(
-                "subastandolo_admin",
+                CH_ADMIN,
                 "Avisos del Sistema",
-                NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationManager.IMPORTANCE_HIGH);
         adminChannel.setDescription("Anuncios, promociones y avisos del equipo de Subastándolo");
         adminChannel.setSound(soundAdmin, audioAttrs);
+        adminChannel.enableVibration(true);
+        adminChannel.setVibrationPattern(new long[] { 0, 150, 100, 300 });
+        adminChannel.enableLights(true);
+        adminChannel.setLightColor(Color.parseColor("#c8f135"));
         nm.createNotificationChannel(adminChannel);
     }
 }

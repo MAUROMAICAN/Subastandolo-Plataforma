@@ -50,19 +50,20 @@ const vibrationMap: Record<string, number[]> = {
     urgent: [0, 300, 100, 300],
 };
 
-// Channel map per notification type (must match channels created in MainActivity.java)
+// Channel map per notification type — IDs MUST match channels in MainActivity.java
+// Increment the version suffix when channel settings change (Android caches channels)
 const channelMap: Record<string, string> = {
-    outbid: "subastandolo_bids",
-    new_bid: "subastandolo_bids",
-    auction_won: "subastandolo_wins",
-    auction_finalized: "subastandolo_wins",
-    payment_verified: "subastandolo_wins",
-    admin_custom: "subastandolo_admin",
-    admin_notification: "subastandolo_admin",
-    promo: "subastandolo_admin",
-    announcement: "subastandolo_admin",
-    urgent: "subastandolo_bids",
-    maintenance: "subastandolo_admin",
+    outbid: "subastandolo_bids_v3",
+    new_bid: "subastandolo_bids_v3",
+    auction_won: "subastandolo_wins_v3",
+    auction_finalized: "subastandolo_wins_v3",
+    payment_verified: "subastandolo_wins_v3",
+    admin_custom: "subastandolo_admin_v3",
+    admin_notification: "subastandolo_admin_v3",
+    promo: "subastandolo_admin_v3",
+    announcement: "subastandolo_admin_v3",
+    urgent: "subastandolo_bids_v3",
+    maintenance: "subastandolo_admin_v3",
 };
 
 serve(async (req) => {
