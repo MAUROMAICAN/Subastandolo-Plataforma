@@ -760,7 +760,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${view === "login-email" ? "bg-brand-dark" : "bg-background"}`}>
       {import.meta.env.DEV && (
         <div className="bg-blue-500/10 border-b border-blue-500/20 p-3 text-center">
           <p className="text-xs text-blue-800 dark:text-blue-400 mb-2 font-medium">Modo de Pruebas Local Detectado</p>
@@ -863,20 +863,38 @@ const Auth = () => {
           {/* STEP 1: ENTER EMAIL                 */}
           {/* ─────────────────────────────────── */}
           {view === "login-email" && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              {/* Logo */}
-              <div className="flex justify-center items-center mb-8">
-                <img src="/inicio_claro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto dark:hidden" />
-                <img src="/inicio_oscuro.svg" alt="Subastándolo" className="h-[125px] sm:h-[166px] w-auto hidden dark:block" />
+            <div className="animate-in fade-in duration-500">
+              {/* ── Hero: Logo grande centrado ── */}
+              <div className="flex flex-col items-center mb-10">
+                {/* Logo en círculo oscuro */}
+                <div className="relative mb-6">
+                  <div className="w-28 h-28 rounded-3xl bg-brand-lime/5 border border-brand-lime/20 flex items-center justify-center shadow-2xl">
+                    <img src="/logo_solo.svg" alt="Subastándolo" className="h-16 w-auto" />
+                  </div>
+                  {/* Dot indicador */}
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-brand-lime border-2 border-brand-dark flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-brand-dark" />
+                  </div>
+                </div>
+
+                {/* Tagline corporativa */}
+                <p className="text-brand-lime/50 text-[10px] font-bold tracking-[0.3em] uppercase mb-1">Plataforma de Subastas</p>
+                <h1 className="text-4xl font-black text-white tracking-tight text-center leading-none mb-2">
+                  Subast<span className="text-brand-lime">á</span>ndolo
+                </h1>
+                <p className="text-white/30 text-xs text-center font-medium">
+                  La forma inteligente de comprar y vender.
+                </p>
               </div>
 
-              <div className="mb-8 text-center">
-                <h2 className="text-3xl font-black text-foreground tracking-tight leading-tight">
-                  Inicia sesión en<br />Subastándolo
-                </h2>
-                <p className="text-sm text-muted-foreground mt-2">Ingresa tu correo para continuar.</p>
+              {/* ── Línea decorativa ── */}
+              <div className="flex items-center gap-3 mb-8">
+                <div className="flex-1 h-px bg-white/8" />
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-lime/40" />
+                <div className="flex-1 h-px bg-white/8" />
               </div>
 
+              {/* ── Formulario ── */}
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
@@ -889,29 +907,42 @@ const Auth = () => {
                   }
                   setLoading(false);
                 }}
-                className="space-y-4"
+                className="space-y-3"
               >
-                <div className="relative">
-                  <Input
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-brand-lime transition-colors" />
+                  <input
                     type="email"
-                    placeholder="tumail@ejemplo.com"
+                    placeholder="correo@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-14 rounded-2xl border border-border/50 bg-muted/20 pl-4 pr-4 text-base font-medium focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all"
+                    className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:ring-0 focus:outline-none text-white placeholder:text-white/20 pl-11 pr-4 text-sm font-medium transition-all"
                     required
                     autoComplete="username"
                     autoFocus
                   />
                 </div>
 
-                <Button
+                <button
                   type="submit"
                   disabled={!email.includes('@') || loading}
-                  className="w-full h-14 bg-zinc-800 text-white hover:bg-zinc-700 font-bold rounded-2xl text-base tracking-wide shadow active:scale-[0.98] transition-all disabled:opacity-40"
+                  className="w-full h-14 bg-brand-lime text-brand-dark font-black rounded-2xl text-sm tracking-wide shadow-lg shadow-brand-lime/20 active:scale-[0.98] transition-all disabled:opacity-40 flex items-center justify-center gap-2"
                 >
-                  {loading ? "Verificando..." : "Ingresar"}
-                </Button>
+                  {loading ? (
+                    <><RefreshCw className="h-4 w-4 animate-spin" /> Verificando...</>
+                  ) : (
+                    <>Continuar <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg></>
+                  )}
+                </button>
               </form>
+
+              {/* ── Footer legal ── */}
+              <p className="text-white/20 text-[10px] text-center mt-6 leading-relaxed px-4">
+                Al continuar aceptas nuestros{" "}
+                <a href="/terminos" className="text-white/40 hover:text-brand-lime transition-colors">Términos de uso</a>{" "}
+                y{" "}
+                <a href="/privacidad" className="text-white/40 hover:text-brand-lime transition-colors">Política de privacidad</a>
+              </p>
             </div>
           )}
 
