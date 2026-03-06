@@ -27,6 +27,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startingPrice, setStartingPrice] = useState("");
+  const [productCondition, setProductCondition] = useState("nuevo");
   const [auctionDuration, setAuctionDuration] = useState("24");
   const [startDate, setStartDate] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -160,6 +161,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
       image_url: uploadedUrls[0] || null,
       status: (autoApprove ? "active" : "pending") as any,
       requested_duration_hours: durationHours,
+      condition: productCondition,
     } as any).select().single();
 
     if (error) {
@@ -182,7 +184,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
     } else {
       toast({ title: "¡Producto enviado a revisión!", description: "Un administrador revisará tu publicación." });
     }
-    setTitle(""); setDescription(""); setStartingPrice(""); setAuctionDuration("24"); setStartDate(""); setImageFiles([]);
+    setTitle(""); setDescription(""); setStartingPrice(""); setProductCondition("nuevo"); setAuctionDuration("24"); setStartDate(""); setImageFiles([]);
 
     if (data) {
       // Push notification (existing)
@@ -277,6 +279,31 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           <div className="space-y-1.5">
             <Label className="text-xs">Precio Inicial ($) *</Label>
             <Input type="number" min="1" step="0.01" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} required placeholder="100" className="rounded-sm max-w-xs" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Estado del Producto *</Label>
+            <div className="grid grid-cols-3 gap-2 max-w-sm">
+              {([
+                { value: "nuevo", label: "Nuevo", emoji: "✨", desc: "Sin uso" },
+                { value: "usado_buen_estado", label: "Usado", emoji: "👍", desc: "Buen estado" },
+                { value: "para_reparar", label: "Para reparar", emoji: "🔧", desc: "Necesita reparación" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setProductCondition(opt.value)}
+                  className={`flex flex-col items-center gap-0.5 rounded-sm border p-2.5 text-center transition-all ${productCondition === opt.value
+                      ? "border-primary bg-primary/10 text-primary dark:border-[#A6E300] dark:bg-[#A6E300]/10 dark:text-[#A6E300]"
+                      : "border-border hover:border-primary/40 hover:bg-secondary/50"
+                    }`}
+                >
+                  <span className="text-lg leading-none">{opt.emoji}</span>
+                  <span className="text-[11px] font-bold leading-tight">{opt.label}</span>
+                  <span className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-1.5">

@@ -128,6 +128,20 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             {auction.title}
           </h3>
 
+          {/* Condition badge */}
+          {(auction as any).condition && (auction as any).condition !== 'nuevo' ? (
+            <span className={`mt-1 inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full w-fit border ${(auction as any).condition === 'usado_buen_estado'
+                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-400/30'
+                : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-400/30'
+              }`}>
+              {(auction as any).condition === 'usado_buen_estado' ? '👍 Usado' : '🔧 Para reparar'}
+            </span>
+          ) : (auction as any).condition === 'nuevo' ? (
+            <span className="mt-1 inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full w-fit border bg-green-500/10 text-green-600 dark:text-green-400 border-green-400/30">
+              ✨ Nuevo
+            </span>
+          ) : null}
+
           {/* Dealer Link */}
           {dealer && (
             <div
