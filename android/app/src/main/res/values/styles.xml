@@ -14,8 +14,8 @@
         <item name="windowNoTitle">true</item>
         <!-- Fondo oscuro brand-dark desde el primer frame, evita flash blanco -->
         <item name="android:windowBackground">@color/brandDark</item>
-        <item name="android:statusBarColor">@color/brandDark</item>
-        <item name="android:navigationBarColor">@color/brandDark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
 

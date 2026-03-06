@@ -134,9 +134,16 @@
     @apply border-border;
   }
 
-  body {
+  html,
+  body,
+  #root {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    /* Set the root background to our brand dark just in case Android pulls from html/body */
+    background-color: hsl(var(--nav-bg));
+  }
+
+  body {
     /* Safe-area padding on sides and bottom but NOT top —
        the Navbar header with position:sticky handles top safe-area */
     padding-bottom: env(safe-area-inset-bottom);

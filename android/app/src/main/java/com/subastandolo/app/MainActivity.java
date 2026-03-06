@@ -27,6 +27,10 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         if (getWindow() != null) {
             getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                getWindow().setStatusBarColor(Color.TRANSPARENT);
+                getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            }
         }
         super.onCreate(savedInstanceState);
         if (getBridge() != null && getBridge().getWebView() != null) {
