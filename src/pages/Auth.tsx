@@ -445,7 +445,7 @@ const Auth = () => {
     if (code.length < 6) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data: verifyData, error } = await supabase.auth.verifyOtp({
         email: sanitizeEmail(email),
         token: code,
         type: "email",
@@ -455,6 +455,23 @@ const Auth = () => {
         setOtpCode(Array(6).fill(""));
         setTimeout(() => otpRefs.current[0]?.focus(), 50);
       } else {
+        // OTP verificado — actualizar perfil con todos los datos del formulario
+        const userId = verifyData?.user?.id;
+        if (userId) {
+          const fullCedula = cedula ? `${cedulaPrefix}-${cedula}` : null;
+          // Esperar brevemente a que el trigger cree el perfil base
+          await new Promise(res => setTimeout(res, 800));
+          await supabase.from("profiles").upsert({
+            id: userId,
+            full_name: sanitizeText(`${firstName} ${lastName}`.trim(), 100) || sanitizeText(fullName, 100),
+            first_name: sanitizeText(firstName, 50) || undefined,
+            last_name: sanitizeText(lastName, 50) || undefined,
+            phone: sanitizePhone(phone) || undefined,
+            state: estado || undefined,
+            city: ciudad || undefined,
+            cedula_number: fullCedula || undefined,
+          }, { onConflict: "id" });
+        }
         toast({ title: "✅ ¡Cuenta verificada!", description: "Tu cuenta ha sido activada correctamente." });
         navigate("/mi-panel", { replace: true });
       }
