@@ -243,7 +243,7 @@ const Index = () => {
         )}
 
         {banners.length === 0 && (
-          <section className="bg-nav py-14 sm:rounded-xl sm:mx-4 sm:mt-3">
+          <section className="bg-brand-dark py-14 sm:rounded-xl sm:mx-4 sm:mt-3">
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-2xl sm:text-3xl font-heading font-black text-white mb-3">{siteName}</h2>
               <p className="text-white/50 mb-5 max-w-md mx-auto text-sm">{siteDescription}</p>
@@ -367,7 +367,7 @@ const Index = () => {
 
         {/* Dynamic sections */}
         {visibleSections.map(section => (
-          <section key={section.id} className={`py-12 ${section.section_type === "cta" ? "bg-nav text-white" : "bg-secondary/20"}`}>
+          <section key={section.id} className={`py-12 ${section.section_type === "cta" ? "bg-brand-dark text-white" : "bg-secondary/20"}`}>
             <div className="container mx-auto px-4 text-center max-w-xl">
               {section.title && <h2 className={`text-xl font-heading font-bold mb-3 ${section.section_type === "cta" ? "text-white" : ""}`}>{section.title}</h2>}
               {section.content && <p className={`text-sm ${section.section_type === "cta" ? "text-white/50 mb-5" : "text-muted-foreground"}`}>{section.content}</p>}

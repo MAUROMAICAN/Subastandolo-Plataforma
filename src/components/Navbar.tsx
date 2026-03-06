@@ -40,9 +40,9 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-[100] shadow-sm bg-nav-solid w-full">
+    <header className="sticky top-0 z-[100] shadow-sm bg-brand-dark text-white w-full">
       {/* Main Nav */}
-      <div className="bg-nav-solid overflow-x-hidden w-full" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <div className="bg-brand-dark w-full" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
           <Link to="/" className="flex items-center shrink-0">
             <img src={siteLogo} alt={siteName} className="h-8 sm:h-10 w-auto object-contain" />
@@ -120,7 +120,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
       </div>
 
       {/* Secondary Nav - Desktop */}
-      <div className="hidden lg:block bg-nav-solid border-t border-white/10">
+      <div className="hidden lg:block bg-brand-dark border-t border-white/10">
         <div className="container mx-auto px-4">
           <nav className="flex items-center gap-1 h-10 text-[13px]">
             <Link to="/" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Inicio</Link>
