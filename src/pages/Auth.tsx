@@ -370,7 +370,7 @@ const Auth = () => {
             if (userRoles.includes('dealer')) { navigate("/dealer", { replace: true }); return; }
           }
         } catch { /* ignore */ }
-        navigate("/mi-panel", { replace: true });
+        navigate("/", { replace: true });
       }
 
     } else if (view === "register-details") {
@@ -473,7 +473,7 @@ const Auth = () => {
           }, { onConflict: "id" });
         }
         toast({ title: "✅ ¡Cuenta verificada!", description: "Tu cuenta ha sido activada correctamente." });
-        navigate("/mi-panel", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch {
       toast({ title: "Error", description: "Error de conexión. Intenta de nuevo.", variant: "destructive" });

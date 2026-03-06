@@ -2,17 +2,44 @@ package com.subastandolo.app;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Fondo oscuro ANTES de que cargue el WebView (elimina flash blanco / página
+        // vieja)
+        if (getWindow() != null) {
+            getWindow().setBackgroundDrawable(null);
+            getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
+        }
+
         super.onCreate(savedInstanceState);
+
+        // Limpiar caché del WebView para evitar rastros de contenido viejo
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            WebView wv = getBridge().getWebView();
+            wv.clearCache(true);
+            wv.setBackgroundColor(Color.parseColor("#1a1a2e"));
+        }
+
         createNotificationChannels();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Asegurarse de que el fondo siga siendo oscuro al volver a la app
+        if (getWindow() != null) {
+            getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
+        }
     }
 
     private void createNotificationChannels() {
