@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -77,6 +77,29 @@ function PushNotificationInitializer() {
   return null;
 }
 
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+/** Initializes native status bar safely */
+function NativeStatusBarInitializer() {
+  useEffect(() => {
+    const initStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // Style.Dark = Light text (White) for dark background
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: '#1a1a2e' });
+          // Ensure webview sits below status bar so the background color is respected
+          await StatusBar.setOverlaysWebView({ overlay: false });
+        } catch (e) {
+          console.error("StatusBar config error:", e);
+        }
+      }
+    };
+    initStatusBar();
+  }, []);
+  return null;
+}
+
 /** Initializes real-time UI/audio notifications globally */
 function RealtimeNotificationInitializer() {
   useRealtimeNotifications();
@@ -124,6 +147,7 @@ const App = () => {
                 <AuthProvider>
                   <SiteProvider>
                     <SiteHead />
+                    <NativeStatusBarInitializer />
                     <PushNotificationInitializer />
                     <RealtimeNotificationInitializer />
                     <Suspense fallback={<PageLoader />}>
