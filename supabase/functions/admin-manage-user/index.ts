@@ -108,8 +108,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Prevent self-actions (except list_users)
-    if (userId === adminId && action !== 'list_users') {
+    // Prevent self-actions (except read-only queries)
+    const readOnlyActions = ['list_users', 'get_user_details', 'get_user_email'];
+    if (userId === adminId && !readOnlyActions.includes(action)) {
       return new Response(JSON.stringify({ error: 'Cannot modify your own account' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -188,16 +189,59 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'get_user_details') {
-      const { data: userData } = await adminClient.auth.admin.getUserById(userId);
-      const { data: profileData } = await adminClient.from('profiles').select('*').eq('id', userId).single();
-      const { data: rolesData } = await adminClient.from('user_roles').select('role').eq('user_id', userId);
-      const { data: dealerData } = await adminClient.from('dealer_verification').select('*').eq('user_id', userId).maybeSingle();
-      const { data: bidsData } = await adminClient.from('bids').select('id, amount, auction_id, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50);
-      const { data: wonAuctions } = await adminClient.from('auctions').select('id, title, current_price, status, end_time').eq('winner_id', userId).order('end_time', { ascending: false }).limit(20);
-      const { data: reviewsReceived } = await adminClient.from('reviews').select('id, rating, comment, review_type, created_at').eq('reviewed_id', userId).order('created_at', { ascending: false }).limit(20);
-      const { data: reviewsGiven } = await adminClient.from('reviews').select('id, rating, comment, review_type, created_at').eq('reviewer_id', userId).order('created_at', { ascending: false }).limit(20);
-      const { data: disputes } = await adminClient.from('disputes').select('id, status, category, created_at, resolution').or(`buyer_id.eq.${userId},dealer_id.eq.${userId}`).order('created_at', { ascending: false }).limit(20);
-      const { data: paymentProofs } = await adminClient.from('payment_proofs').select('id, amount_usd, status, created_at, auction_id').eq('buyer_id', userId).order('created_at', { ascending: false }).limit(20);
+      const [
+        userDataResult,
+        profileDataResult,
+        rolesDataResult,
+        dealerDataResult,
+        bidsDataResult,
+        wonAuctionsResult,
+        reviewsReceivedResult,
+        reviewsGivenResult,
+        disputesResult,
+        paymentProofsResult
+      ] = await Promise.allSettled([
+        adminClient.auth.admin.getUserById(userId),
+        adminClient.from('profiles').select('*').eq('id', userId).single(),
+        adminClient.from('user_roles').select('role').eq('user_id', userId),
+        adminClient.from('dealer_verification').select('*').eq('user_id', userId).maybeSingle(),
+        adminClient.from('bids').select('id, amount, auction_id, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
+        adminClient.from('auctions').select('id, title, current_price, status, end_time').eq('winner_id', userId).order('end_time', { ascending: false }).limit(20),
+        adminClient.from('reviews').select('id, rating, comment, review_type, created_at').eq('reviewed_id', userId).order('created_at', { ascending: false }).limit(20),
+        adminClient.from('reviews').select('id, rating, comment, review_type, created_at').eq('reviewer_id', userId).order('created_at', { ascending: false }).limit(20),
+        adminClient.from('disputes').select('id, status, category, created_at, resolution').or(`buyer_id.eq.${userId},dealer_id.eq.${userId}`).order('created_at', { ascending: false }).limit(20),
+        adminClient.from('payment_proofs').select('id, amount_usd, status, created_at, auction_id').eq('buyer_id', userId).order('created_at', { ascending: false }).limit(20)
+      ]);
+
+      const safeData = (result: any) => result.status === 'fulfilled' && !result.value.error ? result.value.data : null;
+      const getError = (result: any) => result.status === 'rejected' ? String(result.reason) : (result.value?.error ? result.value.error.message : null);
+
+      const errors = {
+        auth: getError(userDataResult),
+        profile: getError(profileDataResult),
+        roles: getError(rolesDataResult),
+        dealer: getError(dealerDataResult),
+        bids: getError(bidsDataResult),
+        won_auctions: getError(wonAuctionsResult),
+        reviews_received: getError(reviewsReceivedResult),
+        reviews_given: getError(reviewsGivenResult),
+        disputes: getError(disputesResult),
+        payment_proofs: getError(paymentProofsResult),
+      };
+
+      // if any error exists, print it
+      console.log('User details query errors:', JSON.stringify(errors));
+
+      const userData = safeData(userDataResult);
+      const profileData = safeData(profileDataResult);
+      const rolesData = safeData(rolesDataResult);
+      const dealerData = safeData(dealerDataResult);
+      const bidsData = safeData(bidsDataResult);
+      const wonAuctions = safeData(wonAuctionsResult);
+      const reviewsReceived = safeData(reviewsReceivedResult);
+      const reviewsGiven = safeData(reviewsGivenResult);
+      const disputes = safeData(disputesResult);
+      const paymentProofs = safeData(paymentProofsResult);
 
       return new Response(JSON.stringify({
         auth: {

@@ -350,18 +350,30 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
                                 <LockedField label="@Nombre de Usuario" value={profile?.username ? `@${profile.username}` : ""} />
                                 <LockedField label="Número de Cédula" value={profile?.cedula_number} icon={<CreditCard className="h-3 w-3" />} />
 
-                                {/* Cedula photo — only a confirmation, no preview for privacy */}
+                                {/* Cedula photo */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                                         <CreditCard className="h-3 w-3" /> Foto de Cédula
                                     </label>
-                                    <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border bg-secondary/30 dark:bg-white/5">
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 dark:text-[#A6E300]" />
-                                        <span className="text-sm text-muted-foreground">Foto cargada y verificada</span>
-                                        <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto" />
+                                    <div className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-secondary/30 dark:bg-white/5">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 dark:text-[#A6E300]" />
+                                            <span className="text-sm font-medium text-foreground">Foto cargada y verificada</span>
+                                            <Lock className="h-3 w-3 text-muted-foreground/50 ml-auto" />
+                                        </div>
+                                        {profile?.cedula_photo_url && (
+                                            <div className="mt-2 relative w-full max-w-xs mx-auto overflow-hidden rounded-lg border border-border/50">
+                                                <img
+                                                    src={profile.cedula_photo_url}
+                                                    alt="Mi Cédula"
+                                                    className="w-full object-cover max-h-48"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
+
                         )}
                     </Card>
                 </div>
