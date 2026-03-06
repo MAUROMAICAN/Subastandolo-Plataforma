@@ -67,6 +67,14 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
     const cedulaFileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
 
+    // ―― Duplicate validation state ――
+    const [usernameError, setUsernameError] = useState<string | null>(null);
+    const [phoneError, setPhoneError] = useState<string | null>(null);
+    const [checkingUsername, setCheckingUsername] = useState(false);
+    const [checkingPhone, setCheckingPhone] = useState(false);
+    const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const phoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // Collapsed/expand state for locked profile
     const [expanded, setExpanded] = useState(false);
 
@@ -87,6 +95,59 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
         setCedulaNumber(profile.cedula_number || "");
         setCedulaPhotoUrl(profile.cedula_photo_url || null);
     }, [profile]);
+
+    // ―― Real-time username duplicate check (debounce 600ms) ――
+    useEffect(() => {
+        if (!username.trim() || username.trim() === (profile?.username || "")) {
+            setUsernameError(null);
+            return;
+        }
+        setCheckingUsername(true);
+        if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current);
+        usernameDebounceRef.current = setTimeout(async () => {
+            try {
+                const { data } = await supabase.functions.invoke("validate-registration", {
+                    body: { username: username.trim(), currentUserId: user?.id },
+                });
+                if (data && !data.valid && data.errors?.includes("duplicate_username")) {
+                    setUsernameError("Este usuario ya está en uso");
+                } else {
+                    setUsernameError(null);
+                }
+            } catch {
+                setUsernameError(null);
+            }
+            setCheckingUsername(false);
+        }, 600);
+        return () => { if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current); };
+    }, [username, profile?.username, user?.id]);
+
+    // ―― Real-time phone duplicate check (debounce 600ms) ――
+    useEffect(() => {
+        const trimmedPhone = phone.trim();
+        if (!trimmedPhone || trimmedPhone === (profile?.phone || "")) {
+            setPhoneError(null);
+            return;
+        }
+        setCheckingPhone(true);
+        if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
+        phoneDebounceRef.current = setTimeout(async () => {
+            try {
+                const { data } = await supabase.functions.invoke("validate-registration", {
+                    body: { phone: trimmedPhone, currentUserId: user?.id },
+                });
+                if (data && !data.valid && data.errors?.includes("duplicate_phone")) {
+                    setPhoneError("Este teléfono ya está registrado en otra cuenta");
+                } else {
+                    setPhoneError(null);
+                }
+            } catch {
+                setPhoneError(null);
+            }
+            setCheckingPhone(false);
+        }, 600);
+        return () => { if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current); };
+    }, [phone, profile?.phone, user?.id]);
 
     const composedFullName = isLocked
         ? profile?.full_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(" ")
@@ -137,6 +198,11 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
 
         if (isLocked) {
             // Only update editable fields
+            if (phoneError) {
+                toast({ title: "❌ Teléfono no válido", description: phoneError, variant: "destructive" });
+                setUpdating(false);
+                return;
+            }
             const { error } = await supabase.from("profiles").update({
                 phone: phone.trim() || null,
                 city: city.trim() || null,
@@ -151,6 +217,12 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
                 refreshProfile();
             }
         } else {
+            if (usernameError || phoneError) {
+                toast({ title: "❌ Error de validación", description: usernameError || phoneError || "Corrige los errores antes de guardar.", variant: "destructive" });
+                setUpdating(false);
+                return;
+            }
+
             // Full update — new profile
             let finalCedulaUrl = cedulaPhotoUrl;
             if (cedulaFile) {
@@ -276,8 +348,10 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
                                         value={phone}
                                         onChange={e => setPhone(e.target.value)}
                                         placeholder="0412-0000000"
-                                        className="rounded-lg"
+                                        className={`rounded-lg ${phoneError ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
                                     />
+                                    {checkingPhone && <p className="text-[10px] text-muted-foreground">Verificando...</p>}
+                                    {phoneError && <p className="text-[10px] text-destructive font-medium">{phoneError}</p>}
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
@@ -310,7 +384,7 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
 
                         <Button
                             type="submit"
-                            disabled={updating}
+                            disabled={updating || !!phoneError || checkingPhone}
                             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm h-11"
                         >
                             {updating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Guardando...</> : "Guardar Cambios"}
@@ -411,17 +485,29 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
                                         value={username}
                                         onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
                                         placeholder="carlospro"
-                                        className="rounded-lg pl-7 font-mono"
+                                        className={`rounded-lg pl-7 font-mono ${usernameError ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
                                         maxLength={30}
                                     />
                                 </div>
+                                {checkingUsername && <p className="text-[10px] text-muted-foreground">Verificando disponibilidad...</p>}
+                                {usernameError && <p className="text-[10px] text-destructive font-medium">{usernameError}</p>}
+                                {!usernameError && !checkingUsername && username.trim() && username.trim() !== (profile?.username || "") && (
+                                    <p className="text-[10px] text-green-500 dark:text-[#A6E300] font-medium">✓ Usuario disponible</p>
+                                )}
                                 <p className="text-[10px] text-muted-foreground">Solo letras, números, puntos o guiones.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-medium text-muted-foreground">Teléfono</label>
-                                    <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412-0000000" className="rounded-lg" />
+                                    <Input
+                                        value={phone}
+                                        onChange={e => setPhone(e.target.value)}
+                                        placeholder="0412-0000000"
+                                        className={`rounded-lg ${phoneError ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
+                                    />
+                                    {checkingPhone && <p className="text-[10px] text-muted-foreground">Verificando...</p>}
+                                    {phoneError && <p className="text-[10px] text-destructive font-medium">{phoneError}</p>}
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
@@ -512,7 +598,7 @@ export default function ProfileView({ profile, user, refreshProfile, onBack }: P
 
                     <Button
                         type="submit"
-                        disabled={updating}
+                        disabled={updating || !!usernameError || !!phoneError || checkingUsername || checkingPhone}
                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm h-11"
                     >
                         {updating ? (

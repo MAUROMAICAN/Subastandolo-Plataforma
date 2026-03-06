@@ -10,9 +10,7 @@ const corsHeaders = {
 // Normalize Venezuelan phone numbers to a consistent format
 function normalizePhone(phone: string): string {
   if (!phone) return "";
-  // Remove all non-digit characters
   let digits = phone.replace(/\D/g, "");
-  // Handle Venezuelan formats: 0412... -> 58412..., 412... -> 58412...
   if (digits.startsWith("0") && digits.length === 11) {
     digits = "58" + digits.substring(1);
   } else if (digits.length === 10 && !digits.startsWith("58")) {
@@ -27,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, phone } = await req.json();
+    const { email, phone, username, currentUserId } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -35,7 +33,7 @@ serve(async (req) => {
 
     const errors: string[] = [];
 
-    // 1. Check blacklisted_records
+    // ── 1. Check blacklisted_records ──────────────────────────────────────
     if (email) {
       const { data: blacklistedEmail } = await supabase
         .from("blacklisted_records")
@@ -50,7 +48,6 @@ serve(async (req) => {
     const normalizedPhone = phone ? normalizePhone(phone.trim()) : "";
 
     if (normalizedPhone) {
-      // Check blacklist with normalized phone
       const { data: blacklistedPhone } = await supabase
         .from("blacklisted_records")
         .select("id, phone")
@@ -66,8 +63,8 @@ serve(async (req) => {
       }
     }
 
-    // 2. Check if phone already exists in profiles (normalized comparison)
-    // Allow duplication only if the existing owner is an admin
+    // ── 2. Check duplicate phone in profiles ──────────────────────────────
+    // Allow if the only matching profile is the currentUser themselves (for profile edits)
     if (normalizedPhone && !errors.includes("blacklisted_phone")) {
       const { data: existingPhones } = await supabase
         .from("profiles")
@@ -76,7 +73,9 @@ serve(async (req) => {
 
       if (existingPhones) {
         const matchingProfiles = existingPhones.filter(
-          (profile: { id: string; phone: string }) => profile.phone && normalizePhone(profile.phone) === normalizedPhone
+          (profile: { id: string; phone: string }) =>
+            profile.phone && normalizePhone(profile.phone) === normalizedPhone &&
+            profile.id !== currentUserId  // exclude self when editing profile
         );
 
         if (matchingProfiles.length > 0) {
@@ -96,6 +95,26 @@ serve(async (req) => {
             errors.push("duplicate_phone");
           }
         }
+      }
+    }
+
+    // ── 3. Check duplicate username in profiles ───────────────────────────
+    if (username && username.trim()) {
+      const cleanUsername = username.trim().toLowerCase();
+      let usernameQuery = supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", cleanUsername);
+
+      // Exclude self when editing profile
+      if (currentUserId) {
+        usernameQuery = usernameQuery.neq("id", currentUserId);
+      }
+
+      const { data: existingUsername } = await usernameQuery.limit(1);
+
+      if (existingUsername && existingUsername.length > 0) {
+        errors.push("duplicate_username");
       }
     }
 
