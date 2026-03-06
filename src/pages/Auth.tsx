@@ -32,6 +32,7 @@ type AuthView =
   | "register-details"
   | "forgot"
   | "resend"
+  | "verify-otp"
   | "signup-success";
 
 const Auth = () => {
@@ -46,6 +47,9 @@ const Auth = () => {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  // OTP state
+  const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
+  const otpRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
   // Biometric enrollment checkbox on password screen
   const [enableBiometricOnLogin, setEnableBiometricOnLogin] = useState(false);
   const [showBiometricSuccess, setShowBiometricSuccess] = useState(false);
@@ -382,7 +386,9 @@ const Auth = () => {
       if (error) {
         toast({ title: "Error al registrarse", description: translateAuthError(error.message), variant: "destructive" });
       } else {
-        setView("signup-success");
+        setOtpCode(Array(6).fill(""));
+        setView("verify-otp");
+        setResendCooldown(RESEND_COOLDOWN);
       }
     }
     setLoading(false);
@@ -421,6 +427,30 @@ const Auth = () => {
   const rememberedName = localStorage.getItem("last_login_name") || "";
   const rememberedAvatar = localStorage.getItem("last_login_avatar") || "";
 
+  // ── OTP verification ──
+  const handleVerifyOtp = async (code: string) => {
+    if (code.length < 6) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: sanitizeEmail(email),
+        token: code,
+        type: "email",
+      });
+      if (error) {
+        toast({ title: "Código incorrecto", description: "El código no es válido o ya expiró. Solicita uno nuevo.", variant: "destructive" });
+        setOtpCode(Array(6).fill(""));
+        setTimeout(() => otpRefs.current[0]?.focus(), 50);
+      } else {
+        toast({ title: "✅ ¡Cuenta verificada!", description: "Tu cuenta ha sido activada correctamente." });
+        navigate("/mi-panel", { replace: true });
+      }
+    } catch {
+      toast({ title: "Error", description: "Error de conexión. Intenta de nuevo.", variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
   // ── Biometric success screen ──
   if (showBiometricSuccess) {
     return (
@@ -444,7 +474,103 @@ const Auth = () => {
     );
   }
 
-  // ── Signup success ──
+  // ── OTP verify screen ──
+  if (view === "verify-otp") {
+    const fullCode = otpCode.join("");
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-dark px-6">
+        <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-400">
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-brand-lime/5 border border-brand-lime/20 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-brand-lime/10 flex items-center justify-center">
+                  <ShieldCheck className="h-9 w-9 text-brand-lime" />
+                </div>
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-brand-lime flex items-center justify-center">
+                <Mail className="h-3.5 w-3.5 text-brand-dark" />
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mb-8 space-y-2">
+            <p className="text-brand-lime/60 text-xs font-medium tracking-widest uppercase">Verificación de cuenta</p>
+            <h3 className="text-2xl font-heading font-bold text-white">Ingresa tu código</h3>
+            <p className="text-sm text-white/50 leading-relaxed">
+              Enviamos un código de 6 dígitos a<br />
+              <span className="text-brand-lime font-semibold">{email}</span>
+            </p>
+          </div>
+
+          {/* 6-digit PIN inputs */}
+          <div className="flex gap-3 justify-center mb-8">
+            {Array(6).fill(null).map((_, i) => (
+              <input
+                key={i}
+                ref={el => { otpRefs.current[i] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={otpCode[i]}
+                autoFocus={i === 0}
+                className={`w-12 h-14 text-center text-xl font-black rounded-2xl border-2 bg-white/5 text-white caret-brand-lime outline-none transition-all ${otpCode[i] ? "border-brand-lime" : "border-white/15 focus:border-brand-lime/60"
+                  }`}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, "").slice(-1);
+                  const newCode = [...otpCode];
+                  newCode[i] = val;
+                  setOtpCode(newCode);
+                  if (val && i < 5) otpRefs.current[i + 1]?.focus();
+                  if (newCode.every(d => d !== "") && newCode.join("").length === 6) {
+                    handleVerifyOtp(newCode.join(""));
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === "Backspace" && !otpCode[i] && i > 0) {
+                    otpRefs.current[i - 1]?.focus();
+                  }
+                }}
+                onPaste={e => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                  if (!pasted) return;
+                  const newCode = Array(6).fill("");
+                  pasted.split("").forEach((c, idx) => { newCode[idx] = c; });
+                  setOtpCode(newCode);
+                  const nextEmpty = newCode.findIndex(d => d === "");
+                  const focusIndex = nextEmpty === -1 ? 5 : nextEmpty;
+                  otpRefs.current[focusIndex]?.focus();
+                  if (pasted.length === 6) handleVerifyOtp(pasted);
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              disabled={loading || fullCode.length < 6}
+              onClick={() => handleVerifyOtp(fullCode)}
+              className="w-full h-14 flex items-center justify-center gap-2 bg-brand-lime text-brand-dark font-black rounded-2xl text-sm shadow-lg active:scale-[0.98] transition-all disabled:opacity-40"
+            >
+              {loading ? <><RefreshCw className="h-4 w-4 animate-spin" /> Verificando...</> : <><CircleCheck className="h-4 w-4" /> Verificar código</>}
+            </button>
+
+            <button
+              type="button"
+              disabled={resendCooldown > 0 || loading}
+              onClick={() => handleResendEmail("signup")}
+              className="w-full text-white/40 hover:text-white/70 text-sm py-3 transition-colors disabled:cursor-not-allowed"
+            >
+              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "No recibí el código — reenviar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Signup success (fallback) ──
   if (view === "signup-success") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-dark px-6">
