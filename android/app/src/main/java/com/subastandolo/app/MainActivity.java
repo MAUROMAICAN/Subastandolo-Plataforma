@@ -7,7 +7,6 @@ import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -25,9 +24,7 @@ public class MainActivity extends BridgeActivity {
         }
         super.onCreate(savedInstanceState);
         if (getBridge() != null && getBridge().getWebView() != null) {
-            WebView wv = getBridge().getWebView();
-            wv.clearCache(true);
-            wv.setBackgroundColor(Color.parseColor("#1a1a2e"));
+            getBridge().getWebView().setBackgroundColor(Color.parseColor("#1a1a2e"));
         }
         createNotificationChannels();
     }

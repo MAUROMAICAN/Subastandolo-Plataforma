@@ -40,7 +40,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-[100] shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <header className="sticky top-0 z-[100] shadow-sm">
       {/* Main Nav */}
       <div className="bg-nav overflow-x-hidden">
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
