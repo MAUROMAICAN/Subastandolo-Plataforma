@@ -3,8 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Mail, Phone, Calendar, Shield, Gavel, Star, AlertTriangle, CreditCard, MessageCircle } from "lucide-react";
+import { Loader2, Mail, Phone, Calendar, Shield, Gavel, Star, AlertTriangle, CreditCard, MapPin, User, IdCard, ExternalLink } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface UserExpedienteProps {
@@ -17,6 +16,7 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cedulaOpen, setCedulaOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -61,7 +61,16 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
           <div className="text-center py-8 text-destructive text-sm">{error}</div>
         ) : details ? (
           <div className="space-y-4 mt-2">
-            {/* Auth & Profile Info */}
+
+            {/* Suspended Banner */}
+            {details.auth?.banned && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
+                <p className="text-xs font-bold text-destructive dark:text-red-400">🚫 CUENTA SUSPENDIDA</p>
+                {details.auth.banned_until && <p className="text-[10px] text-destructive/80 dark:text-red-400">Hasta: {details.auth.banned_until}</p>}
+              </div>
+            )}
+
+            {/* Auth & Contact Info */}
             <div className="grid grid-cols-2 gap-3">
               <InfoCard icon={<Mail className="h-3.5 w-3.5" />} label="Correo electrónico" value={details.auth?.email || "—"} />
               <InfoCard icon={<Phone className="h-3.5 w-3.5" />} label="Teléfono" value={details.profile?.phone || "—"} />
@@ -72,13 +81,87 @@ const UserExpediente = ({ userId, userName, onClose }: UserExpedienteProps) => {
               {details.profile?.public_id && (
                 <InfoCard icon={<Shield className="h-3.5 w-3.5" />} label="ID Público" value={details.profile.public_id} />
               )}
-              {details.auth?.banned && (
-                <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 col-span-2">
-                  <p className="text-xs font-bold text-destructive dark:text-red-400">🚫 CUENTA SUSPENDIDA</p>
-                  {details.auth.banned_until && <p className="text-[10px] text-destructive/80 dark:text-red-400">Hasta: {details.auth.banned_until}</p>}
-                </div>
-              )}
             </div>
+
+            {/* Identity (Legal Name, Username, Location) */}
+            {(details.profile?.first_name || details.profile?.last_name || details.profile?.username || details.profile?.city || details.profile?.state) && (
+              <div className="border border-border rounded-md p-3 space-y-2">
+                <p className="text-[10px] font-bold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Identidad del Usuario
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(details.profile?.first_name || details.profile?.last_name) && (
+                    <div className="col-span-2 bg-secondary/30 rounded-md p-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Nombre legal</p>
+                      <p className="text-sm font-semibold">{[details.profile.first_name, details.profile.last_name].filter(Boolean).join(" ") || "—"}</p>
+                    </div>
+                  )}
+                  {details.profile?.username && (
+                    <div className="bg-secondary/30 rounded-md p-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Usuario (@)</p>
+                      <p className="text-sm font-medium">@{details.profile.username}</p>
+                    </div>
+                  )}
+                  {(details.profile?.city || details.profile?.state) && (
+                    <div className="bg-secondary/30 rounded-md p-2 flex items-start gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ubicación</p>
+                        <p className="text-sm font-medium">{[details.profile.city, details.profile.state].filter(Boolean).join(", ") || "—"}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Cedula / ID Document */}
+            {(details.profile?.cedula_number || details.profile?.cedula_photo_url) && (
+              <div className="border border-border rounded-md p-3 space-y-2">
+                <p className="text-[10px] font-bold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <IdCard className="h-3.5 w-3.5" /> Cédula de Identidad
+                </p>
+                <div className="flex items-start gap-3">
+                  {details.profile?.cedula_number && (
+                    <div className="bg-secondary/30 rounded-md p-2 flex-1">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Número de Cédula</p>
+                      <p className="text-sm font-bold tracking-widest">{details.profile.cedula_number}</p>
+                    </div>
+                  )}
+                  {details.profile?.cedula_photo_url && (
+                    <div className="flex flex-col items-center gap-1">
+                      <img
+                        src={details.profile.cedula_photo_url}
+                        alt="Foto de cédula"
+                        className="h-16 w-24 object-cover rounded border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setCedulaOpen(true)}
+                      />
+                      <a
+                        href={details.profile.cedula_photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-primary flex items-center gap-0.5 hover:underline"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" /> Ver completa
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Cedula Full-screen lightbox */}
+            {cedulaOpen && details.profile?.cedula_photo_url && (
+              <Dialog open={cedulaOpen} onOpenChange={setCedulaOpen}>
+                <DialogContent className="max-w-3xl p-2">
+                  <img
+                    src={details.profile.cedula_photo_url}
+                    alt="Foto de cédula completa"
+                    className="w-full rounded"
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
 
             {/* Dealer info */}
             {details.dealer && (
