@@ -16,7 +16,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       backgroundColor: '#1a1a2e',
-      style: 'DARK',
+      style: 'LIGHT',
       overlaysWebView: false,
     },
     PushNotifications: {
