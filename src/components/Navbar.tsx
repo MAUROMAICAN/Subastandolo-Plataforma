@@ -40,7 +40,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-[100] shadow-sm bg-brand-dark text-white w-full">
+    <header className="sticky top-0 z-[100] shadow-sm bg-brand-dark text-white w-full pt-7">
       {/* Main Nav */}
       <div className="bg-brand-dark w-full">
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
@@ -164,8 +164,8 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
 
           {user && (
             <Link to={isDealer || isAdmin ? "/dealer" : "/mi-panel"} className="flex items-center gap-3 px-3 py-2 bg-secondary/40 rounded-xl text-sm" onClick={() => setMobileMenuOpen(false)}>
-              <Avatar className="h-8 w-8 border border-border">
-                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ""} />}
+              <Avatar className="h-8 w-8 border border-border shrink-0">
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ""} className="object-cover" />}
                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
                   {(profile?.full_name || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>

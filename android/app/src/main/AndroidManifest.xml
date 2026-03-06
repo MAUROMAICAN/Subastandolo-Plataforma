@@ -49,14 +49,14 @@
         <!-- Default FCM notification metadata — MUST match MainActivity channel IDs -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:resource="@drawable/ic_notification" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/brandDark" />
         <!-- !! Keep in sync with MainActivity.CH_ADMIN !! -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="subastandolo_admin_v3" />
+            android:value="subastandolo_admin_v4" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

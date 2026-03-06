@@ -15,6 +15,26 @@ const mount = () => {
 // Mount app immediately, register SW in background
 mount();
 
+// On native Capacitor (Android/iOS), clear any stale Service Worker caches
+// that might serve old bundled content from previous builds
+if (
+  window.location.protocol === "capacitor:" ||
+  window.location.hostname === "localhost" ||
+  (navigator as any).standalone
+) {
+  // Unregister all SWs and clear caches on native to avoid stale content
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((r) => r.unregister());
+    });
+  }
+  if ("caches" in window) {
+    caches.keys().then((names) => {
+      names.forEach((name) => caches.delete(name));
+    });
+  }
+}
+
 import("virtual:pwa-register")
   .then(({ registerSW }) => {
     const updateSW = registerSW({

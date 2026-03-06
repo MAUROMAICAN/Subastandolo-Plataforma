@@ -85,11 +85,9 @@ function NativeStatusBarInitializer() {
     const initStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Style.Dark = Light text (White) for dark background
           await StatusBar.setStyle({ style: Style.Dark });
-          await StatusBar.setBackgroundColor({ color: '#1a1a2e' });
-          // Ensure webview sits below status bar so the background color is respected
-          await StatusBar.setOverlaysWebView({ overlay: false });
+          await StatusBar.setOverlaysWebView({ overlay: true });
+          await StatusBar.setBackgroundColor({ color: '#00000000' });
         } catch (e) {
           console.error("StatusBar config error:", e);
         }

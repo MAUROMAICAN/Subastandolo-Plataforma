@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { X } from "lucide-react";
+
+const AUTO_DISMISS_MS = 10_000; // 10 seconds
 
 interface Campaign {
   id: string;
   title: string;
   image_url: string;
   link_url: string | null;
+  target_user_ids: string[] | null;
 }
 
 const getViewportSize = () => {
@@ -30,22 +33,32 @@ const CampaignModal = () => {
   const [visible, setVisible] = useState(false);
   const [imageRatio, setImageRatio] = useState<number | null>(null);
   const [viewport, setViewport] = useState({ width: 390, height: 844 });
+  const [progress, setProgress] = useState(100);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pausedRef = useRef(false);
 
   const fetchActiveCampaign = useCallback(async () => {
     const nowIso = new Date().toISOString();
 
     const { data: campaigns } = await supabase
       .from("campaigns")
-      .select("id, title, image_url, link_url")
+      .select("id, title, image_url, link_url, target_user_ids")
       .eq("is_active", true)
       .lte("starts_at", nowIso)
       .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(5);
 
     if (!campaigns || campaigns.length === 0) return;
 
-    const activeCampaign = campaigns[0] as Campaign;
+    // Find first campaign that targets this user (or targets everyone)
+    const activeCampaign = (campaigns as Campaign[]).find((c) => {
+      if (!c.target_user_ids) return true; // null = all users
+      if (!user) return false; // targeted campaign but no user logged in
+      return c.target_user_ids.includes(user.id);
+    });
+
+    if (!activeCampaign) return;
 
     if (user) {
       const { data: dismissals } = await supabase
@@ -63,6 +76,7 @@ const CampaignModal = () => {
 
     setCampaign(activeCampaign);
     setImageRatio(null);
+    setProgress(100);
     setTimeout(() => setVisible(true), 250);
   }, [user]);
 
@@ -98,6 +112,30 @@ const CampaignModal = () => {
     };
   }, [campaign?.id]);
 
+  // ── Auto-dismiss timer with progress bar ──
+  useEffect(() => {
+    if (!campaign || !visible) return;
+
+    const TICK = 50; // update every 50ms for smooth animation
+    const startTime = Date.now();
+
+    timerRef.current = setInterval(() => {
+      if (pausedRef.current) return;
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 100 - (elapsed / AUTO_DISMISS_MS) * 100);
+      setProgress(remaining);
+
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        handleDismiss();
+      }
+    }, TICK);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [campaign?.id, visible]);
+
   const handleDismiss = async () => {
     setVisible(false);
     setTimeout(() => setCampaign(null), 260);
@@ -122,17 +160,16 @@ const CampaignModal = () => {
 
   if (!campaign) return null;
 
-  const availableWidth = Math.max(viewport.width - 8, 280);
-  const availableHeight = Math.max(viewport.height - 8, 360);
+  const maxW = viewport.width * 0.85;
+  const maxH = viewport.height * 0.85;
   const ratio = imageRatio ?? 9 / 16;
-  const frameWidth = Math.min(availableWidth, availableHeight * ratio);
-  const frameHeight = Math.min(availableHeight, frameWidth / ratio);
+  const frameWidth = Math.min(maxW, maxH * ratio);
+  const frameHeight = Math.min(maxH, frameWidth / ratio);
 
   return (
     <div
-      className={`fixed inset-0 z-[100] transition-all duration-300 ${
-        visible ? "opacity-100" : "pointer-events-none opacity-0"
-      }`}
+      className={`fixed inset-0 z-[100] transition-all duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
       style={{
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
@@ -141,11 +178,14 @@ const CampaignModal = () => {
       onClick={handleDismiss}
     >
       <div
-        className={`relative flex h-full w-full items-center justify-center transition-all duration-300 ${
-          visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
-        }`}
+        className={`relative flex h-full w-full items-center justify-center transition-all duration-300 ${visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+          }`}
         style={{ padding: "max(env(safe-area-inset-top), 8px) 4px max(env(safe-area-inset-bottom), 8px)" }}
         onClick={(e) => e.stopPropagation()}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; }}
+        onTouchStart={() => { pausedRef.current = true; }}
+        onTouchEnd={() => { pausedRef.current = false; }}
       >
         <button
           onClick={handleDismiss}
@@ -177,6 +217,14 @@ const CampaignModal = () => {
               }
             }}
           />
+
+          {/* Auto-dismiss progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+            <div
+              className="h-full bg-[#c8f135] transition-none"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
       </div>
     </div>

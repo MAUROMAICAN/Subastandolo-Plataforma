@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, Trash2, PenLine, Save, Eye, Pause, Megaphone, RotateCcw } from "lucide-react";
+import { Loader2, Trash2, PenLine, Save, Eye, Pause, Megaphone, RotateCcw, Users, User, Search, X } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CampaignImageUploader from "./CampaignImageUploader";
+import { fuzzyFilter } from "@/lib/fuzzySearch";
 
 interface Campaign {
   id: string;
@@ -20,6 +23,14 @@ interface Campaign {
   starts_at: string;
   ends_at: string | null;
   created_at: string;
+  target_user_ids: string[] | null;
+}
+
+interface UserOption {
+  id: string;
+  full_name: string;
+  email?: string;
+  phone: string | null;
 }
 
 const AdminCampaignsTab = () => {
@@ -34,6 +45,16 @@ const AdminCampaignsTab = () => {
   const [linkUrl, setLinkUrl] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [creating, setCreating] = useState(false);
+  const [sendImmediate, setSendImmediate] = useState(true);
+
+  // Target type: all or specific users
+  const [targetType, setTargetType] = useState<"all" | "specific">("all");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Edit
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -42,6 +63,76 @@ const AdminCampaignsTab = () => {
   const [editEndsAt, setEditEndsAt] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Load users when switching to specific target
+  useEffect(() => {
+    if (targetType === "specific" && users.length === 0) {
+      loadUsers();
+    }
+  }, [targetType]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .order("full_name");
+
+      let emailMap: Record<string, string> = {};
+      try {
+        const { data: emailData } = await supabase.functions.invoke("admin-manage-user", {
+          body: { action: "list_users", userId: "dummy" },
+        });
+        if (emailData?.emails) {
+          emailMap = emailData.emails;
+        }
+      } catch { }
+
+      if (profiles) {
+        const mapped: UserOption[] = profiles.map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          phone: p.phone,
+          email: emailMap[p.id] || undefined,
+        }));
+        setUsers(mapped);
+      }
+    } catch (err) {
+      console.error("Error loading users:", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const filteredUsers = fuzzyFilter(
+    users.filter((u) => !selectedUsers.some((s) => s.id === u.id)),
+    searchQuery,
+    (u) => `${u.full_name} ${u.email || ""} ${u.phone || ""}`,
+    undefined,
+    0.2
+  );
+
+  const handleSelectUser = (user: UserOption) => {
+    setSelectedUsers((prev) => [...prev, user]);
+    setSearchQuery("");
+    setShowDropdown(false);
+  };
+
+  const handleRemoveUser = (userId: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
+  };
 
   const fetchCampaigns = async () => {
     const { data } = await supabase.from("campaigns").select("*").order("created_at", { ascending: false });
@@ -60,17 +151,35 @@ const AdminCampaignsTab = () => {
         return;
       }
     }
+    if (targetType === "specific" && selectedUsers.length === 0) {
+      toast({ title: "Error", description: "Selecciona al menos un usuario", variant: "destructive" });
+      return;
+    }
+
     setCreating(true);
-    await supabase.from("campaigns").insert({
+
+    const insertData: any = {
       title,
       image_url: imageUrl,
       link_url: linkUrl || null,
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
       created_by: user.id,
-    } as any);
-    toast({ title: "✅ Campaña creada" });
+      is_active: true,
+      target_user_ids: targetType === "specific" ? selectedUsers.map((u) => u.id) : null,
+    };
+
+    if (sendImmediate) {
+      insertData.starts_at = new Date().toISOString();
+    }
+
+    await supabase.from("campaigns").insert(insertData);
+    toast({ title: "✅ Campaña creada y enviada" });
     setImageUrl(""); setTitle(""); setLinkUrl(""); setEndsAt("");
+    setSelectedUsers([]); setTargetType("all"); setSendImmediate(true);
     setCreating(false); fetchCampaigns();
+
+    // Trigger CampaignModal refresh on all clients
+    window.dispatchEvent(new CustomEvent("campaign-resent"));
   };
 
   const handleDelete = async (id: string) => {
@@ -97,11 +206,7 @@ const AdminCampaignsTab = () => {
     }
 
     window.dispatchEvent(new CustomEvent("campaign-resent"));
-
-    toast({ 
-      title: "✅ Campaña reenviada", 
-      description: "Se mostrará de nuevo a todos los usuarios." 
-    });
+    toast({ title: "✅ Campaña reenviada", description: "Se mostrará de nuevo a los usuarios." });
   };
 
   const startEdit = (c: Campaign) => {
@@ -164,12 +269,100 @@ const AdminCampaignsTab = () => {
               <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." className="rounded-md text-xs" />
             </div>
           </div>
+
           <div className="space-y-1">
             <Label className="text-xs">Fecha de expiración (opcional)</Label>
             <Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="rounded-md text-xs w-fit" />
           </div>
-          <Button onClick={handleCreate} disabled={!imageUrl || !title || creating} className="rounded-md text-xs">
-            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Megaphone className="h-3.5 w-3.5 mr-1" />} Crear Campaña
+
+          {/* ── Target selector ── */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">Destinatarios</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={targetType === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setTargetType("all"); setSelectedUsers([]); }}
+                className="rounded-md text-xs"
+              >
+                <Users className="h-3 w-3 mr-1" /> Todos
+              </Button>
+              <Button
+                type="button"
+                variant={targetType === "specific" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTargetType("specific")}
+                className="rounded-md text-xs"
+              >
+                <User className="h-3 w-3 mr-1" /> Específicos
+              </Button>
+            </div>
+          </div>
+
+          {/* ── User picker ── */}
+          {targetType === "specific" && (
+            <div className="space-y-2">
+              {/* Selected users chips */}
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedUsers.map((u) => (
+                    <Badge key={u.id} variant="secondary" className="text-[10px] pl-2 pr-1 py-0.5 flex items-center gap-1">
+                      {u.full_name}
+                      <button onClick={() => handleRemoveUser(u.id)} className="ml-0.5 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              <div ref={dropdownRef} className="relative">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder={loadingUsers ? "Cargando usuarios..." : "Buscar usuario..."}
+                    className="pl-8 rounded-md text-xs"
+                    disabled={loadingUsers}
+                  />
+                </div>
+
+                {showDropdown && filteredUsers.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full max-h-48 overflow-auto rounded-md border bg-popover shadow-lg">
+                    {filteredUsers.slice(0, 20).map((u) => (
+                      <button
+                        key={u.id}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-accent transition-colors"
+                        onClick={() => handleSelectUser(u)}
+                      >
+                        <Avatar className="h-6 w-6 shrink-0">
+                          <AvatarFallback className="text-[9px] bg-primary/20">{u.full_name?.charAt(0) || "?"}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{u.full_name}</p>
+                          <p className="truncate text-muted-foreground text-[10px]">{u.email || u.phone || ""}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Send immediately toggle ── */}
+          <div className="flex items-center gap-2">
+            <Switch checked={sendImmediate} onCheckedChange={setSendImmediate} id="send-immediate" />
+            <Label htmlFor="send-immediate" className="text-xs cursor-pointer">
+              Enviar inmediatamente
+            </Label>
+          </div>
+
+          <Button onClick={handleCreate} disabled={!imageUrl || !title || creating || (targetType === "specific" && selectedUsers.length === 0)} className="rounded-md text-xs">
+            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Megaphone className="h-3.5 w-3.5 mr-1" />} Crear y Enviar Campaña
           </Button>
         </CardContent>
       </Card>
@@ -206,6 +399,11 @@ const AdminCampaignsTab = () => {
                   />
                   {!c.is_active && <Badge variant="secondary" className="absolute top-2 left-2 text-[10px]">Inactiva</Badge>}
                   {c.ends_at && new Date(c.ends_at) < new Date() && <Badge variant="destructive" className="absolute top-2 right-2 text-[10px]">Expirada</Badge>}
+                  {c.target_user_ids && (
+                    <Badge variant="outline" className="absolute top-2 left-2 text-[10px] bg-background/80">
+                      <User className="h-2.5 w-2.5 mr-0.5" /> {c.target_user_ids.length} usuario(s)
+                    </Badge>
+                  )}
                 </div>
                 <div className="p-3 space-y-2">
                   <p className="text-sm font-medium truncate">{c.title}</p>
@@ -217,7 +415,7 @@ const AdminCampaignsTab = () => {
                   {c.link_url && <p className="text-[10px] text-muted-foreground dark:text-gray-300 truncate">{c.link_url}</p>}
                   <div className="flex items-center gap-1.5">
                     <Button variant="outline" size="sm" onClick={() => startEdit(c)} className="rounded-md text-[10px] h-7 flex-1"><PenLine className="h-3 w-3 mr-1" /> Editar</Button>
-                    <Button variant="outline" size="icon" onClick={() => handleResend(c.id)} className="rounded-md h-7 w-7 text-primary dark:text-accent" title="Reenviar a todos">
+                    <Button variant="outline" size="icon" onClick={() => handleResend(c.id)} className="rounded-md h-7 w-7 text-primary dark:text-accent" title="Reenviar">
                       <RotateCcw className="h-3 w-3" />
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => handleToggle(c.id, !c.is_active)} className={`rounded-md h-7 w-7 ${c.is_active ? 'text-primary dark:text-accent' : 'text-muted-foreground'}`}>

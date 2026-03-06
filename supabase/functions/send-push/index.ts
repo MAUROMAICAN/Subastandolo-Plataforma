@@ -59,32 +59,47 @@ async function getAccessToken(): Promise<string> {
   return tokenData.access_token;
 }
 
-/** Map tag to Android notification channel */
+/** Map tag to Android notification channel — MUST match IDs in MainActivity.java */
 function getChannelId(tag: string): string {
   switch (tag) {
-    case "outbid": return "sobrepuja_v5";
-    case "new_bid": return "pujando_v5";
-    case "auction_won": return "ganador_v5";
+    case "outbid":
+    case "new_bid":
+    case "urgent":
+      return "subastandolo_bids_v4";
+    case "auction_won":
     case "auction_finalized":
-    case "payment_verified": return "campanita_v5";
+    case "payment_verified":
+      return "subastandolo_wins_v4";
+    case "admin_custom":
+    case "admin_notification":
+    case "promo":
+    case "announcement":
+    case "maintenance":
+      return "subastandolo_admin_v4";
     default:
-      if (["admin_custom", "admin_notification", "promo", "announcement", "urgent", "maintenance"].includes(tag)) {
-        return "administrador_v5";
-      }
-      return "campanita_v5";
+      return "subastandolo_admin_v4";
   }
 }
 
-/** Map tag to sound file name in res/raw/ */
+/** Map tag to sound file name in res/raw/ (without extension) */
 function getSoundName(tag: string): string {
   switch (tag) {
-    case "outbid": return "sobrepuja";
-    case "new_bid": return "pujando";
-    case "auction_won": return "notificacion";
+    case "outbid":
+    case "urgent":
+      return "sobrepuja";
+    case "new_bid":
+      return "pujando";
+    case "auction_won":
+    case "auction_finalized":
+    case "payment_verified":
+      return "campanita";
+    case "admin_custom":
+    case "admin_notification":
+    case "promo":
+    case "announcement":
+    case "maintenance":
+      return "administrador";
     default:
-      if (["admin_custom", "admin_notification", "promo", "announcement", "urgent", "maintenance"].includes(tag)) {
-        return "administrador";
-      }
       return "campanita";
   }
 }
@@ -219,8 +234,8 @@ Deno.serve(async (req) => {
     const targetIds: string[] = user_ids
       ? user_ids
       : user_id
-      ? [user_id]
-      : [];
+        ? [user_id]
+        : [];
 
     if (targetIds.length === 0) {
       return new Response(
@@ -252,13 +267,17 @@ Deno.serve(async (req) => {
     const staleIds: string[] = [];
 
     for (const sub of subs) {
-      if (sub.platform === "android" && sub.fcm_token) {
+      // Determine FCM token — the app saves it as endpoint="fcm:TOKEN"
+      const fcmToken = sub.fcm_token || (sub.endpoint?.startsWith("fcm:") ? sub.endpoint.replace("fcm:", "") : null);
+      const isAndroid = sub.platform === "android" || (sub.endpoint?.startsWith("fcm:") && !sub.endpoint.includes("https://"));
+
+      if (isAndroid && fcmToken) {
         // FCM for Android native
         if (!accessToken) {
           accessToken = await getAccessToken();
         }
         const result = await sendFCM(
-          sub.fcm_token, title, body, url || "/", tag || "general",
+          fcmToken, title, body, url || "/", tag || "general",
           accessToken, projectId,
         );
         results.push({ platform: "android", ...result });

@@ -119,14 +119,26 @@ export function getDealerTier(salesCount: number): TierConfig {
   return DEALER_TIERS.find((t) => salesCount >= t.minSales) || DEALER_TIERS[DEALER_TIERS.length - 1];
 }
 
-/** Starburst / Instagram-style seal check */
+/** Instagram-style verified badge — 16-petal rosette with centered check */
 const SealIcon = ({ fill, stroke, size = 16 }: { fill: string; stroke: string; size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+    {/* Rosette / starburst body — 16-petal symmetrical shape like Instagram */}
     <path
-      d="M12 1.5l2.09 3.36L18 3.54l-.36 3.91 3.36 2.09-2.46 3.05 1.32 3.68-3.91.36-2.09 3.36L12 18.53l-3.05 1.46-2.09-3.36-3.91-.36 1.32-3.68L1.81 9.54l3.36-2.09L4.81 3.54l3.91.36L12 1.5z"
-      fill={fill} stroke={stroke} strokeWidth="0.8" strokeLinejoin="round"
+      d="M12 1.5l1.22 2.15 2.22-.93.43 2.4 2.43.15-.78 2.28 2.13 1.23-1.68 1.79 1.47 1.96-2.3.62.15 2.43-2.4.25-.93 2.22-2.15-1.1-2.15 1.1-.93-2.22-2.4-.25.15-2.43-2.3-.62 1.47-1.96-1.68-1.79 2.13-1.23-.78-2.28 2.43-.15.43-2.4 2.22.93z"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth="0.5"
+      strokeLinejoin="round"
     />
-    <path d="M8.5 12.5l2 2 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    {/* Checkmark — bold white */}
+    <path
+      d="M8.5 12.5l2.5 2.5 4.5-5"
+      stroke="white"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
   </svg>
 );
 

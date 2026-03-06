@@ -30,7 +30,7 @@ const SplashScreen = ({ onFinish, minDuration = 1500 }: SplashScreenProps) => {
     <div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
       style={{
-        backgroundColor: "hsl(200, 17%, 20%)",
+        backgroundColor: "#161625",
         opacity: fadeOut ? 0 : 1,
         transition: "opacity 500ms ease",
       }}

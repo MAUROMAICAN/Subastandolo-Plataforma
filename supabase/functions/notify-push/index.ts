@@ -1,34 +1,73 @@
 // Supabase Edge Function: notify-push
 // Sends Firebase Cloud Messaging (FCM) push notifications to mobile AND web users
-// Deploy: npx supabase functions deploy notify-push
+// Deploy: npx supabase functions deploy notify-push --project-ref oqjwrrttncfcznhmzlrk --no-verify-jwt
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { GoogleAuth } from "npm:google-auth-library@9.6.3";
+
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type",
+};
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_PROJECT_ID = "subastandolo-app";
 
-// Helper to get Google OAuth2 token for FCM v1
+// ── Google OAuth2 token for FCM v1 ──────────────────────────────────────────
 async function getFcmAccessToken() {
     const saRaw = Deno.env.get("FCM_SERVICE_ACCOUNT");
     if (!saRaw) throw new Error("Missing FCM_SERVICE_ACCOUNT secret");
-    const serviceAccount = JSON.parse(saRaw);
+    const sa = JSON.parse(saRaw);
 
-    const googleAuth = new GoogleAuth({
-        credentials: {
-            client_email: serviceAccount.client_email,
-            private_key: serviceAccount.private_key,
-        },
-        scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+    const now = Math.floor(Date.now() / 1000);
+    const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const payload = btoa(JSON.stringify({
+        iss: sa.client_email,
+        scope: "https://www.googleapis.com/auth/firebase.messaging",
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+    })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${header}.${payload}`);
+
+    const pemContents = sa.private_key
+        .replace("-----BEGIN PRIVATE KEY-----", "")
+        .replace("-----END PRIVATE KEY-----", "")
+        .replace(/\s/g, "");
+    const binaryKey = Uint8Array.from(atob(pemContents), (c: string) => c.charCodeAt(0));
+
+    const key = await crypto.subtle.importKey(
+        "pkcs8",
+        binaryKey,
+        { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        false,
+        ["sign"],
+    );
+
+    const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, data);
+    const sig = btoa(String.fromCharCode(...new Uint8Array(signature)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const jwt = `${header}.${payload}.${sig}`;
+
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
     });
-    const accessToken = await googleAuth.getAccessToken();
-    return accessToken;
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+        throw new Error(`FCM auth failed: ${JSON.stringify(tokenData)}`);
+    }
+    return tokenData.access_token as string;
 }
 
-
-// Sound map per notification type
+// ── Sound map ───────────────────────────────────────────────────────────────
 const soundMap: Record<string, string> = {
     outbid: "sobrepuja",
     new_bid: "pujando",
@@ -43,155 +82,182 @@ const soundMap: Record<string, string> = {
     maintenance: "administrador",
 };
 
-// Vibration patterns (Android only)
-const vibrationMap: Record<string, number[]> = {
-    outbid: [0, 200, 100, 200, 100, 400],
-    auction_won: [0, 100, 50, 100, 50, 600],
-    urgent: [0, 300, 100, 300],
-};
-
-// Channel map per notification type — IDs MUST match channels in MainActivity.java
-// Increment the version suffix when channel settings change (Android caches channels)
+// ── Channel map — MUST match IDs in MainActivity.java ───────────────────────
 const channelMap: Record<string, string> = {
-    outbid: "subastandolo_bids_v3",
-    new_bid: "subastandolo_bids_v3",
-    auction_won: "subastandolo_wins_v3",
-    auction_finalized: "subastandolo_wins_v3",
-    payment_verified: "subastandolo_wins_v3",
-    admin_custom: "subastandolo_admin_v3",
-    admin_notification: "subastandolo_admin_v3",
-    promo: "subastandolo_admin_v3",
-    announcement: "subastandolo_admin_v3",
-    urgent: "subastandolo_bids_v3",
-    maintenance: "subastandolo_admin_v3",
+    outbid: "subastandolo_bids_v4",
+    new_bid: "subastandolo_bids_v4",
+    auction_won: "subastandolo_wins_v4",
+    auction_finalized: "subastandolo_wins_v4",
+    payment_verified: "subastandolo_wins_v4",
+    admin_custom: "subastandolo_admin_v4",
+    admin_notification: "subastandolo_admin_v4",
+    promo: "subastandolo_admin_v4",
+    announcement: "subastandolo_admin_v4",
+    urgent: "subastandolo_bids_v4",
+    maintenance: "subastandolo_admin_v4",
 };
 
-serve(async (req) => {
+// ── Main handler ────────────────────────────────────────────────────────────
+Deno.serve(async (req) => {
+    // Handle CORS preflight
+    if (req.method === "OPTIONS") {
+        return new Response(null, { headers: corsHeaders });
+    }
+
     if (req.method !== "POST") {
-        return new Response("Method Not Allowed", { status: 405 });
-    }
-
-    const { user_id, title, message, type, link } = await req.json();
-    if (!user_id || !title || !message) {
-        return new Response("Missing required fields", { status: 400 });
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    // 1. Save to notifications table (in-app realtime)
-    await supabase.from("notifications").insert({
-        user_id,
-        title,
-        message,
-        type: type || "info",
-        link: link || "/",
-    });
-
-    // 2. Get FCM tokens for this user
-    const { data: subs } = await supabase
-        .from("push_subscriptions")
-        .select("endpoint, p256dh, auth, platform")
-        .eq("user_id", user_id);
-
-    if (!subs || subs.length === 0) {
-        return new Response(JSON.stringify({ ok: true, pushed: 0 }), {
-            headers: { "Content-Type": "application/json" },
+        return new Response("Method Not Allowed", {
+            status: 405,
+            headers: corsHeaders,
         });
     }
 
-    const sound = soundMap[type] || "administrador";
-    const vibration = vibrationMap[type] || [0, 150, 100, 150];
-    const channelId = channelMap[type] || "subastandolo_admin";
+    try {
+        const { user_id, title, message, type, link } = await req.json();
+        console.log(`[notify-push] Received: user=${user_id}, type=${type}, title=${title}`);
 
-    // Convert vibration pattern to FCM format (strings of nanoseconds representation)
-    // FCM vibrate_timings_millis expects strings like "0.3s" — but actually RFC: use numeric ms with "s" suffix as Duration
-    // Correct: ["0s","0.2s","0.1s","0.2s"] but safest is sending as data and letting the channel handle it
-    const vibrateDurations = vibration.map((ms: number) => `${(ms / 1000).toFixed(2)}s`);
+        if (!user_id || !title || !message) {
+            return new Response(
+                JSON.stringify({ error: "Missing required fields" }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+        }
 
-    let pushed = 0;
-    const errors = [];
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    for (const sub of subs) {
-        // Native FCM push (Android/iOS)
-        if (sub.endpoint.startsWith("fcm:")) {
-            const fcmToken = sub.endpoint.replace("fcm:", "");
-            try {
-                const res = await fetch(
-                    `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${await getFcmAccessToken()}`,
-                        },
-                        body: JSON.stringify({
-                            message: {
-                                token: fcmToken,
-                                // Include top-level notification for standard display
+        // 1. Save to notifications table (in-app realtime)
+        const { error: insertError } = await supabase.from("notifications").insert({
+            user_id,
+            title,
+            message,
+            type: type || "info",
+            link: link || "/",
+        });
+        if (insertError) {
+            console.error("[notify-push] Insert notification error:", insertError.message);
+        }
+
+        // 2. Get push subscriptions for this user
+        const { data: subs, error: subsError } = await supabase
+            .from("push_subscriptions")
+            .select("id, endpoint, p256dh, auth, platform, fcm_token")
+            .eq("user_id", user_id);
+
+        if (subsError) {
+            console.error("[notify-push] Query subs error:", subsError.message);
+        }
+
+        if (!subs || subs.length === 0) {
+            console.log("[notify-push] No push subscriptions found for user:", user_id);
+            return new Response(
+                JSON.stringify({ ok: true, pushed: 0, reason: "no_subscriptions" }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+        }
+
+        console.log(`[notify-push] Found ${subs.length} subscriptions for user ${user_id}`);
+
+        const sound = soundMap[type] || "administrador";
+        const channelId = channelMap[type] || "subastandolo_admin_v4";
+
+        let pushed = 0;
+        const errors: any[] = [];
+        let accessToken: string | null = null;
+
+        for (const sub of subs) {
+            // Determine FCM token — app saves as endpoint="fcm:TOKEN"
+            const fcmToken = sub.fcm_token || (sub.endpoint?.startsWith("fcm:") ? sub.endpoint.replace("fcm:", "") : null);
+            const isNative = sub.platform === "android" || sub.platform === "ios" ||
+                (sub.endpoint?.startsWith("fcm:") && !sub.endpoint.includes("https://"));
+
+            if (isNative && fcmToken) {
+                console.log(`[notify-push] Sending FCM to ${sub.platform} token: ${fcmToken.substring(0, 20)}...`);
+                try {
+                    if (!accessToken) {
+                        accessToken = await getFcmAccessToken();
+                        console.log("[notify-push] Got FCM access token successfully");
+                    }
+
+                    const fcmPayload = {
+                        message: {
+                            token: fcmToken,
+                            notification: {
+                                title,
+                                body: message,
+                            },
+                            android: {
+                                priority: "high" as const,
+                                ttl: "0s",
                                 notification: {
-                                    title,
-                                    body: message,
-                                },
-                                android: {
-                                    priority: "high",
-                                    // Specify channel_id in android.notification so OS uses custom sound/vibration
-                                    notification: {
-                                        channel_id: channelId,
-                                        sound: sound,
-                                        default_sound: false,
-                                        default_vibrate_timings: false,
-                                    },
-                                    data: {
-                                        title,
-                                        body: message,
-                                        type: type || "info",
-                                        link: link || "/",
-                                        sound,
-                                        channel_id: channelId,
-                                        vibrate: vibration.join(","),
-                                    },
-                                },
-                                apns: {
-                                    payload: {
-                                        aps: {
-                                            alert: { title, body: message },
-                                            sound: `${sound}.caf`,
-                                            badge: 1,
-                                            "content-available": 1,
-                                        },
-                                    },
-                                },
-                                data: {
-                                    title,
-                                    body: message,
-                                    type: type || "info",
-                                    link: link || "/",
-                                    sound,
                                     channel_id: channelId,
+                                    sound: sound,
+                                    default_sound: false,
+                                    default_vibrate_timings: false,
+                                    default_light_settings: false,
+                                    vibrate_timings: ["0s", "0.3s", "0.15s", "0.3s", "0.15s", "0.3s"],
+                                    notification_priority: "PRIORITY_MAX" as const,
+                                    visibility: "PUBLIC" as const,
+                                    ticker: `${title}: ${message}`,
                                 },
                             },
-                        }),
+                            data: {
+                                title,
+                                body: message,
+                                type: type || "info",
+                                link: link || "/",
+                                sound,
+                                channel_id: channelId,
+                            },
+                        },
+                    };
+
+                    const res = await fetch(
+                        `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${accessToken}`,
+                            },
+                            body: JSON.stringify(fcmPayload),
+                        },
+                    );
+
+                    const resBody = await res.text();
+                    if (res.ok) {
+                        pushed++;
+                        console.log(`[notify-push] ✅ FCM sent OK: ${resBody}`);
+                    } else {
+                        console.error(`[notify-push] ❌ FCM error ${res.status}: ${resBody}`);
+                        errors.push({ token: fcmToken.substring(0, 20), status: res.status, error: resBody });
+
+                        // Clean up stale tokens
+                        if (resBody.includes("UNREGISTERED") || resBody.includes("NOT_FOUND")) {
+                            await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+                            console.log(`[notify-push] Deleted stale subscription ${sub.id}`);
+                        }
                     }
-                );
-
-                if (res.ok) {
-                    pushed++;
-                } else {
-                    const errBody = await res.text();
-                    errors.push({ token: fcmToken.slice(0, 20) + "...", error: errBody });
+                } catch (err) {
+                    console.error(`[notify-push] FCM exception:`, err);
+                    errors.push({ error: String(err) });
                 }
-            } catch (err) {
-                errors.push({ error: String(err) });
+            } else if (sub.endpoint?.startsWith("https://")) {
+                // Web Push — skip for now, handled by service worker
+                console.log("[notify-push] Skipping web push subscription");
+            } else {
+                console.log(`[notify-push] Unknown subscription type: platform=${sub.platform}, endpoint=${sub.endpoint?.substring(0, 30)}`);
             }
-        } else {
-            // Web Push (VAPID) — handled by existing service worker
-            pushed++;
         }
+
+        console.log(`[notify-push] Done: ${pushed} pushed, ${errors.length} errors`);
+        return new Response(
+            JSON.stringify({ ok: true, pushed, errors }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+    } catch (err: any) {
+        console.error("[notify-push] Fatal error:", err);
+        return new Response(
+            JSON.stringify({ error: err.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
     }
-
-    return new Response(
-        JSON.stringify({ ok: true, pushed, errors }),
-        { headers: { "Content-Type": "application/json" } }
-    );
 });
-
