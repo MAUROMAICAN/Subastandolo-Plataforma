@@ -1,21 +1,27 @@
 package com.subastandolo.app;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
 
-    // Use versioned channel IDs — increment version suffix to force recreation
-    // when sound/vibration settings change (Android caches channels permanently)
+    // Use versioned channel IDs — increment when sound/vibration settings change
+    // Android caches channels permanently: new ID = new channel
     static final String CH_BIDS = "subastandolo_bids_v3";
     static final String CH_WINS = "subastandolo_wins_v3";
     static final String CH_ADMIN = "subastandolo_admin_v3";
+
+    private static final int REQ_NOTIF = 1001;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -27,6 +33,7 @@ public class MainActivity extends BridgeActivity {
             getBridge().getWebView().setBackgroundColor(Color.parseColor("#1a1a2e"));
         }
         createNotificationChannels();
+        requestAllPermissions();
     }
 
     @Override
@@ -34,6 +41,18 @@ public class MainActivity extends BridgeActivity {
         super.onResume();
         if (getWindow() != null) {
             getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1a2e"));
+        }
+    }
+
+    private void requestAllPermissions() {
+        // Android 13+ requires POST_NOTIFICATIONS at runtime
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[] { Manifest.permission.POST_NOTIFICATIONS },
+                        REQ_NOTIF);
+            }
         }
     }
 
@@ -53,9 +72,7 @@ public class MainActivity extends BridgeActivity {
         // ── Canal 1: Pujas (sobrepuja) ──
         Uri soundBid = Uri.parse("android.resource://" + getPackageName() + "/raw/sobrepuja");
         NotificationChannel bidsChannel = new NotificationChannel(
-                CH_BIDS,
-                "Pujas en Subastas",
-                NotificationManager.IMPORTANCE_HIGH);
+                CH_BIDS, "Pujas en Subastas", NotificationManager.IMPORTANCE_HIGH);
         bidsChannel.setDescription("Avisos cuando alguien supera tu puja");
         bidsChannel.setSound(soundBid, audioAttrs);
         bidsChannel.enableVibration(true);
@@ -67,9 +84,7 @@ public class MainActivity extends BridgeActivity {
         // ── Canal 2: Victorias (campanita) ──
         Uri soundWin = Uri.parse("android.resource://" + getPackageName() + "/raw/campanita");
         NotificationChannel winsChannel = new NotificationChannel(
-                CH_WINS,
-                "Subastas Ganadas",
-                NotificationManager.IMPORTANCE_HIGH);
+                CH_WINS, "Subastas Ganadas", NotificationManager.IMPORTANCE_HIGH);
         winsChannel.setDescription("Cuando ganas una subasta o confirman tu pago");
         winsChannel.setSound(soundWin, audioAttrs);
         winsChannel.enableVibration(true);
@@ -78,12 +93,10 @@ public class MainActivity extends BridgeActivity {
         winsChannel.setLightColor(Color.parseColor("#c8f135"));
         nm.createNotificationChannel(winsChannel);
 
-        // ── Canal 3: Admin / Avisos (administrador) ──
+        // ── Canal 3: Admin / Avisos ──
         Uri soundAdmin = Uri.parse("android.resource://" + getPackageName() + "/raw/administrador");
         NotificationChannel adminChannel = new NotificationChannel(
-                CH_ADMIN,
-                "Avisos del Sistema",
-                NotificationManager.IMPORTANCE_HIGH);
+                CH_ADMIN, "Avisos del Sistema", NotificationManager.IMPORTANCE_HIGH);
         adminChannel.setDescription("Anuncios, promociones y avisos del equipo de Subastándolo");
         adminChannel.setSound(soundAdmin, audioAttrs);
         adminChannel.enableVibration(true);

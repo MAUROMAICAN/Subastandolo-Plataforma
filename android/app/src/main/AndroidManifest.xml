@@ -15,7 +15,9 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:exported="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,16 +46,17 @@
 
         </activity>
 
-        <!-- Default FCM notification metadata -->
+        <!-- Default FCM notification metadata — MUST match MainActivity channel IDs -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/colorPrimary" />
+            android:resource="@color/brandDark" />
+        <!-- !! Keep in sync with MainActivity.CH_ADMIN !! -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="subastandolo_admin" />
+            android:value="subastandolo_admin_v3" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -71,5 +74,11 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Wake screen when notification arrives -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Allow showing over lock screen -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
 </manifest>
