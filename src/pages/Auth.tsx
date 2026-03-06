@@ -1200,6 +1200,20 @@ const Auth = () => {
                   </div>
                 </div>
 
+                {/* Correo electrónico */}
+                <div className="relative group">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
+                  <input
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
                 {/* Teléfono */}
                 <div className="relative group">
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" />
