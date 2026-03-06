@@ -43,6 +43,7 @@ const Auth = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [cedula, setCedula] = useState("");
+  const [cedulaPrefix, setCedulaPrefix] = useState("V");
   const [phone, setPhone] = useState("");
   const [estado, setEstado] = useState("");
   const [ciudad, setCiudad] = useState("");
@@ -1153,15 +1154,33 @@ const Auth = () => {
                 </div>
 
                 {/* Cédula */}
-                <div className="relative group">
-                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" strokeWidth="2" /><path d="M16 10h2M16 14h2M6 10h6M6 14h4" strokeWidth="2" strokeLinecap="round" /></svg>
-                  <input
-                    placeholder="Cédula (ej. 12345678)"
-                    value={cedula}
-                    onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
-                    inputMode="numeric"
-                  />
+                <div className="flex gap-2">
+                  {/* Selector de tipo */}
+                  <div className="relative shrink-0">
+                    <select
+                      value={cedulaPrefix}
+                      onChange={(e) => setCedulaPrefix(e.target.value)}
+                      className="h-12 w-16 rounded-xl text-white text-sm font-bold text-center appearance-none transition-all focus:outline-none focus:border-brand-lime/50"
+                      style={{ background: '#1f2033', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}
+                    >
+                      <option value="V">V</option>
+                      <option value="E">E</option>
+                      <option value="J">J</option>
+                      <option value="G">G</option>
+                    </select>
+                    <svg className="absolute right-1 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                  {/* Número */}
+                  <div className="relative group flex-1">
+                    <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" strokeWidth="2" /><path d="M16 10h2M16 14h2M6 10h6M6 14h4" strokeWidth="2" strokeLinecap="round" /></svg>
+                    <input
+                      placeholder="12345678"
+                      value={cedula}
+                      onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white placeholder:text-white/25 pl-10 pr-4 text-sm font-medium transition-all"
+                      inputMode="numeric"
+                    />
+                  </div>
                 </div>
 
                 {/* Teléfono */}
@@ -1183,20 +1202,20 @@ const Auth = () => {
                 </div>
 
                 {/* Estado */}
-                <div className="relative group">
-                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 group-focus-within:text-brand-lime transition-colors pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <select
                     value={estado}
                     onChange={(e) => { setEstado(e.target.value); setCiudad(""); }}
-                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 focus:border-brand-lime/50 focus:outline-none text-white text-sm font-medium pl-10 pr-4 appearance-none transition-all"
-                    style={{ colorScheme: "dark" }}
+                    className="w-full h-12 rounded-xl text-white text-sm font-medium pl-9 pr-8 appearance-none transition-all focus:outline-none"
+                    style={{ background: '#1f2033', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}
                   >
-                    <option value="" className="bg-[#1a1a2e] text-white/50">Estado</option>
-                    {["Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", "Vargas", "Yaracuy", "Zulia"].map(e => (
-                      <option key={e} value={e} className="bg-[#1a1a2e] text-white">{e}</option>
+                    <option value="" style={{ background: '#1f2033', color: 'rgba(255,255,255,0.4)' }}>Estado</option>
+                    {["Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", "Vargas", "Yaracuy", "Zulia"].map(s => (
+                      <option key={s} value={s} style={{ background: '#1f2033', color: '#fff' }}>{s}</option>
                     ))}
                   </select>
-                  <svg className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </div>
 
                 {/* Ciudad */}
