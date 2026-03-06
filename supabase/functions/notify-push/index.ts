@@ -50,6 +50,21 @@ const vibrationMap: Record<string, number[]> = {
     urgent: [0, 300, 100, 300],
 };
 
+// Channel map per notification type (must match channels created in MainActivity.java)
+const channelMap: Record<string, string> = {
+    outbid: "subastandolo_bids",
+    new_bid: "subastandolo_bids",
+    auction_won: "subastandolo_wins",
+    auction_finalized: "subastandolo_wins",
+    payment_verified: "subastandolo_wins",
+    admin_custom: "subastandolo_admin",
+    admin_notification: "subastandolo_admin",
+    promo: "subastandolo_admin",
+    announcement: "subastandolo_admin",
+    urgent: "subastandolo_bids",
+    maintenance: "subastandolo_admin",
+};
+
 serve(async (req) => {
     if (req.method !== "POST") {
         return new Response("Method Not Allowed", { status: 405 });
@@ -83,8 +98,14 @@ serve(async (req) => {
         });
     }
 
-    const sound = soundMap[type] || "campanita";
+    const sound = soundMap[type] || "administrador";
     const vibration = vibrationMap[type] || [0, 150, 100, 150];
+    const channelId = channelMap[type] || "subastandolo_admin";
+
+    // Convert vibration pattern to FCM format (strings of nanoseconds representation)
+    // FCM vibrate_timings_millis expects strings like "0.3s" — but actually RFC: use numeric ms with "s" suffix as Duration
+    // Correct: ["0s","0.2s","0.1s","0.2s"] but safest is sending as data and letting the channel handle it
+    const vibrateDurations = vibration.map((ms: number) => `${(ms / 1000).toFixed(2)}s`);
 
     let pushed = 0;
     const errors = [];
@@ -94,7 +115,6 @@ serve(async (req) => {
         if (sub.endpoint.startsWith("fcm:")) {
             const fcmToken = sub.endpoint.replace("fcm:", "");
             try {
-                // Use FCM HTTP v1 API
                 const res = await fetch(
                     `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
                     {
@@ -108,16 +128,18 @@ serve(async (req) => {
                                 token: fcmToken,
                                 notification: { title, body: message },
                                 android: {
+                                    priority: "high",           // Wake the device
                                     notification: {
+                                        channel_id: channelId,  // Corrected: maps to existing channel
                                         sound: `${sound}.mp3`,
-                                        channel_id: "subastandolo_main",
-                                        vibrate_timings_millis: vibration.map(v => `${v}s`),
-                                        priority: "HIGH",
+                                        default_sound: false,   // Use channel sound
                                         default_vibrate_timings: false,
-                                        click_action: link || "/",
-                                        color: "#A6E300",
+                                        vibrate_timings: vibrateDurations,
+                                        notification_priority: "PRIORITY_MAX",  // Show heads-up
+                                        visibility: "PUBLIC",   // Show on lock screen
+                                        click_action: "FLUTTER_NOTIFICATION_CLICK",
+                                        color: "#c8f135",
                                     },
-                                    priority: "high",
                                 },
                                 apns: {
                                     payload: {
@@ -132,6 +154,7 @@ serve(async (req) => {
                                     type: type || "info",
                                     link: link || "/",
                                     sound,
+                                    channel_id: channelId,
                                 },
                             },
                         }),
@@ -149,7 +172,6 @@ serve(async (req) => {
             }
         } else {
             // Web Push (VAPID) — handled by existing service worker
-            // This path can be extended later via web-push library
             pushed++;
         }
     }
@@ -159,3 +181,4 @@ serve(async (req) => {
         { headers: { "Content-Type": "application/json" } }
     );
 });
+
