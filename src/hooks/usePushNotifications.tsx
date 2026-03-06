@@ -33,14 +33,10 @@ async function initNativePush(userId: string) {
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
 
-    // Request permission
-    const perm = await PushNotifications.requestPermissions();
-    if (perm.receive !== "granted") {
-      console.warn("[FCM] Permission denied");
-      return;
-    }
-
-    await PushNotifications.register();
+    // !! IMPORTANT: Add ALL listeners BEFORE calling register().
+    // On Android, if the FCM token is already cached, the 'registration'
+    // event fires synchronously inside register() — before any later
+    // addListener() call would have a chance to catch it.
 
     // Get FCM token and save to Supabase
     PushNotifications.addListener("registration", async (token) => {
@@ -94,6 +90,17 @@ async function initNativePush(userId: string) {
         window.location.href = link;
       }
     });
+
+    // ── Now request permission and register AFTER all listeners are set ──
+    const perm = await PushNotifications.requestPermissions();
+    if (perm.receive !== "granted") {
+      console.warn("[FCM] Permission denied");
+      return;
+    }
+
+    // register() may synchronously emit 'registration' if token is cached,
+    // so it MUST come after addListener() calls above.
+    await PushNotifications.register();
 
   } catch (err) {
     console.error("[FCM] Native push init failed:", err);
