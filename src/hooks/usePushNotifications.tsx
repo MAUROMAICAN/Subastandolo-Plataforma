@@ -20,11 +20,14 @@ const soundMap: Record<string, string> = {
 };
 
 const playSound = (notifType: string) => {
+  // Guard: only play for real notification types, never on mount
+  if (!notifType || notifType === "info" || !soundMap[notifType]) return;
   try {
-    const url = soundMap[notifType] || "/sounds/campanita.mp3";
+    const url = soundMap[notifType];
     const audio = new Audio(url);
     audio.volume = 0.8;
-    audio.play().catch(() => { });
+    // Only play if we are in a user interaction context or background delivery
+    audio.play().catch(() => { /* silently ignore autoplay policy denials */ });
   } catch { }
 };
 
