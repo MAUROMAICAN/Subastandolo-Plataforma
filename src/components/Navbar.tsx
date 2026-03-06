@@ -40,9 +40,9 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-[100] shadow-sm">
+    <header className="sticky top-0 z-[100] shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Main Nav */}
-      <div className="bg-nav overflow-x-hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="bg-nav overflow-x-hidden">
         <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 gap-4">
           <Link to="/" className="flex items-center shrink-0">
             <img src={siteLogo} alt={siteName} className="h-8 sm:h-10 w-auto object-contain" />
