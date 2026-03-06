@@ -127,24 +127,32 @@ serve(async (req) => {
                         body: JSON.stringify({
                             message: {
                                 token: fcmToken,
-                                notification: { title, body: message },
+                                // DATA-ONLY: No 'notification' block.
+                                // When 'notification' is present, Android OS intercepts
+                                // the message and shows it with the DEFAULT channel,
+                                // ignoring channel_id, custom sound, and vibration.
+                                // With data-only, Capacitor's FCM plugin receives it
+                                // and displays via the correct versioned channel (v3)
+                                // which has sound + vibration configured in MainActivity.
                                 android: {
-                                    priority: "high",           // Wake the device
-                                    notification: {
-                                        channel_id: channelId,  // Corrected: maps to existing channel
-                                        sound: `${sound}.mp3`,
-                                        default_sound: false,   // Use channel sound
-                                        default_vibrate_timings: false,
-                                        vibrate_timings: vibrateDurations,
-                                        notification_priority: "PRIORITY_MAX",  // Show heads-up
-                                        visibility: "PUBLIC",   // Show on lock screen
-                                        click_action: "FLUTTER_NOTIFICATION_CLICK",
-                                        color: "#c8f135",
+                                    priority: "high",           // Wake device from Doze
+                                    data: {
+                                        title,
+                                        body: message,
+                                        type: type || "info",
+                                        link: link || "/",
+                                        sound,
+                                        channel_id: channelId,
+                                        vibrate: vibration.join(","),
+                                    },
+                                    fcm_options: {
+                                        analytics_label: type || "admin",
                                     },
                                 },
                                 apns: {
                                     payload: {
                                         aps: {
+                                            alert: { title, body: message },
                                             sound: `${sound}.caf`,
                                             badge: 1,
                                             "content-available": 1,
@@ -152,6 +160,8 @@ serve(async (req) => {
                                     },
                                 },
                                 data: {
+                                    title,
+                                    body: message,
                                     type: type || "info",
                                     link: link || "/",
                                     sound,

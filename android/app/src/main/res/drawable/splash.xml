@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen drawable — dark brand background (#1a1a2e) with centered logo.
+     This replaces the default splash.png to eliminate the white flash on startup. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Solid dark background — matches brandDark (#1a1a2e) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/brandDark" />
+        </shape>
+    </item>
+</layer-list>

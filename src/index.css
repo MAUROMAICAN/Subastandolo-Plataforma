@@ -137,7 +137,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-    padding-top: env(safe-area-inset-top);
+    /* Safe-area padding on sides and bottom but NOT top —
+       the Navbar header with position:sticky handles top safe-area */
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
