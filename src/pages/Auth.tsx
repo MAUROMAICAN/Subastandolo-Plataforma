@@ -411,7 +411,14 @@ const Auth = () => {
     const [local, domain] = e.split("@");
     if (!domain) return e;
     const masked = local.length <= 2 ? local[0] + "***" : local[0] + "***" + local.slice(-1);
-    const [domName, ext] = domain.split(".");
+    const dotIndex = domain.lastIndexOf(".");
+    if (dotIndex <= 0) {
+      // No extension (e.g. localhost) - just mask the domain
+      const maskedDom = domain.length <= 2 ? domain[0] + "***" : domain[0] + "***" + domain.slice(-1);
+      return `${masked}@${maskedDom}`;
+    }
+    const domName = domain.slice(0, dotIndex);
+    const ext = domain.slice(dotIndex + 1);
     const maskedDom = domName.length <= 2 ? domName[0] + "***" : domName[0] + "***" + domName.slice(-1);
     return `${masked}@${maskedDom}.${ext}`;
   };
