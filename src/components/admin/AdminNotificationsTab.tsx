@@ -109,13 +109,11 @@ const AdminNotificationsTab = () => {
     setSending(true);
     try {
       if (targetType === "all") {
-        // Fetch ALL users from profiles table (not push_subscriptions which may be empty)
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id");
 
         if (profilesError) throw profilesError;
-
         const userIds = (profiles || []).map((p) => p.id);
 
         if (userIds.length === 0) {
@@ -124,6 +122,7 @@ const AdminNotificationsTab = () => {
           return;
         }
 
+        // Insert in-app notifications in batches of 50
         const notifs = userIds.map((uid) => ({
           user_id: uid,
           title,
@@ -131,14 +130,26 @@ const AdminNotificationsTab = () => {
           type: tag,
           link: url || "/",
         }));
-
-        // Insert in batches of 50
         for (let i = 0; i < notifs.length; i += 50) {
           const { error } = await supabase.from("notifications").insert(notifs.slice(i, i + 50));
           if (error) throw error;
         }
 
-        toast({ title: "✅ Enviado", description: `Notificación in-app enviada a ${userIds.length} usuario(s)` });
+        // Send FCM push notifications in batches of 10
+        let pushed = 0;
+        for (let i = 0; i < userIds.length; i += 10) {
+          const batch = userIds.slice(i, i + 10);
+          await Promise.allSettled(
+            batch.map((uid) =>
+              supabase.functions.invoke("notify-push", {
+                body: { user_id: uid, title, message: body, type: tag, link: url || "/" },
+              })
+            )
+          );
+          pushed += batch.length;
+        }
+
+        toast({ title: "✅ Enviado", description: `Notificación enviada a ${pushed} usuario(s) con push nativo` });
       } else {
         if (!selectedUser) {
           toast({ title: "Error", description: "Selecciona un usuario", variant: "destructive" });
@@ -146,6 +157,7 @@ const AdminNotificationsTab = () => {
           return;
         }
 
+        // In-app notification
         const { error } = await supabase.from("notifications").insert({
           user_id: selectedUser.id,
           title,
@@ -153,9 +165,20 @@ const AdminNotificationsTab = () => {
           type: tag,
           link: url || "/",
         });
-
         if (error) throw error;
-        toast({ title: "✅ Enviado", description: `Notificación enviada a ${selectedUser.full_name}` });
+
+        // FCM push
+        await supabase.functions.invoke("notify-push", {
+          body: {
+            user_id: selectedUser.id,
+            title,
+            message: body,
+            type: tag,
+            link: url || "/",
+          },
+        });
+
+        toast({ title: "✅ Enviado", description: `Notificación push enviada a ${selectedUser.full_name}` });
       }
 
       setTitle("");

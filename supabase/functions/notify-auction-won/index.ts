@@ -1,25 +1,33 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    try {
-        const { email, name, auctionTitle, auctionId, winningBid, imageUrl } = await req.json();
-        if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
+  try {
+    const { email, name, auctionTitle, auctionId, winningBid, imageUrl, userId } = await req.json();
+    if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
 
-        const resendKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
 
-        const appUrl = "https://subastandolo.com";
-        const auctionUrl = `${appUrl}/subasta/${auctionId}`;
-        const userName = name || "Usuario";
-        const title = auctionTitle || "la subasta";
-        const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-        const html = `
+    const appUrl = "https://subastandolo.com";
+    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const userName = name || "Usuario";
+    const title = auctionTitle || "la subasta";
+    const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
+
+
+    const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -85,25 +93,44 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-        const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                from: "SUBASTANDOLO <no-reply@subastandolo.com>",
-                to: [email],
-                subject: `🏆 ¡Ganaste "${title}"! Procede al pago`,
-                html,
-            }),
-        });
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "SUBASTANDOLO <no-reply@subastandolo.com>",
+        to: [email],
+        subject: `🏆 ¡Ganaste "${title}"! Procede al pago`,
+        html,
+      }),
+    });
 
-        if (!res.ok) throw new Error(await res.text());
-        const result = await res.json();
-        return new Response(JSON.stringify({ success: true, id: result.id }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!res.ok) throw new Error(await res.text());
+    const result = await res.json();
+
+    // ── Push notification nativa (FCM) ──
+    if (userId) {
+      try {
+        await supabaseAdmin.functions.invoke("notify-push", {
+          body: {
+            user_id: userId,
+            title: `🏆 ¡Ganaste "${title}"!`,
+            message: amount ? `Tu puja de ${amount} fue la ganadora. Procede al pago.` : "Eres el ganador. Procede al pago.",
+            type: "auction_won",
+            link: `/subasta/${auctionId}`,
+          },
         });
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      } catch (pushErr) {
+        console.warn("[notify-auction-won] Push notification skipped:", pushErr);
+      }
     }
+
+    return new Response(JSON.stringify({ success: true, id: result.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 });

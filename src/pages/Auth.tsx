@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Mail, Lock, User, Phone, ShieldAlert, CircleCheck,
-  RefreshCw, Fingerprint, ShieldCheck, Sparkles, Send, KeyRound
+  RefreshCw, Fingerprint, ShieldCheck, Send, KeyRound
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError, isEmailNotConfirmedError } from "@/lib/authErrors";
@@ -871,20 +871,11 @@ const Auth = () => {
                   <div className="w-28 h-28 rounded-3xl bg-brand-lime/5 border border-brand-lime/20 flex items-center justify-center shadow-2xl">
                     <img src="/logo_solo.svg" alt="Subastándolo" className="h-16 w-auto" />
                   </div>
-                  {/* Dot indicador */}
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-brand-lime border-2 border-brand-dark flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-brand-dark" />
-                  </div>
                 </div>
 
                 {/* Tagline corporativa */}
-                <p className="text-brand-lime/50 text-[10px] font-bold tracking-[0.3em] uppercase mb-1">Plataforma de Subastas</p>
-                <h1 className="text-4xl font-black text-white tracking-tight text-center leading-none mb-2">
-                  Subast<span className="text-brand-lime">á</span>ndolo
-                </h1>
-                <p className="text-white/30 text-xs text-center font-medium">
-                  La forma inteligente de comprar y vender.
-                </p>
+                <p className="text-brand-lime/50 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Plataforma de Subastas</p>
+                <img src="/logo_letras.svg" alt="Subastándolo" className="h-12 w-auto" />
               </div>
 
               {/* ── Línea decorativa ── */}

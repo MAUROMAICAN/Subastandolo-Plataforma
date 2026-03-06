@@ -85,6 +85,22 @@ Deno.serve(async (req: Request) => {
 
     if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
+
+    // ── Push notification nativa (FCM) al dealer ──
+    try {
+      await supabaseAdmin.functions.invoke("notify-push", {
+        body: {
+          user_id: dealerUserId,
+          title: `💰 Nuevo comprobante de pago`,
+          message: `${buyer} envió un comprobante para "${title}". ${amount ? `Monto: ${amount}.` : ""}`,
+          type: "payment_verified",
+          link: `/dealer`,
+        },
+      });
+    } catch (pushErr) {
+      console.warn("[notify-payment-received] Push notification skipped:", pushErr);
+    }
+
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

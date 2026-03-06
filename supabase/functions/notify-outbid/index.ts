@@ -82,6 +82,22 @@ Deno.serve(async (req: Request) => {
 
     if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
+
+    // ── Push notification nativa (FCM) ──
+    try {
+      await supabaseAdmin.functions.invoke("notify-push", {
+        body: {
+          user_id: userId,
+          title: `⚡ Te superaron en "${title}"`,
+          message: amount ? `Nueva puja: ${amount}. ¡Vuelve a pujar!` : "Alguien ofreció más. ¡No pierdas el artículo!",
+          type: "outbid",
+          link: `/subasta/${auctionId}`,
+        },
+      });
+    } catch (pushErr) {
+      console.warn("[notify-outbid] Push notification skipped:", pushErr);
+    }
+
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
