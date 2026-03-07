@@ -29,6 +29,16 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Panel del Dealer
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas · ${metrics.totalRevenue.toLocaleString("es-MX")} ingresos
+        </p>
+      </div>
+
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[

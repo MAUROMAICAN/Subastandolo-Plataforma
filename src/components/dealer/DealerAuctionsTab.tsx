@@ -156,6 +156,19 @@ export default function DealerAuctionsTab({
         <AuctionPreviewModal auction={previewAuction} onClose={() => setPreviewAuction(null)} />
       )}
 
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mis Subastas
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {auctions.filter(a => a.status === "active").length} activas · {auctions.filter(a => a.status === "pending").length} pendientes · {auctions.filter(a => a.status === "finalized").length} finalizadas
+          </p>
+        </div>
+        <Badge variant="outline" className="text-xs">{auctions.length} subastas</Badge>
+      </div>
+
       {/* Status filter pills */}
       <div className="flex flex-wrap gap-2">
         {[

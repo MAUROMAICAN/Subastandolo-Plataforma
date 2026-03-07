@@ -92,10 +92,13 @@ export default function DealerPaymentTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-heading font-bold flex items-center gap-2">
-        <Banknote className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-        Configuración de Cobro
-      </h2>
+      <div>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+          <Banknote className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+          Configuración de Cobro
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Configura tu cuenta bancaria para recibir pagos de tus ventas</p>
+      </div>
 
       <div className="bg-amber-500/10 border border-amber-200 rounded-sm p-4 text-sm space-y-1">
         <p className="font-semibold text-foreground">🔒 Regla de Seguridad</p>

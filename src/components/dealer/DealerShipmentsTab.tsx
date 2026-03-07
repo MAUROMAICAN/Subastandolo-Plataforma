@@ -391,9 +391,14 @@ export default function DealerShipmentsTab({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-        <Truck className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Gestión de Envíos
-      </h2>
+      <div>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+          <Truck className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Gestión de Envíos
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {pendingShip.length} pendientes · {shipped.length} en camino · {delivered.length} entregados
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[

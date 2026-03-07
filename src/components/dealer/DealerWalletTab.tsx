@@ -76,6 +76,16 @@ export default function DealerWalletTab() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mi Billetera
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Saldo disponible: ${walletBalance.toFixed(2)} · {withdrawals.length} retiros realizados
+        </p>
+      </div>
+
       <Card className="border border-primary/30 rounded-sm bg-primary/5 dark:bg-[#A6E300]/5 overflow-hidden">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
