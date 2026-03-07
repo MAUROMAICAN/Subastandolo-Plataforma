@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -30,6 +30,12 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [editingTime, setEditingTime] = useState<string | null>(null);
   const [newDurationHours, setNewDurationHours] = useState("");
   const [savingTime, setSavingTime] = useState(false);
+
+  // Search, collapse & pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Create "Próximamente" auction state
   const [showCreateScheduled, setShowCreateScheduled] = useState(false);
@@ -74,11 +80,41 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
 
   const filteredAuctions = auctions.filter(a => {
     const isArchived = !!a.archived_at;
-    if (auctionFilter === "archived") return isArchived;
-    if (auctionFilter === "scheduled") return a.status === "scheduled";
-    if (auctionFilter === "all") return true;
-    return !isArchived && (["active", "paused", "finalized"].includes(a.status));
+    let passFilter = false;
+    if (auctionFilter === "archived") passFilter = isArchived;
+    else if (auctionFilter === "scheduled") passFilter = a.status === "scheduled";
+    else if (auctionFilter === "all") passFilter = true;
+    else passFilter = !isArchived && (["active", "paused", "finalized"].includes(a.status));
+    if (!passFilter) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      a.title.toLowerCase().includes(q) ||
+      (a.dealer_name || "").toLowerCase().includes(q) ||
+      (a.operation_number || "").toLowerCase().includes(q) ||
+      a.id.toLowerCase().includes(q)
+    );
   });
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredAuctions.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedAuctions = filteredAuctions.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const toggleCard = (id: string) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllCards = () => {
+    if (expandedCards.size >= paginatedAuctions.length) {
+      setExpandedCards(new Set());
+    } else {
+      setExpandedCards(new Set(paginatedAuctions.map(a => a.id)));
+    }
+  };
 
   const handleCreateScheduled = async () => {
     if (!user || !schedTitle.trim() || schedImageFiles.length < 1) {
@@ -254,13 +290,44 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         </div>
         <div className="flex items-center gap-1 flex-wrap">
           {(["visible", "scheduled", "archived", "all"] as const).map(f => (
-            <Button key={f} variant={auctionFilter === f ? "default" : "outline"} size="sm" className="text-xs h-7 rounded-sm" onClick={() => setAuctionFilter(f)}>
+            <Button key={f} variant={auctionFilter === f ? "default" : "outline"} size="sm" className="text-xs h-7 rounded-sm" onClick={() => { setAuctionFilter(f); setCurrentPage(1); }}>
               {f === "visible" ? "Visibles" : f === "scheduled" ? "📅 Próximamente" : f === "archived" ? "Archivadas" : "Todas"}
             </Button>
           ))}
           <Button size="sm" className="text-xs h-7 rounded-sm bg-accent text-accent-foreground" onClick={() => setShowCreateScheduled(!showCreateScheduled)}>
             <CalendarClock className="h-3 w-3 mr-1" /> Crear Próximamente
           </Button>
+        </div>
+      </div>
+
+      {/* Search bar + controls */}
+      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título, dealer, operación o ID..."
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            className="pl-9 h-9 rounded-sm text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" className="h-9 text-xs rounded-sm gap-1.5" onClick={toggleAllCards}>
+            <ChevronsUpDown className="h-3.5 w-3.5" />
+            {expandedCards.size >= paginatedAuctions.length ? "Colapsar Todo" : "Expandir Todo"}
+          </Button>
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+            className="flex h-9 rounded-sm border border-input bg-background px-3 py-1 text-xs"
+          >
+            <option value={25}>25/pág</option>
+            <option value={50}>50/pág</option>
+            <option value={100}>100/pág</option>
+          </select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {filteredAuctions.length} resultado{filteredAuctions.length !== 1 ? "s" : ""}
+          </span>
         </div>
       </div>
 
@@ -316,11 +383,12 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
           </CardContent>
         </Card>
       )}
-      {filteredAuctions.map(auction => {
+      {paginatedAuctions.map(auction => {
         const isEnded = new Date(auction.end_time).getTime() <= Date.now();
         const winner = auction.winner_id ? winnerProfiles[auction.winner_id] : null;
         const mainImage = auction.images[0]?.image_url || auction.image_url;
         const isArchived = !!auction.archived_at;
+        const isExpanded = expandedCards.has(auction.id);
         const statusStyles: Record<string, string> = {
           active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
           paused: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
@@ -335,8 +403,8 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         return (
           <Card key={auction.id} className={`border rounded-sm transition-all overflow-hidden ${isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30 hover:shadow-sm"}`}>
             <CardContent className="p-0">
-              {/* ═══ Card Header ═══ */}
-              <div className="flex items-stretch gap-0">
+              {/* ═══ Card Header (always visible, click to toggle) ═══ */}
+              <div className="flex items-stretch gap-0 cursor-pointer" onClick={() => toggleCard(auction.id)}>
                 {mainImage && (
                   <img
                     src={mainImage}
@@ -373,7 +441,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                         <Clock className="h-3 w-3" />Fin: {new Date(auction.end_time).toLocaleString("es-MX")}
                       </p>
                     </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
+                    <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver subasta" onClick={() => navigate(`/auction/${auction.id}`)}>
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
@@ -405,332 +473,368 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title={isExpanded ? "Colapsar" : "Expandir"}>
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Time editing & Extended toggle */}
-              {editingTime === auction.id && (
-                <div className="p-3 rounded-sm bg-secondary/50 border border-border space-y-3">
-                  <p className="text-xs font-heading font-bold flex items-center gap-1.5">
-                    <Timer className="h-3.5 w-3.5 text-primary dark:text-accent" /> Cambiar Tiempo de Subasta
-                  </p>
-                  <div className="flex items-end gap-2">
-                    <div className="space-y-1 flex-1 max-w-xs">
-                      <Label className="text-[10px]">Nuevas horas desde ahora</Label>
-                      <select
-                        value={newDurationHours}
-                        onChange={(e) => setNewDurationHours(e.target.value)}
-                        className="flex h-9 w-full rounded-sm border border-input bg-background px-3 py-1 text-sm"
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="1">1 hora</option>
-                        <option value="2">2 horas</option>
-                        <option value="3">3 horas</option>
-                        <option value="4">4 horas</option>
-                        <option value="5">5 horas</option>
-                        <option value="6">6 horas</option>
-                        <option value="12">12 horas</option>
-                        <option value="24">1 día (24h)</option>
-                        <option value="48">2 días (48h)</option>
-                        <option value="72">3 días (72h)</option>
-                        <option value="96">4 días (96h)</option>
-                        <option value="120">5 días (120h)</option>
-                        <option value="144">6 días (144h)</option>
-                      </select>
-                    </div>
-                    <Button size="sm" onClick={() => handleChangeTime(auction.id)} disabled={savingTime || !newDurationHours} className="rounded-sm text-xs h-9">
-                      {savingTime ? <Loader2 className="h-3 w-3 animate-spin" /> : "Aplicar"}
-                    </Button>
-                  </div>
-                  {newDurationHours && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Nuevo fin: <strong className="text-foreground">{new Date(Date.now() + parseFloat(newDurationHours) * 60 * 60 * 1000).toLocaleString("es-MX")}</strong>
+              {/* ═══ Collapsible Body ═══ */}
+              {isExpanded && <div className="border-t border-border">
+
+                {/* Time editing & Extended toggle */}
+                {editingTime === auction.id && (
+                  <div className="p-3 rounded-sm bg-secondary/50 border border-border space-y-3">
+                    <p className="text-xs font-heading font-bold flex items-center gap-1.5">
+                      <Timer className="h-3.5 w-3.5 text-primary dark:text-accent" /> Cambiar Tiempo de Subasta
                     </p>
-                  )}
-                  <div className="flex items-center justify-between border-t border-border pt-2">
-                    <div>
-                      <p className="text-xs font-medium flex items-center gap-1"><Zap className="h-3 w-3 text-accent" /> Etiqueta "Tiempo Extendido"</p>
-                      <p className="text-[10px] text-muted-foreground">Visible para compradores en la tarjeta de subasta</p>
-                    </div>
-                    <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
-                  </div>
-                </div>
-              )}
-
-              {/* Activate scheduled auction */}
-              {auction.status === "scheduled" && (
-                <div className="p-3 rounded-sm bg-accent/5 border border-accent/20 space-y-3">
-                  <p className="text-xs font-heading font-bold flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5 text-accent" /> Activar Subasta
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Duración *</Label>
-                      <select value={activateDuration[auction.id] || ""} onChange={(e) => setActivateDuration(p => ({ ...p, [auction.id]: e.target.value }))} className="flex h-9 w-full rounded-sm border border-input bg-background px-3 py-1 text-sm">
-                        <option value="">Seleccionar...</option>
-                        <option value="1">1 hora</option>
-                        <option value="2">2 horas</option>
-                        <option value="3">3 horas</option>
-                        <option value="6">6 horas</option>
-                        <option value="12">12 horas</option>
-                        <option value="24">1 día</option>
-                        <option value="48">2 días</option>
-                        <option value="72">3 días</option>
-                        <option value="96">4 días</option>
-                        <option value="120">5 días</option>
-                        <option value="144">6 días</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Programar inicio (opcional)</Label>
-                      <Input type="datetime-local" value={activateDate[auction.id] || ""} onChange={(e) => setActivateDate(p => ({ ...p, [auction.id]: e.target.value }))} min={new Date().toISOString().slice(0, 16)} className="rounded-sm h-9 text-sm" />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="rounded-sm text-xs" disabled={!activateDuration[auction.id] || activatingId === auction.id} onClick={async () => {
-                      setActivatingId(auction.id);
-                      await handleActivateScheduled(auction.id, parseInt(activateDuration[auction.id]), activateDate[auction.id] || undefined);
-                      setActivatingId(null);
-                    }}>
-                      {activatingId === auction.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Play className="h-3 w-3 mr-1" />}
-                      {activateDate[auction.id] ? "Programar Inicio" : "Activar Ahora"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {isEnded && winner && (
-                <div className="mx-4 mb-3 rounded-lg border border-primary/20 overflow-hidden">
-                  {/* Winner Header */}
-                  <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent dark:from-accent/10 dark:via-accent/5 px-4 py-2.5 flex items-center gap-2 border-b border-primary/10">
-                    <div className="h-8 w-8 rounded-full bg-primary/15 dark:bg-accent/15 flex items-center justify-center">
-                      <Trophy className="h-4 w-4 text-primary dark:text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-heading font-bold text-primary dark:text-accent">Ganador de la Subasta</p>
-                      <p className="text-[10px] text-muted-foreground">Precio final: <strong className="text-foreground">${auction.current_price.toLocaleString("es-MX")}</strong></p>
-                    </div>
-                  </div>
-                  {/* Winner Details */}
-                  <div className="px-4 py-3 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
-                        <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">Nombre</p>
-                          <p className="text-xs font-semibold">{winner.full_name}</p>
-                        </div>
+                    <div className="flex items-end gap-2">
+                      <div className="space-y-1 flex-1 max-w-xs">
+                        <Label className="text-[10px]">Nuevas horas desde ahora</Label>
+                        <select
+                          value={newDurationHours}
+                          onChange={(e) => setNewDurationHours(e.target.value)}
+                          className="flex h-9 w-full rounded-sm border border-input bg-background px-3 py-1 text-sm"
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="1">1 hora</option>
+                          <option value="2">2 horas</option>
+                          <option value="3">3 horas</option>
+                          <option value="4">4 horas</option>
+                          <option value="5">5 horas</option>
+                          <option value="6">6 horas</option>
+                          <option value="12">12 horas</option>
+                          <option value="24">1 día (24h)</option>
+                          <option value="48">2 días (48h)</option>
+                          <option value="72">3 días (72h)</option>
+                          <option value="96">4 días (96h)</option>
+                          <option value="120">5 días (120h)</option>
+                          <option value="144">6 días (144h)</option>
+                        </select>
                       </div>
-                      {winner.phone && (
-                        <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
-                          <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <div>
-                            <p className="text-[10px] text-muted-foreground">Teléfono</p>
-                            <p className="text-xs font-semibold font-mono">{winner.phone}</p>
-                          </div>
-                        </div>
-                      )}
+                      <Button size="sm" onClick={() => handleChangeTime(auction.id)} disabled={savingTime || !newDurationHours} className="rounded-sm text-xs h-9">
+                        {savingTime ? <Loader2 className="h-3 w-3 animate-spin" /> : "Aplicar"}
+                      </Button>
+                    </div>
+                    {newDurationHours && (
+                      <p className="text-[10px] text-muted-foreground">
+                        Nuevo fin: <strong className="text-foreground">{new Date(Date.now() + parseFloat(newDurationHours) * 60 * 60 * 1000).toLocaleString("es-MX")}</strong>
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between border-t border-border pt-2">
+                      <div>
+                        <p className="text-xs font-medium flex items-center gap-1"><Zap className="h-3 w-3 text-accent" /> Etiqueta "Tiempo Extendido"</p>
+                        <p className="text-[10px] text-muted-foreground">Visible para compradores en la tarjeta de subasta</p>
+                      </div>
+                      <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Activate scheduled auction */}
+                {auction.status === "scheduled" && (
+                  <div className="p-3 rounded-sm bg-accent/5 border border-accent/20 space-y-3">
+                    <p className="text-xs font-heading font-bold flex items-center gap-1.5">
+                      <CalendarClock className="h-3.5 w-3.5 text-accent" /> Activar Subasta
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Duración *</Label>
+                        <select value={activateDuration[auction.id] || ""} onChange={(e) => setActivateDuration(p => ({ ...p, [auction.id]: e.target.value }))} className="flex h-9 w-full rounded-sm border border-input bg-background px-3 py-1 text-sm">
+                          <option value="">Seleccionar...</option>
+                          <option value="1">1 hora</option>
+                          <option value="2">2 horas</option>
+                          <option value="3">3 horas</option>
+                          <option value="6">6 horas</option>
+                          <option value="12">12 horas</option>
+                          <option value="24">1 día</option>
+                          <option value="48">2 días</option>
+                          <option value="72">3 días</option>
+                          <option value="96">4 días</option>
+                          <option value="120">5 días</option>
+                          <option value="144">6 días</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Programar inicio (opcional)</Label>
+                        <Input type="datetime-local" value={activateDate[auction.id] || ""} onChange={(e) => setActivateDate(p => ({ ...p, [auction.id]: e.target.value }))} min={new Date().toISOString().slice(0, 16)} className="rounded-sm h-9 text-sm" />
+                      </div>
                     </div>
                     <div className="flex gap-2">
-                      {winner.phone && (
-                        <Button size="sm" className="text-xs h-8 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none" onClick={() => openWhatsApp(winner.phone!, auction.title, auction.current_price)}>
-                          <MessageCircle className="h-3.5 w-3.5 mr-1.5" />WhatsApp
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" className="text-xs h-8 rounded-sm flex-1 sm:flex-none" onClick={() => handleSendEmail(auction.id)} disabled={sendingEmail === auction.id}>
-                        {sendingEmail === auction.id ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
-                        Enviar Correo
+                      <Button size="sm" className="rounded-sm text-xs" disabled={!activateDuration[auction.id] || activatingId === auction.id} onClick={async () => {
+                        setActivatingId(auction.id);
+                        await handleActivateScheduled(auction.id, parseInt(activateDuration[auction.id]), activateDate[auction.id] || undefined);
+                        setActivatingId(null);
+                      }}>
+                        {activatingId === auction.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Play className="h-3 w-3 mr-1" />}
+                        {activateDate[auction.id] ? "Programar Inicio" : "Activar Ahora"}
                       </Button>
                     </div>
                   </div>
-                </div>
-              )}
-              {isEnded && auction.winner_id && (() => {
-                const payStatus = (auction as any).payment_status || "pending";
-                const delStatus = (auction as any).delivery_status || "pending";
-                const frozen = (auction as any).funds_frozen;
-                const PayIcon: Record<string, any> = { pending: Clock, under_review: Search, verified: CheckCircle, escrow: Lock, released: Unlock, refunded: ReceiptText };
-                const paymentSteps = [
-                  { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
-                  { key: "under_review", label: "En Revisión", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
-                  { key: "verified", label: "Verificado", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
-                  { key: "escrow", label: "Custodia", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20" },
-                  { key: "released", label: "Liberado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-                  { key: "refunded", label: "Reembolsado", color: "text-slate-600 dark:text-slate-400 bg-slate-500/10 border-slate-500/20" },
-                ];
-                const DelIcon: Record<string, any> = { pending: Package, ready_to_ship: ShieldCheck, shipped: Truck, delivered: CheckCircle };
-                const deliverySteps = [
-                  { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
-                  { key: "ready_to_ship", label: "Listo", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
-                  { key: "shipped", label: "Enviado", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
-                  { key: "delivered", label: "Entregado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-                ];
-                const currentPayIdx = paymentSteps.findIndex(s => s.key === payStatus);
-                const currentDelIdx = deliverySteps.findIndex(s => s.key === delStatus);
-                const changePayment = async (direction: "prev" | "next") => {
-                  const newIdx = direction === "next" ? currentPayIdx + 1 : currentPayIdx - 1;
-                  if (newIdx < 0 || newIdx >= paymentSteps.length) return;
-                  const newStatus = paymentSteps[newIdx].key;
-                  const updateData: any = { payment_status: newStatus };
-                  if (newStatus === "escrow") updateData.paid_at = new Date().toISOString();
-                  if (newStatus === "released") updateData.funds_released_at = new Date().toISOString();
-                  await supabase.from("auctions").update(updateData).eq("id", auction.id);
-                  toast({ title: `Pago → ${paymentSteps[newIdx].label}` }); fetchAllData();
-                };
-                const changeDelivery = async (direction: "prev" | "next") => {
-                  const newIdx = direction === "next" ? currentDelIdx + 1 : currentDelIdx - 1;
-                  if (newIdx < 0 || newIdx >= deliverySteps.length) return;
-                  const newStatus = deliverySteps[newIdx].key;
-                  const updateData: any = { delivery_status: newStatus };
-                  if (newStatus === "ready_to_ship") updateData.dealer_ship_deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-                  if (newStatus === "delivered") updateData.delivered_at = new Date().toISOString();
-                  await supabase.from("auctions").update(updateData).eq("id", auction.id);
-                  toast({ title: `Envío → ${deliverySteps[newIdx].label}` }); fetchAllData();
-                };
-                const currentPayStep = paymentSteps[currentPayIdx];
-                const currentDelStep = deliverySteps[currentDelIdx];
-                const CurrentPayIcon = PayIcon[payStatus] || Clock;
-                const CurrentDelIcon = DelIcon[delStatus] || Package;
-                return (
-                  <div className="mx-4 mb-4 space-y-3">
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-primary dark:text-accent" /> Estado de Fondos</p>
-                      {frozen && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 font-bold animate-pulse">🔒 CONGELADO</Badge>}
-                    </div>
+                )}
 
-                    {/* ═══ PAGO ═══ */}
-                    <div className="rounded-lg border border-border bg-card overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">💳 Pago</span>
-                          <Badge variant="outline" className={`text-[10px] font-bold ${currentPayStep?.color || ""}`}>
-                            <CurrentPayIcon className="h-3 w-3 mr-1" />{currentPayStep?.label || payStatus}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}>
-                            <ChevronLeft className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
+                {isEnded && winner && (
+                  <div className="mx-4 mb-3 rounded-lg border border-primary/20 overflow-hidden">
+                    {/* Winner Header */}
+                    <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent dark:from-accent/10 dark:via-accent/5 px-4 py-2.5 flex items-center gap-2 border-b border-primary/10">
+                      <div className="h-8 w-8 rounded-full bg-primary/15 dark:bg-accent/15 flex items-center justify-center">
+                        <Trophy className="h-4 w-4 text-primary dark:text-accent" />
                       </div>
-                      <div className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          {paymentSteps.map((step, i) => {
-                            const isActive = i === currentPayIdx; const isPast = i < currentPayIdx;
-                            const StepIcon = PayIcon[step.key] || Clock;
-                            return (
-                              <div key={step.key} className="flex items-center flex-1">
-                                <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
-                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
-                                    : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
-                                      : "bg-muted/50 border-border text-muted-foreground"
-                                    }`}>
-                                    {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
-                                  </div>
-                                  <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-                                </div>
-                                {i < paymentSteps.length - 1 && (
-                                  <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div>
+                        <p className="text-xs font-heading font-bold text-primary dark:text-accent">Ganador de la Subasta</p>
+                        <p className="text-[10px] text-muted-foreground">Precio final: <strong className="text-foreground">${auction.current_price.toLocaleString("es-MX")}</strong></p>
                       </div>
                     </div>
-
-                    {/* ═══ ENVÍO ═══ */}
-                    <div className="rounded-lg border border-border bg-card overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">📦 Envío</span>
-                          <Badge variant="outline" className={`text-[10px] font-bold ${currentDelStep?.color || ""}`}>
-                            <CurrentDelIcon className="h-3 w-3 mr-1" />{currentDelStep?.label || delStatus}
-                          </Badge>
+                    {/* Winner Details */}
+                    <div className="px-4 py-3 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
+                          <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Nombre</p>
+                            <p className="text-xs font-semibold">{winner.full_name}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}>
-                            <ChevronLeft className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
+                        {winner.phone && (
+                          <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
+                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Teléfono</p>
+                              <p className="text-xs font-semibold font-mono">{winner.phone}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          {deliverySteps.map((step, i) => {
-                            const isActive = i === currentDelIdx; const isPast = i < currentDelIdx;
-                            const StepIcon = DelIcon[step.key] || Package;
-                            return (
-                              <div key={step.key} className="flex items-center flex-1">
-                                <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
-                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
-                                    : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
-                                      : "bg-muted/50 border-border text-muted-foreground"
-                                    }`}>
-                                    {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
-                                  </div>
-                                  <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-                                </div>
-                                {i < deliverySteps.length - 1 && (
-                                  <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className="flex gap-2">
+                        {winner.phone && (
+                          <Button size="sm" className="text-xs h-8 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none" onClick={() => openWhatsApp(winner.phone!, auction.title, auction.current_price)}>
+                            <MessageCircle className="h-3.5 w-3.5 mr-1.5" />WhatsApp
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" className="text-xs h-8 rounded-sm flex-1 sm:flex-none" onClick={() => handleSendEmail(auction.id)} disabled={sendingEmail === auction.id}>
+                          {sendingEmail === auction.id ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
+                          Enviar Correo
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Auto-release notice */}
-                    {(auction as any).delivered_at && !frozen && payStatus === "escrow" && (
-                      <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5">
-                        <Clock className="h-4 w-4 text-primary dark:text-accent shrink-0" />
-                        <p className="text-xs text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
-                      </div>
-                    )}
-
-                    {/* ═══ COMISIÓN ═══ */}
-                    {auction.winner_id && (
-                      <div className="rounded-lg border border-border bg-card overflow-hidden">
-                        <div className="px-4 py-2.5 bg-secondary/30 border-b border-border">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                            <DollarSign className="h-3.5 w-3.5" /> Desglose de Comisión
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 divide-x divide-border">
-                          <div className="p-3 text-center">
-                            <ReceiptText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                            <p className="text-[10px] text-muted-foreground mb-0.5">Venta Total</p>
-                            <p className="text-base font-heading font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                          </div>
-                          <div className="p-3 text-center bg-primary/5 dark:bg-accent/5">
-                            <DollarSign className="h-4 w-4 text-primary dark:text-accent mx-auto mb-1" />
-                            <p className="text-[10px] text-muted-foreground mb-0.5">Comisión ({commissionPct}%)</p>
-                            <p className="text-base font-heading font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                          </div>
-                          <div className="p-3 text-center">
-                            <User className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                            <p className="text-[10px] text-muted-foreground mb-0.5">Dealer Recibe</p>
-                            <p className="text-base font-heading font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })()}
+                )}
+                {isEnded && auction.winner_id && (() => {
+                  const payStatus = (auction as any).payment_status || "pending";
+                  const delStatus = (auction as any).delivery_status || "pending";
+                  const frozen = (auction as any).funds_frozen;
+                  const PayIcon: Record<string, any> = { pending: Clock, under_review: Search, verified: CheckCircle, escrow: Lock, released: Unlock, refunded: ReceiptText };
+                  const paymentSteps = [
+                    { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
+                    { key: "under_review", label: "En Revisión", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
+                    { key: "verified", label: "Verificado", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                    { key: "escrow", label: "Custodia", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                    { key: "released", label: "Liberado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                    { key: "refunded", label: "Reembolsado", color: "text-slate-600 dark:text-slate-400 bg-slate-500/10 border-slate-500/20" },
+                  ];
+                  const DelIcon: Record<string, any> = { pending: Package, ready_to_ship: ShieldCheck, shipped: Truck, delivered: CheckCircle };
+                  const deliverySteps = [
+                    { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
+                    { key: "ready_to_ship", label: "Listo", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                    { key: "shipped", label: "Enviado", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
+                    { key: "delivered", label: "Entregado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                  ];
+                  const currentPayIdx = paymentSteps.findIndex(s => s.key === payStatus);
+                  const currentDelIdx = deliverySteps.findIndex(s => s.key === delStatus);
+                  const changePayment = async (direction: "prev" | "next") => {
+                    const newIdx = direction === "next" ? currentPayIdx + 1 : currentPayIdx - 1;
+                    if (newIdx < 0 || newIdx >= paymentSteps.length) return;
+                    const newStatus = paymentSteps[newIdx].key;
+                    const updateData: any = { payment_status: newStatus };
+                    if (newStatus === "escrow") updateData.paid_at = new Date().toISOString();
+                    if (newStatus === "released") updateData.funds_released_at = new Date().toISOString();
+                    await supabase.from("auctions").update(updateData).eq("id", auction.id);
+                    toast({ title: `Pago → ${paymentSteps[newIdx].label}` }); fetchAllData();
+                  };
+                  const changeDelivery = async (direction: "prev" | "next") => {
+                    const newIdx = direction === "next" ? currentDelIdx + 1 : currentDelIdx - 1;
+                    if (newIdx < 0 || newIdx >= deliverySteps.length) return;
+                    const newStatus = deliverySteps[newIdx].key;
+                    const updateData: any = { delivery_status: newStatus };
+                    if (newStatus === "ready_to_ship") updateData.dealer_ship_deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+                    if (newStatus === "delivered") updateData.delivered_at = new Date().toISOString();
+                    await supabase.from("auctions").update(updateData).eq("id", auction.id);
+                    toast({ title: `Envío → ${deliverySteps[newIdx].label}` }); fetchAllData();
+                  };
+                  const currentPayStep = paymentSteps[currentPayIdx];
+                  const currentDelStep = deliverySteps[currentDelIdx];
+                  const CurrentPayIcon = PayIcon[payStatus] || Clock;
+                  const CurrentDelIcon = DelIcon[delStatus] || Package;
+                  return (
+                    <div className="mx-4 mb-4 space-y-3">
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-primary dark:text-accent" /> Estado de Fondos</p>
+                        {frozen && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 font-bold animate-pulse">🔒 CONGELADO</Badge>}
+                      </div>
+
+                      {/* ═══ PAGO ═══ */}
+                      <div className="rounded-lg border border-border bg-card overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">💳 Pago</span>
+                            <Badge variant="outline" className={`text-[10px] font-bold ${currentPayStep?.color || ""}`}>
+                              <CurrentPayIcon className="h-3 w-3 mr-1" />{currentPayStep?.label || payStatus}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}>
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            {paymentSteps.map((step, i) => {
+                              const isActive = i === currentPayIdx; const isPast = i < currentPayIdx;
+                              const StepIcon = PayIcon[step.key] || Clock;
+                              return (
+                                <div key={step.key} className="flex items-center flex-1">
+                                  <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
+                                        : "bg-muted/50 border-border text-muted-foreground"
+                                      }`}>
+                                      {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                                    </div>
+                                    <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                                  </div>
+                                  {i < paymentSteps.length - 1 && (
+                                    <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ═══ ENVÍO ═══ */}
+                      <div className="rounded-lg border border-border bg-card overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">📦 Envío</span>
+                            <Badge variant="outline" className={`text-[10px] font-bold ${currentDelStep?.color || ""}`}>
+                              <CurrentDelIcon className="h-3 w-3 mr-1" />{currentDelStep?.label || delStatus}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}>
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            {deliverySteps.map((step, i) => {
+                              const isActive = i === currentDelIdx; const isPast = i < currentDelIdx;
+                              const StepIcon = DelIcon[step.key] || Package;
+                              return (
+                                <div key={step.key} className="flex items-center flex-1">
+                                  <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
+                                        : "bg-muted/50 border-border text-muted-foreground"
+                                      }`}>
+                                      {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                                    </div>
+                                    <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                                  </div>
+                                  {i < deliverySteps.length - 1 && (
+                                    <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Auto-release notice */}
+                      {(auction as any).delivered_at && !frozen && payStatus === "escrow" && (
+                        <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5">
+                          <Clock className="h-4 w-4 text-primary dark:text-accent shrink-0" />
+                          <p className="text-xs text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
+                        </div>
+                      )}
+
+                      {/* ═══ COMISIÓN ═══ */}
+                      {auction.winner_id && (
+                        <div className="rounded-lg border border-border bg-card overflow-hidden">
+                          <div className="px-4 py-2.5 bg-secondary/30 border-b border-border">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <DollarSign className="h-3.5 w-3.5" /> Desglose de Comisión
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 divide-x divide-border">
+                            <div className="p-3 text-center">
+                              <ReceiptText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                              <p className="text-[10px] text-muted-foreground mb-0.5">Venta Total</p>
+                              <p className="text-base font-heading font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div className="p-3 text-center bg-primary/5 dark:bg-accent/5">
+                              <DollarSign className="h-4 w-4 text-primary dark:text-accent mx-auto mb-1" />
+                              <p className="text-[10px] text-muted-foreground mb-0.5">Comisión ({commissionPct}%)</p>
+                              <p className="text-base font-heading font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div className="p-3 text-center">
+                              <User className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                              <p className="text-[10px] text-muted-foreground mb-0.5">Dealer Recibe</p>
+                              <p className="text-base font-heading font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>}
             </CardContent>
           </Card>
         );
       })}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filteredAuctions.length)} de {filteredAuctions.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Anterior
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 7) page = i + 1;
+              else if (safePage <= 4) page = i + 1;
+              else if (safePage >= totalPages - 3) page = totalPages - 6 + i;
+              else page = safePage - 3 + i;
+              return (
+                <Button key={page} variant={page === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs rounded-sm p-0" onClick={() => setCurrentPage(page)}>
+                  {page}
+                </Button>
+              );
+            })}
+            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}>
+              Siguiente <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
