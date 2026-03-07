@@ -678,25 +678,23 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                   ];
                   const currentPayIdx = paymentSteps.findIndex(s => s.key === payStatus);
                   const currentDelIdx = deliverySteps.findIndex(s => s.key === delStatus);
-                  const changePayment = async (direction: "prev" | "next") => {
-                    const newIdx = direction === "next" ? currentPayIdx + 1 : currentPayIdx - 1;
-                    if (newIdx < 0 || newIdx >= paymentSteps.length) return;
-                    const newStatus = paymentSteps[newIdx].key;
+                  const changePayment = async (targetIdx: number) => {
+                    if (targetIdx < 0 || targetIdx >= paymentSteps.length || targetIdx === currentPayIdx) return;
+                    const newStatus = paymentSteps[targetIdx].key;
                     const updateData: any = { payment_status: newStatus };
                     if (newStatus === "escrow") updateData.paid_at = new Date().toISOString();
                     if (newStatus === "released") updateData.funds_released_at = new Date().toISOString();
                     await supabase.from("auctions").update(updateData).eq("id", auction.id);
-                    toast({ title: `Pago → ${paymentSteps[newIdx].label}` }); fetchAllData();
+                    toast({ title: `Pago → ${paymentSteps[targetIdx].label}` }); fetchAllData();
                   };
-                  const changeDelivery = async (direction: "prev" | "next") => {
-                    const newIdx = direction === "next" ? currentDelIdx + 1 : currentDelIdx - 1;
-                    if (newIdx < 0 || newIdx >= deliverySteps.length) return;
-                    const newStatus = deliverySteps[newIdx].key;
+                  const changeDelivery = async (targetIdx: number) => {
+                    if (targetIdx < 0 || targetIdx >= deliverySteps.length || targetIdx === currentDelIdx) return;
+                    const newStatus = deliverySteps[targetIdx].key;
                     const updateData: any = { delivery_status: newStatus };
                     if (newStatus === "ready_to_ship") updateData.dealer_ship_deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
                     if (newStatus === "delivered") updateData.delivered_at = new Date().toISOString();
                     await supabase.from("auctions").update(updateData).eq("id", auction.id);
-                    toast({ title: `Envío → ${deliverySteps[newIdx].label}` }); fetchAllData();
+                    toast({ title: `Envío → ${deliverySteps[targetIdx].label}` }); fetchAllData();
                   };
                   const currentPayStep = paymentSteps[currentPayIdx];
                   const currentDelStep = deliverySteps[currentDelIdx];
@@ -719,14 +717,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                               <CurrentPayIcon className="h-3 w-3 mr-1" />{currentPayStep?.label || payStatus}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}>
-                              <ChevronLeft className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}>
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          <span className="text-[9px] text-muted-foreground">Click para cambiar</span>
                         </div>
                         <div className="px-4 py-3">
                           <div className="flex items-center gap-1">
@@ -735,15 +726,19 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                               const StepIcon = PayIcon[step.key] || Clock;
                               return (
                                 <div key={step.key} className="flex items-center flex-1">
-                                  <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
-                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
-                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
-                                        : "bg-muted/50 border-border text-muted-foreground"
+                                  <button
+                                    onClick={() => changePayment(i)}
+                                    className={`flex flex-col items-center flex-1 transition-all group cursor-pointer ${isActive || isPast ? "" : "opacity-40 hover:opacity-70"}`}
+                                    title={`${step.label} — click para seleccionar`}
+                                  >
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 group-hover:shadow-md ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30 group-hover:ring-1 group-hover:ring-primary/20"
+                                        : "bg-muted/50 border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary dark:group-hover:text-accent"
                                       }`}>
                                       {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
                                     </div>
-                                    <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-                                  </div>
+                                    <span className={`text-[9px] mt-1 text-center leading-tight transition-colors ${isActive ? "font-bold text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}>{step.label}</span>
+                                  </button>
                                   {i < paymentSteps.length - 1 && (
                                     <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
                                   )}
@@ -763,14 +758,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                               <CurrentDelIcon className="h-3 w-3 mr-1" />{currentDelStep?.label || delStatus}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}>
-                              <ChevronLeft className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}>
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          <span className="text-[9px] text-muted-foreground">Click para cambiar</span>
                         </div>
                         <div className="px-4 py-3">
                           <div className="flex items-center gap-1">
@@ -779,15 +767,19 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                               const StepIcon = DelIcon[step.key] || Package;
                               return (
                                 <div key={step.key} className="flex items-center flex-1">
-                                  <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
-                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
-                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
-                                        : "bg-muted/50 border-border text-muted-foreground"
+                                  <button
+                                    onClick={() => changeDelivery(i)}
+                                    className={`flex flex-col items-center flex-1 transition-all group cursor-pointer ${isActive || isPast ? "" : "opacity-40 hover:opacity-70"}`}
+                                    title={`${step.label} — click para seleccionar`}
+                                  >
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 group-hover:shadow-md ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                      : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30 group-hover:ring-1 group-hover:ring-primary/20"
+                                        : "bg-muted/50 border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary dark:group-hover:text-accent"
                                       }`}>
                                       {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
                                     </div>
-                                    <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-                                  </div>
+                                    <span className={`text-[9px] mt-1 text-center leading-tight transition-colors ${isActive ? "font-bold text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}>{step.label}</span>
+                                  </button>
                                   {i < deliverySteps.length - 1 && (
                                     <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
                                   )}
