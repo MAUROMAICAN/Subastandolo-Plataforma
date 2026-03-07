@@ -64,4 +64,4 @@ export interface SiteSection {
   section_type: string;
 }
 
-export type AdminTab = "dashboard" | "review" | "auctions" | "won" | "payments" | "messages" | "cms" | "dealers" | "dealer_sales" | "disputes" | "reports" | "users" | "team" | "campaigns" | "notifications";
+export type AdminTab = "dashboard" | "review" | "auctions" | "won" | "payments" | "messages" | "emails" | "cms" | "dealers" | "dealer_sales" | "disputes" | "reports" | "users" | "team" | "campaigns" | "notifications";

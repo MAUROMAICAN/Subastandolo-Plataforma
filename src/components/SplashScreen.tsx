@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen as NativeSplash } from "@capacitor/splash-screen";
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -8,6 +10,13 @@ interface SplashScreenProps {
 const SplashScreen = ({ onFinish, minDuration = 3000 }: SplashScreenProps) => {
   const [phase, setPhase] = useState(0); // 0=icon, 1=text, 2=dots
   const [fadeOut, setFadeOut] = useState(false);
+
+  // Hide native Capacitor splash once the React splash is visible
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      NativeSplash.hide().catch(() => { });
+    }
+  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 100);

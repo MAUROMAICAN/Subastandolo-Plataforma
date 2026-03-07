@@ -1,3 +1,6 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -15,6 +18,11 @@ Deno.serve(async (req) => {
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     const userName = name || "Usuario";
     const appName = "SUBASTANDOLO";
@@ -109,10 +117,12 @@ Deno.serve(async (req) => {
 
     if (!emailRes.ok) {
       const errBody = await emailRes.text();
+      await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, email_type: "welcome", subject: `🎉 ¡Bienvenido a ${appName}! Tu cuenta está lista`, status: "failed", error_message: errBody });
       throw new Error(`Error enviando email: ${errBody}`);
     }
 
     const result = await emailRes.json();
+    await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, email_type: "welcome", subject: `🎉 ¡Bienvenido a ${appName}! Tu cuenta está lista`, status: "sent", resend_id: result.id });
     return new Response(
       JSON.stringify({ success: true, id: result.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

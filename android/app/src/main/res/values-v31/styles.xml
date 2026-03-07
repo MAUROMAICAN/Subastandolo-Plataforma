@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ (API 31) mandatory splash screen theming.
+         Without this, the system splash defaults to WHITE. -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">#161625</item>
+        <item name="colorPrimaryDark">#161625</item>
+        <item name="colorAccent">#c8f135</item>
+        <item name="android:windowBackground">#161625</item>
+        <item name="android:statusBarColor">#00000000</item>
+        <item name="android:navigationBarColor">#161625</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <!-- Android 12 SplashScreen API -->
+        <item name="android:windowSplashScreenBackground">#161625</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">#161625</item>
+        <item name="android:statusBarColor">#00000000</item>
+        <item name="android:navigationBarColor">#161625</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowSplashScreenBackground">#161625</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+        <item name="android:background">#161625</item>
+        <item name="android:windowSplashScreenBackground">#161625</item>
+    </style>
+</resources>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle,
+  Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle, Mail,
   Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell, LogOut
 } from "lucide-react";
 import AdminBadge from "@/components/AdminBadge";
@@ -28,6 +28,7 @@ import AdminWonAuctionsTab from "@/components/admin/AdminWonAuctionsTab";
 import AdminDealerSalesTab from "@/components/admin/AdminDealerSalesTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminNotificationsTab from "@/components/admin/AdminNotificationsTab";
+import AdminEmailsTab from "@/components/admin/AdminEmailsTab";
 import type { AdminTab, AuctionExtended, WinnerInfo, BannerImage, DealerUser, Message, SiteSetting, SiteSection } from "@/components/admin/types";
 
 const Admin = () => {
@@ -297,6 +298,7 @@ const Admin = () => {
       label: "Comunicación",
       items: [
         { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages, urgent: unreadMessages > 0 },
+        { key: "emails", label: "Correos", icon: Mail },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
       ],
@@ -434,6 +436,7 @@ const Admin = () => {
             {activeTab === "payments" && <AdminPaymentsTab paymentProofs={paymentProofs} fetchAllData={fetchAllData} />}
             {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} paymentProofs={paymentProofs} />}
             {activeTab === "messages" && <AdminMessagesTab dealers={dealers} messages={messages} dealerProfiles={dealerProfiles} fetchAllData={fetchAllData} />}
+            {activeTab === "emails" && <AdminEmailsTab />}
             {activeTab === "cms" && <AdminCMSTab siteSettings={siteSettings} siteSections={siteSections} banners={banners} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} setSavingSettings={setSavingSettings} handleSaveSettings={handleSaveSettings} fetchAllData={fetchAllData} />}
             {activeTab === "dealer_sales" && <AdminDealerSalesTab />}
             {activeTab === "dealers" && <AdminDealersTab dealerApps={dealerApps} fetchAllData={fetchAllData} />}

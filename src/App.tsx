@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useEffect } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -118,13 +118,87 @@ const SiteHead = () => {
   );
 };
 
+/** Branded 3-second loading screen shown after login */
+const PostLoginSplash = ({ onDone }: { onDone: () => void }) => {
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFadeOut(true);
+      setTimeout(onDone, 500);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[9998] flex flex-col items-center justify-center gap-5"
+      style={{
+        backgroundColor: "#161625",
+        opacity: fadeOut ? 0 : 1,
+        transition: "opacity 500ms ease",
+      }}
+    >
+      {/* Green S icon */}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4700 5520" className="w-20 h-20">
+        <polygon
+          points="4648.9,3778.18 4590.46,2787.19 2866.32,1811.17 4698.23,1077.87 4208.95,0 1303.42,1122.83 1358.33,2324.26 2878.11,3198.66 0,4366.86 104.01,5512.86"
+          fill="#B5FB05"
+        />
+      </svg>
+      <div className="flex flex-col items-center gap-3">
+        <p className="text-white text-base font-semibold tracking-wide">Cargando tu panel…</p>
+        <div className="flex gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#B5FB05] animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#B5FB05] animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#B5FB05] animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RootRoute = () => {
   const { user, loading } = useAuth();
+  const [showPostSplash, setShowPostSplash] = useState(false);
+  const isFirstMount = useRef(true);
+  const prevUserId = useRef<string | null>(null);
 
-  if (loading) return null; // Or a simple loader
+  const handlePostSplashDone = useCallback(() => {
+    setShowPostSplash(false);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (isFirstMount.current) {
+      // First time auth resolves — skip post-login splash
+      // (the initial SplashScreen already covered this wait)
+      isFirstMount.current = false;
+      prevUserId.current = user?.id ?? null;
+      return;
+    }
+
+    // User just logged in (was null, now has a user)
+    if (user && prevUserId.current === null) {
+      prevUserId.current = user.id;
+      setShowPostSplash(true);
+    } else if (!user) {
+      prevUserId.current = null;
+      setShowPostSplash(false);
+    }
+  }, [user, loading]);
+
+  if (loading) return null;
   if (Capacitor.isNativePlatform() && !user) {
     return <Auth />;
   }
+
+  // Show post-login splash only after an actual login action
+  if (showPostSplash) {
+    return <PostLoginSplash onDone={handlePostSplashDone} />;
+  }
+
   return <Index />;
 };
 

@@ -46,21 +46,18 @@ async function initNativePush(userId: string) {
       console.log("[FCM] Token:", token.value);
       const endpoint = `fcm:${token.value}`;
 
-      const { data: existing } = await supabase
-        .from("push_subscriptions")
-        .select("id")
-        .eq("endpoint", endpoint)
-        .eq("user_id", userId)
-        .maybeSingle();
+      // ── Rebind this device token to the CURRENT user ──
+      // Uses a SECURITY DEFINER RPC so it can delete old subscriptions
+      // from any previous user on this same device
+      const { error } = await supabase.rpc("rebind_push_token" as any, {
+        p_endpoint: endpoint,
+        p_platform: Capacitor.getPlatform(),
+      });
 
-      if (!existing) {
-        await supabase.from("push_subscriptions").insert({
-          user_id: userId,
-          endpoint,
-          p256dh: "",
-          auth: "",
-          platform: Capacitor.getPlatform(),
-        } as any);
+      if (error) {
+        console.error("[FCM] rebind_push_token error:", error.message);
+      } else {
+        console.log("[FCM] Token registered for user:", userId);
       }
     });
 

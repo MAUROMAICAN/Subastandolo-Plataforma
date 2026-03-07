@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,8 +91,13 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const errText = await res.text();
+      await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, recipient_id: buyerUserId, email_type: "payment_approved", subject: `✅ Tu pago fue aprobado — "${title}"`, auction_id: auctionId, auction_title: title, status: "failed", error_message: errText });
+      throw new Error(errText);
+    }
     const result = await res.json();
+    await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, recipient_id: buyerUserId, email_type: "payment_approved", subject: `✅ Tu pago fue aprobado — "${title}"`, auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id });
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

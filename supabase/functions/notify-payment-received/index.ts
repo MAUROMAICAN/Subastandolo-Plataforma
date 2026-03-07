@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,8 +86,13 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const errText = await res.text();
+      await logEmail(supabaseAdmin, { recipient_email: dealerEmail, recipient_name: dealer, recipient_id: dealerUserId, email_type: "payment_received", subject: `💰 Nuevo comprobante de pago — "${title}"`, auction_id: auctionId, auction_title: title, status: "failed", error_message: errText, metadata: { amount_usd: amountUsd, buyer_name: buyer } });
+      throw new Error(errText);
+    }
     const result = await res.json();
+    await logEmail(supabaseAdmin, { recipient_email: dealerEmail, recipient_name: dealer, recipient_id: dealerUserId, email_type: "payment_received", subject: `💰 Nuevo comprobante de pago — "${title}"`, auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id, metadata: { amount_usd: amountUsd, buyer_name: buyer } });
 
     // ── Push notification nativa (FCM) al dealer ──
     try {

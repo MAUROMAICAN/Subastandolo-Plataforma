@@ -196,7 +196,7 @@ const CampaignModal = () => {
         onTouchEnd={() => { pausedRef.current = false; }}
       >
         <div
-          className="relative overflow-hidden rounded-2xl shadow-2xl"
+          className="relative"
           style={{
             width: `${frameWidth}px`,
             height: `${frameHeight}px`,
@@ -204,35 +204,38 @@ const CampaignModal = () => {
             maxHeight: "90vh",
           }}
         >
-          {/* Close button — inside image, top-right corner */}
+          {/* Close button — at the corner of the image, outside */}
           <button
             onClick={handleDismiss}
-            className="absolute right-3 top-3 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-2xl backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
+            className="absolute -right-3 -top-3 z-[10000] flex h-9 w-9 items-center justify-center rounded-full bg-black/80 text-white shadow-2xl ring-2 ring-white/30 backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
             aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
 
-          {/* Campaign image — fills the frame */}
-          <img
-            src={campaign.image_url}
-            alt={campaign.title}
-            className={`h-full w-full object-contain ${campaign.link_url ? "cursor-pointer" : ""}`}
-            onClick={handleImageClick}
-            onLoad={(e) => {
-              const { naturalWidth, naturalHeight } = e.currentTarget;
-              if (naturalWidth > 0 && naturalHeight > 0) {
-                setImageRatio(naturalWidth / naturalHeight);
-              }
-            }}
-          />
-
-          {/* Auto-dismiss progress bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
-            <div
-              className="h-full bg-[#c8f135] transition-none"
-              style={{ width: `${progress}%` }}
+          {/* Image container */}
+          <div className="h-full w-full overflow-hidden rounded-2xl shadow-2xl">
+            {/* Campaign image — fills the frame */}
+            <img
+              src={campaign.image_url}
+              alt={campaign.title}
+              className={`h-full w-full object-contain ${campaign.link_url ? "cursor-pointer" : ""}`}
+              onClick={handleImageClick}
+              onLoad={(e) => {
+                const { naturalWidth, naturalHeight } = e.currentTarget;
+                if (naturalWidth > 0 && naturalHeight > 0) {
+                  setImageRatio(naturalWidth / naturalHeight);
+                }
+              }}
             />
+
+            {/* Auto-dismiss progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+              <div
+                className="h-full bg-[#c8f135] transition-none"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>

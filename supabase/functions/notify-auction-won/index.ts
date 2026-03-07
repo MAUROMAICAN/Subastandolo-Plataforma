@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,8 +150,24 @@ Deno.serve(async (req) => {
       }),
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const errText = await res.text();
+      await logEmail(supabaseAdmin, {
+        recipient_email: email, recipient_name: userName, recipient_id: userId,
+        email_type: "auction_won", subject: `🏆 ¡Ganaste "${title}"! Procede al pago`,
+        auction_id: auctionId, auction_title: title, status: "failed", error_message: errText,
+        metadata: { winning_bid: winningBid },
+      });
+      throw new Error(errText);
+    }
     const result = await res.json();
+
+    await logEmail(supabaseAdmin, {
+      recipient_email: email, recipient_name: userName, recipient_id: userId,
+      email_type: "auction_won", subject: `🏆 ¡Ganaste "${title}"! Procede al pago`,
+      auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id,
+      metadata: { winning_bid: winningBid, image_url: imageUrl },
+    });
 
     // ── Push notification nativa (FCM) ──
     if (userId) {

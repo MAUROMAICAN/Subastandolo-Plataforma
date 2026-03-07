@@ -1,3 +1,6 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -12,6 +15,11 @@ Deno.serve(async (req) => {
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     const appUrl = "https://subastandolo.com";
     const auctionUrl = `${appUrl}/subasta/${auctionId}`;
@@ -97,8 +105,13 @@ Deno.serve(async (req) => {
       }),
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const errText = await res.text();
+      await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, email_type: "shipment", subject: `📦 Tu pedido va en camino — Guía: ${tracking}`, auction_id: auctionId, auction_title: title, status: "failed", error_message: errText, metadata: { tracking_number: trackingNumber, shipping_company: shippingCompany } });
+      throw new Error(errText);
+    }
     const result = await res.json();
+    await logEmail(supabaseAdmin, { recipient_email: email, recipient_name: userName, email_type: "shipment", subject: `📦 Tu pedido va en camino — Guía: ${tracking}`, auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id, metadata: { tracking_number: trackingNumber, shipping_company: shippingCompany } });
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

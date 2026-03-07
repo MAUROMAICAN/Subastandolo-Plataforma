@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,17 +76,24 @@ Deno.serve(async (req: Request) => {
       const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
       const email = u?.user?.email;
       if (!email) continue;
+      const subject = `🔔 ${dealer} publicó: "${title}" — ¡Puja ahora!`;
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "SUBASTANDOLO <no-reply@subastandolo.com>",
           to: [email],
-          subject: `🔔 ${dealer} publicó: "${title}" — ¡Puja ahora!`,
+          subject,
           html,
         }),
       });
-      if (res.ok) results.push(email);
+      if (res.ok) {
+        const r = await res.json();
+        await logEmail(supabaseAdmin, { recipient_email: email, recipient_id: uid, email_type: "new_auction", subject, auction_id: auctionId, auction_title: title, status: "sent", resend_id: r.id, metadata: { dealer_name: dealer, starting_price: startingPrice } });
+        results.push(email);
+      } else {
+        await logEmail(supabaseAdmin, { recipient_email: email, recipient_id: uid, email_type: "new_auction", subject, auction_id: auctionId, auction_title: title, status: "failed", error_message: await res.text() });
+      }
     }
 
     return new Response(JSON.stringify({ success: true, sent: results.length }), {
