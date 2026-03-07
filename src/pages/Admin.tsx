@@ -420,7 +420,7 @@ const Admin = () => {
         <main className="flex-1 p-3 sm:p-6 overflow-y-auto">
           <div className="max-w-5xl mx-auto">
             {activeTab === "dashboard" && (
-              <AdminDashboardTab auctions={auctions} allUsers={allUsers} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} handleSaveSettings={handleSaveSettings} setActiveTab={setActiveTab} />
+              <AdminDashboardTab auctions={auctions} allUsers={allUsers} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} handleSaveSettings={handleSaveSettings} setActiveTab={setActiveTab} pendingPayments={pendingPayments} openDisputes={openDisputes} unreadMessages={unreadMessages} />
             )}
             {activeTab === "review" && <AdminReviewTab auctions={auctions} fetchAllData={fetchAllData} />}
             {activeTab === "auctions" && <AdminAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} commissionPct={commissionPct} fetchAllData={fetchAllData} />}
