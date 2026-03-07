@@ -64,7 +64,48 @@
       background-color: #161625;
     }
   </style>
-  <div id="root"></div>
+  <div id="root">
+    <!-- SEO fallback: visible to crawlers before JS runs, React replaces on mount -->
+    <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">
+      <h1>Subastandolo.com — Subastas Online en Venezuela</h1>
+      <p>La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar, moda y más con solo el 5% de
+        comisión. ¡El mejor postor gana! Regístrate gratis y empieza a subastar.</p>
+
+      <nav aria-label="Navegación principal">
+        <a href="/home">Subastas en Vivo</a>
+        <a href="/como-funciona">Cómo Funciona</a>
+        <a href="/quiero-vender">Quiero Vender</a>
+        <a href="/nosotros">Sobre Nosotros</a>
+        <a href="/contacto">Contacto</a>
+        <a href="/ayuda">Centro de Ayuda</a>
+        <a href="/tienda">Tienda</a>
+        <a href="/terminos">Términos y Condiciones</a>
+        <a href="/privacidad">Política de Privacidad</a>
+        <a href="/politicas-publicacion">Políticas de Publicación</a>
+        <a href="/compradores">Preguntas Frecuentes Compradores</a>
+        <a href="/instalar">Instalar App</a>
+      </nav>
+
+      <section>
+        <h2>¿Qué es Subastandolo?</h2>
+        <p>Subastandolo es la primera plataforma de subastas online de Venezuela. Conectamos compradores y vendedores
+          verificados en un entorno seguro, con comisiones bajas del 5% y protección al comprador. Subastas en tiempo
+          real, pagos seguros, y envío a todo el país.</p>
+      </section>
+
+      <section>
+        <h2>¿Cómo funciona?</h2>
+        <p>1. Regístrate gratis. 2. Encuentra productos que te interesen. 3. Puja en subastas en vivo. 4. Si ganas, paga
+          de forma segura. 5. Recibe tu producto en casa.</p>
+      </section>
+
+      <section>
+        <h2>Vende en Subastandolo</h2>
+        <p>¿Tienes productos para vender? Conviértete en vendedor verificado y llega a miles de compradores en
+          Venezuela. Solo cobramos el 5% de comisión por venta exitosa.</p>
+      </section>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
   <!-- JSON-LD Structured Data for Google Rich Snippets -->
   <script type="application/ld+json">
