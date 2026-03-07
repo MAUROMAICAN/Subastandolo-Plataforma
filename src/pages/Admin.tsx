@@ -265,22 +265,43 @@ const Admin = () => {
   const openDisputes = adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation").length;
   const pendingPayments = paymentProofs.filter((p: any) => p.status === "pending").length;
 
-  const sidebarItems: { key: AdminTab; label: string; icon: any; badge?: number }[] = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { key: "review", label: "Revisión", icon: Eye, badge: pendingAuctions.length },
-    { key: "auctions", label: "Subastas", icon: Gavel, badge: auctions.length },
-    { key: "payments", label: "Pagos", icon: CreditCard, badge: paymentProofs.length },
-    { key: "won", label: "Ganadas", icon: Trophy, badge: auctions.filter(a => a.status === "finalized").length },
-    { key: "messages", label: "Mensajes", icon: MessageCircle, badge: messages.length },
-    { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
-    { key: "dealers", label: "Dealers", icon: Package, badge: dealers.length },
-    { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: adminDisputes.length },
-    { key: "reports", label: "Reportes", icon: Flag, badge: auctionReports.length },
-    { key: "campaigns", label: "Campañas", icon: ImagePlus },
-    { key: "notifications", label: "Push", icon: Bell },
-    { key: "users", label: "Usuarios", icon: Users, badge: allUsers.length },
-    { key: "team", label: "Equipo", icon: Shield, badge: allUsers.filter(u => u.role === "admin").length },
-    { key: "cms", label: "Config. Central", icon: Settings },
+  // Grouped sidebar sections for professional navigation
+  const sidebarGroups: { label: string; items: { key: AdminTab; label: string; icon: any; badge?: number; urgent?: boolean }[] }[] = [
+    {
+      label: "Operaciones",
+      items: [
+        { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { key: "review", label: "Revisión", icon: Eye, badge: pendingAuctions.length, urgent: pendingAuctions.length > 0 },
+        { key: "auctions", label: "Subastas", icon: Gavel },
+        { key: "won", label: "Ganadas", icon: Trophy },
+        { key: "payments", label: "Pagos", icon: CreditCard, badge: pendingPayments, urgent: pendingPayments > 0 },
+      ],
+    },
+    {
+      label: "Usuarios",
+      items: [
+        { key: "users", label: "Usuarios", icon: Users },
+        { key: "dealers", label: "Dealers", icon: Package },
+        { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
+        { key: "team", label: "Equipo", icon: Shield },
+      ],
+    },
+    {
+      label: "Comunicación",
+      items: [
+        { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages, urgent: unreadMessages > 0 },
+        { key: "notifications", label: "Push", icon: Bell },
+        { key: "campaigns", label: "Campañas", icon: ImagePlus },
+      ],
+    },
+    {
+      label: "Sistema",
+      items: [
+        { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: openDisputes, urgent: openDisputes > 0 },
+        { key: "reports", label: "Reportes", icon: Flag },
+        { key: "cms", label: "Config. Central", icon: Settings },
+      ],
+    },
   ];
 
   if (authLoading || !isAdmin) {
@@ -320,17 +341,34 @@ const Admin = () => {
             </button>
           </div>
         </div>
-        <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-          {sidebarOpen && <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-2 mb-2">Navegación</p>}
-          {sidebarItems.map(item => (
-            <button key={item.key} onClick={() => { setActiveTab(item.key); if (window.innerWidth < 1024) setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs rounded-md transition-all relative ${activeTab === item.key ? "bg-accent text-accent-foreground font-semibold shadow-md" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
-              <item.icon className={`h-4 w-4 shrink-0`} />
-              {sidebarOpen && <span>{item.label}</span>}
-              {item.badge && item.badge > 0 && (
-                <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1 -right-1"} min-w-[20px] h-5 px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold`}>{item.badge}</span>
+        <nav className="flex-1 py-2 px-2 overflow-y-auto">
+          {sidebarGroups.map((group, gi) => (
+            <div key={group.label} className={gi > 0 ? "mt-1" : ""}>
+              {sidebarOpen && (
+                <p className="text-[9px] uppercase tracking-widest text-white/25 font-semibold px-3 pt-3 pb-1.5">{group.label}</p>
               )}
-            </button>
+              {!sidebarOpen && gi > 0 && (
+                <div className="mx-3 my-2 border-t border-white/10" />
+              )}
+              <div className="space-y-0.5">
+                {group.items.map(item => (
+                  <button key={item.key} onClick={() => { setActiveTab(item.key); if (window.innerWidth < 1024) setSidebarOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-md transition-all relative ${activeTab === item.key
+                      ? "bg-accent/90 text-accent-foreground font-semibold shadow-sm"
+                      : "text-white/55 hover:text-white hover:bg-white/8"
+                      }`}>
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {sidebarOpen && <span>{item.label}</span>}
+                    {item.badge != null && item.badge > 0 && (
+                      <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1 -right-1"} min-w-[18px] h-[18px] px-1 text-[9px] rounded-full flex items-center justify-center font-bold ${item.urgent
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-white/15 text-white/70"
+                        }`}>{item.badge}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
         <div className="p-3 border-t border-white/10 shrink-0 flex flex-col items-center">
@@ -345,7 +383,7 @@ const Admin = () => {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground">
               <Menu className="h-5 w-5" />
             </button>
-            <h2 className="font-heading font-bold text-sm sm:text-base text-foreground hidden sm:block truncate">{sidebarItems.find(s => s.key === activeTab)?.label || "Dashboard"}</h2>
+            <h2 className="font-heading font-bold text-sm sm:text-base text-foreground hidden sm:block truncate">{sidebarGroups.flatMap(g => g.items).find(s => s.key === activeTab)?.label || "Dashboard"}</h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-md mx-2 sm:mx-4">
             <div className="relative w-full">

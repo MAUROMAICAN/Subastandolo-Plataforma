@@ -39,6 +39,10 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [sortField, setSortField] = useState<SortField>("end_time");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Detail modal
   const [selectedAuction, setSelectedAuction] = useState<AuctionExtended | null>(null);
   const [shippingInfo, setShippingInfo] = useState<any>(null);
@@ -95,6 +99,16 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
     return list;
   }, [wonAuctions, search, paymentFilter, deliveryFilter, dateFrom, dateTo, sortField, sortDir, winnerProfiles, dealerProfiles]);
+
+  // Reset page when filters change
+  useMemo(() => { setPage(1); }, [search, paymentFilter, deliveryFilter, dateFrom, dateTo]);
+
+  // Paginated results
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   // Stats
   const stats = useMemo(() => {
@@ -286,7 +300,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((a) => {
+                {paginated.map((a) => {
                   const winner = winnerProfiles[a.winner_id!];
                   const ps = paymentLabel(a.payment_status);
                   const ds = deliveryLabel(a.delivery_status);
@@ -343,6 +357,36 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Mostrando {Math.min((page - 1) * pageSize + 1, filtered.length)}-{Math.min(page * pageSize, filtered.length)} de {filtered.length}</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="bg-secondary border border-border rounded-md px-2 py-1 text-xs"
+              >
+                <option value={10}>10 / pág</option>
+                <option value={25}>25 / pág</option>
+                <option value={50}>50 / pág</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Ant</Button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) { pageNum = i + 1; }
+                else if (page <= 3) { pageNum = i + 1; }
+                else if (page >= totalPages - 2) { pageNum = totalPages - 4 + i; }
+                else { pageNum = page - 2 + i; }
+                return (
+                  <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="h-7 w-7 px-0 text-xs" onClick={() => setPage(pageNum)}>{pageNum}</Button>
+                );
+              })}
+              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Sig →</Button>
+            </div>
           </div>
         </Card>
       )}
