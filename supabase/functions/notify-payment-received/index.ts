@@ -66,6 +66,7 @@ Deno.serve(async (req: Request) => {
     </div>
     <div style="border-top:1px solid #2a2a4e;padding:20px 30px;text-align:center;">
       <p style="color:#EAB308;font-size:13px;margin:0 0 8px;font-style:italic;">¡Gracias por vender en Subastandolo! 🔨</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0 0 6px;">¿Necesitas ayuda? Escríbenos a <a href="mailto:atenciondealer@subastandolo.com" style="color:#EAB308;text-decoration:none;font-weight:600;">atenciondealer@subastandolo.com</a></p>
       <p style="color:#555;font-size:11px;margin:0;">SUBASTANDOLO · Notificación automática</p>
     </div>
   </div>
@@ -77,6 +78,7 @@ Deno.serve(async (req: Request) => {
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: "SUBASTANDOLO <no-reply@subastandolo.com>",
+        reply_to: "atenciondealer@subastandolo.com",
         to: [dealerEmail],
         subject: `💰 Nuevo comprobante de pago — "${title}"`,
         html,

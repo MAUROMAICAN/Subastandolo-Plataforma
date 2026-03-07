@@ -1,26 +1,26 @@
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    try {
-        const { email, name, auctionTitle, auctionId, trackingNumber, shippingCompany, imageUrl } = await req.json();
-        if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
+  try {
+    const { email, name, auctionTitle, auctionId, trackingNumber, shippingCompany, imageUrl } = await req.json();
+    if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
 
-        const resendKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
 
-        const appUrl = "https://subastandolo.com";
-        const auctionUrl = `${appUrl}/subasta/${auctionId}`;
-        const userName = name || "Usuario";
-        const title = auctionTitle || "tu producto";
-        const tracking = trackingNumber || "N/D";
-        const company = shippingCompany || "Empresa de envío";
+    const appUrl = "https://subastandolo.com";
+    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const userName = name || "Usuario";
+    const title = auctionTitle || "tu producto";
+    const tracking = trackingNumber || "N/D";
+    const company = shippingCompany || "Empresa de envío";
 
-        const html = `
+    const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -78,31 +78,33 @@ Deno.serve(async (req) => {
     <!-- Footer -->
     <div style="border-top:1px solid #2a2a4e;padding:20px 30px;text-align:center;">
       <p style="color:#EAB308;font-size:13px;margin:0 0 8px;font-style:italic;">¡Tu compra está protegida en todo momento! 🛡️</p>
-      <p style="color:#555;font-size:11px;margin:0;">Este correo fue enviado automáticamente por SUBASTANDOLO · <a href="${appUrl}/mi-panel" style="color:#555;">Ver mi panel</a></p>
+      <p style="color:#9ca3af;font-size:12px;margin:0 0 6px;">¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@subastandolo.com" style="color:#EAB308;text-decoration:none;font-weight:600;">soporte@subastandolo.com</a></p>
+      <p style="color:#555;font-size:11px;margin:0;">SUBASTANDOLO · <a href="${appUrl}/mi-panel" style="color:#555;">Ver mi panel</a></p>
     </div>
   </div>
 </body>
 </html>`;
 
-        const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                from: "SUBASTANDOLO <no-reply@subastandolo.com>",
-                to: [email],
-                subject: `📦 Tu pedido va en camino — Guía: ${tracking}`,
-                html,
-            }),
-        });
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "SUBASTANDOLO <no-reply@subastandolo.com>",
+        reply_to: "soporte@subastandolo.com",
+        to: [email],
+        subject: `📦 Tu pedido va en camino — Guía: ${tracking}`,
+        html,
+      }),
+    });
 
-        if (!res.ok) throw new Error(await res.text());
-        const result = await res.json();
-        return new Response(JSON.stringify({ success: true, id: result.id }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-    }
+    if (!res.ok) throw new Error(await res.text());
+    const result = await res.json();
+    return new Response(JSON.stringify({ success: true, id: result.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 });

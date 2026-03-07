@@ -62,6 +62,7 @@ Deno.serve(async (req: Request) => {
     </div>
     <div style="border-top:1px solid #2a2a4e;padding:20px 30px;text-align:center;">
       <p style="color:#EAB308;font-size:13px;margin:0 0 8px;font-style:italic;">El mejor postor siempre gana 🔨</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0 0 6px;">¿Necesitas ayuda? <a href="mailto:soporte@subastandolo.com" style="color:#EAB308;text-decoration:none;font-weight:600;">soporte@subastandolo.com</a></p>
       <p style="color:#555;font-size:11px;margin:0;">Recibes esto porque sigues a ${dealer} · SUBASTANDOLO</p>
     </div>
   </div>
