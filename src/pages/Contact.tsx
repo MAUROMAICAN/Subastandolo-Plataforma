@@ -220,8 +220,8 @@ const Contact = () => {
             { icon: Ticket, title: "Sistema de Tickets", desc: "Seguimiento completo de cada caso" },
           ].map((item, i) => (
             <div key={i} className="bg-card border border-border rounded-sm p-5 text-center shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <item.icon className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center mx-auto mb-3">
+                <item.icon className="h-5 w-5 text-primary dark:text-[#A6E300]" />
               </div>
               <h3 className="text-sm font-heading font-bold mb-1">{item.title}</h3>
               <p className="text-xs text-muted-foreground">{item.desc}</p>
@@ -239,7 +239,7 @@ const Contact = () => {
             <>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-heading font-bold flex items-center gap-2">
-                  <Ticket className="h-5 w-5 text-primary" /> Soporte
+                  <Ticket className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Soporte
                 </h2>
                 <Button
                   onClick={() => setShowForm(!showForm)}
@@ -298,7 +298,7 @@ const Contact = () => {
                 </h3>
 
                 {loadingTickets ? (
-                  <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" /></div>
+                  <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary dark:text-[#A6E300]" /></div>
                 ) : tickets.length === 0 ? (
                   <Card className="border border-border rounded-sm">
                     <CardContent className="p-8 text-center">
@@ -343,7 +343,7 @@ const Contact = () => {
                                   <div key={m.id} className={`flex ${m.sender_role === "user" ? "justify-end" : "justify-start"}`}>
                                     <div className={`max-w-[80%] rounded-lg px-3 py-2.5 ${m.sender_role === "user" ? "bg-primary/10 border border-primary/20" : "bg-accent/10 border border-accent/20"}`}>
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className={`text-[10px] font-bold ${m.sender_role === "admin" ? "text-accent" : "text-primary"}`}>
+                                        <span className={`text-[10px] font-bold ${m.sender_role === "admin" ? "text-accent" : "text-primary dark:text-[#A6E300]"}`}>
                                           {m.sender_role === "admin" ? "🛡️ Soporte" : "Tú"}
                                         </span>
                                         <span className="text-[9px] text-muted-foreground">
