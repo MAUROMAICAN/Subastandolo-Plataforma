@@ -51,7 +51,12 @@ const AdminDisputesTab = ({ adminDisputes, fetchAllData }: Props) => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-heading font-bold flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Disputas ({adminDisputes.length})</h1>
+      <div>
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Disputas</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {adminDisputes.filter(d => d.status === "open").length} abiertas · {adminDisputes.filter(d => d.status === "mediation").length} en mediación · {adminDisputes.filter(d => d.status === "resolved").length} resueltas · {adminDisputes.filter(d => d.status === "refunded").length} reembolsadas
+        </p>
+      </div>
       {adminDisputes.length === 0 ? (
         <Card className="border border-border rounded-sm"><CardContent className="p-8 text-center text-muted-foreground"><CheckCircle className="h-8 w-8 mx-auto mb-2 text-primary dark:text-accent" />Sin disputas abiertas</CardContent></Card>
       ) : (

@@ -163,8 +163,11 @@ const AdminCMSTab = ({ siteSettings, siteSections, banners: initialBanners, edit
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Settings className="h-5 w-5 text-primary dark:text-accent" /> Configuración Central</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Settings className="h-5 w-5 text-primary dark:text-accent" /> Configuración Central</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Identidad visual, información general, banners y secciones</p>
+        </div>
         <Button onClick={handleSaveSettings} disabled={savingSettings} className="bg-primary text-primary-foreground rounded-sm text-xs">
           {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}Guardar Cambios
         </Button>

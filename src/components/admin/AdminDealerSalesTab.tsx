@@ -461,10 +461,10 @@ const AdminDealerSalesTab = () => {
           sales: d.sales.map(s => s.earning_id === earningId ? { ...s, is_paid: isPaid } : s),
         };
       }));
-      toast({ 
+      toast({
         title: isPaid ? "✅ Marcado como pagado" : "↩️ Desmarcado",
-        description: isPaid && dealer && !dealer.bank_account 
-          ? "⚠️ Sin datos bancarios — Retiro en tienda autorizado" 
+        description: isPaid && dealer && !dealer.bank_account
+          ? "⚠️ Sin datos bancarios — Retiro en tienda autorizado"
           : undefined,
       });
     }
@@ -477,10 +477,15 @@ const AdminDealerSalesTab = () => {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary dark:text-accent" /> Ventas de Dealers
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary dark:text-accent" /> Ventas de Dealers
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {totals.totalSales} ventas · ${totals.totalRevenue.toFixed(2)} bruto · {totals.dealersWithBalance} con saldo pendiente
+          </p>
+        </div>
         <Badge variant="outline" className="text-xs">{dealers.length} dealers activos</Badge>
       </div>
 
@@ -715,7 +720,7 @@ const AdminDealerSalesTab = () => {
                                   </Badge>
                                   {w.status === "pending" && (
                                     <div className="flex items-center gap-1">
-                                       <Button
+                                      <Button
                                         size="sm"
                                         className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-[10px] h-7 px-2"
                                         onClick={() => handleWithdrawalAction(w.id, dealer.dealer_id, "approved", w.amount)}
@@ -759,7 +764,7 @@ const AdminDealerSalesTab = () => {
                                 <div>
                                   <p className="text-sm font-bold">${p.total_amount.toFixed(2)}</p>
                                   <p className="text-[10px] text-muted-foreground">
-                                    {p.payment_method === "transfer" ? "Transferencia" : p.payment_method === "cash" ? "Efectivo" : p.payment_method} 
+                                    {p.payment_method === "transfer" ? "Transferencia" : p.payment_method === "cash" ? "Efectivo" : p.payment_method}
                                     {p.reference_number && <span className="font-mono ml-1">• Ref: {p.reference_number}</span>}
                                   </p>
                                 </div>

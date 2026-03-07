@@ -194,9 +194,12 @@ const AdminNotificationsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Bell className="h-5 w-5 text-primary dark:text-accent" />
-        <h2 className="font-heading font-bold text-lg">Enviar Notificación Push</h2>
+      <div className="mb-4">
+        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary dark:text-accent" />
+          Enviar Notificación Push
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Envía notificaciones push nativas a todos o a un usuario específico</p>
       </div>
 
       <div className="bg-card border border-border rounded-xl p-6 space-y-4 max-w-xl">

@@ -285,11 +285,14 @@ export default function TeamPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          Equipo de Trabajo ({teamMembers.length})
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Equipo de Trabajo
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">{teamMembers.length} administradores · Gestión de roles y permisos</p>
+        </div>
         <Button size="sm" onClick={() => setShowCreateForm(!showCreateForm)} className="gap-1">
           <UserPlus className="h-4 w-4" />
           Crear Usuario
@@ -505,11 +508,10 @@ export default function TeamPanel() {
                       return (
                         <label
                           key={perm.key}
-                          className={`flex items-start gap-2.5 p-2.5 rounded-sm border cursor-pointer transition-all ${
-                            checked
+                          className={`flex items-start gap-2.5 p-2.5 rounded-sm border cursor-pointer transition-all ${checked
                               ? "border-primary/40 bg-primary/5"
                               : "border-border hover:border-primary/20 hover:bg-secondary/30"
-                          } ${isCurrentUser ? "opacity-60 pointer-events-none" : ""}`}
+                            } ${isCurrentUser ? "opacity-60 pointer-events-none" : ""}`}
                         >
                           <Checkbox
                             checked={checked}

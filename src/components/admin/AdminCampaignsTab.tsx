@@ -243,9 +243,16 @@ const AdminCampaignsTab = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <Megaphone className="h-5 w-5 text-primary dark:text-accent" />
-        <h1 className="text-xl font-heading font-bold">Campañas Publicitarias</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary dark:text-accent" /> Campañas Publicitarias
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {campaigns.filter(c => c.is_active).length} activas · {campaigns.filter(c => !c.is_active).length} inactivas
+          </p>
+        </div>
+        <Badge variant="outline" className="text-xs">{campaigns.length} campañas</Badge>
       </div>
 
       {/* Create form */}

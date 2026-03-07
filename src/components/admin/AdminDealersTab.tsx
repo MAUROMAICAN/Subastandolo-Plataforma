@@ -80,8 +80,13 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold">Verificación de Dealers</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Eye className="h-5 w-5 text-primary dark:text-accent" /> Verificación de Dealers</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {dealerApps.filter(a => a.status === "pending").length} pendientes · {dealerApps.filter(a => a.status === "approved").length} aprobados · {dealerApps.filter(a => a.status === "rejected").length} rechazados
+          </p>
+        </div>
         <Badge variant="outline" className="text-xs">{dealerApps.length} registros</Badge>
       </div>
       <Card className="border border-border rounded-md overflow-hidden">

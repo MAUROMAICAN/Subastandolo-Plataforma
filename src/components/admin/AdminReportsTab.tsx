@@ -46,8 +46,13 @@ const AdminReportsTab = ({ auctionReports, fetchAllData }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" /> Reportes</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" /> Reportes</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {auctionReports.filter(r => r.status === "pending").length} pendientes · {auctionReports.filter(r => r.status === "reviewed").length} revisados
+          </p>
+        </div>
         <Badge variant="outline">{filteredReports.length} reportes</Badge>
       </div>
 
