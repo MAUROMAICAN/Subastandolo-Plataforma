@@ -14,6 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -80,6 +84,7 @@ const Contact = () => {
   // Guest form (not logged in)
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     if (!user) return;
@@ -229,16 +234,21 @@ const Contact = () => {
 
   const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("¿Estás seguro de eliminar este ticket? Esta acción no se puede deshacer.")) return;
+    setDeleteConfirmId(ticketId);
+  };
+
+  const confirmDeleteTicket = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await supabase.from("ticket_messages").delete().eq("ticket_id", ticketId);
-      await supabase.from("support_tickets").delete().eq("id", ticketId);
-      setTickets(prev => prev.filter(t => t.id !== ticketId));
-      if (expandedTicket === ticketId) setExpandedTicket(null);
+      await supabase.from("ticket_messages").delete().eq("ticket_id", deleteConfirmId);
+      await supabase.from("support_tickets").delete().eq("id", deleteConfirmId);
+      setTickets(prev => prev.filter(t => t.id !== deleteConfirmId));
+      if (expandedTicket === deleteConfirmId) setExpandedTicket(null);
       toast({ title: "🗑️ Ticket eliminado" });
     } catch {
       toast({ title: "Error", description: "No se pudo eliminar el ticket", variant: "destructive" });
     }
+    setDeleteConfirmId(null);
   };
 
   return (
@@ -585,6 +595,27 @@ const Contact = () => {
         </div>
       </section>
       <Footer />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent className="rounded-sm border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-base font-heading">
+              <Trash2 className="h-5 w-5 text-destructive" /> Eliminar Ticket
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              ¿Estás seguro de que deseas eliminar este ticket y todos sus mensajes?
+              <span className="block mt-1 text-xs text-destructive/80 font-medium">Esta acción no se puede deshacer.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-sm text-sm">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm text-sm">
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
