@@ -195,24 +195,25 @@ const CampaignModal = () => {
         onTouchStart={() => { pausedRef.current = true; }}
         onTouchEnd={() => { pausedRef.current = false; }}
       >
+        {/* Close button — fixed top-right, always visible above everything */}
+        <button
+          onClick={handleDismiss}
+          className="absolute right-4 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-2xl backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
+          style={{ top: "48px" }}
+          aria-label="Cerrar"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
         <div
           className="relative overflow-hidden rounded-2xl shadow-2xl"
           style={{
             width: `${frameWidth}px`,
             height: `${frameHeight}px`,
             maxWidth: "92vw",
-            maxHeight: "88vh",
+            maxHeight: "78vh",
           }}
         >
-          {/* Close button — inside the image, top-right, always visible */}
-          <button
-            onClick={handleDismiss}
-            className="absolute right-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
-            style={{ top: "max(env(safe-area-inset-top, 0px), 12px)" }}
-            aria-label="Cerrar"
-          >
-            <X className="h-5 w-5" />
-          </button>
 
           {/* Campaign image — fills the frame */}
           <img
