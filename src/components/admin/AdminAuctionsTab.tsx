@@ -257,9 +257,51 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
 
   const handleSendEmail = async (auctionId: string) => {
     setSendingEmail(auctionId);
-    const { data, error } = await supabase.functions.invoke("notify-winner", { body: { auction_id: auctionId } });
-    if (error || data?.error) toast({ title: "Error", variant: "destructive" });
-    else toast({ title: "📧 Correo enviado" });
+    try {
+      const auction = auctions.find(a => a.id === auctionId);
+      if (!auction || !auction.winner_id) {
+        toast({ title: "No hay ganador para esta subasta", variant: "destructive" });
+        setSendingEmail(null);
+        return;
+      }
+      const winner = winnerProfiles[auction.winner_id];
+      if (!winner) {
+        toast({ title: "No se encontró el perfil del ganador", variant: "destructive" });
+        setSendingEmail(null);
+        return;
+      }
+      // Look up winner email from auth
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", auction.winner_id)
+        .single();
+      const winnerEmail = profileData?.email;
+      if (!winnerEmail) {
+        toast({ title: "El ganador no tiene email registrado", variant: "destructive" });
+        setSendingEmail(null);
+        return;
+      }
+      const mainImage = auction.images[0]?.image_url || auction.image_url;
+      const { data, error } = await supabase.functions.invoke("notify-auction-won", {
+        body: {
+          email: winnerEmail,
+          name: winner.full_name,
+          auctionTitle: auction.title,
+          auctionId: auction.id,
+          winningBid: auction.current_price,
+          imageUrl: mainImage || null,
+          userId: auction.winner_id,
+        },
+      });
+      if (error || data?.error) {
+        toast({ title: "Error al enviar correo", description: error?.message || data?.error, variant: "destructive" });
+      } else {
+        toast({ title: "📧 Correo enviado al ganador" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Error desconocido", variant: "destructive" });
+    }
     setSendingEmail(null);
   };
 
