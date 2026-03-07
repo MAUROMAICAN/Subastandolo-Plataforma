@@ -114,8 +114,11 @@ const AdminEmailsTab = () => {
                     <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={fetchEmails} disabled={loading}>
                         <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Actualizar
                     </Button>
-                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => window.open("https://mail.spaceship.com", "_blank")}>
-                        <ExternalLink className="h-3.5 w-3.5" /> Bandeja Spacemail
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => window.open("https://www.spacemail.com/login/", "_blank")}>
+                        <ExternalLink className="h-3.5 w-3.5" /> Spacemail
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => window.open("https://mail.google.com", "_blank")}>
+                        <Mail className="h-3.5 w-3.5" /> Gmail
                     </Button>
                 </div>
             </div>
