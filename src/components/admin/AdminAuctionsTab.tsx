@@ -28,6 +28,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const { toast } = useToast();
   const [auctionFilter, setAuctionFilter] = useState<"visible" | "scheduled" | "archived" | "all">("visible");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [editingTime, setEditingTime] = useState<string | null>(null);
   const [newDurationHours, setNewDurationHours] = useState("");
   const [savingTime, setSavingTime] = useState(false);
@@ -750,6 +751,50 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                             })}
                           </div>
                         </div>
+                        {/* Payment Reminder Button */}
+                        {(payStatus === "pending" || payStatus === "under_review") && (() => {
+                          const winner = winnerProfiles[auction.winner_id!];
+                          return winner?.email ? (
+                            <div className="px-4 pb-3 -mt-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-[11px] h-8 rounded-md gap-1.5 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 hover:text-amber-500"
+                                disabled={sendingReminder === auction.id}
+                                onClick={async () => {
+                                  setSendingReminder(auction.id);
+                                  try {
+                                    const mainImage = auction.images[0]?.image_url || auction.image_url;
+                                    const { data, error } = await supabase.functions.invoke("notify-payment-reminder", {
+                                      body: {
+                                        email: winner.email,
+                                        name: winner.full_name,
+                                        auctionTitle: auction.title,
+                                        auctionId: auction.id,
+                                        winningBid: auction.current_price,
+                                        imageUrl: mainImage || null,
+                                        userId: auction.winner_id,
+                                        operationNumber: (auction as any).operation_number || null,
+                                        auctionDate: auction.end_time ? new Date(auction.end_time).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }) : null,
+                                      },
+                                    });
+                                    if (error || data?.error) {
+                                      toast({ title: "Error al enviar recordatorio", description: error?.message || data?.error, variant: "destructive" });
+                                    } else {
+                                      toast({ title: "📧 Recordatorio de pago enviado", description: `Correo enviado a ${winner.email}` });
+                                    }
+                                  } catch (err: any) {
+                                    toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                  }
+                                  setSendingReminder(null);
+                                }}
+                              >
+                                {sendingReminder === auction.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                                Recordar Pago al Comprador
+                              </Button>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
 
                       {/* ═══ ENVÍO ═══ */}
