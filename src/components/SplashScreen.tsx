@@ -5,7 +5,7 @@ interface SplashScreenProps {
   minDuration?: number;
 }
 
-const SplashScreen = ({ onFinish, minDuration = 1500 }: SplashScreenProps) => {
+const SplashScreen = ({ onFinish, minDuration = 3000 }: SplashScreenProps) => {
   const [phase, setPhase] = useState(0); // 0=icon, 1=text, 2=dots
   const [fadeOut, setFadeOut] = useState(false);
 
