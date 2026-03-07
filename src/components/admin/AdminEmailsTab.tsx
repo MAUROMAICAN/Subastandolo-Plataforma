@@ -59,11 +59,13 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
     high: { label: "Alta", color: "text-red-600" },
 };
 
-const AdminEmailsTab = () => {
+const AdminEmailsTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
     const { user } = useAuth();
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+
+    useEffect(() => { if (globalSearch) setSearch(globalSearch); }, [globalSearch]);
     const [statusFilter, setStatusFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);

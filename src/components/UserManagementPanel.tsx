@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ interface DealerUser {
 interface Props {
   allUsers: DealerUser[];
   onRefresh: () => void;
+  globalSearch?: string;
 }
 
 type RoleFilter = "all" | "admins" | "dealers" | "buyers";
@@ -56,7 +57,7 @@ type StatusFilter = "all" | "active" | "banned";
 type SortField = "name" | "date" | "role";
 type SortDir = "asc" | "desc";
 
-export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
+export default function UserManagementPanel({ allUsers, onRefresh, globalSearch = "" }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -64,6 +65,8 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => { if (globalSearch) setSearchQuery(globalSearch); }, [globalSearch]);
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -300,8 +303,8 @@ export default function UserManagementPanel({ allUsers, onRefresh }: Props) {
               key={opt.key}
               onClick={() => setRoleFilter(opt.key)}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${roleFilter === opt.key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card hover:bg-secondary/50 text-muted-foreground"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card hover:bg-secondary/50 text-muted-foreground"
                 }`}
             >
               <opt.icon className="h-3.5 w-3.5" />

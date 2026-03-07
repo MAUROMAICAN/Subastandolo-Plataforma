@@ -432,19 +432,19 @@ const Admin = () => {
               <AdminDashboardTab auctions={auctions} allUsers={allUsers} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} handleSaveSettings={handleSaveSettings} setActiveTab={setActiveTab} pendingPayments={pendingPayments} openDisputes={openDisputes} unreadMessages={unreadMessages} />
             )}
             {activeTab === "review" && <AdminReviewTab auctions={auctions} fetchAllData={fetchAllData} />}
-            {activeTab === "auctions" && <AdminAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} commissionPct={commissionPct} fetchAllData={fetchAllData} />}
+            {activeTab === "auctions" && <AdminAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} commissionPct={commissionPct} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "payments" && <AdminPaymentsTab paymentProofs={paymentProofs} fetchAllData={fetchAllData} />}
-            {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} paymentProofs={paymentProofs} />}
-            {activeTab === "messages" && <AdminMessagesTab dealers={dealers} messages={messages} dealerProfiles={dealerProfiles} fetchAllData={fetchAllData} />}
-            {activeTab === "emails" && <AdminEmailsTab />}
+            {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} paymentProofs={paymentProofs} globalSearch={globalSearch} />}
+            {activeTab === "messages" && <AdminMessagesTab dealers={dealers} messages={messages} dealerProfiles={dealerProfiles} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
+            {activeTab === "emails" && <AdminEmailsTab globalSearch={globalSearch} />}
             {activeTab === "cms" && <AdminCMSTab siteSettings={siteSettings} siteSections={siteSections} banners={banners} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} setSavingSettings={setSavingSettings} handleSaveSettings={handleSaveSettings} fetchAllData={fetchAllData} />}
-            {activeTab === "dealer_sales" && <AdminDealerSalesTab />}
+            {activeTab === "dealer_sales" && <AdminDealerSalesTab globalSearch={globalSearch} />}
             {activeTab === "dealers" && <AdminDealersTab dealerApps={dealerApps} fetchAllData={fetchAllData} />}
             {activeTab === "disputes" && <AdminDisputesTab adminDisputes={adminDisputes} fetchAllData={fetchAllData} />}
             {activeTab === "reports" && <AdminReportsTab auctionReports={auctionReports} fetchAllData={fetchAllData} />}
             {activeTab === "campaigns" && <AdminCampaignsTab />}
             {activeTab === "notifications" && <AdminNotificationsTab />}
-            {activeTab === "users" && <UserManagementPanel allUsers={allUsers} onRefresh={fetchAllData} />}
+            {activeTab === "users" && <UserManagementPanel allUsers={allUsers} onRefresh={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "team" && <TeamPanel />}
           </div>
         </main>

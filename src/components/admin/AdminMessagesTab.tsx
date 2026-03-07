@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,15 +14,18 @@ interface Props {
   messages: Message[];
   dealerProfiles: Record<string, { full_name: string; phone: string | null; email: string | null }>;
   fetchAllData: () => Promise<void>;
+  globalSearch?: string;
 }
 
-const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: Props) => {
+const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData, globalSearch = "" }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedDealerId, setSelectedDealerId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [dealerSearch, setDealerSearch] = useState("");
+
+  useEffect(() => { if (globalSearch) setDealerSearch(globalSearch); }, [globalSearch]);
 
   const totalUnread = messages.filter(m => m.receiver_id === user?.id && !m.is_read).length;
   const filteredDealers = dealers.filter(d => d.full_name.toLowerCase().includes(dealerSearch.toLowerCase()));

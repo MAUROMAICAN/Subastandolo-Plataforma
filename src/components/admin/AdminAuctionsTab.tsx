@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,9 +19,10 @@ interface Props {
   winnerProfiles: Record<string, WinnerInfo>;
   commissionPct: number;
   fetchAllData: () => Promise<void>;
+  globalSearch?: string;
 }
 
-const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllData }: Props) => {
+const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllData, globalSearch = "" }: Props) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -33,6 +34,8 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
 
   // Search, collapse & pagination
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => { if (globalSearch) setSearchQuery(globalSearch); }, [globalSearch]);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);

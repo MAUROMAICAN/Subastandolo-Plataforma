@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,17 +22,20 @@ interface Props {
   winnerProfiles: Record<string, WinnerInfo>;
   dealerProfiles: Record<string, WinnerInfo>;
   paymentProofs: any[];
+  globalSearch?: string;
 }
 
 type SortField = "end_time" | "current_price" | "title";
 type SortDir = "asc" | "desc";
 
-const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, paymentProofs }: Props) => {
+const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, paymentProofs, globalSearch = "" }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Filters
   const [search, setSearch] = useState("");
+
+  useEffect(() => { if (globalSearch) setSearch(globalSearch); }, [globalSearch]);
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [deliveryFilter, setDeliveryFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");

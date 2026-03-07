@@ -145,12 +145,14 @@ const ReceiptProofImage = ({ proofPath }: { proofPath: string }) => {
   );
 };
 
-const AdminDealerSalesTab = () => {
+const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [dealers, setDealers] = useState<DealerSalesData[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => { if (globalSearch) setSearch(globalSearch); }, [globalSearch]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedDealer, setExpandedDealer] = useState<string | null>(null);
   const [processingWithdrawal, setProcessingWithdrawal] = useState<string | null>(null);
