@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Trophy, Search, Filter, Eye, Download, Calendar, Package,
   DollarSign, Truck, CreditCard, Clock, CheckCircle, XCircle,
-  Loader2, ChevronDown, ChevronUp, User, MapPin, Phone, FileText
+  Loader2, ChevronDown, ChevronUp, User, MapPin, Phone, FileText,
+  Mail, MessageSquare
 } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
@@ -390,6 +391,40 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                       <Phone className="h-3 w-3" /> {winnerProfiles[selectedAuction.winner_id!].phone}
                     </p>
                   )}
+                  {winnerProfiles[selectedAuction.winner_id!]?.email && (
+                    <p className="text-[10px] text-muted-foreground dark:text-gray-300 flex items-center gap-1">
+                      <Mail className="h-3 w-3" /> {winnerProfiles[selectedAuction.winner_id!].email}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    {winnerProfiles[selectedAuction.winner_id!]?.phone && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[10px] h-7 px-2 rounded-sm gap-1 text-green-600 border-green-600/30 hover:bg-green-600/10"
+                        onClick={() => {
+                          const phone = winnerProfiles[selectedAuction.winner_id!].phone!.replace(/\D/g, '');
+                          const msg = encodeURIComponent(`Hola ${winnerProfiles[selectedAuction.winner_id!].full_name}, te escribimos de Subastandolo respecto a la subasta "${selectedAuction.title}".`);
+                          window.open(`https://wa.me/58${phone.startsWith('0') ? phone.slice(1) : phone}?text=${msg}`, '_blank');
+                        }}
+                      >
+                        <MessageSquare className="h-3 w-3" /> WhatsApp
+                      </Button>
+                    )}
+                    {winnerProfiles[selectedAuction.winner_id!]?.email && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                        onClick={() => {
+                          const subject = encodeURIComponent(`Subasta "${selectedAuction.title}" - Subastandolo`);
+                          window.open(`mailto:${winnerProfiles[selectedAuction.winner_id!].email}?subject=${subject}`, '_blank');
+                        }}
+                      >
+                        <Mail className="h-3 w-3" /> Email
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
                   <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">

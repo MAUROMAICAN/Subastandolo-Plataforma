@@ -71,6 +71,49 @@ Deno.serve(async (req) => {
         </a>
       </div>
 
+      <!-- Steps to receive product -->
+      <div style="background:#1a1a2e;border:1px solid #2a2a4e;border-radius:12px;padding:20px;margin-bottom:20px;">
+        <p style="margin:0 0 14px;font-size:14px;color:#EAB308;font-weight:700;">📦 Pasos para recibir tu producto:</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 10px;vertical-align:top;">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;text-align:center;line-height:28px;color:#fff;font-weight:800;font-size:13px;">1</div>
+            </td>
+            <td style="padding:8px 0;color:#e0e0e0;font-size:13px;line-height:1.5;">
+              <strong style="color:#fff;">Realiza el pago</strong><br>
+              <span style="color:#9ca3af;">Transfiere el monto a la cuenta oficial de Subastandolo (ver datos abajo). NO pagues directo al vendedor.</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;vertical-align:top;">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;text-align:center;line-height:28px;color:#fff;font-weight:800;font-size:13px;">2</div>
+            </td>
+            <td style="padding:8px 0;color:#e0e0e0;font-size:13px;line-height:1.5;">
+              <strong style="color:#fff;">Sube tu comprobante</strong><br>
+              <span style="color:#9ca3af;">En la página de la subasta, sube la captura de tu transferencia. Nuestro equipo lo verificará en máximo 24 horas.</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;vertical-align:top;">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;text-align:center;line-height:28px;color:#fff;font-weight:800;font-size:13px;">3</div>
+            </td>
+            <td style="padding:8px 0;color:#e0e0e0;font-size:13px;line-height:1.5;">
+              <strong style="color:#fff;">Completa tus datos de envío</strong><br>
+              <span style="color:#9ca3af;">Ingresa tu nombre, cédula, teléfono, estado, ciudad y oficina de la empresa de encomiendas donde recibirás el paquete.</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;vertical-align:top;">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;text-align:center;line-height:28px;color:#fff;font-weight:800;font-size:13px;">4</div>
+            </td>
+            <td style="padding:8px 0;color:#e0e0e0;font-size:13px;line-height:1.5;">
+              <strong style="color:#fff;">Recibe tu producto</strong><br>
+              <span style="color:#9ca3af;">El vendedor enviará tu producto y te llegarán actualizaciones con el número de guía para rastrear tu envío.</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+
       <!-- Payment instructions teaser -->
       <div style="background:#1a1a2e;border:1px solid #2a2a4e;border-left:4px solid #EAB308;border-radius:10px;padding:14px 18px;">
         <p style="margin:0;font-size:13px;color:#b0b0c0;line-height:1.6;">

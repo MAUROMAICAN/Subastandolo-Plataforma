@@ -171,12 +171,27 @@ const Admin = () => {
     setEditingSettings(editMap);
 
     const winnerIds = auctionList.filter(a => a.winner_id).map(a => a.winner_id!);
+
+    // Fetch emails first so we can include them in winnerProfiles
+    let emailMap: Record<string, string> = {};
+    try {
+      const { data: emailData } = await supabase.functions.invoke("admin-manage-user", {
+        body: { action: "list_users", userId: "all" },
+      });
+      if (emailData?.emails) {
+        emailMap = emailData.emails;
+        setAllUsers(prev => prev.map(u => ({ ...u, email: emailMap[u.user_id] || "" })));
+      }
+    } catch (e) {
+      console.error("Error fetching emails:", e);
+    }
+
     if (winnerIds.length > 0) {
       const uniqueIds = [...new Set(winnerIds)];
       const map: Record<string, WinnerInfo> = {};
       uniqueIds.forEach(id => {
         const p = profileMap[id];
-        if (p) map[id] = { full_name: p.full_name, phone: p.phone };
+        if (p) map[id] = { full_name: p.full_name, phone: p.phone, email: emailMap[id] || null };
       });
       setWinnerProfiles(map);
     }

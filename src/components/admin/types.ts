@@ -3,6 +3,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export interface WinnerInfo {
   full_name: string;
   phone: string | null;
+  email: string | null;
 }
 
 export interface BannerImage {
