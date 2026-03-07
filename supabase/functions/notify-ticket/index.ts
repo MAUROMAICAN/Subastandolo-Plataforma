@@ -2,57 +2,57 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-    try {
-        const { ticketId, type } = await req.json();
-        // type = "new_ticket" | "admin_reply"
+  try {
+    const { ticketId, type } = await req.json();
+    // type = "new_ticket" | "admin_reply"
 
-        const resendKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
 
-        const supabaseAdmin = createClient(
-            Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-        );
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-        // Fetch ticket with latest message
-        const { data: ticket, error: ticketErr } = await supabaseAdmin
-            .from("support_tickets")
-            .select("*")
-            .eq("id", ticketId)
-            .single();
-        if (ticketErr || !ticket) throw new Error("Ticket no encontrado");
+    // Fetch ticket with latest message
+    const { data: ticket, error: ticketErr } = await supabaseAdmin
+      .from("support_tickets")
+      .select("*")
+      .eq("id", ticketId)
+      .single();
+    if (ticketErr || !ticket) throw new Error("Ticket no encontrado");
 
-        const { data: messages } = await supabaseAdmin
-            .from("ticket_messages")
-            .select("*")
-            .eq("ticket_id", ticketId)
-            .order("created_at", { ascending: false })
-            .limit(1);
+    const { data: messages } = await supabaseAdmin
+      .from("ticket_messages")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-        const lastMessage = messages?.[0]?.message || "";
-        const appUrl = "https://subastandolo.com";
+    const lastMessage = messages?.[0]?.message || "";
+    const appUrl = "https://subastandolo.com";
 
-        const categoryLabels: Record<string, string> = {
-            general: "General",
-            pago: "Pago",
-            envio: "Envío",
-            subasta: "Subasta",
-            cuenta: "Cuenta",
-            dealer: "Dealer",
-        };
+    const categoryLabels: Record<string, string> = {
+      general: "General",
+      pago: "Pago",
+      envio: "Envío",
+      subasta: "Subasta",
+      cuenta: "Cuenta",
+      dealer: "Dealer",
+    };
 
-        if (type === "new_ticket") {
-            // Notify admin about new ticket
-            const adminEmail = "subastandolove@gmail.com";
-            const subject = `🎫 Nuevo Ticket #${ticket.ticket_number} — ${ticket.subject}`;
-            const html = `
+    if (type === "new_ticket") {
+      // Notify admin about new ticket
+      const adminEmail = "subastandolo1@gmail.com";
+      const subject = `🎫 Nuevo Ticket #${ticket.ticket_number} — ${ticket.subject}`;
+      const html = `
         <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#ffffff;border-radius:12px;overflow:hidden">
           <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;text-align:center">
             <h1 style="color:#A6E300;margin:0;font-size:20px">🎫 Nuevo Ticket de Soporte</h1>
@@ -74,29 +74,29 @@ Deno.serve(async (req) => {
           </div>
         </div>`;
 
-            const res = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    from: "SUBASTANDOLO Soporte <soporte@subastandolo.com>",
-                    to: [adminEmail],
-                    reply_to: ticket.user_email,
-                    subject,
-                    html,
-                }),
-            });
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "SUBASTANDOLO Soporte <soporte@subastandolo.com>",
+          to: [adminEmail],
+          reply_to: ticket.user_email,
+          subject,
+          html,
+        }),
+      });
 
-            if (res.ok) {
-                const r = await res.json();
-                await logEmail(supabaseAdmin, { recipient_email: adminEmail, email_type: "support_new_ticket", subject, status: "sent", resend_id: r.id, metadata: { ticket_number: ticket.ticket_number, user_name: ticket.user_name } });
-            } else {
-                await logEmail(supabaseAdmin, { recipient_email: adminEmail, email_type: "support_new_ticket", subject, status: "failed", error_message: await res.text() });
-            }
+      if (res.ok) {
+        const r = await res.json();
+        await logEmail(supabaseAdmin, { recipient_email: adminEmail, email_type: "support_new_ticket", subject, status: "sent", resend_id: r.id, metadata: { ticket_number: ticket.ticket_number, user_name: ticket.user_name } });
+      } else {
+        await logEmail(supabaseAdmin, { recipient_email: adminEmail, email_type: "support_new_ticket", subject, status: "failed", error_message: await res.text() });
+      }
 
-        } else if (type === "admin_reply") {
-            // Notify user about admin reply  
-            const subject = `💬 Respuesta a tu Ticket #${ticket.ticket_number} — ${ticket.subject}`;
-            const html = `
+    } else if (type === "admin_reply") {
+      // Notify user about admin reply  
+      const subject = `💬 Respuesta a tu Ticket #${ticket.ticket_number} — ${ticket.subject}`;
+      const html = `
         <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#ffffff;border-radius:12px;overflow:hidden">
           <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;text-align:center">
             <h1 style="color:#A6E300;margin:0;font-size:20px">💬 Respuesta del Soporte</h1>
@@ -118,33 +118,33 @@ Deno.serve(async (req) => {
           </div>
         </div>`;
 
-            const res = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    from: "SUBASTANDOLO Soporte <soporte@subastandolo.com>",
-                    to: [ticket.user_email],
-                    subject,
-                    html,
-                }),
-            });
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "SUBASTANDOLO Soporte <soporte@subastandolo.com>",
+          to: [ticket.user_email],
+          subject,
+          html,
+        }),
+      });
 
-            if (res.ok) {
-                const r = await res.json();
-                await logEmail(supabaseAdmin, { recipient_email: ticket.user_email, recipient_name: ticket.user_name, recipient_id: ticket.user_id, email_type: "support_reply", subject, status: "sent", resend_id: r.id, metadata: { ticket_number: ticket.ticket_number } });
-            } else {
-                await logEmail(supabaseAdmin, { recipient_email: ticket.user_email, recipient_name: ticket.user_name, recipient_id: ticket.user_id, email_type: "support_reply", subject, status: "failed", error_message: await res.text() });
-            }
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-
-    } catch (error) {
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (res.ok) {
+        const r = await res.json();
+        await logEmail(supabaseAdmin, { recipient_email: ticket.user_email, recipient_name: ticket.user_name, recipient_id: ticket.user_id, email_type: "support_reply", subject, status: "sent", resend_id: r.id, metadata: { ticket_number: ticket.ticket_number } });
+      } else {
+        await logEmail(supabaseAdmin, { recipient_email: ticket.user_email, recipient_name: ticket.user_name, recipient_id: ticket.user_id, email_type: "support_reply", subject, status: "failed", error_message: await res.text() });
+      }
     }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 });
