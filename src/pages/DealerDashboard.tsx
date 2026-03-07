@@ -15,7 +15,7 @@ import ReputationThermometer from "@/components/ReputationThermometer";
 import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert, Store } from "lucide-react";
+import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert, Store, Headphones } from "lucide-react";
 
 import type { AuctionWithImages, WinnerProfile } from "@/components/dealer/types";
 import DealerDashboardTab from "@/components/dealer/DealerDashboardTab";
@@ -231,6 +231,7 @@ const DealerDashboard = () => {
     { key: "payment", label: "Cobro", icon: Banknote },
     { key: "wallet", label: "Mi Billetera", icon: Wallet },
     { key: "levels", label: "Niveles", icon: Trophy },
+    { key: "support", label: "Soporte", icon: Headphones },
   ];
 
   // ── Compute tier info for header ──────────────────────────────────────────
@@ -489,6 +490,20 @@ const DealerDashboard = () => {
           {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
           {activeTab === "payment" && <DealerPaymentTab />}
           {activeTab === "wallet" && <DealerWalletTab />}
+          {activeTab === "support" && (
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="text-center mb-6">
+                <Headphones className="h-10 w-10 mx-auto mb-3 text-primary dark:text-[#A6E300]" />
+                <h2 className="text-lg font-heading font-bold mb-1">Centro de Soporte</h2>
+                <p className="text-xs text-muted-foreground">¿Necesitas ayuda? Crea un ticket de soporte o revisa los existentes.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => navigate("/contacto")} className="rounded-xl font-bold gap-2 bg-primary text-primary-foreground">
+                  <Headphones className="h-4 w-4" /> Ir al Centro de Soporte
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

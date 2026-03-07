@@ -29,7 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, AlertTriangle, Clock, CheckCircle, Shield, Scale,
   ChevronRight, ImageIcon, Store, Star, Heart, Plus, Package,
-  Lock, ShieldCheck, User, MapPin, Users, CreditCard
+  Lock, ShieldCheck, User, MapPin, Users, CreditCard, Headphones
 } from "lucide-react";
 import ProfileCompletionBar from "@/components/ProfileCompletionBar";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive dark:text-white border-destructive/20 dark:border-white/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses" | "support";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -1395,6 +1395,23 @@ const BuyerPanel = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Soporte */}
+          <Card
+            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
+            onClick={() => navigate("/contacto")}
+          >
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                <Headphones className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-heading font-bold text-sm">Soporte y Ayuda</p>
+                <p className="text-xs text-muted-foreground">Crea tickets y recibe asistencia</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </CardContent>
+          </Card>
 
 
 
