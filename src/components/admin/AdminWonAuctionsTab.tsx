@@ -13,7 +13,7 @@ import {
   DollarSign, Truck, CreditCard, Clock, CheckCircle,
   Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   User, MapPin, Phone, FileText, Mail, MessageSquare,
-  ChevronsUpDown, XCircle
+  ChevronsUpDown, XCircle, Bell
 } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
@@ -53,6 +53,10 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [shippingInfo, setShippingInfo] = useState<any>(null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [sendingNotification, setSendingNotification] = useState<string | null>(null);
+  const [sendingShipReminder, setSendingShipReminder] = useState<string | null>(null);
+  const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
 
   // Won auctions
   const wonAuctions = useMemo(() => auctions.filter(a => !!a.winner_id), [auctions]);
@@ -441,6 +445,102 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
                           </div>
                         </div>
+                        {/* ═══ Recordatorios ═══ */}
+                        {((a.payment_status === "pending" || a.payment_status === "under_review") || (a.delivery_status === "pending" || a.delivery_status === "ready_to_ship")) && (
+                          <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">📧 Recordatorios</p>
+                            <div className="flex flex-col gap-1.5">
+                              {/* Payment reminder - to buyer */}
+                              {(a.payment_status === "pending" || a.payment_status === "under_review") && winner?.email && (
+                                <div className="flex gap-1.5">
+                                  <Button size="sm" variant="outline"
+                                    className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                                    disabled={sendingReminder === a.id}
+                                    onClick={async () => {
+                                      setSendingReminder(a.id);
+                                      try {
+                                        const { data, error } = await supabase.functions.invoke("notify-payment-reminder", {
+                                          body: { email: winner.email, name: winner.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.winner_id, operationNumber: a.operation_number || null, auctionDate: new Date(a.end_time).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }) },
+                                        });
+                                        if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                        else toast({ title: "📧 Recordatorio de pago enviado", description: `A ${winner.email}` });
+                                      } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                      setSendingReminder(null);
+                                    }}
+                                  >
+                                    {sendingReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                    Pago (Correo)
+                                  </Button>
+                                  <Button size="sm" variant="outline"
+                                    className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-blue-500/30 text-blue-600 hover:bg-blue-500/10"
+                                    disabled={sendingNotification === a.id}
+                                    onClick={async () => {
+                                      setSendingNotification(a.id);
+                                      try {
+                                        const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+                                        const { data, error } = await supabase.functions.invoke("notify-push", {
+                                          body: { user_id: a.winner_id, title: `⚠️ Pago pendiente: "${a.title}"`, message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`, type: "payment_reminder", link: `/subasta/${a.id}` },
+                                        });
+                                        if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                        else toast({ title: "🔔 Notificación enviada", description: `A ${winner.full_name}` });
+                                      } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                      setSendingNotification(null);
+                                    }}
+                                  >
+                                    {sendingNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+                                    Pago (Push)
+                                  </Button>
+                                </div>
+                              )}
+                              {/* Shipping reminder - to dealer */}
+                              {(a.delivery_status === "pending" || a.delivery_status === "ready_to_ship") && (() => {
+                                const dealer = dealerProfiles[a.created_by];
+                                return dealer ? (
+                                  <div className="flex gap-1.5">
+                                    <Button size="sm" variant="outline"
+                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-purple-500/30 text-purple-600 hover:bg-purple-500/10"
+                                      disabled={sendingShipReminder === a.id}
+                                      onClick={async () => {
+                                        setSendingShipReminder(a.id);
+                                        try {
+                                          if (!dealer.email) { toast({ title: "Dealer sin email", variant: "destructive" }); setSendingShipReminder(null); return; }
+                                          const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
+                                            body: { email: dealer.email, name: dealer.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.created_by, operationNumber: a.operation_number || null, buyerName: winner?.full_name || "el comprador" },
+                                          });
+                                          if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                          else toast({ title: "📧 Recordatorio de envío enviado", description: `A ${dealer.email}` });
+                                        } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                        setSendingShipReminder(null);
+                                      }}
+                                    >
+                                      {sendingShipReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                      Envío (Correo)
+                                    </Button>
+                                    <Button size="sm" variant="outline"
+                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-indigo-500/30 text-indigo-600 hover:bg-indigo-500/10"
+                                      disabled={sendingShipNotification === a.id}
+                                      onClick={async () => {
+                                        setSendingShipNotification(a.id);
+                                        try {
+                                          const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+                                          const { data, error } = await supabase.functions.invoke("notify-push", {
+                                            body: { user_id: a.created_by, title: `📦 Envío pendiente: "${a.title}"`, message: `Hola ${dealer.full_name}, ${winner?.full_name || "el comprador"} ya pagó ${amount}. Procede con el envío.`, type: "shipping_reminder", link: `/subasta/${a.id}` },
+                                          });
+                                          if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                          else toast({ title: "🔔 Notificación enviada al dealer", description: `A ${dealer.full_name}` });
+                                        } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                        setSendingShipNotification(null);
+                                      }}
+                                    >
+                                      {sendingShipNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+                                      Envío (Push)
+                                    </Button>
+                                  </div>
+                                ) : null;
+                              })()}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
