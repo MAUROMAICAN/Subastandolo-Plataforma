@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useVerifiedDealers } from "@/hooks/useVerifiedDealers";
@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Navbar from "@/components/Navbar";
 import SEO from "@/components/SEO";
-import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Store, Globe } from "lucide-react";
+import { Search, Flame, Clock, Gavel, ArrowRight, Store, Globe } from "lucide-react";
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -46,17 +46,20 @@ const Index = () => {
   }, []);
 
   const bannerInterval = parseInt(getSetting("banner_interval", "5"), 10) * 1000;
+  const bannerPaused = useRef(false);
 
   useEffect(() => {
     if (banners.length <= 1) return undefined;
-    const interval = setInterval(() => setCurrentSlide(prev => (prev + 1) % banners.length), bannerInterval);
+    const interval = setInterval(() => {
+      if (!bannerPaused.current) setCurrentSlide(prev => (prev + 1) % banners.length);
+    }, bannerInterval);
     return () => clearInterval(interval);
   }, [banners.length, bannerInterval]);
 
   const fetchAuctions = useCallback(async () => {
     setFetchError(null);
     setLoading(true);
-    const { data, error } = await supabase.from("auctions").select("id, title, image_url, starting_price, current_price, end_time, start_time, status, winner_name, created_by, condition, is_extended, archived_at").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
+    const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
     setLoading(false);
     if (error) {
       setFetchError(error.message);
@@ -194,7 +197,13 @@ const Index = () => {
 
         {/* Banner */}
         {banners.length > 0 && (
-          <section className="relative overflow-hidden h-[170px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3">
+          <section
+            className="relative overflow-hidden h-[170px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3"
+            onMouseEnter={() => { bannerPaused.current = true; }}
+            onMouseLeave={() => { bannerPaused.current = false; }}
+            onTouchStart={() => { bannerPaused.current = true; }}
+            onTouchEnd={() => { bannerPaused.current = false; }}
+          >
             {banners.map((banner, index) => (
               <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <img
@@ -237,13 +246,9 @@ const Index = () => {
               </div>
             </div>
             {banners.length > 1 && (
-              <>
-                <button onClick={() => setCurrentSlide(prev => (prev - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card/20 hover:bg-card/40 backdrop-blur-sm text-white flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
-                <button onClick={() => setCurrentSlide(prev => (prev + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card/20 hover:bg-card/40 backdrop-blur-sm text-white flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                  {banners.map((_, i) => <button key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? "bg-white w-5" : "bg-white/40"}`} />)}
-                </div>
-              </>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                {banners.map((_, i) => <button key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? "bg-white w-5" : "bg-white/40"}`} />)}
+              </div>
             )}
           </section>
         )}
