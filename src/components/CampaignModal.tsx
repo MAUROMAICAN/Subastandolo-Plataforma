@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { X } from "lucide-react";
 
-const AUTO_DISMISS_MS = 10_000; // 10 seconds
+const AUTO_DISMISS_MS = 8_000; // 8 seconds
 
 interface Campaign {
   id: string;
@@ -116,24 +116,33 @@ const CampaignModal = () => {
   useEffect(() => {
     if (!campaign || !visible) return;
 
-    const TICK = 50; // update every 50ms for smooth animation
+    const TICK = 50;
     const startTime = Date.now();
+    let pauseOffset = 0;
+    let pauseStart = 0;
 
-    timerRef.current = setInterval(() => {
-      if (pausedRef.current) return;
-      const elapsed = Date.now() - startTime;
+    const interval = setInterval(() => {
+      if (pausedRef.current) {
+        if (!pauseStart) pauseStart = Date.now();
+        return;
+      }
+      if (pauseStart) {
+        pauseOffset += Date.now() - pauseStart;
+        pauseStart = 0;
+      }
+      const elapsed = Date.now() - startTime - pauseOffset;
       const remaining = Math.max(0, 100 - (elapsed / AUTO_DISMISS_MS) * 100);
       setProgress(remaining);
 
       if (remaining <= 0) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        handleDismiss();
+        clearInterval(interval);
+        setVisible(false);
+        setTimeout(() => setCampaign(null), 260);
       }
     }, TICK);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    timerRef.current = interval;
+    return () => clearInterval(interval);
   }, [campaign?.id, visible]);
 
   const handleDismiss = async () => {
@@ -160,8 +169,8 @@ const CampaignModal = () => {
 
   if (!campaign) return null;
 
-  const maxW = viewport.width * 0.85;
-  const maxH = viewport.height * 0.85;
+  const maxW = viewport.width * 0.70;
+  const maxH = viewport.height * 0.70;
   const ratio = imageRatio ?? 9 / 16;
   const frameWidth = Math.min(maxW, maxH * ratio);
   const frameHeight = Math.min(maxH, frameWidth / ratio);
