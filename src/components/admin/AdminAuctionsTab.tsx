@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -29,6 +29,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [auctionFilter, setAuctionFilter] = useState<"visible" | "scheduled" | "archived" | "all">("visible");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [sendingNotification, setSendingNotification] = useState<string | null>(null);
   const [editingTime, setEditingTime] = useState<string | null>(null);
   const [newDurationHours, setNewDurationHours] = useState("");
   const [savingTime, setSavingTime] = useState(false);
@@ -755,11 +756,11 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                         {(payStatus === "pending" || payStatus === "under_review") && (() => {
                           const winner = winnerProfiles[auction.winner_id!];
                           return winner?.email ? (
-                            <div className="px-4 pb-3 -mt-1">
+                            <div className="px-4 pb-3 -mt-1 flex gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="w-full text-[11px] h-8 rounded-md gap-1.5 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 hover:text-amber-500"
+                                className="flex-1 text-[11px] h-8 rounded-md gap-1.5 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 hover:text-amber-500"
                                 disabled={sendingReminder === auction.id}
                                 onClick={async () => {
                                   setSendingReminder(auction.id);
@@ -781,7 +782,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                     if (error || data?.error) {
                                       toast({ title: "Error al enviar recordatorio", description: error?.message || data?.error, variant: "destructive" });
                                     } else {
-                                      toast({ title: "📧 Recordatorio de pago enviado", description: `Correo enviado a ${winner.email}` });
+                                      toast({ title: "📧 Correo de recordatorio enviado", description: `Enviado a ${winner.email}` });
                                     }
                                   } catch (err: any) {
                                     toast({ title: "Error", description: err?.message, variant: "destructive" });
@@ -790,7 +791,39 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                 }}
                               >
                                 {sendingReminder === auction.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-                                Recordar Pago al Comprador
+                                Correo
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 text-[11px] h-8 rounded-md gap-1.5 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 hover:text-blue-500"
+                                disabled={sendingNotification === auction.id}
+                                onClick={async () => {
+                                  setSendingNotification(auction.id);
+                                  try {
+                                    const amount = `$${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+                                    const { data, error } = await supabase.functions.invoke("notify-push", {
+                                      body: {
+                                        user_id: auction.winner_id,
+                                        title: `⚠️ Pago pendiente: "${auction.title}"`,
+                                        message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount} para recibir tu producto. Ingresa a la plataforma y sube tu comprobante.`,
+                                        type: "payment_reminder",
+                                        link: `/subasta/${auction.id}`,
+                                      },
+                                    });
+                                    if (error || data?.error) {
+                                      toast({ title: "Error al enviar notificación", description: error?.message || data?.error, variant: "destructive" });
+                                    } else {
+                                      toast({ title: "🔔 Notificación enviada", description: `Enviada a ${winner.full_name} (app + web)` });
+                                    }
+                                  } catch (err: any) {
+                                    toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                  }
+                                  setSendingNotification(null);
+                                }}
+                              >
+                                {sendingNotification === auction.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
+                                Notificación
                               </Button>
                             </div>
                           ) : null;

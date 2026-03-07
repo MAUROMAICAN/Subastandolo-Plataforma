@@ -80,6 +80,7 @@ const soundMap: Record<string, string> = {
     announcement: "administrador",
     urgent: "sobrepuja",
     maintenance: "administrador",
+    payment_reminder: "sobrepuja",
 };
 
 // ── Channel map — MUST match IDs in MainActivity.java ───────────────────────
@@ -95,6 +96,7 @@ const channelMap: Record<string, string> = {
     announcement: "subastandolo_admin_v4",
     urgent: "subastandolo_bids_v4",
     maintenance: "subastandolo_admin_v4",
+    payment_reminder: "subastandolo_bids_v4",
 };
 
 // ── Main handler ────────────────────────────────────────────────────────────
