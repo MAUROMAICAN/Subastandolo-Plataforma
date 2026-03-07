@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { X } from "lucide-react";
 
-const AUTO_DISMISS_MS = 8_000; // 8 seconds
+const AUTO_DISMISS_MS = 10_000; // 10 seconds
 
 interface Campaign {
   id: string;
@@ -169,8 +169,8 @@ const CampaignModal = () => {
 
   if (!campaign) return null;
 
-  const maxW = viewport.width * 0.70;
-  const maxH = viewport.height * 0.70;
+  const maxW = viewport.width * 0.80;
+  const maxH = viewport.height * 0.80;
   const ratio = imageRatio ?? 9 / 16;
   const frameWidth = Math.min(maxW, maxH * ratio);
   const frameHeight = Math.min(maxH, frameWidth / ratio);
@@ -211,7 +211,7 @@ const CampaignModal = () => {
             width: `${frameWidth}px`,
             height: `${frameHeight}px`,
             maxWidth: "92vw",
-            maxHeight: "78vh",
+            maxHeight: "82vh",
           }}
         >
 
