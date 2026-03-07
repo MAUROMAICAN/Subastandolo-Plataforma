@@ -56,7 +56,7 @@ const Index = () => {
   const fetchAuctions = useCallback(async () => {
     setFetchError(null);
     setLoading(true);
-    const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
+    const { data, error } = await supabase.from("auctions").select("id, title, image_url, starting_price, current_price, end_time, start_time, status, winner_name, created_by, condition, is_extended, archived_at").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
     setLoading(false);
     if (error) {
       setFetchError(error.message);
@@ -197,7 +197,13 @@ const Index = () => {
           <section className="relative overflow-hidden h-[170px] sm:h-[360px] sm:rounded-xl sm:mx-4 sm:mt-3">
             {banners.map((banner, index) => (
               <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-                <img src={banner.image_url} alt={banner.title || "Banner"} className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src={banner.image_url}
+                  alt={banner.title || "Banner"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading={index <= 1 ? "eager" : "lazy"}
+                  decoding="async"
+                />
                 <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 45%, rgba(0,0,0,0.05) 75%, transparent 100%)' }} />
               </div>
             ))}
