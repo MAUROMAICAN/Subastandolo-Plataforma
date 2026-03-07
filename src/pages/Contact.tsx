@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, MessageCircle, Shield, Clock, Send, Headphones, Ticket, ChevronDown, ChevronUp,
-  AlertCircle, CheckCircle, Loader2, Plus, ArrowRight
+  AlertCircle, CheckCircle, Loader2, Plus, ArrowRight, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,6 +185,20 @@ const Contact = () => {
     setReplying(null);
   };
 
+  const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("¿Estás seguro de eliminar este ticket? Esta acción no se puede deshacer.")) return;
+    try {
+      await supabase.from("ticket_messages").delete().eq("ticket_id", ticketId);
+      await supabase.from("support_tickets").delete().eq("id", ticketId);
+      setTickets(prev => prev.filter(t => t.id !== ticketId));
+      if (expandedTicket === ticketId) setExpandedTicket(null);
+      toast({ title: "🗑️ Ticket eliminado" });
+    } catch {
+      toast({ title: "Error", description: "No se pudo eliminar el ticket", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -320,7 +334,7 @@ const Contact = () => {
                           <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => toggleTicket(t.id)}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-mono text-muted-foreground">#{t.ticket_number}</span>
+                                <span className="text-xs font-mono text-muted-foreground">TK-{String(t.ticket_number).padStart(8, '0')}</span>
                                 <p className="text-sm font-bold truncate">{t.subject}</p>
                                 <Badge variant="outline" className={`text-[9px] ${st.bg} ${st.color} border-transparent`}>{st.label}</Badge>
                               </div>
@@ -373,10 +387,13 @@ const Contact = () => {
                               )}
 
                               {(t.status === "closed" || t.status === "resolved") && (
-                                <div className="border-t border-border p-3 text-center">
-                                  <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                                <div className="border-t border-border p-3 flex items-center justify-between">
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                                     <CheckCircle className="h-3.5 w-3.5 text-emerald-500" /> Este ticket fue {t.status === "resolved" ? "resuelto" : "cerrado"}
                                   </p>
+                                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 text-[10px] h-7 gap-1 rounded-sm" onClick={(e) => handleDeleteTicket(t.id, e)}>
+                                    <Trash2 className="h-3 w-3" /> Eliminar
+                                  </Button>
                                 </div>
                               )}
                             </div>

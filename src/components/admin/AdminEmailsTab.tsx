@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
     Mail, Search, CheckCircle, XCircle, Ticket, ChevronLeft,
     ChevronRight, RefreshCw, ExternalLink, Loader2, Send,
-    Clock, AlertTriangle, ArrowRight, X, User, Shield, ChevronDown
+    Clock, AlertTriangle, ArrowRight, X, User, Shield, ChevronDown, Trash2
 } from "lucide-react";
 
 interface SupportTicket {
@@ -135,6 +135,16 @@ const AdminEmailsTab = () => {
         fetchTickets();
     };
 
+    const handleDeleteTicket = async (ticketId: string) => {
+        if (!confirm("¿Eliminar este ticket y todos sus mensajes? Esta acción no se puede deshacer.")) return;
+        try {
+            await supabase.from("ticket_messages").delete().eq("ticket_id", ticketId);
+            await supabase.from("support_tickets").delete().eq("id", ticketId);
+            setTickets(prev => prev.filter(t => t.id !== ticketId));
+            if (selectedTicket?.id === ticketId) setSelectedTicket(null);
+        } catch { }
+    };
+
     const filtered = useMemo(() => {
         let list = [...tickets];
         if (search.trim()) {
@@ -143,7 +153,7 @@ const AdminEmailsTab = () => {
                 t.subject.toLowerCase().includes(q) ||
                 t.user_name.toLowerCase().includes(q) ||
                 t.user_email.toLowerCase().includes(q) ||
-                `#${t.ticket_number}`.includes(q)
+                `TK-${String(t.ticket_number).padStart(8, '0')}`.toLowerCase().includes(q)
             );
         }
         if (statusFilter !== "all") list = list.filter(t => t.status === statusFilter);
@@ -241,7 +251,7 @@ const AdminEmailsTab = () => {
                             return (
                                 <div key={t.id} className={`border rounded-sm p-3 cursor-pointer transition-all hover:border-primary/30 ${isSelected ? "border-primary/50 bg-primary/5" : "border-border"}`} onClick={() => openTicket(t)}>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-mono text-muted-foreground">#{t.ticket_number}</span>
+                                        <span className="text-[10px] font-mono text-muted-foreground">TK-{String(t.ticket_number).padStart(8, '0')}</span>
                                         <Badge variant="outline" className={`text-[8px] ${st.bg} ${st.color} border-transparent px-1.5 py-0`}>{st.label}</Badge>
                                         {t.priority === "high" && <AlertTriangle className="h-3 w-3 text-red-500" />}
                                     </div>
@@ -269,7 +279,7 @@ const AdminEmailsTab = () => {
                                         <Button variant="ghost" size="icon" className="h-7 w-7 lg:hidden shrink-0" onClick={() => setSelectedTicket(null)}>
                                             <ChevronLeft className="h-4 w-4" />
                                         </Button>
-                                        <span className="text-xs font-mono text-muted-foreground shrink-0">#{selectedTicket.ticket_number}</span>
+                                        <span className="text-xs font-mono text-muted-foreground shrink-0">TK-{String(selectedTicket.ticket_number).padStart(8, '0')}</span>
                                         <h3 className="text-sm font-bold truncate">{selectedTicket.subject}</h3>
                                     </div>
                                     <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 hidden lg:flex" onClick={() => setSelectedTicket(null)}>
@@ -307,6 +317,9 @@ const AdminEmailsTab = () => {
                                     </Button>
                                     <Button variant="outline" size="sm" className="h-7 text-[10px] rounded-sm gap-1" onClick={() => window.open(`mailto:${selectedTicket.user_email}`, "_blank")}>
                                         <Mail className="h-3 w-3" /> Email directo
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="h-7 text-[10px] rounded-sm gap-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteTicket(selectedTicket.id)}>
+                                        <Trash2 className="h-3 w-3" /> Eliminar
                                     </Button>
                                 </div>
                             </div>
