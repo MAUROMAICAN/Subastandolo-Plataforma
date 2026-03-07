@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Trophy, Search, Filter, Eye, Download, Calendar, Package,
-  DollarSign, Truck, CreditCard, Clock, CheckCircle, XCircle,
-  Loader2, ChevronDown, ChevronUp, User, MapPin, Phone, FileText,
-  Mail, MessageSquare
+  Trophy, Search, Eye, Download, Calendar, Package,
+  DollarSign, Truck, CreditCard, Clock, CheckCircle,
+  Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  User, MapPin, Phone, FileText, Mail, MessageSquare,
+  ChevronsUpDown, XCircle
 } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
@@ -39,9 +40,10 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [sortField, setSortField] = useState<SortField>("end_time");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // Pagination
+  // Pagination & expand
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   // Detail modal
   const [selectedAuction, setSelectedAuction] = useState<AuctionExtended | null>(null);
@@ -49,15 +51,12 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // All auctions with a winner (regardless of status)
-  const wonAuctions = useMemo(() => {
-    return auctions.filter(a => !!a.winner_id);
-  }, [auctions]);
+  // Won auctions
+  const wonAuctions = useMemo(() => auctions.filter(a => !!a.winner_id), [auctions]);
 
   // Filtered & sorted
   const filtered = useMemo(() => {
     let list = [...wonAuctions];
-
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(a =>
@@ -67,7 +66,6 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         dealerProfiles[a.created_by]?.toLowerCase().includes(q)
       );
     }
-
     if (paymentFilter !== "all") {
       if (paymentFilter === "verified") {
         list = list.filter(a => a.payment_status === "verified" || a.payment_status === "released");
@@ -75,19 +73,9 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         list = list.filter(a => a.payment_status === paymentFilter);
       }
     }
-
-    if (deliveryFilter !== "all") {
-      list = list.filter(a => a.delivery_status === deliveryFilter);
-    }
-
-    if (dateFrom) {
-      list = list.filter(a => new Date(a.end_time) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59);
-      list = list.filter(a => new Date(a.end_time) <= to);
-    }
+    if (deliveryFilter !== "all") list = list.filter(a => a.delivery_status === deliveryFilter);
+    if (dateFrom) list = list.filter(a => new Date(a.end_time) >= new Date(dateFrom));
+    if (dateTo) { const to = new Date(dateTo); to.setHours(23, 59, 59); list = list.filter(a => new Date(a.end_time) <= to); }
 
     list.sort((a, b) => {
       let cmp = 0;
@@ -96,19 +84,14 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
       else cmp = a.title.localeCompare(b.title);
       return sortDir === "desc" ? -cmp : cmp;
     });
-
     return list;
   }, [wonAuctions, search, paymentFilter, deliveryFilter, dateFrom, dateTo, sortField, sortDir, winnerProfiles, dealerProfiles]);
 
-  // Reset page when filters change
   useMemo(() => { setPage(1); }, [search, paymentFilter, deliveryFilter, dateFrom, dateTo]);
 
-  // Paginated results
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page, pageSize]);
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Stats
   const stats = useMemo(() => {
@@ -121,52 +104,53 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
     return { total, totalRevenue, pendingPayment, verified, delivered, shipped };
   }, [wonAuctions]);
 
+  const toggleCard = (id: string) => {
+    setExpandedCards(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  };
+  const toggleAllCards = () => {
+    if (expandedCards.size >= paginated.length) setExpandedCards(new Set());
+    else setExpandedCards(new Set(paginated.map(a => a.id)));
+  };
+
   const openDetail = async (auction: AuctionExtended) => {
     setSelectedAuction(auction);
     setLoadingDetail(true);
     setShippingInfo(null);
     setProofUrl(null);
-
     const [shipRes, proofRes] = await Promise.all([
       supabase.from("shipping_info").select("*").eq("auction_id", auction.id).maybeSingle(),
       supabase.from("payment_proofs").select("*").eq("auction_id", auction.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-
     setShippingInfo(shipRes.data);
-
     if (proofRes.data?.proof_url) {
       const url = proofRes.data.proof_url;
-      if (url.startsWith("http")) {
-        setProofUrl(url);
-      } else {
-        const { data } = await supabase.storage.from("payment-proofs").createSignedUrl(url, 864000);
-        setProofUrl(data?.signedUrl || null);
-      }
+      if (url.startsWith("http")) setProofUrl(url);
+      else { const { data } = await supabase.storage.from("payment-proofs").createSignedUrl(url, 864000); setProofUrl(data?.signedUrl || null); }
     }
-
     setLoadingDetail(false);
   };
 
   const paymentLabel = (status: string) => {
-    const map: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-warning/10 text-warning border-warning/20" },
-      under_review: { label: "En Revisión", class: "bg-amber-500/10 text-amber-600 border-amber-200" },
-      verified: { label: "Verificado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
-      released: { label: "Liberado", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
-      refunded: { label: "Reembolsado", class: "bg-destructive/10 text-destructive border-destructive/20" },
+    const map: Record<string, { label: string; class: string; icon: any }> = {
+      pending: { label: "Pendiente", class: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20", icon: Clock },
+      under_review: { label: "En Revisión", class: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", icon: Search },
+      verified: { label: "Verificado", class: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle },
+      released: { label: "Liberado", class: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle },
+      refunded: { label: "Reembolsado", class: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle },
     };
-    return map[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
+    return map[status] || { label: status, class: "bg-muted text-muted-foreground border-border", icon: Clock };
   };
 
   const deliveryLabel = (status: string) => {
-    const SHIPPING_STATUSES: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-200" },
-      ready_to_ship: { label: "Listo para enviar", class: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200" },
-      shipped: { label: "Enviado", class: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200" },
-      delivered: { label: "Entregado", class: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200" },
-      returned: { label: "Devuelto", class: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200" }
+    const map: Record<string, { label: string; class: string; icon: any }> = {
+      pending: { label: "Pendiente", class: "bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20", icon: Package },
+      ready_to_ship: { label: "Listo", class: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", icon: Package },
+      shipped: { label: "Enviado", class: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20", icon: Truck },
+      in_transit: { label: "En Tránsito", class: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20", icon: Truck },
+      delivered: { label: "Entregado", class: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle },
+      returned: { label: "Devuelto", class: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle },
     };
-    return SHIPPING_STATUSES[status] || { label: status, class: "bg-muted text-muted-foreground dark:text-gray-300 border-border" };
+    return map[status] || { label: status, class: "bg-muted text-muted-foreground border-border", icon: Package };
   };
 
   const toggleSort = (field: SortField) => {
@@ -174,103 +158,119 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
     else { setSortField(field); setSortDir("desc"); }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return null;
-    return sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />;
-  };
+  const hasFilters = search || paymentFilter !== "all" || deliveryFilter !== "all" || dateFrom || dateTo;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary dark:text-accent" /> Subastas Ganadas
-        </h1>
-        <Badge variant="outline" className="text-xs">{stats.total} total</Badge>
+      {/* ═══ Header ═══ */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary dark:text-accent" /> Subastas Ganadas
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {stats.total} ganadas · ${stats.totalRevenue.toLocaleString("es-MX")} ingresos · {stats.pendingPayment} pago pendiente · {stats.delivered} entregadas
+          </p>
+        </div>
+        <Badge variant="outline" className="text-xs self-start sm:self-auto shrink-0 font-mono">
+          {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+        </Badge>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      {/* ═══ Stats Cards ═══ */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {[
-          { label: "Total Ganadas", value: stats.total, icon: Trophy, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
-          { label: "Ingresos", value: `$${stats.totalRevenue.toLocaleString("es-MX")}`, icon: DollarSign, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
-          { label: "Pago Pendiente", value: stats.pendingPayment, icon: Clock, color: "text-warning", action: () => { setPaymentFilter("pending"); setDeliveryFilter("all"); } },
-          { label: "Pago Verificado", value: stats.verified, icon: CheckCircle, color: "text-primary dark:text-accent", action: () => { setPaymentFilter("verified"); setDeliveryFilter("all"); } },
-          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-primary dark:text-accent", action: () => { setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
-          { label: "Entregados", value: stats.delivered, icon: Package, color: "text-primary dark:text-accent", action: () => { setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
+          { label: "Total", value: stats.total, icon: Trophy, color: "text-primary dark:text-accent", bg: "bg-primary/5 dark:bg-accent/5", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
+          { label: "Ingresos", value: `$${stats.totalRevenue.toLocaleString("es-MX")}`, icon: DollarSign, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
+          { label: "Pago Pend.", value: stats.pendingPayment, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/5", action: () => { setPaymentFilter("pending"); setDeliveryFilter("all"); } },
+          { label: "Verificados", value: stats.verified, icon: CheckCircle, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/5", action: () => { setPaymentFilter("verified"); setDeliveryFilter("all"); } },
+          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/5", action: () => { setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
+          { label: "Entregados", value: stats.delivered, icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
         ].map((s, i) => (
-          <Card
+          <div
             key={i}
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/40 hover:shadow-md transition-all"
+            className={`${s.bg} rounded-lg border border-border p-3 cursor-pointer hover:border-primary/30 hover:shadow-sm transition-all`}
             onClick={s.action}
           >
-            <CardContent className="p-3">
-              <s.icon className={`h-4 w-4 ${s.color} mb-1`} />
-              <p className="text-lg font-heading font-bold">{s.value}</p>
-              <p className="text-[10px] text-muted-foreground">{s.label}</p>
-            </CardContent>
-          </Card>
+            <s.icon className={`h-4 w-4 ${s.color} mb-1.5`} />
+            <p className="text-lg font-heading font-bold leading-tight">{s.value}</p>
+            <p className="text-[10px] text-muted-foreground">{s.label}</p>
+          </div>
         ))}
       </div>
 
-      {/* Filters */}
-      <Card className="border border-border rounded-sm">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Filtros</span>
+      {/* ═══ Search + Filters Bar ═══ */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por título, Nº operación, ganador, dealer..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="pl-9 h-9 rounded-sm text-sm"
+            />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <div className="relative lg:col-span-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por título, Nº operación, ganador, dealer..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 rounded-sm text-xs"
-              />
-            </div>
-            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-              <SelectTrigger className="h-9 rounded-sm text-xs">
-                <SelectValue placeholder="Estado pago" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={paymentFilter} onValueChange={v => { setPaymentFilter(v); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[140px] rounded-sm text-xs">
+                <SelectValue placeholder="Pago" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los pagos</SelectItem>
                 <SelectItem value="pending">Pendiente</SelectItem>
                 <SelectItem value="under_review">En revisión</SelectItem>
-                <SelectItem value="verified">Verificado / Liberado</SelectItem>
-                <SelectItem value="released">Solo Liberados</SelectItem>
+                <SelectItem value="verified">Verificado</SelectItem>
+                <SelectItem value="released">Liberado</SelectItem>
                 <SelectItem value="refunded">Reembolsado</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={deliveryFilter} onValueChange={setDeliveryFilter}>
-              <SelectTrigger className="h-9 rounded-sm text-xs">
-                <SelectValue placeholder="Estado envío" />
+            <Select value={deliveryFilter} onValueChange={v => { setDeliveryFilter(v); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[140px] rounded-sm text-xs">
+                <SelectValue placeholder="Envío" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los envíos</SelectItem>
                 <SelectItem value="pending">Pendiente</SelectItem>
-                <SelectItem value="ready_to_ship">Listo para enviar</SelectItem>
+                <SelectItem value="ready_to_ship">Listo</SelectItem>
                 <SelectItem value="shipped">Enviado</SelectItem>
-                <SelectItem value="in_transit">En tránsito</SelectItem>
                 <SelectItem value="delivered">Entregado</SelectItem>
               </SelectContent>
             </Select>
-            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 rounded-sm text-xs" placeholder="Desde" />
-            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 rounded-sm text-xs" placeholder="Hasta" />
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-[130px] rounded-sm text-xs" />
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-[130px] rounded-sm text-xs" />
           </div>
-          {(search || paymentFilter !== "all" || deliveryFilter !== "all" || dateFrom || dateTo) && (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">{filtered.length} resultado(s)</span>
-              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={() => { setSearch(""); setPaymentFilter("all"); setDeliveryFilter("all"); setDateFrom(""); setDateTo(""); }}>
-                Limpiar filtros
+        </div>
+        {/* Controls row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm gap-1.5" onClick={toggleAllCards}>
+              <ChevronsUpDown className="h-3.5 w-3.5" />
+              {expandedCards.size >= paginated.length ? "Colapsar" : "Expandir"}
+            </Button>
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }} className="flex h-8 rounded-sm border border-input bg-background px-2 py-1 text-xs">
+              <option value={25}>25/pág</option>
+              <option value={50}>50/pág</option>
+              <option value={100}>100/pág</option>
+            </select>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => toggleSort("current_price")}>
+                <DollarSign className="h-3 w-3" /> Precio {sortField === "current_price" && (sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />)}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => toggleSort("end_time")}>
+                <Calendar className="h-3 w-3" /> Fecha {sortField === "end_time" && (sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />)}
               </Button>
             </div>
+          </div>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => { setSearch(""); setPaymentFilter("all"); setDeliveryFilter("all"); setDateFrom(""); setDateTo(""); }}>
+              Limpiar filtros
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Table */}
+      {/* ═══ Auction Cards ═══ */}
       {filtered.length === 0 ? (
         <Card className="border border-border rounded-sm">
           <CardContent className="p-12 text-center">
@@ -279,119 +279,157 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
           </CardContent>
         </Card>
       ) : (
-        <Card className="border border-border rounded-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-secondary/50 border-b border-border">
-                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Producto</th>
-                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Nº Operación</th>
-                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden md:table-cell">Ganador</th>
-                  <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden lg:table-cell">Dealer</th>
-                  <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("current_price")}>
-                    <span className="flex items-center justify-end gap-1">Precio <SortIcon field="current_price" /></span>
-                  </th>
-                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Pago</th>
-                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden md:table-cell">Envío</th>
-                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort("end_time")}>
-                    <span className="flex items-center justify-center gap-1">Fecha <SortIcon field="end_time" /></span>
-                  </th>
-                  <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {paginated.map((a) => {
-                  const winner = winnerProfiles[a.winner_id!];
-                  const ps = paymentLabel(a.payment_status);
-                  const ds = deliveryLabel(a.delivery_status);
+        <div className="space-y-2">
+          {paginated.map((a) => {
+            const winner = winnerProfiles[a.winner_id!];
+            const ps = paymentLabel(a.payment_status);
+            const ds = deliveryLabel(a.delivery_status);
+            const isExpanded = expandedCards.has(a.id);
+            const PayStatusIcon = ps.icon;
+            const DelStatusIcon = ds.icon;
 
-                  return (
-                    <tr key={a.id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <div
-                          className="flex items-center gap-2 cursor-pointer group"
-                          onClick={() => navigate(`/auction/${a.id}`)}
-                        >
-                          {a.image_url && (
-                            <img src={a.image_url} alt={a.title} className="w-8 h-8 rounded-sm object-cover border border-border shrink-0 group-hover:opacity-80 transition-opacity" />
-                          )}
-                          <p className="font-medium truncate max-w-[180px] group-hover:text-primary dark:group-hover:text-white transition-colors">{a.title}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="font-mono text-[10px] text-muted-foreground">{a.operation_number || "—"}</span>
-                      </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <div>
-                          <p className="font-medium">{winner?.full_name || "Desconocido"}</p>
-                          {winner?.phone && <p className="text-[10px] text-muted-foreground">{winner.phone}</p>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">
-                        {dealerProfiles[a.created_by] || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <p className="font-bold">${a.current_price.toLocaleString("es-MX")}</p>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge variant="outline" className={`text-[10px] ${ps.class}`}>{ps.label}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center hidden md:table-cell">
-                        <Badge variant="outline" className={`text-[10px] ${ds.class}`}>{ds.label}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center text-[10px] text-muted-foreground">
-                        {new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short", year: "2-digit" })}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button variant="ghost" size="sm" className="text-[10px] h-7 px-2" onClick={() => openDetail(a)}>
-                            <Eye className="h-3 w-3 mr-1" /> Detalle
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-[10px] h-7 px-2" onClick={() => navigate(`/auction/${a.id}`)}>
-                            <Package className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+            return (
+              <Card key={a.id} className="border rounded-sm overflow-hidden transition-all hover:border-primary/20 hover:shadow-sm">
+                <CardContent className="p-0">
+                  {/* Row Header — always visible */}
+                  <div className="flex items-center gap-0 cursor-pointer" onClick={() => toggleCard(a.id)}>
+                    {a.image_url && (
+                      <img src={a.image_url} alt="" className="w-16 h-16 object-cover border-r border-border shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0 px-4 py-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-heading font-bold text-sm truncate max-w-[200px]">{a.title}</h4>
+                        {a.operation_number && <span className="font-mono text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded">{a.operation_number}</span>}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                        <span className="flex items-center gap-1"><User className="h-3 w-3" />{winner?.full_name || "—"}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealerProfiles[a.created_by] || "—"}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short" })}</span>
+                      </div>
+                    </div>
+                    {/* Right side: price + badges + actions */}
+                    <div className="flex items-center gap-3 px-4 shrink-0">
+                      <p className="font-heading font-bold text-sm">${a.current_price.toLocaleString("es-MX")}</p>
+                      <div className="hidden sm:flex items-center gap-1.5">
+                        <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}>
+                          <PayStatusIcon className="h-3 w-3" />{ps.label}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}>
+                          <DelStatusIcon className="h-3 w-3" />{ds.label}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver detalle" onClick={() => openDetail(a)}>
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title="Ver subasta" onClick={() => navigate(`/auction/${a.id}`)}>
+                          <Package className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </div>
+                  </div>
 
-          {/* Pagination controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Mostrando {Math.min((page - 1) * pageSize + 1, filtered.length)}-{Math.min(page * pageSize, filtered.length)} de {filtered.length}</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="bg-secondary border border-border rounded-md px-2 py-1 text-xs"
-              >
-                <option value={10}>10 / pág</option>
-                <option value={25}>25 / pág</option>
-                <option value={50}>50 / pág</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Ant</Button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) { pageNum = i + 1; }
-                else if (page <= 3) { pageNum = i + 1; }
-                else if (page >= totalPages - 2) { pageNum = totalPages - 4 + i; }
-                else { pageNum = page - 2 + i; }
-                return (
-                  <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="h-7 w-7 px-0 text-xs" onClick={() => setPage(pageNum)}>{pageNum}</Button>
-                );
-              })}
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Sig →</Button>
-            </div>
-          </div>
-        </Card>
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div className="border-t border-border px-4 py-3 bg-secondary/10">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Winner info */}
+                        <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center shrink-0">
+                            <Trophy className="h-5 w-5 text-primary dark:text-accent" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ganador</p>
+                            <p className="text-sm font-bold truncate">{winner?.full_name || "—"}</p>
+                            {winner?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{winner.phone}</p>}
+                            {winner?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{winner.email}</p>}
+                          </div>
+                        </div>
+                        {/* Status */}
+                        <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estados</p>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1"><CreditCard className="h-3 w-3" /> Pago</span>
+                              <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}><PayStatusIcon className="h-3 w-3" />{ps.label}</Badge>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Envío</span>
+                              <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}><DelStatusIcon className="h-3 w-3" />{ds.label}</Badge>
+                            </div>
+                            {a.tracking_number && (
+                              <p className="text-[10px] font-mono text-muted-foreground">Guía: {a.tracking_number}</p>
+                            )}
+                          </div>
+                        </div>
+                        {/* Actions */}
+                        <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acciones rápidas</p>
+                          <div className="flex flex-col gap-1.5">
+                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => openDetail(a)}>
+                              <Eye className="h-3.5 w-3.5" /> Ver detalle completo
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => navigate(`/auction/${a.id}`)}>
+                              <Package className="h-3.5 w-3.5" /> Ir a la subasta
+                            </Button>
+                            {winner?.phone && (
+                              <Button
+                                size="sm"
+                                className="text-xs h-8 rounded-sm justify-start gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => {
+                                  let phone = winner.phone!.replace(/\D/g, '');
+                                  if (phone.startsWith('0')) phone = phone.slice(1);
+                                  const msg = encodeURIComponent(`Hola ${winner.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
+                                  window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                }}
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
-      {/* Detail Modal */}
+      {/* ═══ Pagination ═══ */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Anterior
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let p: number;
+              if (totalPages <= 7) p = i + 1;
+              else if (safePage <= 4) p = i + 1;
+              else if (safePage >= totalPages - 3) p = totalPages - 6 + i;
+              else p = safePage - 3 + i;
+              return (
+                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs rounded-sm p-0" onClick={() => setPage(p)}>
+                  {p}
+                </Button>
+              );
+            })}
+            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
+              Siguiente <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Detail Modal ═══ */}
       <Dialog open={!!selectedAuction} onOpenChange={(open) => { if (!open) setSelectedAuction(null); }}>
         <DialogContent className="max-w-2xl bg-card max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -409,14 +447,14 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
               )}
 
               {/* Product info */}
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 bg-secondary/20 rounded-lg p-4 border border-border">
                 {selectedAuction.image_url && (
-                  <img src={selectedAuction.image_url} alt={selectedAuction.title} className="w-20 h-20 rounded-sm object-cover border border-border" />
+                  <img src={selectedAuction.image_url} alt={selectedAuction.title} className="w-20 h-20 rounded-lg object-cover border border-border" />
                 )}
                 <div className="flex-1 space-y-1">
                   <h3 className="font-heading font-bold text-sm">{selectedAuction.title}</h3>
-                  <p className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono">{selectedAuction.operation_number || "Sin Nº"}</p>
-                  <p className="text-lg font-heading font-bold text-primary dark:text-accent">${selectedAuction.current_price.toLocaleString("es-MX")} USD</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">{selectedAuction.operation_number || "Sin Nº"}</p>
+                  <p className="text-xl font-heading font-bold text-primary dark:text-accent">${selectedAuction.current_price.toLocaleString("es-MX")} USD</p>
                   <p className="text-[10px] text-muted-foreground">
                     Finalizada: {new Date(selectedAuction.end_time).toLocaleString("es-VE")}
                   </p>
@@ -425,41 +463,32 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
               {/* Participants */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <User className="h-3 w-3" /> Ganador
+                <div className="rounded-lg border border-border p-4 space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-3 w-3 text-primary dark:text-accent" /></div> Ganador
                   </p>
-                  <p className="text-sm font-medium">{winnerProfiles[selectedAuction.winner_id!]?.full_name || "Desconocido"}</p>
+                  <p className="text-sm font-bold">{winnerProfiles[selectedAuction.winner_id!]?.full_name || "Desconocido"}</p>
                   {winnerProfiles[selectedAuction.winner_id!]?.phone && (
-                    <p className="text-[10px] text-muted-foreground dark:text-gray-300 flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {winnerProfiles[selectedAuction.winner_id!].phone}
-                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Phone className="h-3 w-3" />{winnerProfiles[selectedAuction.winner_id!].phone}</p>
                   )}
                   {winnerProfiles[selectedAuction.winner_id!]?.email && (
-                    <p className="text-[10px] text-muted-foreground dark:text-gray-300 flex items-center gap-1">
-                      <Mail className="h-3 w-3" /> {winnerProfiles[selectedAuction.winner_id!].email}
-                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Mail className="h-3 w-3" />{winnerProfiles[selectedAuction.winner_id!].email}</p>
                   )}
                   <div className="flex items-center gap-1.5 pt-1">
                     {winnerProfiles[selectedAuction.winner_id!]?.phone && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-[10px] h-7 px-2 rounded-sm gap-1 text-green-600 border-green-600/30 hover:bg-green-600/10"
+                      <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600/10 text-emerald-600 border-emerald-600/30 hover:bg-emerald-600/20"
                         onClick={() => {
-                          const phone = winnerProfiles[selectedAuction.winner_id!].phone!.replace(/\D/g, '');
+                          let phone = winnerProfiles[selectedAuction.winner_id!].phone!.replace(/\D/g, '');
+                          if (phone.startsWith('0')) phone = phone.slice(1);
                           const msg = encodeURIComponent(`Hola ${winnerProfiles[selectedAuction.winner_id!].full_name}, te escribimos de Subastandolo respecto a la subasta "${selectedAuction.title}".`);
-                          window.open(`https://wa.me/58${phone.startsWith('0') ? phone.slice(1) : phone}?text=${msg}`, '_blank');
+                          window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
                         }}
                       >
                         <MessageSquare className="h-3 w-3" /> WhatsApp
                       </Button>
                     )}
                     {winnerProfiles[selectedAuction.winner_id!]?.email && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                      <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
                         onClick={() => {
                           const subject = encodeURIComponent(`Subasta "${selectedAuction.title}" - Subastandolo`);
                           window.open(`mailto:${winnerProfiles[selectedAuction.winner_id!].email}?subject=${subject}`, '_blank');
@@ -470,44 +499,46 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                     )}
                   </div>
                 </div>
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <Package className="h-3 w-3" /> Dealer
+                <div className="rounded-lg border border-border p-4 space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center"><Package className="h-3 w-3 text-primary dark:text-accent" /></div> Dealer
                   </p>
-                  <p className="text-sm font-medium">{dealerProfiles[selectedAuction.created_by] || "Desconocido"}</p>
+                  <p className="text-sm font-bold">{dealerProfiles[selectedAuction.created_by] || "Desconocido"}</p>
                 </div>
               </div>
 
               {/* Status */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <CreditCard className="h-3 w-3" /> Estado de Pago
+                <div className="rounded-lg border border-border p-4 space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" /> Estado de Pago
                   </p>
-                  <Badge variant="outline" className={paymentLabel(selectedAuction.payment_status).class}>
+                  <Badge variant="outline" className={`text-xs gap-1 ${paymentLabel(selectedAuction.payment_status).class}`}>
+                    {(() => { const I = paymentLabel(selectedAuction.payment_status).icon; return <I className="h-3.5 w-3.5" />; })()}
                     {paymentLabel(selectedAuction.payment_status).label}
                   </Badge>
                 </div>
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <Truck className="h-3 w-3" /> Estado de Envío
+                <div className="rounded-lg border border-border p-4 space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5" /> Estado de Envío
                   </p>
-                  <Badge variant="outline" className={deliveryLabel(selectedAuction.delivery_status).class}>
+                  <Badge variant="outline" className={`text-xs gap-1 ${deliveryLabel(selectedAuction.delivery_status).class}`}>
+                    {(() => { const I = deliveryLabel(selectedAuction.delivery_status).icon; return <I className="h-3.5 w-3.5" />; })()}
                     {deliveryLabel(selectedAuction.delivery_status).label}
                   </Badge>
                   {selectedAuction.tracking_number && (
-                    <p className="text-[10px] font-mono text-foreground mt-1">Guía: {selectedAuction.tracking_number}</p>
+                    <p className="text-xs font-mono text-foreground mt-1">Guía: {selectedAuction.tracking_number}</p>
                   )}
                 </div>
               </div>
 
               {/* Shipping info */}
               {!loadingDetail && shippingInfo && (
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> Datos de Envío
+                <div className="rounded-lg border border-border p-4 space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" /> Datos de Envío
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                     <div><span className="text-muted-foreground">Nombre: </span><span className="font-medium">{shippingInfo.full_name}</span></div>
                     <div><span className="text-muted-foreground">Cédula: </span><span className="font-mono font-medium">{shippingInfo.cedula}</span></div>
                     <div><span className="text-muted-foreground">Teléfono: </span><span className="font-medium">{shippingInfo.phone || "—"}</span></div>
@@ -521,45 +552,41 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
               {/* Payment proof */}
               {!loadingDetail && proofUrl && (
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-2">
-                  <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                    <FileText className="h-3 w-3" /> Comprobante de Pago
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" /> Comprobante de Pago
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="text-[10px] h-7 rounded-sm" onClick={() => window.open(proofUrl, "_blank")}>
-                      <Eye className="h-3 w-3 mr-1" /> Ver Comprobante
+                    <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm" onClick={() => window.open(proofUrl, "_blank")}>
+                      <Eye className="h-3 w-3 mr-1" /> Ver
                     </Button>
-                    <Button variant="outline" size="sm" className="text-[10px] h-7 rounded-sm" onClick={() => {
-                      const a = document.createElement("a");
-                      a.href = proofUrl;
-                      a.target = "_blank";
-                      a.download = `comprobante-${selectedAuction.operation_number || selectedAuction.id}`;
-                      a.click();
+                    <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm" onClick={() => {
+                      const a = document.createElement("a"); a.href = proofUrl; a.target = "_blank";
+                      a.download = `comprobante-${selectedAuction.operation_number || selectedAuction.id}`; a.click();
                     }}>
                       <Download className="h-3 w-3 mr-1" /> Descargar
                     </Button>
                   </div>
-                  <img src={proofUrl} alt="Comprobante" className="max-h-60 w-auto rounded-sm border border-border object-contain" />
+                  <img src={proofUrl} alt="Comprobante" className="max-h-60 w-auto rounded-lg border border-border object-contain" />
                 </div>
               )}
-
               {!loadingDetail && !proofUrl && (
-                <div className="bg-secondary/30 border border-border rounded-sm p-3 text-center">
+                <div className="rounded-lg border border-border p-4 text-center">
                   <p className="text-xs text-muted-foreground">No se ha subido comprobante de pago aún.</p>
                 </div>
               )}
 
               {/* Timestamps */}
-              <div className="bg-secondary/30 border border-border rounded-sm p-3 space-y-1">
-                <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> Línea de Tiempo
+              <div className="rounded-lg border border-border p-4 space-y-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" /> Línea de Tiempo
                 </p>
-                <div className="space-y-1 text-[10px] text-muted-foreground">
-                  <p>Creada: {new Date(selectedAuction.created_at).toLocaleString("es-VE")}</p>
-                  <p>Finalizada: {new Date(selectedAuction.end_time).toLocaleString("es-VE")}</p>
-                  {selectedAuction.paid_at && <p>Pagada: {new Date(selectedAuction.paid_at).toLocaleString("es-VE")}</p>}
-                  {selectedAuction.delivered_at && <p>Entregada: {new Date(selectedAuction.delivered_at).toLocaleString("es-VE")}</p>}
-                  {selectedAuction.funds_released_at && <p>Fondos liberados: {new Date(selectedAuction.funds_released_at).toLocaleString("es-VE")}</p>}
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-border shrink-0" /> Creada: {new Date(selectedAuction.created_at).toLocaleString("es-VE")}</p>
+                  <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary shrink-0" /> Finalizada: {new Date(selectedAuction.end_time).toLocaleString("es-VE")}</p>
+                  {selectedAuction.paid_at && <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Pagada: {new Date(selectedAuction.paid_at).toLocaleString("es-VE")}</p>}
+                  {selectedAuction.delivered_at && <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Entregada: {new Date(selectedAuction.delivered_at).toLocaleString("es-VE")}</p>}
+                  {selectedAuction.funds_released_at && <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Fondos liberados: {new Date(selectedAuction.funds_released_at).toLocaleString("es-VE")}</p>}
                 </div>
               </div>
 
