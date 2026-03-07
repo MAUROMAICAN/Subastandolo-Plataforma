@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, Loader2, Timer, Zap, CalendarClock, Plus, Upload } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -321,65 +321,92 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         const winner = auction.winner_id ? winnerProfiles[auction.winner_id] : null;
         const mainImage = auction.images[0]?.image_url || auction.image_url;
         const isArchived = !!auction.archived_at;
+        const statusStyles: Record<string, string> = {
+          active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          paused: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          finalized: "bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20",
+          scheduled: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+          pending: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+        };
+        const statusLabels: Record<string, string> = {
+          active: "Activa", paused: "Pausada", finalized: "Finalizada",
+          scheduled: "Próximamente", pending: "Pendiente",
+        };
         return (
-          <Card key={auction.id} className={`border rounded-sm transition-all ${isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30"}`}>
-            <CardContent className="p-3 space-y-2">
-              <div className="flex items-center gap-3 group">
+          <Card key={auction.id} className={`border rounded-sm transition-all overflow-hidden ${isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30 hover:shadow-sm"}`}>
+            <CardContent className="p-0">
+              {/* ═══ Card Header ═══ */}
+              <div className="flex items-stretch gap-0">
                 {mainImage && (
                   <img
                     src={mainImage}
-                    className="w-16 h-16 rounded-sm object-cover border border-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="w-24 h-auto min-h-[96px] object-cover shrink-0 cursor-pointer hover:opacity-80 transition-opacity border-r border-border"
                     onClick={() => navigate(`/auction/${auction.id}`)}
                     alt=""
                   />
                 )}
-                <div
-                  className="flex-1 min-w-0 cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => navigate(`/auction/${auction.id}`)}
-                >
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-medium text-sm truncate group-hover:text-primary dark:group-hover:text-white transition-colors">{auction.title}</h4>
-                    <Badge variant="outline" className="text-[10px]">{auction.status}</Badge>
-                    {isArchived && <Badge variant="secondary" className="text-[10px]">Archivada</Badge>}
-                    {(auction as any).is_extended && (
-                      <Badge className="text-[10px] bg-accent text-accent-foreground border-0 animate-pulse">
-                        <Zap className="h-2.5 w-2.5 mr-0.5" />EXTENDIDA
-                      </Badge>
-                    )}
-                    {auction.operation_number && <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-mono">{auction.operation_number}</span>}
+                <div className="flex-1 min-w-0 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className="flex-1 min-w-0 cursor-pointer group"
+                      onClick={() => navigate(`/auction/${auction.id}`)}
+                    >
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h4 className="font-heading font-bold text-sm truncate group-hover:text-primary dark:group-hover:text-accent transition-colors">{auction.title}</h4>
+                        <Badge variant="outline" className={`text-[10px] font-semibold ${statusStyles[auction.status] || ""}`}>
+                          {statusLabels[auction.status] || auction.status}
+                        </Badge>
+                        {isArchived && <Badge variant="secondary" className="text-[10px]">📦 Archivada</Badge>}
+                        {(auction as any).is_extended && (
+                          <Badge className="text-[10px] bg-accent text-accent-foreground border-0 animate-pulse">
+                            <Zap className="h-2.5 w-2.5 mr-0.5" />EXTENDIDA
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1"><User className="h-3 w-3" />{auction.dealer_name}</span>
+                        <span className="font-bold text-foreground">${auction.current_price.toLocaleString("es-MX")}</span>
+                        <span>{auction.bids_count} pujas</span>
+                        {auction.operation_number && <span className="font-mono text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded">{auction.operation_number}</span>}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />Fin: {new Date(auction.end_time).toLocaleString("es-MX")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver subasta" onClick={() => navigate(`/auction/${auction.id}`)}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      {["active", "paused"].includes(auction.status) && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Editar tiempo" onClick={() => { setEditingTime(editingTime === auction.id ? null : auction.id); setNewDurationHours(""); }}>
+                            <Timer className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-500/10" title={auction.status === "paused" ? "Reanudar" : "Pausar"} onClick={() => handlePauseAuction(auction.id, auction.status)}>
+                            {auction.status === "paused" ? <Play className="h-3.5 w-3.5 text-emerald-500" /> : <Pause className="h-3.5 w-3.5 text-amber-500" />}
+                          </Button>
+                        </>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title={isArchived ? "Restaurar" : "Archivar"} onClick={() => handleArchiveAuction(auction.id, isArchived)}>
+                        <Package className="h-3.5 w-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" title="Eliminar"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar subasta?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta acción es irreversible. Se eliminará "{auction.title}" permanentemente.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(auction.id)} className="bg-destructive text-destructive-foreground">Eliminar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">{auction.dealer_name} · ${auction.current_price.toLocaleString("es-MX")} · {auction.bids_count} pujas</p>
-                  <p className="text-[10px] text-muted-foreground">Fin: {new Date(auction.end_time).toLocaleString("es-MX")}</p>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  {["active", "paused"].includes(auction.status) && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar tiempo" onClick={() => { setEditingTime(editingTime === auction.id ? null : auction.id); setNewDurationHours(""); }}>
-                        <Timer className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handlePauseAuction(auction.id, auction.status)}>
-                        {auction.status === "paused" ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-                      </Button>
-                    </>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleArchiveAuction(auction.id, isArchived)}>
-                    <Package className="h-3 w-3" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar subasta?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta acción es irreversible. Se eliminará "{auction.title}" permanentemente.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(auction.id)} className="bg-destructive text-destructive-foreground">Eliminar</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
               </div>
 
@@ -475,15 +502,48 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
               )}
 
               {isEnded && winner && (
-                <div className="p-2.5 rounded-sm bg-primary/5 border border-primary/10 space-y-2">
-                  <div className="flex items-center gap-1.5 text-primary dark:text-accent font-semibold text-xs"><Trophy className="h-3.5 w-3.5" /> Ganador</div>
-                  <div className="text-xs space-y-0.5">
-                    <div className="flex items-center gap-1.5"><User className="h-3 w-3 text-muted-foreground" />{winner.full_name}</div>
-                    {winner.phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-muted-foreground" />{winner.phone}</div>}
+                <div className="mx-4 mb-3 rounded-lg border border-primary/20 overflow-hidden">
+                  {/* Winner Header */}
+                  <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent dark:from-accent/10 dark:via-accent/5 px-4 py-2.5 flex items-center gap-2 border-b border-primary/10">
+                    <div className="h-8 w-8 rounded-full bg-primary/15 dark:bg-accent/15 flex items-center justify-center">
+                      <Trophy className="h-4 w-4 text-primary dark:text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-heading font-bold text-primary dark:text-accent">Ganador de la Subasta</p>
+                      <p className="text-[10px] text-muted-foreground">Precio final: <strong className="text-foreground">${auction.current_price.toLocaleString("es-MX")}</strong></p>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    {winner.phone && <Button size="sm" variant="outline" className="text-xs h-7 rounded-sm" onClick={() => openWhatsApp(winner.phone!, auction.title, auction.current_price)}><MessageCircle className="h-3 w-3 mr-1" />WhatsApp</Button>}
-                    <Button size="sm" variant="outline" className="text-xs h-7 rounded-sm" onClick={() => handleSendEmail(auction.id)} disabled={sendingEmail === auction.id}><Mail className="h-3 w-3 mr-1" />Correo</Button>
+                  {/* Winner Details */}
+                  <div className="px-4 py-3 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
+                        <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Nombre</p>
+                          <p className="text-xs font-semibold">{winner.full_name}</p>
+                        </div>
+                      </div>
+                      {winner.phone && (
+                        <div className="flex items-center gap-2.5 bg-secondary/30 rounded-sm px-3 py-2">
+                          <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Teléfono</p>
+                            <p className="text-xs font-semibold font-mono">{winner.phone}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {winner.phone && (
+                        <Button size="sm" className="text-xs h-8 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none" onClick={() => openWhatsApp(winner.phone!, auction.title, auction.current_price)}>
+                          <MessageCircle className="h-3.5 w-3.5 mr-1.5" />WhatsApp
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" className="text-xs h-8 rounded-sm flex-1 sm:flex-none" onClick={() => handleSendEmail(auction.id)} disabled={sendingEmail === auction.id}>
+                        {sendingEmail === auction.id ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
+                        Enviar Correo
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -491,19 +551,21 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                 const payStatus = (auction as any).payment_status || "pending";
                 const delStatus = (auction as any).delivery_status || "pending";
                 const frozen = (auction as any).funds_frozen;
+                const PayIcon: Record<string, any> = { pending: Clock, under_review: Search, verified: CheckCircle, escrow: Lock, released: Unlock, refunded: ReceiptText };
                 const paymentSteps = [
-                  { key: "pending", label: "Pendiente", icon: "⏳", color: "text-muted-foreground bg-muted" },
-                  { key: "under_review", label: "En Revisión", icon: "🔍", color: "text-amber-600 bg-amber-500/10" },
-                  { key: "verified", label: "Verificado", icon: "✓", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10" },
-                  { key: "escrow", label: "Custodia", icon: "🔐", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10" },
-                  { key: "released", label: "Liberado", icon: "💸", color: "text-green-600 dark:text-green-400 bg-green-500/10" },
-                  { key: "refunded", label: "Reembolsado", icon: "↩️", color: "text-gray-600 dark:text-gray-400 bg-gray-500/10" },
+                  { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
+                  { key: "under_review", label: "En Revisión", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
+                  { key: "verified", label: "Verificado", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                  { key: "escrow", label: "Custodia", color: "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                  { key: "released", label: "Liberado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                  { key: "refunded", label: "Reembolsado", color: "text-slate-600 dark:text-slate-400 bg-slate-500/10 border-slate-500/20" },
                 ];
+                const DelIcon: Record<string, any> = { pending: Package, ready_to_ship: ShieldCheck, shipped: Truck, delivered: CheckCircle };
                 const deliverySteps = [
-                  { key: "pending", label: "Pendiente", icon: "📦", color: "text-muted-foreground bg-muted" },
-                  { key: "ready_to_ship", label: "Listo", icon: "📋", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10" },
-                  { key: "shipped", label: "Enviado", icon: "🚚", color: "text-amber-600 bg-amber-500/10" },
-                  { key: "delivered", label: "Entregado", icon: "✅", color: "text-primary dark:text-accent bg-primary/10" },
+                  { key: "pending", label: "Pendiente", color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
+                  { key: "ready_to_ship", label: "Listo", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                  { key: "shipped", label: "Enviado", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
+                  { key: "delivered", label: "Entregado", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
                 ];
                 const currentPayIdx = paymentSteps.findIndex(s => s.key === payStatus);
                 const currentDelIdx = deliverySteps.findIndex(s => s.key === delStatus);
@@ -527,71 +589,138 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                   await supabase.from("auctions").update(updateData).eq("id", auction.id);
                   toast({ title: `Envío → ${deliverySteps[newIdx].label}` }); fetchAllData();
                 };
+                const currentPayStep = paymentSteps[currentPayIdx];
+                const currentDelStep = deliverySteps[currentDelIdx];
+                const CurrentPayIcon = PayIcon[payStatus] || Clock;
+                const CurrentDelIcon = DelIcon[delStatus] || Package;
                 return (
-                  <div className="p-3 rounded-sm bg-card border border-border space-y-3">
+                  <div className="mx-4 mb-4 space-y-3">
+                    {/* Header */}
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5 text-primary dark:text-accent" /> Estado de Fondos</p>
+                      <p className="text-xs font-heading font-bold flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-primary dark:text-accent" /> Estado de Fondos</p>
                       {frozen && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20 font-bold animate-pulse">🔒 CONGELADO</Badge>}
                     </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Pago</span>
+
+                    {/* ═══ PAGO ═══ */}
+                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">💳 Pago</span>
+                          <Badge variant="outline" className={`text-[10px] font-bold ${currentPayStep?.color || ""}`}>
+                            <CurrentPayIcon className="h-3 w-3 mr-1" />{currentPayStep?.label || payStatus}
+                          </Badge>
+                        </div>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}><ChevronLeft className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}><ChevronLeft className="h-3 w-3 rotate-180" /></Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx <= 0} onClick={() => changePayment("prev")}>
+                            <ChevronLeft className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentPayIdx >= paymentSteps.length - 1} onClick={() => changePayment("next")}>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        {paymentSteps.map((step, i) => {
-                          const isActive = i === currentPayIdx; const isPast = i < currentPayIdx;
-                          return (
-                            <div key={step.key} className="flex items-center flex-1">
-                              <div className={`flex flex-col items-center flex-1 ${isActive || isPast ? "" : "opacity-30"}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
-                                <span className={`text-[8px] mt-0.5 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-                              </div>
-                              {i < paymentSteps.length - 1 && <div className={`h-0.5 w-full min-w-1 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary" : "bg-border"}`} />}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Envío</span>
+                      <div className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}><ChevronLeft className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}><ChevronLeft className="h-3 w-3 rotate-180" /></Button>
+                          {paymentSteps.map((step, i) => {
+                            const isActive = i === currentPayIdx; const isPast = i < currentPayIdx;
+                            const StepIcon = PayIcon[step.key] || Clock;
+                            return (
+                              <div key={step.key} className="flex items-center flex-1">
+                                <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
+                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                    : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
+                                      : "bg-muted/50 border-border text-muted-foreground"
+                                    }`}>
+                                    {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                                  </div>
+                                  <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                                </div>
+                                {i < paymentSteps.length - 1 && (
+                                  <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentPayIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        {deliverySteps.map((step, i) => {
-                          const isActive = i === currentDelIdx; const isPast = i < currentDelIdx;
-                          return (
-                            <div key={step.key} className="flex items-center flex-1">
-                              <div className={`flex flex-col items-center flex-1 ${isActive || isPast ? "" : "opacity-30"}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] border transition-all ${isActive ? step.color + " border-current ring-2 ring-offset-1 ring-current/20 font-bold" : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30" : "bg-muted border-border"}`}>{isPast ? "✓" : step.icon}</div>
-                                <span className={`text-[8px] mt-0.5 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                    </div>
+
+                    {/* ═══ ENVÍO ═══ */}
+                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/30 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">📦 Envío</span>
+                          <Badge variant="outline" className={`text-[10px] font-bold ${currentDelStep?.color || ""}`}>
+                            <CurrentDelIcon className="h-3 w-3 mr-1" />{currentDelStep?.label || delStatus}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx <= 0} onClick={() => changeDelivery("prev")}>
+                            <ChevronLeft className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md" disabled={currentDelIdx >= deliverySteps.length - 1} onClick={() => changeDelivery("next")}>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          {deliverySteps.map((step, i) => {
+                            const isActive = i === currentDelIdx; const isPast = i < currentDelIdx;
+                            const StepIcon = DelIcon[step.key] || Package;
+                            return (
+                              <div key={step.key} className="flex items-center flex-1">
+                                <div className={`flex flex-col items-center flex-1 transition-all ${isActive || isPast ? "" : "opacity-25"}`}>
+                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? step.color + " ring-2 ring-offset-2 ring-offset-background ring-current/20 shadow-sm"
+                                    : isPast ? "bg-primary/10 text-primary dark:text-accent border-primary/30"
+                                      : "bg-muted/50 border-border text-muted-foreground"
+                                    }`}>
+                                    {isPast ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                                  </div>
+                                  <span className={`text-[9px] mt-1 text-center leading-tight ${isActive ? "font-bold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                                </div>
+                                {i < deliverySteps.length - 1 && (
+                                  <div className={`h-0.5 w-full min-w-2 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary dark:bg-accent" : "bg-border"}`} />
+                                )}
                               </div>
-                              {i < deliverySteps.length - 1 && <div className={`h-0.5 w-full min-w-1 mx-0.5 rounded-full transition-colors ${i < currentDelIdx ? "bg-primary" : "bg-border"}`} />}
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Auto-release notice */}
                     {(auction as any).delivered_at && !frozen && payStatus === "escrow" && (
-                      <div className="flex items-center gap-1.5 bg-primary/5 border border-primary/10 rounded-sm px-2.5 py-1.5">
-                        <Clock className="h-3 w-3 text-primary dark:text-accent shrink-0" />
-                        <p className="text-[10px] text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
+                      <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5">
+                        <Clock className="h-4 w-4 text-primary dark:text-accent shrink-0" />
+                        <p className="text-xs text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
                       </div>
                     )}
+
+                    {/* ═══ COMISIÓN ═══ */}
                     {auction.winner_id && (
-                      <div className="border-t border-border pt-2 space-y-1.5">
-                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1"><DollarSign className="h-3 w-3" /> Desglose de Comisión</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="bg-secondary/30 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Venta Total</p><p className="text-sm font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
-                          <div className="bg-primary/10 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Comisión ({commissionPct}%)</p><p className="text-sm font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
-                          <div className="bg-secondary/30 rounded-sm p-2 text-center"><p className="text-[9px] text-muted-foreground">Dealer Recibe</p><p className="text-sm font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p></div>
+                      <div className="rounded-lg border border-border bg-card overflow-hidden">
+                        <div className="px-4 py-2.5 bg-secondary/30 border-b border-border">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                            <DollarSign className="h-3.5 w-3.5" /> Desglose de Comisión
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 divide-x divide-border">
+                          <div className="p-3 text-center">
+                            <ReceiptText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                            <p className="text-[10px] text-muted-foreground mb-0.5">Venta Total</p>
+                            <p className="text-base font-heading font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                          </div>
+                          <div className="p-3 text-center bg-primary/5 dark:bg-accent/5">
+                            <DollarSign className="h-4 w-4 text-primary dark:text-accent mx-auto mb-1" />
+                            <p className="text-[10px] text-muted-foreground mb-0.5">Comisión ({commissionPct}%)</p>
+                            <p className="text-base font-heading font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                          </div>
+                          <div className="p-3 text-center">
+                            <User className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                            <p className="text-[10px] text-muted-foreground mb-0.5">Dealer Recibe</p>
+                            <p className="text-base font-heading font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                          </div>
                         </div>
                       </div>
                     )}
