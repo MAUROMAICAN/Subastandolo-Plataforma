@@ -245,8 +245,13 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-xl font-heading font-bold">Gestión de Subastas ({auctions.length})</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Subastas</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {auctions.filter(a => a.status === "active").length} activas · {auctions.filter(a => a.status === "finalized").length} finalizadas · {auctions.filter(a => a.status === "scheduled").length} programadas
+          </p>
+        </div>
         <div className="flex items-center gap-1 flex-wrap">
           {(["visible", "scheduled", "archived", "all"] as const).map(f => (
             <Button key={f} variant={auctionFilter === f ? "default" : "outline"} size="sm" className="text-xs h-7 rounded-sm" onClick={() => setAuctionFilter(f)}>
@@ -317,7 +322,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         const mainImage = auction.images[0]?.image_url || auction.image_url;
         const isArchived = !!auction.archived_at;
         return (
-          <Card key={auction.id} className={`border rounded-sm ${isArchived ? "border-muted opacity-60" : "border-border"}`}>
+          <Card key={auction.id} className={`border rounded-sm transition-all ${isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30"}`}>
             <CardContent className="p-3 space-y-2">
               <div className="flex items-center gap-3 group">
                 {mainImage && (

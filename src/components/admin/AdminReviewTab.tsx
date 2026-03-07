@@ -57,11 +57,20 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-heading font-bold">Revisión de Subastas ({pendingAuctions.length})</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Eye className="h-5 w-5 text-primary dark:text-accent" /> Revisión de Subastas</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">{pendingAuctions.length} subastas pendientes de moderación</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20">{pendingAuctions.filter(a => a.status === "pending").length} pendientes</Badge>
+          <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-500 border-blue-500/20">{pendingAuctions.filter(a => a.status === "in_review").length} en revisión</Badge>
+        </div>
+      </div>
       {pendingAuctions.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12 text-sm">No hay subastas pendientes.</p>
+        <Card className="border border-border rounded-sm"><CardContent className="p-12 text-center"><Eye className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" /><p className="text-sm font-medium text-muted-foreground">No hay subastas pendientes</p><p className="text-xs text-muted-foreground/70 mt-1">Todas las subastas han sido revisadas</p></CardContent></Card>
       ) : pendingAuctions.map(auction => (
-        <Card key={auction.id} className="border border-border rounded-sm">
+        <Card key={auction.id} className="border border-border rounded-sm hover:border-primary/30 transition-all">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-start gap-3">
               <div className="flex-1">

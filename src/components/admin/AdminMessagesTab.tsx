@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Send } from "lucide-react";
+import { User, Send, MessageCircle, Search } from "lucide-react";
 import type { DealerUser, Message } from "./types";
 
 interface Props {
@@ -21,6 +22,10 @@ const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: P
   const [selectedDealerId, setSelectedDealerId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [dealerSearch, setDealerSearch] = useState("");
+
+  const totalUnread = messages.filter(m => m.receiver_id === user?.id && !m.is_read).length;
+  const filteredDealers = dealers.filter(d => d.full_name.toLowerCase().includes(dealerSearch.toLowerCase()));
 
   const handleSendMessage = async () => {
     if (!selectedDealerId || !messageText.trim() || !user) return;
@@ -31,13 +36,25 @@ const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: P
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-heading font-bold">Mensajes</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary dark:text-accent" /> Mensajes</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Comunicación directa con dealers</p>
+        </div>
+        {totalUnread > 0 && <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-500 border-red-500/20 animate-pulse">{totalUnread} sin leer</Badge>}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border border-border rounded-sm md:col-span-1">
           <CardHeader className="pb-2"><CardTitle className="text-xs font-heading">Dealers</CardTitle></CardHeader>
           <CardContent className="p-0">
+            <div className="p-2 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input value={dealerSearch} onChange={(e) => setDealerSearch(e.target.value)} placeholder="Buscar dealer..." className="rounded-sm text-xs h-8 pl-8" />
+              </div>
+            </div>
             <div className="max-h-96 overflow-y-auto">
-              {dealers.map(d => {
+              {filteredDealers.map(d => {
                 const unread = messages.filter(m => m.sender_id === d.user_id && m.receiver_id === user?.id && !m.is_read).length;
                 return (
                   <button key={d.user_id} onClick={() => setSelectedDealerId(d.user_id)}

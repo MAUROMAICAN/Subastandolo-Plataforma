@@ -91,18 +91,25 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData }: Props) => {
     setProcessingPayment(null);
   };
 
+  const pendingCount = paymentProofs.filter((p: any) => p.status === "pending").length;
+  const approvedCount = paymentProofs.filter((p: any) => p.status === "approved").length;
+  const rejectedCount = paymentProofs.filter((p: any) => p.status === "rejected").length;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Cobros</h1>
+        <div>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Cobros</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Verificación de comprobantes de pago</p>
+        </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/20">{paymentProofs.filter((p: any) => p.status === "pending").length} pendientes</Badge>
-          <Badge variant="outline" className="text-xs">{paymentProofs.length} total</Badge>
+          {pendingCount > 0 && <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse">{pendingCount} pendientes</Badge>}
+          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20">{approvedCount} aprobados</Badge>
+          {rejectedCount > 0 && <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-500 border-red-500/20">{rejectedCount} rechazados</Badge>}
         </div>
       </div>
       {paymentProofs.length === 0 ? (
-        <Card className="border border-border rounded-md"><CardContent className="p-12 text-center"><CreditCard className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" /><p className="text-sm text-muted-foreground">No hay comprobantes de pago registrados.</p></CardContent></Card>
+        <Card className="border border-border rounded-sm"><CardContent className="p-12 text-center"><CreditCard className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" /><p className="text-sm font-medium text-muted-foreground">No hay comprobantes registrados</p><p className="text-xs text-muted-foreground/70 mt-1">Los comprobantes aparecerán aquí cuando los compradores suban sus pagos</p></CardContent></Card>
       ) : (
         <Card className="border border-border rounded-md overflow-hidden">
           <div className="overflow-x-auto">
