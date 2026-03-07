@@ -30,6 +30,8 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [sendingNotification, setSendingNotification] = useState<string | null>(null);
+  const [sendingShipReminder, setSendingShipReminder] = useState<string | null>(null);
+  const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
   const [editingTime, setEditingTime] = useState<string | null>(null);
   const [newDurationHours, setNewDurationHours] = useState("");
   const [savingTime, setSavingTime] = useState(false);
@@ -870,42 +872,135 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                           </div>
                         </div>
                       </div>
+                      {/* Shipping Reminder Buttons */}
+                      {(delStatus === "pending" || delStatus === "preparing" || delStatus === "ready") && (() => {
+                        const winner = winnerProfiles[auction.winner_id!];
+                        return (
+                          <div className="px-4 pb-3 -mt-1 flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-[11px] h-8 rounded-md gap-1.5 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 hover:text-blue-500"
+                              disabled={sendingShipReminder === auction.id}
+                              onClick={async () => {
+                                setSendingShipReminder(auction.id);
+                                try {
+                                  // Fetch dealer profile
+                                  const { data: dealerProfile } = await supabase.from("profiles").select("full_name, id").eq("id", (auction as any).user_id).single();
+                                  const { data: authData } = await supabase.rpc("get_user_email_admin" as any, { target_user_id: (auction as any).user_id });
+                                  const dealerEmail = authData || null;
+                                  const dealerName = dealerProfile?.full_name || auction.dealer_name || "Dealer";
+
+                                  if (!dealerEmail) {
+                                    toast({ title: "No se encontró el email del dealer", variant: "destructive" });
+                                    setSendingShipReminder(null);
+                                    return;
+                                  }
+                                  const mainImage = auction.images[0]?.image_url || auction.image_url;
+                                  const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
+                                    body: {
+                                      email: dealerEmail,
+                                      name: dealerName,
+                                      auctionTitle: auction.title,
+                                      auctionId: auction.id,
+                                      winningBid: auction.current_price,
+                                      imageUrl: mainImage || null,
+                                      userId: (auction as any).user_id,
+                                      operationNumber: (auction as any).operation_number || null,
+                                      buyerName: winner?.full_name || "el comprador",
+                                    },
+                                  });
+                                  if (error || data?.error) {
+                                    toast({ title: "Error al enviar recordatorio", description: error?.message || data?.error, variant: "destructive" });
+                                  } else {
+                                    toast({ title: "📧 Correo de envío enviado al dealer", description: `Enviado a ${dealerEmail}` });
+                                  }
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                }
+                                setSendingShipReminder(null);
+                              }}
+                            >
+                              {sendingShipReminder === auction.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                              Correo Dealer
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-[11px] h-8 rounded-md gap-1.5 border-purple-500/30 text-purple-600 hover:bg-purple-500/10 hover:text-purple-500"
+                              disabled={sendingShipNotification === auction.id}
+                              onClick={async () => {
+                                setSendingShipNotification(auction.id);
+                                try {
+                                  const dealerName = auction.dealer_name || "Dealer";
+                                  const winner = winnerProfiles[auction.winner_id!];
+                                  const amount = `$${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+                                  const { data, error } = await supabase.functions.invoke("notify-push", {
+                                    body: {
+                                      user_id: (auction as any).user_id,
+                                      title: `📦 Envío pendiente: "${auction.title}"`,
+                                      message: `Hola ${dealerName}, el comprador ${winner?.full_name || ""} ya pagó ${amount}. Por favor, procede con el envío del artículo.`,
+                                      type: "shipping_reminder",
+                                      link: `/subasta/${auction.id}`,
+                                    },
+                                  });
+                                  if (error || data?.error) {
+                                    toast({ title: "Error al enviar notificación", description: error?.message || data?.error, variant: "destructive" });
+                                  } else {
+                                    toast({ title: "🔔 Notificación enviada al dealer", description: `Enviada a ${dealerName} (app + web)` });
+                                  }
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                }
+                                setSendingShipNotification(null);
+                              }}
+                            >
+                              {sendingShipNotification === auction.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
+                              Notificación Dealer
+                            </Button>
+                          </div>
+                        );
+                      })()}
 
                       {/* Auto-release notice */}
-                      {(auction as any).delivered_at && !frozen && payStatus === "escrow" && (
-                        <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5">
-                          <Clock className="h-4 w-4 text-primary dark:text-accent shrink-0" />
-                          <p className="text-xs text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
-                        </div>
-                      )}
+                      {
+                        (auction as any).delivered_at && !frozen && payStatus === "escrow" && (
+                          <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5">
+                            <Clock className="h-4 w-4 text-primary dark:text-accent shrink-0" />
+                            <p className="text-xs text-primary dark:text-accent">Auto-liberación: <strong>{new Date(new Date((auction as any).delivered_at).getTime() + 72 * 60 * 60 * 1000).toLocaleString("es-MX")}</strong></p>
+                          </div>
+                        )
+                      }
 
                       {/* ═══ COMISIÓN ═══ */}
-                      {auction.winner_id && (
-                        <div className="rounded-lg border border-border bg-card overflow-hidden">
-                          <div className="px-4 py-2.5 bg-secondary/30 border-b border-border">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                              <DollarSign className="h-3.5 w-3.5" /> Desglose de Comisión
-                            </span>
+                      {
+                        auction.winner_id && (
+                          <div className="rounded-lg border border-border bg-card overflow-hidden">
+                            <div className="px-4 py-2.5 bg-secondary/30 border-b border-border">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <DollarSign className="h-3.5 w-3.5" /> Desglose de Comisión
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 divide-x divide-border">
+                              <div className="p-3 text-center">
+                                <ReceiptText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                                <p className="text-[10px] text-muted-foreground mb-0.5">Venta Total</p>
+                                <p className="text-base font-heading font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                              </div>
+                              <div className="p-3 text-center bg-primary/5 dark:bg-accent/5">
+                                <DollarSign className="h-4 w-4 text-primary dark:text-accent mx-auto mb-1" />
+                                <p className="text-[10px] text-muted-foreground mb-0.5">Comisión ({commissionPct}%)</p>
+                                <p className="text-base font-heading font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                              </div>
+                              <div className="p-3 text-center">
+                                <User className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                                <p className="text-[10px] text-muted-foreground mb-0.5">Dealer Recibe</p>
+                                <p className="text-base font-heading font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-3 divide-x divide-border">
-                            <div className="p-3 text-center">
-                              <ReceiptText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                              <p className="text-[10px] text-muted-foreground mb-0.5">Venta Total</p>
-                              <p className="text-base font-heading font-bold text-foreground">${auction.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                            </div>
-                            <div className="p-3 text-center bg-primary/5 dark:bg-accent/5">
-                              <DollarSign className="h-4 w-4 text-primary dark:text-accent mx-auto mb-1" />
-                              <p className="text-[10px] text-muted-foreground mb-0.5">Comisión ({commissionPct}%)</p>
-                              <p className="text-base font-heading font-bold text-primary dark:text-accent">${(auction.current_price * commissionPct / 100).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                            </div>
-                            <div className="p-3 text-center">
-                              <User className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                              <p className="text-[10px] text-muted-foreground mb-0.5">Dealer Recibe</p>
-                              <p className="text-base font-heading font-bold text-foreground">${(auction.current_price * (1 - commissionPct / 100)).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        )
+                      }
                     </div>
                   );
                 })()}
@@ -916,34 +1011,36 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       })}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border pt-4">
-          <p className="text-xs text-muted-foreground">
-            Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filteredAuctions.length)} de {filteredAuctions.length}
-          </p>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Anterior
-            </Button>
-            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-              let page: number;
-              if (totalPages <= 7) page = i + 1;
-              else if (safePage <= 4) page = i + 1;
-              else if (safePage >= totalPages - 3) page = totalPages - 6 + i;
-              else page = safePage - 3 + i;
-              return (
-                <Button key={page} variant={page === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs rounded-sm p-0" onClick={() => setCurrentPage(page)}>
-                  {page}
-                </Button>
-              );
-            })}
-            <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}>
-              Siguiente <ChevronRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
+      {
+        totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filteredAuctions.length)} de {filteredAuctions.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
+                <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Anterior
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let page: number;
+                if (totalPages <= 7) page = i + 1;
+                else if (safePage <= 4) page = i + 1;
+                else if (safePage >= totalPages - 3) page = totalPages - 6 + i;
+                else page = safePage - 3 + i;
+                return (
+                  <Button key={page} variant={page === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs rounded-sm p-0" onClick={() => setCurrentPage(page)}>
+                    {page}
+                  </Button>
+                );
+              })}
+              <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}>
+                Siguiente <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
