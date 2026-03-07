@@ -270,14 +270,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         setSendingEmail(null);
         return;
       }
-      // Look up winner email from auth
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", auction.winner_id)
-        .single();
-      const winnerEmail = profileData?.email;
-      if (!winnerEmail) {
+      if (!winner.email) {
         toast({ title: "El ganador no tiene email registrado", variant: "destructive" });
         setSendingEmail(null);
         return;
@@ -285,7 +278,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       const mainImage = auction.images[0]?.image_url || auction.image_url;
       const { data, error } = await supabase.functions.invoke("notify-auction-won", {
         body: {
-          email: winnerEmail,
+          email: winner.email,
           name: winner.full_name,
           auctionTitle: auction.title,
           auctionId: auction.id,
