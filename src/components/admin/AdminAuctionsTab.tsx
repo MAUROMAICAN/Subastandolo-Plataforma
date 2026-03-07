@@ -473,7 +473,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title={isExpanded ? "Colapsar" : "Expandir"}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title={isExpanded ? "Colapsar" : "Expandir"} onClick={() => toggleCard(auction.id)}>
                         {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       </Button>
                     </div>
