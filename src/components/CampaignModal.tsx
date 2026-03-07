@@ -210,8 +210,8 @@ const CampaignModal = () => {
           style={{
             width: `${frameWidth}px`,
             height: `${frameHeight}px`,
-            maxWidth: "92vw",
-            maxHeight: "82vh",
+            maxWidth: "95vw",
+            maxHeight: "90vh",
           }}
         >
 
