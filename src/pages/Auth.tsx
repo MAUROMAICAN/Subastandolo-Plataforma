@@ -355,8 +355,12 @@ const Auth = () => {
 
         // If user opted in for biometrics, save credentials NOW
         if (enableBiometricOnLogin && biometricAvailable) {
-          await saveCredentials(loginEmail, password);
-          toast({ title: `✅ ${getBiometryLabel()} activada`, description: "La próxima vez entrarás sin escribir tu contraseña." });
+          const saved = await saveCredentials(loginEmail, password);
+          if (saved) {
+            toast({ title: `✅ ${getBiometryLabel()} activada`, description: "La próxima vez entrarás sin escribir tu contraseña." });
+          } else {
+            toast({ title: "No se pudo activar", description: "Intenta activar la biometría desde tu próximo inicio de sesión.", variant: "destructive" });
+          }
         }
 
         loginInProgressRef.current = false;
@@ -989,13 +993,17 @@ const Auth = () => {
 
                 {/* ── Biometric enrollment checkbox ── */}
                 {biometricAvailable && !biometricChecking && !biometricEnabled && (
-                  <div className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 transition-colors hover:bg-white/10 cursor-pointer" onClick={() => setEnableBiometricOnLogin(!enableBiometricOnLogin)}>
-                    <Checkbox
-                      id="enable-biometric"
-                      checked={enableBiometricOnLogin}
-                      onCheckedChange={(checked) => setEnableBiometricOnLogin(checked === true)}
-                      className="mt-0.5 shrink-0 border-white/30 data-[state=checked]:bg-brand-lime data-[state=checked]:text-brand-dark"
-                    />
+                  <div className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 transition-colors hover:bg-white/10 cursor-pointer" onClick={() => setEnableBiometricOnLogin(prev => !prev)}>
+                    {/* span barrier: stops BubbleInput's synthetic click on the hidden
+                        <input> from bubbling up to the parent div onClick */}
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        id="enable-biometric"
+                        checked={enableBiometricOnLogin}
+                        onCheckedChange={(checked) => setEnableBiometricOnLogin(checked === true)}
+                        className="mt-0.5 shrink-0 border-white/30 data-[state=checked]:bg-brand-lime data-[state=checked]:text-brand-dark"
+                      />
+                    </span>
                     <div className="flex flex-col select-none break-words">
                       <span className="text-sm font-bold text-white flex items-center gap-2 mb-0.5">
                         <Fingerprint className="h-4 w-4 text-brand-lime" />

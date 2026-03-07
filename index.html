@@ -8,7 +8,10 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>Subastandolo.com | Subastas Online en Venezuela</title>
+  <meta name="description"
+    content="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!" />
   <meta name="google-site-verification" content="iXD3UXHlBEeFLBrn7DQRhCmqCcDyEXZ1eBz0z_ghM0Q" />
+  <link rel="canonical" href="https://www.subastandolo.com/" />
 
   <!-- PWA -->
   <meta name="theme-color" content="#1a1a2e" />
@@ -22,11 +25,12 @@
 
 
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="/icons/icon-512.png">
+  <meta property="og:image" content="https://www.subastandolo.com/icons/icon-512.png">
+  <meta property="og:url" content="https://www.subastandolo.com/">
+  <meta property="og:site_name" content="Subastandolo.com">
 
   <meta name="twitter:card" content="summary_large_image" />
-
-  <meta name="twitter:image" content="/icons/icon-512.png">
+  <meta name="twitter:image" content="https://www.subastandolo.com/icons/icon-512.png">
 
 
 
@@ -62,6 +66,31 @@
   </style>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <!-- JSON-LD Structured Data for Google Rich Snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Subastandolo.com",
+    "alternateName": "Subastandolo",
+    "url": "https://www.subastandolo.com",
+    "description": "La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.subastandolo.com/home?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Subastandolo",
+      "url": "https://www.subastandolo.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.subastandolo.com/icons/icon-512.png"
+      }
+    }
+  }
+  </script>
   <script>
     window.__removeSplashBg = function () {
       document.body.style.backgroundColor = "";
