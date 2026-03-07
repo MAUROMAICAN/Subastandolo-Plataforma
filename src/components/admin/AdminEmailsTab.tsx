@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
     Mail, Search, CheckCircle, XCircle, Ticket, ChevronLeft,
     ChevronRight, RefreshCw, ExternalLink, Loader2, Send,
-    Clock, AlertTriangle, ArrowRight, X, User, Shield, ChevronDown, Trash2
+    Clock, AlertTriangle, ArrowRight, X, User, Shield, ChevronDown, Trash2, Paperclip, FileText, Image as ImageIcon
 } from "lucide-react";
 
 interface SupportTicket {
@@ -343,6 +343,22 @@ const AdminEmailsTab = () => {
                                                     </span>
                                                 </div>
                                                 <p className="text-xs leading-relaxed whitespace-pre-wrap">{m.message}</p>
+                                                {m.attachments && m.attachments.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                        {m.attachments.map((url: string, ai: number) => {
+                                                            const isPdf = url.toLowerCase().endsWith(".pdf");
+                                                            return isPdf ? (
+                                                                <a key={ai} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded px-2 py-1 text-[10px] text-red-400 hover:bg-red-500/20 transition-colors">
+                                                                    <FileText className="h-3 w-3" /> PDF {ai + 1}
+                                                                </a>
+                                                            ) : (
+                                                                <a key={ai} href={url} target="_blank" rel="noopener noreferrer">
+                                                                    <img src={url} alt={`Adjunto ${ai + 1}`} className="h-16 w-16 object-cover rounded border border-border hover:border-primary transition-colors" />
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))

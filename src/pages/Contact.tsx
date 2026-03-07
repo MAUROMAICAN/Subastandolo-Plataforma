@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, MessageCircle, Shield, Clock, Send, Headphones, Ticket, ChevronDown, ChevronUp,
-  AlertCircle, CheckCircle, Loader2, Plus, ArrowRight, Trash2
+  AlertCircle, CheckCircle, Loader2, Plus, ArrowRight, Trash2, Paperclip, FileText, X, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ interface SupportTicket {
 interface TicketMessage {
   id: string;
   ticket_id: string;
+  attachments?: string[];
   sender_id: string;
   sender_role: string;
   message: string;
@@ -65,6 +66,8 @@ const Contact = () => {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [replyAttachments, setReplyAttachments] = useState<Record<string, File[]>>({});
 
   // Tickets state
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -139,12 +142,16 @@ const Contact = () => {
 
       if (ticketErr) throw ticketErr;
 
+      // Upload attachments
+      const uploadedUrls = await uploadFiles(attachments, user.id, ticket.id);
+
       // 2. Create initial message
       await supabase.from("ticket_messages").insert({
         ticket_id: ticket.id,
         sender_id: user.id,
         sender_role: "user",
         message,
+        attachments: uploadedUrls,
       });
 
       // 3. Notify admin via edge function
@@ -158,6 +165,7 @@ const Contact = () => {
       setSubject("");
       setCategory("general");
       setMessage("");
+      setAttachments([]);
       setShowForm(false);
       fetchTickets();
 
@@ -167,18 +175,52 @@ const Contact = () => {
     setSubmitting(false);
   };
 
+  const uploadFiles = async (files: File[], userId: string, ticketId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of files) {
+      const ext = file.name.split(".").pop();
+      const path = `${userId}/${ticketId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("ticket-attachments").upload(path, file);
+      if (!error) {
+        const { data } = supabase.storage.from("ticket-attachments").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  };
+
+  const handleFileSelect = (files: FileList | null, target: "form" | string) => {
+    if (!files) return;
+    const allowed = [".jpg", ".jpeg", ".png", ".pdf"];
+    const valid = Array.from(files).filter(f => {
+      const ext = "." + f.name.split(".").pop()?.toLowerCase();
+      if (!allowed.includes(ext)) { toast({ title: "Formato no permitido", description: `Solo se aceptan: ${allowed.join(", ")}`, variant: "destructive" }); return false; }
+      if (f.size > 5 * 1024 * 1024) { toast({ title: "Archivo muy grande", description: "Máximo 5MB por archivo", variant: "destructive" }); return false; }
+      return true;
+    });
+    if (target === "form") {
+      setAttachments(prev => [...prev, ...valid].slice(0, 3));
+    } else {
+      setReplyAttachments(prev => ({ ...prev, [target]: [...(prev[target] || []), ...valid].slice(0, 3) }));
+    }
+  };
+
   const handleReply = async (ticketId: string) => {
     const text = replyText[ticketId]?.trim();
-    if (!text || !user) return;
+    const files = replyAttachments[ticketId] || [];
+    if ((!text && files.length === 0) || !user) return;
     setReplying(ticketId);
     try {
+      const uploadedUrls = await uploadFiles(files, user.id, ticketId);
       await supabase.from("ticket_messages").insert({
         ticket_id: ticketId,
         sender_id: user.id,
         sender_role: "user",
-        message: text,
+        message: text || "(archivo adjunto)",
+        attachments: uploadedUrls,
       });
       setReplyText(prev => ({ ...prev, [ticketId]: "" }));
+      setReplyAttachments(prev => ({ ...prev, [ticketId]: [] }));
       await fetchMessages(ticketId);
       toast({ title: "✉️ Respuesta enviada" });
     } catch { }
@@ -291,6 +333,32 @@ const Contact = () => {
                         <label className="text-xs font-medium mb-1.5 block">Mensaje *</label>
                         <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Describe tu problema con el mayor detalle posible..." required rows={5} className="rounded-sm" />
                       </div>
+                      {/* Attachments */}
+                      <div>
+                        <label className="text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                          <Paperclip className="h-3.5 w-3.5" /> Adjuntar evidencia <span className="text-muted-foreground font-normal">(opcional, máx. 3 archivos)</span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-border rounded-sm text-xs text-muted-foreground hover:border-primary hover:text-primary dark:hover:text-[#A6E300] transition-colors">
+                            <Paperclip className="h-3.5 w-3.5" /> Seleccionar archivos
+                            <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" multiple onChange={e => handleFileSelect(e.target.files, "form")} />
+                          </label>
+                          <span className="text-[10px] text-muted-foreground">.jpg .png .pdf · máx 5MB</span>
+                        </div>
+                        {attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {attachments.map((f, i) => (
+                              <div key={i} className="flex items-center gap-1.5 bg-secondary/50 rounded-sm px-2 py-1 text-xs">
+                                {f.name.match(/\.(jpg|jpeg|png)$/i) ? <ImageIcon className="h-3 w-3 text-blue-500" /> : <FileText className="h-3 w-3 text-red-500" />}
+                                <span className="truncate max-w-[120px]">{f.name}</span>
+                                <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3 justify-between">
                         <p className="text-[10px] text-muted-foreground">
                           Enviando como <strong>{profile?.full_name || user.email}</strong>
@@ -365,6 +433,22 @@ const Contact = () => {
                                         </span>
                                       </div>
                                       <p className="text-xs leading-relaxed whitespace-pre-wrap">{m.message}</p>
+                                      {m.attachments && m.attachments.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                          {m.attachments.map((url: string, ai: number) => {
+                                            const isPdf = url.toLowerCase().endsWith(".pdf");
+                                            return isPdf ? (
+                                              <a key={ai} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded px-2 py-1 text-[10px] text-red-400 hover:bg-red-500/20 transition-colors">
+                                                <FileText className="h-3 w-3" /> PDF {ai + 1}
+                                              </a>
+                                            ) : (
+                                              <a key={ai} href={url} target="_blank" rel="noopener noreferrer">
+                                                <img src={url} alt={`Adjunto ${ai + 1}`} className="h-16 w-16 object-cover rounded border border-border hover:border-primary transition-colors" />
+                                              </a>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -372,17 +456,36 @@ const Contact = () => {
 
                               {/* Reply box (only if ticket is not closed) */}
                               {t.status !== "closed" && t.status !== "resolved" && (
-                                <div className="border-t border-border p-3 flex gap-2">
-                                  <Input
-                                    value={replyText[t.id] || ""}
-                                    onChange={e => setReplyText(prev => ({ ...prev, [t.id]: e.target.value }))}
-                                    placeholder="Escribe tu respuesta..."
-                                    className="rounded-sm text-sm"
-                                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(t.id); } }}
-                                  />
-                                  <Button size="sm" className="rounded-sm shrink-0" disabled={!replyText[t.id]?.trim() || replying === t.id} onClick={() => handleReply(t.id)}>
-                                    {replying === t.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                  </Button>
+                                <div className="border-t border-border p-3 space-y-2">
+                                  {(replyAttachments[t.id] || []).length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(replyAttachments[t.id] || []).map((f, i) => (
+                                        <div key={i} className="flex items-center gap-1 bg-secondary/50 rounded px-2 py-1 text-[10px]">
+                                          {f.name.match(/\.(jpg|jpeg|png)$/i) ? <ImageIcon className="h-3 w-3 text-blue-500" /> : <FileText className="h-3 w-3 text-red-500" />}
+                                          <span className="truncate max-w-[80px]">{f.name}</span>
+                                          <button onClick={() => setReplyAttachments(prev => ({ ...prev, [t.id]: (prev[t.id] || []).filter((_, j) => j !== i) }))} className="text-muted-foreground hover:text-destructive">
+                                            <X className="h-2.5 w-2.5" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <label className="cursor-pointer flex items-center justify-center h-9 w-9 border border-border rounded-sm hover:border-primary dark:hover:border-[#A6E300] transition-colors shrink-0">
+                                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                                      <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" multiple onChange={e => handleFileSelect(e.target.files, t.id)} />
+                                    </label>
+                                    <Input
+                                      value={replyText[t.id] || ""}
+                                      onChange={e => setReplyText(prev => ({ ...prev, [t.id]: e.target.value }))}
+                                      placeholder="Escribe tu respuesta..."
+                                      className="rounded-sm text-sm"
+                                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(t.id); } }}
+                                    />
+                                    <Button size="sm" className="rounded-sm shrink-0" disabled={(!replyText[t.id]?.trim() && (replyAttachments[t.id] || []).length === 0) || replying === t.id} onClick={() => handleReply(t.id)}>
+                                      {replying === t.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
 
