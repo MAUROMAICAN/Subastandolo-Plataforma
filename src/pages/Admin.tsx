@@ -48,7 +48,7 @@ const Admin = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSetting[]>([]);
   const [siteSections, setSiteSections] = useState<SiteSection[]>([]);
-  const [dealerProfiles, setDealerProfiles] = useState<Record<string, string>>({});
+  const [dealerProfiles, setDealerProfiles] = useState<Record<string, WinnerInfo>>({});
   const [adminDisputes, setAdminDisputes] = useState<any[]>([]);
   const [auctionReports, setAuctionReports] = useState<any[]>([]);
   const [paymentProofs, setPaymentProofs] = useState<any[]>([]);
@@ -117,11 +117,12 @@ const Admin = () => {
 
     const profileMap: Record<string, any> = {};
     const dealerNames: Record<string, string> = {};
+    const dealerContactMap: Record<string, WinnerInfo> = {};
     ((profilesRes as any).data || []).forEach((p: any) => {
       profileMap[p.id] = p;
       dealerNames[p.id] = p.full_name;
+      dealerContactMap[p.id] = { full_name: p.full_name, phone: p.phone || null, email: null };
     });
-    setDealerProfiles(dealerNames);
 
     const rolesMap: Record<string, string[]> = {};
     ((rolesRes as any).data || []).forEach((r: any) => {
@@ -185,6 +186,12 @@ const Admin = () => {
     } catch (e) {
       console.error("Error fetching emails:", e);
     }
+
+    // Enrich dealer contacts with emails
+    Object.keys(dealerContactMap).forEach(id => {
+      dealerContactMap[id].email = emailMap[id] || null;
+    });
+    setDealerProfiles(dealerContactMap);
 
     if (winnerIds.length > 0) {
       const uniqueIds = [...new Set(winnerIds)];

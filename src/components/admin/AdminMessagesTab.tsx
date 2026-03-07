@@ -12,7 +12,7 @@ import type { DealerUser, Message } from "./types";
 interface Props {
   dealers: DealerUser[];
   messages: Message[];
-  dealerProfiles: Record<string, string>;
+  dealerProfiles: Record<string, { full_name: string; phone: string | null; email: string | null }>;
   fetchAllData: () => Promise<void>;
 }
 
@@ -72,7 +72,7 @@ const AdminMessagesTab = ({ dealers, messages, dealerProfiles, fetchAllData }: P
           <CardContent className="p-0 flex flex-col h-96">
             {selectedDealerId ? (
               <>
-                <div className="px-4 py-2.5 border-b border-border bg-secondary/30"><p className="text-xs font-medium">{dealerProfiles[selectedDealerId] || "Dealer"}</p></div>
+                <div className="px-4 py-2.5 border-b border-border bg-secondary/30"><p className="text-xs font-medium">{dealerProfiles[selectedDealerId]?.full_name || "Dealer"}</p></div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {messages.filter(m => (m.sender_id === selectedDealerId && m.receiver_id === user?.id) || (m.sender_id === user?.id && m.receiver_id === selectedDealerId))
                     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())

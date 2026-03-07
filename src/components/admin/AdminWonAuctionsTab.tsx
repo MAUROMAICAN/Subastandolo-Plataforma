@@ -20,7 +20,7 @@ import type { AuctionExtended, WinnerInfo } from "./types";
 interface Props {
   auctions: AuctionExtended[];
   winnerProfiles: Record<string, WinnerInfo>;
-  dealerProfiles: Record<string, string>;
+  dealerProfiles: Record<string, WinnerInfo>;
   paymentProofs: any[];
 }
 
@@ -63,7 +63,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         a.title.toLowerCase().includes(q) ||
         a.operation_number?.toLowerCase().includes(q) ||
         winnerProfiles[a.winner_id!]?.full_name?.toLowerCase().includes(q) ||
-        dealerProfiles[a.created_by]?.toLowerCase().includes(q)
+        dealerProfiles[a.created_by]?.full_name?.toLowerCase().includes(q)
       );
     }
     if (paymentFilter !== "all") {
@@ -304,7 +304,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
                         <span className="flex items-center gap-1"><User className="h-3 w-3" />{winner?.full_name || "—"}</span>
                         <span className="text-muted-foreground">→</span>
-                        <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealerProfiles[a.created_by] || "—"}</span>
+                        <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealerProfiles[a.created_by]?.full_name || "—"}</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short" })}</span>
                       </div>
                     </div>
@@ -340,13 +340,74 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                           <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center shrink-0">
                             <Trophy className="h-5 w-5 text-primary dark:text-accent" />
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ganador</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ganador (Comprador)</p>
                             <p className="text-sm font-bold truncate">{winner?.full_name || "—"}</p>
                             {winner?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{winner.phone}</p>}
                             {winner?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{winner.email}</p>}
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              {winner?.phone && (
+                                <Button
+                                  size="sm"
+                                  className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  onClick={() => {
+                                    let phone = winner.phone!.replace(/\D/g, '');
+                                    if (phone.startsWith('0')) phone = phone.slice(1);
+                                    const msg = encodeURIComponent(`Hola ${winner.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
+                                    window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                  }}
+                                >
+                                  <MessageSquare className="h-3 w-3" /> WhatsApp
+                                </Button>
+                              )}
+                              {winner?.email && (
+                                <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                                  onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${winner.email}?subject=${sub}`, '_blank'); }}>
+                                  <Mail className="h-3 w-3" /> Email
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        {/* Dealer info */}
+                        {(() => {
+                          const dealer = dealerProfiles[a.created_by];
+                          return (
+                            <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
+                              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Dealer (Vendedor)</p>
+                                <p className="text-sm font-bold truncate">{dealer?.full_name || "—"}</p>
+                                {dealer?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{dealer.phone}</p>}
+                                {dealer?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{dealer.email}</p>}
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                  {dealer?.phone && (
+                                    <Button
+                                      size="sm"
+                                      className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      onClick={() => {
+                                        let phone = dealer.phone!.replace(/\D/g, '');
+                                        if (phone.startsWith('0')) phone = phone.slice(1);
+                                        const msg = encodeURIComponent(`Hola ${dealer.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
+                                        window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                      }}
+                                    >
+                                      <MessageSquare className="h-3 w-3" /> WhatsApp
+                                    </Button>
+                                  )}
+                                  {dealer?.email && (
+                                    <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                                      onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${dealer.email}?subject=${sub}`, '_blank'); }}>
+                                      <Mail className="h-3 w-3" /> Email
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         {/* Status */}
                         <div className="bg-card rounded-lg border border-border p-3 space-y-2">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estados</p>
@@ -374,20 +435,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                             <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => navigate(`/auction/${a.id}`)}>
                               <Package className="h-3.5 w-3.5" /> Ir a la subasta
                             </Button>
-                            {winner?.phone && (
-                              <Button
-                                size="sm"
-                                className="text-xs h-8 rounded-sm justify-start gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                                onClick={() => {
-                                  let phone = winner.phone!.replace(/\D/g, '');
-                                  if (phone.startsWith('0')) phone = phone.slice(1);
-                                  const msg = encodeURIComponent(`Hola ${winner.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
-                                  window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
-                                }}
-                              >
-                                <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
-                              </Button>
-                            )}
+
                           </div>
                         </div>
                       </div>
@@ -503,7 +551,37 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center"><Package className="h-3 w-3 text-primary dark:text-accent" /></div> Dealer
                   </p>
-                  <p className="text-sm font-bold">{dealerProfiles[selectedAuction.created_by] || "Desconocido"}</p>
+                  <p className="text-sm font-bold">{dealerProfiles[selectedAuction.created_by]?.full_name || "Desconocido"}</p>
+                  {(() => {
+                    const dealer = dealerProfiles[selectedAuction.created_by];
+                    return (
+                      <>
+                        {dealer?.phone && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Phone className="h-3 w-3" />{dealer.phone}</p>}
+                        {dealer?.email && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Mail className="h-3 w-3" />{dealer.email}</p>}
+                        <div className="flex items-center gap-1.5 pt-1">
+                          {dealer?.phone && (
+                            <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600/10 text-emerald-600 border-emerald-600/30 hover:bg-emerald-600/20"
+                              onClick={() => {
+                                let phone = dealer.phone!.replace(/\D/g, '');
+                                if (phone.startsWith('0')) phone = phone.slice(1);
+                                const msg = encodeURIComponent(`Hola ${dealer.full_name}, te escribimos de Subastandolo respecto a la subasta "${selectedAuction.title}".`);
+                                window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                              }}
+                            >
+                              <MessageSquare className="h-3 w-3" /> WhatsApp
+                            </Button>
+                          )}
+                          {dealer?.email && (
+                            <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                              onClick={() => { const sub = encodeURIComponent(`Subasta "${selectedAuction.title}" - Subastandolo`); window.open(`mailto:${dealer.email}?subject=${sub}`, '_blank'); }}
+                            >
+                              <Mail className="h-3 w-3" /> Email
+                            </Button>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
