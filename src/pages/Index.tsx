@@ -14,7 +14,7 @@ import { Search, ChevronRight, ChevronLeft, Flame, Clock, Gavel, ArrowRight, Sto
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import LaunchCountdown from "@/components/LaunchCountdown";
+
 import CampaignModal from "@/components/CampaignModal";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
@@ -186,7 +186,7 @@ const Index = () => {
       <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main>
-        <LaunchCountdown />
+
 
         {/* Banners start immediately after the Navbar */}
 
