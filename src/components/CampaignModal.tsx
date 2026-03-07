@@ -52,7 +52,7 @@ const CampaignModal = () => {
     if (!campaigns || campaigns.length === 0) return;
 
     // Find first campaign that targets this user (or targets everyone)
-    const activeCampaign = (campaigns as Campaign[]).find((c) => {
+    const activeCampaign = ((campaigns as unknown) as Campaign[]).find((c) => {
       if (!c.target_user_ids) return true; // null = all users
       if (!user) return false; // targeted campaign but no user logged in
       return c.target_user_ids.includes(user.id);
@@ -177,43 +177,44 @@ const CampaignModal = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] transition-all duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"
+      className={`fixed inset-0 z-[9999] transition-all duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       style={{
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        backgroundColor: "rgba(0,0,0,0.70)",
+        backgroundColor: "rgba(0,0,0,0.80)",
       }}
       onClick={handleDismiss}
     >
       <div
         className={`relative flex h-full w-full items-center justify-center transition-all duration-300 ${visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
           }`}
-        style={{ padding: "max(env(safe-area-inset-top), 8px) 4px max(env(safe-area-inset-bottom), 8px)" }}
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
         onTouchStart={() => { pausedRef.current = true; }}
         onTouchEnd={() => { pausedRef.current = false; }}
       >
-        <button
-          onClick={handleDismiss}
-          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform hover:scale-110"
-          style={{ marginTop: "max(env(safe-area-inset-top), 0px)" }}
-          aria-label="Cerrar"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
         <div
-          className="relative overflow-hidden rounded-xl bg-black/30 shadow-2xl"
+          className="relative overflow-hidden rounded-2xl shadow-2xl"
           style={{
             width: `${frameWidth}px`,
             height: `${frameHeight}px`,
-            maxWidth: "100%",
-            maxHeight: "100%",
+            maxWidth: "92vw",
+            maxHeight: "88vh",
           }}
         >
+          {/* Close button — inside the image, top-right, always visible */}
+          <button
+            onClick={handleDismiss}
+            className="absolute right-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
+            style={{ top: "max(env(safe-area-inset-top, 0px), 12px)" }}
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Campaign image — fills the frame */}
           <img
             src={campaign.image_url}
             alt={campaign.title}
