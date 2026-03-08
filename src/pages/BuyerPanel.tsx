@@ -777,10 +777,11 @@ const BuyerPanel = () => {
           city: addrCity.trim(),
           state: addrState,
         } as any).eq("id", user!.id);
+        await refreshProfile();
         setSaving(false);
         setEditing(false);
         const { toast } = await import("@/hooks/use-toast");
-        toast({ title: "¡Dirección guardada!" });
+        toast({ title: "✅ ¡Dirección guardada exitosamente!" });
       };
 
       const hasAddress = (profile as any)?.city && (profile as any)?.state;
@@ -813,9 +814,10 @@ const BuyerPanel = () => {
                 {!editing && (
                   <button
                     onClick={() => setEditing(true)}
-                    className="text-xs text-primary hover:underline font-semibold"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/10 transition-colors"
                   >
-                    {hasAddress ? "Editar" : "Agregar"}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                    {hasAddress ? "Modificar" : "Agregar"}
                   </button>
                 )}
               </div>
