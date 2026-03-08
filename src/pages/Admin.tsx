@@ -435,7 +435,7 @@ const Admin = () => {
             {activeTab === "auctions" && <AdminAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} commissionPct={commissionPct} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "payments" && <AdminPaymentsTab paymentProofs={paymentProofs} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} paymentProofs={paymentProofs} globalSearch={globalSearch} />}
-            {activeTab === "messages" && <AdminMessagesTab dealers={dealers} messages={messages} dealerProfiles={dealerProfiles} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
+            {activeTab === "messages" && <AdminMessagesTab globalSearch={globalSearch} />}
             {activeTab === "emails" && <AdminEmailsTab globalSearch={globalSearch} />}
             {activeTab === "cms" && <AdminCMSTab siteSettings={siteSettings} siteSections={siteSections} banners={banners} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} setSavingSettings={setSavingSettings} handleSaveSettings={handleSaveSettings} fetchAllData={fetchAllData} />}
             {activeTab === "dealer_sales" && <AdminDealerSalesTab globalSearch={globalSearch} />}

@@ -136,7 +136,7 @@ const AdminCampaignsTab = () => {
 
   const fetchCampaigns = async () => {
     const { data } = await supabase.from("campaigns").select("*").order("created_at", { ascending: false });
-    setCampaigns((data as Campaign[]) || []);
+    setCampaigns(((data || []) as any[]).map((c: any) => ({ ...c, target_user_ids: c.target_user_ids || null })) as Campaign[]);
     setLoading(false);
   };
 
@@ -241,6 +241,13 @@ const AdminCampaignsTab = () => {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary dark:text-accent" /></div>;
 
+  // Stats
+  const now = new Date();
+  const activeCampaigns = campaigns.filter(c => c.is_active && (!c.ends_at || new Date(c.ends_at) > now));
+  const inactiveCampaigns = campaigns.filter(c => !c.is_active);
+  const expiredCampaigns = campaigns.filter(c => c.ends_at && new Date(c.ends_at) < now);
+  const targetedCampaigns = campaigns.filter(c => c.target_user_ids && c.target_user_ids.length > 0);
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -249,10 +256,30 @@ const AdminCampaignsTab = () => {
             <Megaphone className="h-5 w-5 text-primary dark:text-accent" /> Campañas Publicitarias
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {campaigns.filter(c => c.is_active).length} activas · {campaigns.filter(c => !c.is_active).length} inactivas
+            {activeCampaigns.length} activas · {inactiveCampaigns.length} inactivas · {expiredCampaigns.length} expiradas
           </p>
         </div>
         <Badge variant="outline" className="text-xs">{campaigns.length} campañas</Badge>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Activas", value: activeCampaigns.length, icon: Eye, color: "text-primary dark:text-accent" },
+          { label: "Inactivas", value: inactiveCampaigns.length, icon: Pause, color: "text-muted-foreground" },
+          { label: "Expiradas", value: expiredCampaigns.length, icon: RotateCcw, color: expiredCampaigns.length > 0 ? "text-warning" : "text-muted-foreground" },
+          { label: "Segmentadas", value: targetedCampaigns.length, icon: User, color: "text-foreground" },
+        ].map((stat, idx) => (
+          <Card key={idx} className="border border-border rounded-sm">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-medium uppercase tracking-wide">{stat.label}</span>
+              </div>
+              <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Create form */}
