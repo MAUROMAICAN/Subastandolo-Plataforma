@@ -110,6 +110,33 @@ function divider() {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // ── Auth guard: admin only ──────────────────────────────────────────────
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  // Verify caller identity
+  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+  const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || serviceRoleKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: authError } = await authClient.auth.getUser();
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  // Verify admin role
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
+  const { data: roles } = await adminClient.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").limit(1);
+  if (!roles || roles.length === 0) {
+    return new Response(JSON.stringify({ error: "Solo administradores" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const resendKey = Deno.env.get("RESEND_API_KEY");
   if (!resendKey) return new Response(JSON.stringify({ error: "RESEND_API_KEY no configurada" }), { status: 400, headers: corsHeaders });
 
