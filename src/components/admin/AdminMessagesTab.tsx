@@ -387,7 +387,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
               >
                 <div className="relative shrink-0">
                   <Avatar className="h-9 w-9">
-                    {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.full_name} />}
+                    {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.full_name} className="object-cover" />}
                     <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
                       {(contact.full_name || "?").charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -443,7 +443,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
                     className="w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-primary/5 transition-colors"
                   >
                     <Avatar className="h-9 w-9 shrink-0">
-                      {result.avatar_url && <AvatarImage src={result.avatar_url} alt={result.full_name} />}
+                      {result.avatar_url && <AvatarImage src={result.avatar_url} alt={result.full_name} className="object-cover" />}
                       <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
                         {(result.full_name || "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -476,7 +476,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
               <div className="px-4 py-3 border-b border-border bg-secondary/20 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
                   <Avatar className="h-8 w-8">
-                    {selectedContact.avatar_url && <AvatarImage src={selectedContact.avatar_url} alt={selectedContact.full_name} />}
+                    {selectedContact.avatar_url && <AvatarImage src={selectedContact.avatar_url} alt={selectedContact.full_name} className="object-cover" />}
                     <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
                       {(selectedContact.full_name || "?").charAt(0).toUpperCase()}
                     </AvatarFallback>
