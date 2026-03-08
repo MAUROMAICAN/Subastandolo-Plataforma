@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -53,6 +54,12 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
   const [sendingChat, setSendingChat] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Email compose dialog state
+  const [emailDealer, setEmailDealer] = useState<any | null>(null);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     fetchExtraDealers();
@@ -145,6 +152,58 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
       await fetchChatMessages(chatDealer.user_id);
     }
     setSendingChat(false);
+  };
+
+  const openEmailCompose = (dealer: any) => {
+    setEmailDealer(dealer);
+    setEmailSubject("");
+    setEmailBody("");
+  };
+
+  const sendEmail = async () => {
+    if (!emailSubject.trim() || !emailBody.trim() || !user || !emailDealer) return;
+    const dealerEmail = dealerEmails[emailDealer.user_id];
+    if (!dealerEmail) {
+      toast({ title: "Sin correo", description: "No se encontró el email de este dealer.", variant: "destructive" });
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      // Create a support ticket from admin to dealer
+      const { data: ticket, error: ticketError } = await (supabase.from("support_tickets" as any)).insert({
+        user_id: emailDealer.user_id,
+        user_name: emailDealer.full_name || emailDealer.business_name || "Dealer",
+        user_email: dealerEmail,
+        subject: emailSubject.trim(),
+        category: "dealer",
+        priority: "medium",
+        status: "in_progress",
+      }).select().single() as any;
+
+      if (ticketError) throw ticketError;
+      const ticketId = (ticket as any).id;
+
+      // Add admin message
+      await (supabase.from("ticket_messages" as any)).insert({
+        ticket_id: ticketId,
+        sender_id: user.id,
+        sender_role: "admin",
+        message: emailBody.trim(),
+      });
+
+      // Notify via email edge function
+      try {
+        await supabase.functions.invoke("notify-ticket", {
+          body: { ticketId: ticketId, type: "admin_reply" },
+        });
+      } catch { /* non-blocking */ }
+
+      toast({ title: "✅ Correo enviado", description: `Email enviado a ${emailDealer.full_name} (${dealerEmail})` });
+      setEmailDealer(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setSendingEmail(false);
   };
 
   // Merge dealer_verification apps + role-only dealers
@@ -283,9 +342,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                           <MessageSquare className="h-3 w-3" />
                         </Button>
                         {dealerEmails[app.user_id] && (
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title={dealerEmails[app.user_id]} onClick={() => {
-                            window.open(`mailto:${dealerEmails[app.user_id]}`, '_blank');
-                          }}>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title={`Enviar correo a ${dealerEmails[app.user_id]}`} onClick={() => openEmailCompose(app)}>
                             <Mail className="h-3 w-3" />
                           </Button>
                         )}
@@ -424,6 +481,51 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Compose Dialog */}
+      <Dialog open={!!emailDealer} onOpenChange={(open) => { if (!open) setEmailDealer(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm font-heading">
+              <Mail className="h-4 w-4 text-primary dark:text-accent" />
+              Enviar correo a {emailDealer?.full_name || emailDealer?.business_name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {emailDealer && dealerEmails[emailDealer.user_id] && (
+            <p className="text-[10px] text-muted-foreground -mt-2">Para: {dealerEmails[emailDealer.user_id]}</p>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-medium">Asunto</Label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Ej: Información requerida sobre tu cuenta"
+                className="mt-1 text-sm rounded-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-medium">Mensaje</Label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                placeholder="Escribe el contenido del correo..."
+                className="mt-1 min-h-[120px] text-sm rounded-sm resize-none"
+              />
+            </div>
+            <Button
+              onClick={sendEmail}
+              disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+              className="w-full rounded-sm bg-primary text-primary-foreground font-bold gap-2"
+            >
+              {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {sendingEmail ? "Enviando..." : "Enviar Correo"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
