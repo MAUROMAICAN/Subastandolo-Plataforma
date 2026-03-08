@@ -258,7 +258,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
         total_commission: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.commission_amount), 0),
         total_dealer_net: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.dealer_net), 0),
         total_paid: totalPaid,
-        pending_balance: dealerBalance,
+        pending_balance: dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + Number(e.dealer_net), 0),
         sales: dealerEarnings.map((e: any) => {
           const proof = proofMap[e.auction_id];
           const auctionInfo = auctionMap[e.auction_id];
