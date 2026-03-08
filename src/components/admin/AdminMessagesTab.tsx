@@ -164,28 +164,54 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
     if (!user) return;
     setSearchingUsers(true);
     const q = query.toLowerCase().trim();
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url")
-      .ilike("full_name", `%${q}%`)
-      .limit(15);
 
-    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+    // Fetch profiles by name + emails in parallel
+    const [profilesRes, rolesRes, emailsRes] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, avatar_url").ilike("full_name", `%${q}%`).limit(15),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.functions.invoke("admin-manage-user", { body: { action: "list_users", userId: "all" } }),
+    ]);
+
+    const profiles = profilesRes.data || [];
+    const emailMap: Record<string, string> = emailsRes.data?.emails || {};
+
+    // Find users whose email matches the query
+    const emailMatchIds = new Set<string>();
+    for (const [uid, email] of Object.entries(emailMap)) {
+      if (email.toLowerCase().includes(q)) emailMatchIds.add(uid);
+    }
+
+    // Fetch profiles for email matches not already in name results
+    const nameIds = new Set(profiles.map(p => p.id));
+    const extraIds = Array.from(emailMatchIds).filter(id => !nameIds.has(id));
+    let extraProfiles: any[] = [];
+    if (extraIds.length > 0) {
+      const { data } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", extraIds.slice(0, 10));
+      extraProfiles = data || [];
+    }
+
+    const allProfiles = [...profiles, ...extraProfiles];
+
     const rolesMap: Record<string, string> = {};
-    (roles || []).forEach((r: any) => {
+    (rolesRes.data || []).forEach((r: any) => {
       if (r.role === "admin") rolesMap[r.user_id] = "admin";
       else if (!rolesMap[r.user_id]) rolesMap[r.user_id] = r.role === "dealer" ? "dealer" : "user";
     });
 
     const existingIds = new Set(contacts.map(c => c.id));
-    const results: ContactUser[] = (profiles || [])
-      .filter(p => p.id !== user.id && !existingIds.has(p.id))
+    const seen = new Set<string>();
+    const results: ContactUser[] = allProfiles
+      .filter(p => {
+        if (p.id === user.id || existingIds.has(p.id) || seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      })
       .map(p => ({
         id: p.id,
         full_name: p.full_name || "Sin nombre",
         avatar_url: (p as any).avatar_url || null,
         role: rolesMap[p.id] || "user",
-        last_message: "",
+        last_message: emailMap[p.id] || "",
         last_message_at: "",
         unread_count: 0,
       }));
@@ -336,7 +362,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
               <Input
                 value={contactSearch}
                 onChange={(e) => setContactSearch(e.target.value)}
-                placeholder="Buscar usuario..."
+                placeholder="Buscar por nombre o correo..."
                 className="rounded-sm text-xs h-8 pl-8"
               />
             </div>
@@ -426,7 +452,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
                       <span className="text-xs font-medium block truncate">{result.full_name}</span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {getRoleBadge(result.role)}
-                        <span className="text-[10px] text-muted-foreground">Iniciar conversación</span>
+                        <span className="text-[10px] text-muted-foreground">{result.last_message || "Iniciar conversación"}</span>
                       </div>
                     </div>
                     <UserPlus className="h-3.5 w-3.5 text-primary dark:text-accent shrink-0" />
