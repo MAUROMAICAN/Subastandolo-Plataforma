@@ -222,6 +222,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ── Auth guard: service role only (server-to-server) ──
+  const { isServiceRole, unauthorized } = await import("../_shared/auth.ts");
+  if (!isServiceRole(req)) {
+    return unauthorized(corsHeaders);
+  }
+
   try {
     const { user_id, user_ids, title, body, url, tag } = await req.json();
 

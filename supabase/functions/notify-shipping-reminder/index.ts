@@ -2,36 +2,40 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logEmail } from "../_shared/logEmail.ts";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    try {
-        const { email, name, auctionTitle, auctionId, winningBid, imageUrl, userId, operationNumber, buyerName } = await req.json();
-        if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
+  // ── Auth guard: service role only ──
+  const { isServiceRole, unauthorized } = await import("../_shared/auth.ts");
+  if (!isServiceRole(req)) return unauthorized(corsHeaders);
 
-        const resendKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
+  try {
+    const { email, name, auctionTitle, auctionId, winningBid, imageUrl, userId, operationNumber, buyerName } = await req.json();
+    if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
 
-        const supabaseAdmin = createClient(
-            Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-        );
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) throw new Error("RESEND_API_KEY no configurada");
 
-        const appUrl = "https://subastandolo.com";
-        const auctionUrl = `${appUrl}/subasta/${auctionId}`;
-        const dealerName = name || "Dealer";
-        const title = auctionTitle || "la subasta";
-        const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
-        const opNumber = operationNumber || "N/A";
-        const buyer = buyerName || "el comprador";
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-        const subject = `📦 Acción requerida: Envío pendiente de "${title}"`;
+    const appUrl = "https://subastandolo.com";
+    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const dealerName = name || "Dealer";
+    const title = auctionTitle || "la subasta";
+    const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
+    const opNumber = operationNumber || "N/A";
+    const buyer = buyerName || "el comprador";
 
-        const html = `
+    const subject = `📦 Acción requerida: Envío pendiente de "${title}"`;
+
+    const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -124,58 +128,58 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-        const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                from: "SUBASTANDOLO <no-reply@subastandolo.com>",
-                reply_to: "soporte@subastandolo.com",
-                to: [email],
-                subject,
-                html,
-            }),
-        });
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "SUBASTANDOLO <no-reply@subastandolo.com>",
+        reply_to: "soporte@subastandolo.com",
+        to: [email],
+        subject,
+        html,
+      }),
+    });
 
-        if (!res.ok) {
-            const errText = await res.text();
-            await logEmail(supabaseAdmin, {
-                recipient_email: email, recipient_name: dealerName, recipient_id: userId,
-                email_type: "shipping_reminder", subject,
-                auction_id: auctionId, auction_title: title, status: "failed", error_message: errText,
-                metadata: { winning_bid: winningBid, operation_number: opNumber },
-            });
-            throw new Error(errText);
-        }
-        const result = await res.json();
-
-        await logEmail(supabaseAdmin, {
-            recipient_email: email, recipient_name: dealerName, recipient_id: userId,
-            email_type: "shipping_reminder", subject,
-            auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id,
-            metadata: { winning_bid: winningBid, operation_number: opNumber, buyer_name: buyer },
-        });
-
-        // Push notification
-        if (userId) {
-            try {
-                await supabaseAdmin.functions.invoke("notify-push", {
-                    body: {
-                        user_id: userId,
-                        title: `📦 Envío pendiente: "${title}"`,
-                        body: `El comprador ${buyer} ya pagó ${amount}. Por favor, procede con el envío del artículo.`,
-                        data: { url: `/subasta/${auctionId}` },
-                    },
-                });
-            } catch (_e) { /* push optional */ }
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-    } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return new Response(JSON.stringify({ error: msg }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    if (!res.ok) {
+      const errText = await res.text();
+      await logEmail(supabaseAdmin, {
+        recipient_email: email, recipient_name: dealerName, recipient_id: userId,
+        email_type: "shipping_reminder", subject,
+        auction_id: auctionId, auction_title: title, status: "failed", error_message: errText,
+        metadata: { winning_bid: winningBid, operation_number: opNumber },
+      });
+      throw new Error(errText);
     }
+    const result = await res.json();
+
+    await logEmail(supabaseAdmin, {
+      recipient_email: email, recipient_name: dealerName, recipient_id: userId,
+      email_type: "shipping_reminder", subject,
+      auction_id: auctionId, auction_title: title, status: "sent", resend_id: result.id,
+      metadata: { winning_bid: winningBid, operation_number: opNumber, buyer_name: buyer },
+    });
+
+    // Push notification
+    if (userId) {
+      try {
+        await supabaseAdmin.functions.invoke("notify-push", {
+          body: {
+            user_id: userId,
+            title: `📦 Envío pendiente: "${title}"`,
+            body: `El comprador ${buyer} ya pagó ${amount}. Por favor, procede con el envío del artículo.`,
+            data: { url: `/subasta/${auctionId}` },
+          },
+        });
+      } catch (_e) { /* push optional */ }
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 });

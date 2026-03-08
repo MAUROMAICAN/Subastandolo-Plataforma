@@ -113,6 +113,10 @@ Deno.serve(async (req) => {
         });
     }
 
+    // ── Auth guard: service role only ──
+    const { isServiceRole, unauthorized } = await import("../_shared/auth.ts");
+    if (!isServiceRole(req)) return unauthorized(corsHeaders);
+
     try {
         const { user_id, title, message, type, link } = await req.json();
         console.log(`[notify-push] Received: user=${user_id}, type=${type}, title=${title}`);

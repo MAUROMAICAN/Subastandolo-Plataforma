@@ -9,6 +9,11 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // ── Auth guard: authenticated user required ──
+  const { getCallerUser, unauthorized } = await import("../_shared/auth.ts");
+  const caller = await getCallerUser(req);
+  if (!caller) return unauthorized(corsHeaders);
+
   try {
     const { ticketId, type } = await req.json();
     // type = "new_ticket" | "admin_reply"
