@@ -342,58 +342,56 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {filteredContacts.length === 0 ? (
+            {filteredContacts.length === 0 && (!contactSearch || contactSearch.length < 2 || (searchResults.length === 0 && !searchingUsers)) && (
               <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                 <Users className="h-8 w-8 text-muted-foreground/20 mb-2" />
                 <p className="text-xs text-muted-foreground">
-                  {contactSearch ? "Sin conversaciones previas" : "No hay conversaciones"}
+                  {contactSearch ? "Buscando usuarios..." : "No hay conversaciones"}
                 </p>
-                {contactSearch && contactSearch.length >= 2 && searchingUsers && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary mt-2" />
-                )}
               </div>
-            ) : (
-              filteredContacts.map(contact => (
-                <button
-                  key={contact.id}
-                  onClick={() => handleSelectContact(contact)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-secondary/30 transition-colors ${selectedContact?.id === contact.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
-                    }`}
-                >
-                  <div className="relative shrink-0">
-                    <Avatar className="h-9 w-9">
-                      {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.full_name} />}
-                      <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
-                        {(contact.full_name || "?").charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {contact.unread_count > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[9px] rounded-full flex items-center justify-center font-bold">
-                        {contact.unread_count}
+            )}
+
+            {/* Existing contacts */}
+            {filteredContacts.map(contact => (
+              <button
+                key={contact.id}
+                onClick={() => handleSelectContact(contact)}
+                className={`w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-secondary/30 transition-colors ${selectedContact?.id === contact.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
+                  }`}
+              >
+                <div className="relative shrink-0">
+                  <Avatar className="h-9 w-9">
+                    {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.full_name} />}
+                    <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
+                      {(contact.full_name || "?").charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {contact.unread_count > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[9px] rounded-full flex items-center justify-center font-bold">
+                      {contact.unread_count}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className={`text-xs truncate ${contact.unread_count > 0 ? "font-bold" : "font-medium"}`}>
+                      {contact.full_name}
+                    </span>
+                    {contact.last_message_at && (
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {formatTime(contact.last_message_at)}
                       </span>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className={`text-xs truncate ${contact.unread_count > 0 ? "font-bold" : "font-medium"}`}>
-                        {contact.full_name}
-                      </span>
-                      {contact.last_message_at && (
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {formatTime(contact.last_message_at)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {getRoleBadge(contact.role)}
-                      <span className={`text-[10px] truncate ${contact.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                        {contact.last_message || "Sin mensajes"}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {getRoleBadge(contact.role)}
+                    <span className={`text-[10px] truncate ${contact.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      {contact.last_message || "Sin mensajes"}
+                    </span>
                   </div>
-                </button>
-              ))
-            )}
+                </div>
+              </button>
+            ))}
 
             {/* Global search results — new users not in contacts */}
             {contactSearch && contactSearch.length >= 2 && searchResults.length > 0 && (
