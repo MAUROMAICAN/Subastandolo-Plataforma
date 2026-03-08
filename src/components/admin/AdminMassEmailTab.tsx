@@ -4,9 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
     Loader2, Send, Mail, Check, AlertTriangle, Flame, PartyPopper,
-    Zap, Megaphone, Wrench, Eye, Users
+    Zap, Megaphone, Wrench, Eye, Users, TestTube
 } from "lucide-react";
 
 // ─── Email HTML builder (mirrors edge function exactly) ──────────────────────
@@ -220,6 +221,8 @@ const AdminMassEmailTab = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
     const [customMessage, setCustomMessage] = useState("");
     const [sending, setSending] = useState(false);
+    const [sendingTest, setSendingTest] = useState(false);
+    const [testEmail, setTestEmail] = useState("");
     const [showConfirm, setShowConfirm] = useState(false);
     const [result, setResult] = useState<{ total: number; sent: number; failed: number } | null>(null);
 
@@ -230,6 +233,36 @@ const AdminMassEmailTab = () => {
         if (!selected) return "";
         return selected.buildHtml(selected.hasCustomMessage ? customMessage : undefined);
     }, [selected, customMessage]);
+
+    const handleSendTest = async () => {
+        if (!selectedTemplate || !testEmail.trim()) return;
+        setSendingTest(true);
+
+        try {
+            const { error } = await supabase.functions.invoke("send-mass-email", {
+                body: {
+                    templateKey: selectedTemplate,
+                    customMessage: selected?.hasCustomMessage ? customMessage : undefined,
+                    testEmail: testEmail.trim(),
+                },
+            });
+
+            if (error) throw error;
+
+            toast({
+                title: "✅ Correo de prueba enviado",
+                description: `Se envió a ${testEmail.trim()}`,
+            });
+        } catch (e: any) {
+            toast({
+                title: "Error",
+                description: e.message || "No se pudo enviar",
+                variant: "destructive",
+            });
+        } finally {
+            setSendingTest(false);
+        }
+    };
 
     const handleSend = async () => {
         if (!selectedTemplate) return;
@@ -288,8 +321,8 @@ const AdminMassEmailTab = () => {
                             key={t.key}
                             onClick={() => { setSelectedTemplate(t.key); setResult(null); setShowConfirm(false); }}
                             className={`relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${selectedTemplate === t.key
-                                    ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                                    : "border-border hover:border-primary/40 hover:bg-secondary/30"
+                                ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
+                                : "border-border hover:border-primary/40 hover:bg-secondary/30"
                                 }`}
                         >
                             <div className="flex items-start gap-3">
@@ -359,6 +392,30 @@ const AdminMassEmailTab = () => {
                             />
                         </CardContent>
                     </Card>
+
+                    {/* Test email */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Input
+                            type="email"
+                            placeholder="email@ejemplo.com"
+                            value={testEmail}
+                            onChange={e => setTestEmail(e.target.value)}
+                            className="w-64 text-sm"
+                        />
+                        <Button
+                            onClick={handleSendTest}
+                            disabled={sendingTest || !testEmail.trim() || (selected.hasCustomMessage && !customMessage.trim())}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                        >
+                            {sendingTest ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</>
+                            ) : (
+                                <><TestTube className="h-3.5 w-3.5" /> Enviar prueba</>
+                            )}
+                        </Button>
+                    </div>
 
                     {/* Confirm + Send */}
                     {!showConfirm ? (
