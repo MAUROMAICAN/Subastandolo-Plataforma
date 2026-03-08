@@ -1,9 +1,12 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Package, TrendingUp, Clock, CheckCircle, ChevronDown,
-  DollarSign, Gavel, BarChart3
+  DollarSign, Gavel, BarChart3, Wallet, ShoppingBag, ArrowRight
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { AuctionWithImages } from "./types";
 
 interface Props {
@@ -14,6 +17,29 @@ interface Props {
 }
 
 export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFilter, sections }: Props) {
+  const { user } = useAuth();
+
+  // Earnings data (fetched independently for dashboard overview)
+  const [dealerEarnings, setDealerEarnings] = useState<any[]>([]);
+  const [earningsLoaded, setEarningsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase.from("dealer_earnings")
+        .select("sale_amount, commission_amount, dealer_net, is_paid, created_at")
+        .eq("dealer_id", user.id)
+        .then(({ data }) => {
+          setDealerEarnings((data || []).map((e: any) => ({
+            sale_amount: Number(e.sale_amount),
+            commission_amount: Number(e.commission_amount),
+            dealer_net: Number(e.dealer_net),
+            is_paid: e.is_paid,
+          })));
+          setEarningsLoaded(true);
+        });
+    }
+  }, [user]);
+
   const metrics = useMemo(() => {
     const total = auctions.length;
     const active = auctions.filter(a => a.status === "active").length;
@@ -27,8 +53,16 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     return { total, active, pending, finalized, totalBids, totalRevenue, avgPrice };
   }, [auctions]);
 
+  const walletStats = useMemo(() => {
+    const totalNet = dealerEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
+    const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+    const paid = dealerEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+    const totalCommission = dealerEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
+    return { totalNet, unpaid, paid, totalCommission };
+  }, [dealerEarnings]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div>
         <h1 className="text-xl font-heading font-bold flex items-center gap-2">
@@ -38,6 +72,39 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas · ${metrics.totalRevenue.toLocaleString("es-MX")} ingresos
         </p>
       </div>
+
+      {/* Wallet Balance — Prominent */}
+      {earningsLoaded && (
+        <Card
+          className="border-2 border-emerald-500/30 rounded-sm bg-emerald-500/5 cursor-pointer hover:border-emerald-500/50 transition-all group"
+          onClick={() => setActiveTab("wallet")}
+        >
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-emerald-500/10 rounded-sm group-hover:scale-105 transition-transform">
+                  <Wallet className="h-7 w-7 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
+                  <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">${walletStats.unpaid.toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground">Total Ganado</p>
+                  <p className="text-sm font-bold">${walletStats.totalNet.toFixed(2)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground">Pagado</p>
+                  <p className="text-sm font-bold text-emerald-500">${walletStats.paid.toFixed(2)}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
