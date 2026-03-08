@@ -298,7 +298,7 @@ const Admin = () => {
       label: "Comunicación",
       items: [
         { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages, urgent: unreadMessages > 0 },
-        { key: "emails", label: "Correos", icon: Mail },
+        { key: "emails", label: "Soporte & Correos", icon: Mail },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
       ],
