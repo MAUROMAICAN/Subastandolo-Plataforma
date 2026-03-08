@@ -278,16 +278,12 @@ const Admin = () => {
   const activeAuctions = auctions.filter(a => a.status === "active").length;
   const dealers = allUsers.filter(u => u.role === "dealer");
   const pendingDealerApps = dealerApps.filter((d: any) => d.status === "pending").length;
+  const totalMessages = messages.length;
   const unreadMessages = messages.filter(m => m.receiver_id === user?.id && !m.is_read).length;
   const openDisputes = adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation").length;
   const pendingPayments = paymentProofs.filter((p: any) => p.status === "pending").length;
   const pendingReports = auctionReports.filter((r: any) => r.status === "pending" || !r.status).length;
-  const newUsersToday = allUsers.filter(u => {
-    if (!u.created_at) return false;
-    const d = new Date(u.created_at);
-    const now = new Date();
-    return d.toDateString() === now.toDateString();
-  }).length;
+  const totalUsers = allUsers.length;
 
   // Grouped sidebar sections for professional navigation
   const sidebarGroups: { label: string; items: { key: AdminTab; label: string; icon: any; badge?: number; urgent?: boolean }[] }[] = [
@@ -304,8 +300,8 @@ const Admin = () => {
     {
       label: "Usuarios",
       items: [
-        { key: "users", label: "Usuarios", icon: Users, badge: newUsersToday > 0 ? newUsersToday : undefined },
-        { key: "dealers", label: "Dealers", icon: Package, badge: pendingDealerApps, urgent: pendingDealerApps > 0 },
+        { key: "users", label: "Usuarios", icon: Users, badge: totalUsers || undefined },
+        { key: "dealers", label: "Dealers", icon: Package, badge: pendingDealerApps || dealers.length || undefined, urgent: pendingDealerApps > 0 },
         { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
         { key: "team", label: "Equipo", icon: Shield },
       ],
@@ -313,7 +309,7 @@ const Admin = () => {
     {
       label: "Comunicación",
       items: [
-        { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages, urgent: unreadMessages > 0 },
+        { key: "messages", label: "Mensajes", icon: MessageCircle, badge: totalMessages || undefined, urgent: unreadMessages > 0 },
         { key: "emails", label: "Soporte & Correos", icon: Mail, badge: openTickets, urgent: openTickets > 0 },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
@@ -387,11 +383,11 @@ const Admin = () => {
                     {item.badge != null && item.badge > 0 && (
                       <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1.5 -right-1.5"} inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 ${item.urgent
                         ? sidebarOpen
-                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)] ring-1 ring-red-400/30"
-                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-red-500 text-white shadow-[0_0_6px_rgba(239,68,68,0.6)]"
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-[#A6E300] text-[#1a2332] shadow-[0_0_8px_rgba(166,227,0,0.45)] ring-1 ring-[#A6E300]/40"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-[#A6E300] text-[#1a2332] shadow-[0_0_6px_rgba(166,227,0,0.5)]"
                         : sidebarOpen
-                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-white/10 text-white/60 ring-1 ring-white/10 backdrop-blur-sm"
-                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-white/20 text-white/80"
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-[#A6E300]/20 text-[#A6E300] ring-1 ring-[#A6E300]/20"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-[#A6E300]/30 text-[#A6E300]"
                         }`}>{item.badge > 99 ? "99+" : item.badge}</span>
                     )}
                   </button>
