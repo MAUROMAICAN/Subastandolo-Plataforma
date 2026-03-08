@@ -283,11 +283,11 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                           <MessageSquare className="h-3 w-3" />
                         </Button>
                         {dealerEmails[app.user_id] && (
-                          <a href={`mailto:${dealerEmails[app.user_id]}`} title={dealerEmails[app.user_id]}>
-                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm">
-                              <Mail className="h-3 w-3" />
-                            </Button>
-                          </a>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title={dealerEmails[app.user_id]} onClick={() => {
+                            window.location.href = `mailto:${dealerEmails[app.user_id]}`;
+                          }}>
+                            <Mail className="h-3 w-3" />
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -454,8 +454,8 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[80%] rounded-sm px-3 py-2 text-xs ${isMe
-                        ? "bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground"
-                        : "bg-card border border-border"
+                      ? "bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground"
+                      : "bg-card border border-border"
                       }`}>
                       <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                       <p className={`text-[9px] mt-0.5 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
