@@ -1,14 +1,16 @@
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import BottomNav from "@/components/BottomNav";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SEOHead from "@/components/SEOHead";
 import {
   HelpCircle, Download, BookOpen, ShieldCheck, DollarSign, Truck, Clock,
-  UserCheck, AlertTriangle, Star, ShoppingCart, CreditCard, PackageCheck, Ban, Lock
+  UserCheck, AlertTriangle, Star, ShoppingCart, CreditCard, PackageCheck, Ban,
+  Lock, Search, Headphones, ChevronRight, MessageCircle, Zap, Eye
 } from "lucide-react";
 
 const dealerFaqs = [
@@ -82,214 +84,303 @@ const buyerFaqs = [
   },
 ];
 
-const FAQAccordion = ({ faqs, prefix }: { faqs: typeof dealerFaqs; prefix: string }) => (
-  <Accordion type="single" collapsible className="space-y-2">
-    {faqs.map((faq, i) => (
-      <AccordionItem
-        key={i}
-        value={`${prefix}-${i}`}
-        className="border border-border rounded-sm overflow-hidden bg-card px-0"
-      >
-        <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline hover:bg-secondary/30 gap-3">
-          <div className="flex items-center gap-2.5 text-left">
-            <faq.icon className="h-4 w-4 text-primary dark:text-gray-300 shrink-0" />
-            {faq.question}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4 pt-0">
-          <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed pl-6.5 text-justify">
-            {faq.answer}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    ))}
-  </Accordion>
-);
+const FAQAccordion = ({ faqs, prefix, searchQuery }: { faqs: typeof dealerFaqs; prefix: string; searchQuery: string }) => {
+  const filtered = searchQuery.trim()
+    ? faqs.filter(f =>
+      f.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : faqs;
+
+  if (filtered.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground">No se encontraron resultados para "{searchQuery}"</p>
+      </div>
+    );
+  }
+
+  return (
+    <Accordion type="single" collapsible className="space-y-2">
+      {filtered.map((faq, i) => (
+        <AccordionItem
+          key={i}
+          value={`${prefix}-${i}`}
+          className="border border-border/60 rounded-xl overflow-hidden bg-card hover:border-primary/20 transition-colors px-0"
+        >
+          <AccordionTrigger className="px-5 py-4 text-sm font-medium hover:no-underline hover:bg-secondary/20 gap-3">
+            <div className="flex items-center gap-3 text-left">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 dark:bg-primary/5 flex items-center justify-center shrink-0">
+                <faq.icon className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+              </div>
+              <span className="font-heading font-bold text-[13px]">{faq.question}</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-5 pb-5 pt-0">
+            <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed pl-11 text-justify">
+              {faq.answer}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  );
+};
 
 const Help = () => {
   const { getSetting } = useSiteSettings();
   const siteName = getSetting("site_name", "SUBASTANDOLO");
+  const [activeTab, setActiveTab] = useState<"buyer" | "dealer">("buyer");
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Centro de Ayuda" description="Encuentra respuestas a las preguntas más comunes sobre compras, ventas y subastas en Subastándolo." />
       <Navbar />
       <BackButton />
-      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-2">
-            <HelpCircle className="h-7 w-7 text-primary dark:text-white" />
+      <main className="container mx-auto px-4 py-6 max-w-4xl pb-24">
+
+        {/* ─── HERO SECTION ─── */}
+        <div className="relative rounded-2xl overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(132,204,22,0.12),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(250,204,21,0.08),transparent_50%)]" />
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
+
+          <div className="relative z-10 p-6 sm:p-10 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center mx-auto mb-5 backdrop-blur-sm">
+              <HelpCircle className="h-8 w-8 text-primary dark:text-[#A6E300]" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight mb-2">
+              Centro de Ayuda
+            </h1>
+            <p className="text-sm text-white/50 max-w-md mx-auto mb-6">
+              Encuentra respuestas rápidas sobre {siteName}. Compras, ventas, envíos y más.
+            </p>
+
+            {/* Search bar */}
+            <div className="relative max-w-md mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar pregunta..."
+                className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all backdrop-blur-sm"
+              />
+            </div>
           </div>
-          <h1 className="text-3xl font-heading font-bold">Centro de Ayuda</h1>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            Encuentra respuestas a las preguntas más comunes sobre {siteName}.
-          </p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="buyer" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 h-11">
-            <TabsTrigger value="buyer" className="text-sm font-heading font-bold gap-1.5">
-              <ShoppingCart className="h-4 w-4" />
-              Guía del Comprador
-            </TabsTrigger>
-            <TabsTrigger value="dealer" className="text-sm font-heading font-bold gap-1.5">
-              <UserCheck className="h-4 w-4" />
-              Guía del Dealer
-            </TabsTrigger>
-          </TabsList>
+        {/* ─── QUICK LINKS ─── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-8">
+          {[
+            { label: "Pagos", icon: CreditCard, color: "text-emerald-500", onClick: () => setSearchQuery("pago") },
+            { label: "Envíos", icon: Truck, color: "text-sky-500", onClick: () => setSearchQuery("envío") },
+            { label: "Seguridad", icon: ShieldCheck, color: "text-amber-500", onClick: () => setSearchQuery("seguro") },
+            { label: "Disputas", icon: AlertTriangle, color: "text-rose-500", onClick: () => setSearchQuery("disputa") },
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              onClick={item.onClick}
+              className="bg-card border border-border rounded-xl p-3 sm:p-4 text-center hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+            >
+              <item.icon className={`h-5 w-5 ${item.color} mx-auto mb-1.5 group-hover:scale-110 transition-transform`} />
+              <span className="text-xs font-heading font-bold text-muted-foreground">{item.label}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Buyer Tab */}
-          <TabsContent value="buyer" className="space-y-6">
-            <Card className="border border-accent/20 bg-accent/5 rounded-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-accent" />
-                  🛍️ Guía del Comprador — Tu dinero está protegido
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2 text-justify">
-                <p>
-                  En {siteName}, tu seguridad es nuestra prioridad. Nunca le pagas directamente al vendedor:
-                  tu dinero queda resguardado por la plataforma hasta que confirmes que recibiste el producto
-                  en perfecto estado. Aquí resolvemos todas tus dudas.
-                </p>
-              </CardContent>
-            </Card>
+        {/* ─── TABS ─── */}
+        <div className="flex items-center gap-2 mb-6">
+          <button
+            onClick={() => { setActiveTab("buyer"); setSearchQuery(""); }}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-heading font-bold transition-all ${activeTab === "buyer"
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+              : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+              }`}
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Compradores
+          </button>
+          <button
+            onClick={() => { setActiveTab("dealer"); setSearchQuery(""); }}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-heading font-bold transition-all ${activeTab === "dealer"
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+              : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+              }`}
+          >
+            <UserCheck className="h-4 w-4" />
+            Dealers
+          </button>
+        </div>
+
+        {/* ─── BUYER TAB ─── */}
+        {activeTab === "buyer" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Trust Banner */}
+            <div className="bg-gradient-to-r from-emerald-500/10 to-accent/5 border border-emerald-500/20 rounded-xl p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-11 w-11 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <Lock className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-sm mb-1">Tu dinero está protegido</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed text-justify">
+                    En {siteName}, nunca le pagas directamente al vendedor. Tu dinero queda resguardado por la plataforma
+                    hasta que confirmes que recibiste el producto en perfecto estado.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Security Tips */}
             <div className="grid gap-3 sm:grid-cols-2">
-              <Card className="border border-accent/30 bg-accent/5 rounded-sm">
-                <CardContent className="p-4 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <ShieldCheck className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                    <h4 className="font-heading font-bold text-xs text-foreground mb-1">¡Tu dinero está seguro!</h4>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed text-justify">
-                      No le pagues directamente al Dealer. Al pagarle a {siteName}, nosotros resguardamos tu dinero hasta que tengas el producto en tus manos.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border border-amber-500/30 bg-amber-500/5 rounded-sm">
-                <CardContent className="p-4 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-heading font-bold text-xs text-foreground mb-1">¡Retira a tiempo!</h4>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed text-justify">
-                      Tienes 3 días para buscar tu paquete en la agencia desde que llega. Pasado ese tiempo, el sistema libera el pago al vendedor automáticamente.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-3">
-              <h2 className="text-lg font-heading font-bold flex items-center gap-2">
-                ❓ Preguntas Frecuentes — Compradores
-              </h2>
-              <FAQAccordion faqs={buyerFaqs} prefix="buyer" />
-            </div>
-          </TabsContent>
-
-          {/* Dealer Tab */}
-          <TabsContent value="dealer" className="space-y-6">
-            <Card className="border border-primary/20 bg-primary/5 rounded-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary dark:text-white" />
-                  🚀 Guía del Dealer — Vende con confianza
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2 text-justify">
-                <p>
-                  ¡Estamos felices de que seas parte de nuestra comunidad de subastas! Para asegurar que tengas éxito
-                  y mantengas una excelente reputación, hemos preparado esta guía rápida y un manual descargable.
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-3">
-              <h2 className="text-lg font-heading font-bold flex items-center gap-2">
-                ❓ Preguntas Frecuentes — Dealers
-              </h2>
-              <FAQAccordion faqs={dealerFaqs} prefix="dealer" />
-            </div>
-
-            {/* Publication Policies */}
-            <Card className="border border-primary/20 bg-primary/5 rounded-sm">
-              <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 shrink-0">
-                  <BookOpen className="h-6 w-6 text-primary dark:text-white" />
+              <div className="bg-card border border-accent/20 rounded-xl p-4 flex items-start gap-3 hover:border-accent/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-4 w-4 text-accent" />
                 </div>
-                <div className="flex-1 text-center sm:text-left space-y-1">
-                  <h3 className="font-heading font-bold text-sm">📋 Políticas de Publicación</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Conoce las normas obligatorias sobre imágenes, descripciones y comunicación al publicar tus productos.
+                <div>
+                  <h4 className="font-heading font-bold text-xs mb-1">Paga solo a {siteName}</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    No le pagues directamente al Dealer. Nosotros resguardamos tu dinero hasta que tengas el producto.
                   </p>
                 </div>
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm font-bold shrink-0"
+              </div>
+              <div className="bg-card border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 hover:border-amber-500/40 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="font-heading font-bold text-xs mb-1">¡Retira a tiempo!</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Tienes 3 días para buscar tu paquete. Pasado ese tiempo, el pago se libera automáticamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div>
+              <h2 className="text-sm font-heading font-bold text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-primary" />
+                Preguntas Frecuentes — Compradores
+              </h2>
+              <FAQAccordion faqs={buyerFaqs} prefix="buyer" searchQuery={searchQuery} />
+            </div>
+          </div>
+        )}
+
+        {/* ─── DEALER TAB ─── */}
+        {activeTab === "dealer" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Dealer Welcome Banner */}
+            <div className="bg-gradient-to-r from-primary/10 to-accent/5 border border-primary/20 rounded-xl p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                  <Zap className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-sm mb-1">Vende con confianza</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed text-justify">
+                    ¡Bienvenido a la comunidad de subastas! Tu éxito como dealer depende de una excelente reputación.
+                    Aquí encontrarás todo lo que necesitas saber para vender con confianza.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div>
+              <h2 className="text-sm font-heading font-bold text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-primary" />
+                Preguntas Frecuentes — Dealers
+              </h2>
+              <FAQAccordion faqs={dealerFaqs} prefix="dealer" searchQuery={searchQuery} />
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h2 className="text-sm font-heading font-bold text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-accent" />
+                Recursos para Dealers
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* Políticas de Publicación */}
+                <div
+                  className="bg-card border border-primary/20 rounded-xl p-5 cursor-pointer hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5"
                   onClick={() => window.open("/politicas-publicacion", "_blank")}
                 >
-                  <BookOpen className="h-4 w-4 mr-1.5" />
-                  Ver Políticas
-                </Button>
-              </CardContent>
-            </Card>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Eye className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-heading font-bold text-sm">Políticas de Publicación</p>
+                      <p className="text-[11px] text-muted-foreground">Normas sobre imágenes y descripciones</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                  </div>
+                </div>
 
-            {/* Download Manual */}
-            <Card className="border border-border rounded-sm">
-              <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 shrink-0">
-                  <Download className="h-6 w-6 text-accent" />
-                </div>
-                <div className="flex-1 text-center sm:text-left space-y-1">
-                  <h3 className="font-heading font-bold text-sm">📖 Manual del Dealer (PDF)</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Descarga nuestra guía completa con todas las reglas, procesos y mejores prácticas para vender en la plataforma.
-                  </p>
-                </div>
-                <Button
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-sm font-bold shrink-0"
+                {/* Manual del Dealer */}
+                <div
+                  className="bg-card border border-accent/20 rounded-xl p-5 cursor-pointer hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5 transition-all group hover:-translate-y-0.5"
                   onClick={() => window.open("/manual-dealer.pdf", "_blank")}
                 >
-                  <Download className="h-4 w-4 mr-1.5" />
-                  Descargar PDF
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Contact Support */}
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 rounded-sm overflow-hidden">
-          <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <HelpCircle className="h-7 w-7 text-primary dark:text-white" />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
+                      <Download className="h-5 w-5 text-accent" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-heading font-bold text-sm">Manual del Dealer</p>
+                      <p className="text-[11px] text-muted-foreground">Guía completa en PDF</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 group-hover:text-accent transition-all" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5 max-w-md">
-              <h3 className="font-heading font-bold text-base">¿Necesitas más ayuda?</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Nuestro equipo de soporte está listo para asistirte. Escríbenos y te responderemos lo antes posible.
-              </p>
-            </div>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm font-bold px-8 h-11 text-sm gap-2"
-              onClick={() => window.location.href = "/contacto"}
-            >
-              <HelpCircle className="h-4 w-4" />
-              Contactar a Soporte
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
-        <div className="pb-6" />
+        {/* ─── CONTACT SUPPORT CTA ─── */}
+        <div className="mt-10 relative rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(132,204,22,0.08),transparent_70%)]" />
+          <div className="relative z-10 p-6 sm:p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="h-7 w-7 text-primary dark:text-[#A6E300]" />
+            </div>
+            <h3 className="font-heading font-bold text-lg mb-1.5">¿Necesitas más ayuda?</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto mb-5">
+              Nuestro equipo de soporte está listo para asistirte. Escríbenos y te responderemos lo antes posible.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold px-8 h-11 text-sm gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                onClick={() => window.location.href = "/contacto"}
+              >
+                <Headphones className="h-4 w-4" />
+                Contactar Soporte
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl font-bold px-6 h-11 text-sm gap-2 border-border hover:border-primary/30 transition-all"
+                onClick={() => window.location.href = "/mi-panel"}
+              >
+                <HelpCircle className="h-4 w-4" />
+                Ir a Mi Panel
+              </Button>
+            </div>
+          </div>
+        </div>
+
       </main>
-      <Footer />
+      <div className="hidden sm:block"><Footer /></div>
+      <div className="sm:hidden h-14" />
+      <BottomNav />
     </div>
   );
 };
