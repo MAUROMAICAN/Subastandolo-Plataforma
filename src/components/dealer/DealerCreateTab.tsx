@@ -6,8 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Upload, AlertTriangle, Headphones, Copy } from "lucide-react";
 
 interface Props {
@@ -222,18 +220,14 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
   return (
     <div className="space-y-6">
       {/* ── HEADER ── */}
-      <div className="relative rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(132,204,22,0.12),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(250,204,21,0.08),transparent_50%)]" />
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
-        <div className="relative z-10 p-5 sm:p-7">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="p-5 sm:p-7">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
               <Plus className="h-5 w-5 text-primary dark:text-[#A6E300]" />
             </div>
             <div>
-              <h2 className="text-lg font-heading font-black text-white">Publicar Producto</h2>
+              <h2 className="text-lg font-heading font-black text-foreground">Publicar Producto</h2>
               {isGoldPlus && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 mt-0.5">
                   ⚡ Publicación Directa
@@ -241,7 +235,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
               )}
             </div>
           </div>
-          <p className="text-xs text-white/40 leading-relaxed max-w-2xl">
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
             {isGoldPlus
               ? "Como dealer de nivel Oro o superior, tus subastas se publican directamente sin necesidad de revisión."
               : "Tu producto será revisado por un administrador antes de ser publicado."
@@ -253,6 +247,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           </p>
         </div>
       </div>
+
 
       {/* Duplicate warning */}
       {isDuplicate && (

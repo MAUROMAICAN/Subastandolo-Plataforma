@@ -154,22 +154,19 @@ export default function DealerAuctionsTab({
       )}
 
       {/* ── HEADER ── */}
-      <div className="relative rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(132,204,22,0.10),transparent_50%)]" />
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
-        <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-heading font-black text-white flex items-center gap-2">
+            <h2 className="text-lg font-heading font-black text-foreground flex items-center gap-2">
               <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mis Subastas
             </h2>
-            <p className="text-xs text-white/40 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {auctions.filter(a => a.status === "active").length} activas · {auctions.filter(a => a.status === "pending").length} pendientes · {auctions.filter(a => a.status === "finalized").length} finalizadas
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-bold text-white/70">
+          <Badge variant="outline" className="text-[11px] font-bold">
             {auctions.length} subastas
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -304,11 +301,11 @@ export default function DealerAuctionsTab({
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="border-t border-border p-4 sm:p-5 space-y-3">
+                  <div className="border-t border-border p-4 sm:p-5 space-y-3 bg-card">
                     {/* Photos gallery */}
                     {auction.images.length > 0 && (
-                      <div className="bg-secondary/30 border border-border rounded-xl p-3">
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">📷 Fotos ({auction.images.length})</p>
+                      <div className="bg-secondary/50 border border-border rounded-xl p-3">
+                        <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-2">📷 Fotos ({auction.images.length})</p>
                         <div className="flex gap-2 overflow-x-auto pb-1">
                           {auction.images.map((img, i) => (
                             <div key={img.id} className="relative shrink-0">
@@ -322,25 +319,25 @@ export default function DealerAuctionsTab({
 
                     {/* Description */}
                     {auction.description && (
-                      <div className="bg-secondary/30 border border-border rounded-xl p-3">
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">📝 Descripción</p>
-                        <p className="text-xs text-foreground/80 leading-relaxed max-h-32 overflow-y-auto pr-2">{auction.description}</p>
+                      <div className="bg-secondary/50 border border-border rounded-xl p-3">
+                        <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-1.5">📝 Descripción</p>
+                        <p className="text-xs text-foreground/70 leading-relaxed max-h-32 overflow-y-auto pr-2">{auction.description}</p>
                       </div>
                     )}
 
                     {/* Admin notes */}
                     {auction.admin_notes && (
                       <div className="bg-warning/5 border border-warning/20 rounded-xl p-3">
-                        <p className="text-[11px] font-bold text-warning uppercase tracking-wider mb-1">📋 Notas del Administrador</p>
+                        <p className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-1">📋 Notas del Administrador</p>
                         <p className="text-xs text-muted-foreground">{auction.admin_notes}</p>
                       </div>
                     )}
 
                     {/* Active timer */}
                     {auction.status === "active" && (
-                      <div className="bg-secondary/30 border border-border rounded-xl p-3 flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">⏰ Finalización</span>
-                        <span className="text-xs font-bold">
+                      <div className="bg-secondary/50 border border-border rounded-xl p-3 flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider">⏰ Finalización</span>
+                        <span className="text-xs font-bold text-foreground">
                           {new Date(auction.end_time).toLocaleString("es-MX")}
                           {isEnded && <span className="text-destructive ml-2">— FINALIZADA</span>}
                         </span>
@@ -349,9 +346,9 @@ export default function DealerAuctionsTab({
 
                     {/* Bids table */}
                     {auction.bids.length > 0 && (
-                      <div className="bg-secondary/30 border border-border rounded-xl overflow-hidden">
+                      <div className="bg-secondary/50 border border-border rounded-xl overflow-hidden">
                         <div className="px-3 py-2 border-b border-border">
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">🏷️ Pujas ({auction.bids.length})</p>
+                          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider">🏷️ Pujas ({auction.bids.length})</p>
                         </div>
                         <div className="max-h-48 overflow-y-auto">
                           <table className="w-full text-xs">
