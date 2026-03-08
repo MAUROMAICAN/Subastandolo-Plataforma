@@ -593,9 +593,9 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                       <p className="text-[10px] text-muted-foreground">Ingresos</p>
                       <p className="text-xs font-bold">${dealer.total_revenue.toFixed(2)}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-muted-foreground">Por Pagar</p>
-                      <p className={`text-xs font-bold ${dealer.pending_balance > 0 ? "text-warning" : "text-primary dark:text-accent"}`}>
+                    <div className={`text-right px-3 py-1.5 rounded-sm ${dealer.pending_balance > 0 ? "bg-warning/10 border border-warning/20" : "bg-primary/5 border border-primary/10"}`}>
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
+                      <p className={`text-sm font-bold ${dealer.pending_balance > 0 ? "text-warning" : "text-primary dark:text-accent"}`}>
                         ${dealer.pending_balance.toFixed(2)}
                       </p>
                     </div>
