@@ -181,10 +181,10 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       supabase.from("platform_earnings").select("*").order("created_at", { ascending: false }),
       supabase.from("withdrawal_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("dealer_bank_accounts").select("*"),
-      supabase.from("auctions").select("id, title, operation_number, funds_released_at, payment_status, current_price"),
+      supabase.from("auctions").select("id, title, operation_number, funds_released_at, payment_status, current_price, created_by"),
       supabase.from("payment_proofs").select("auction_id, bcv_rate, amount_bs, amount_usd, status").eq("status", "approved"),
       supabase.from("site_settings").select("setting_value").eq("setting_key", "bcv_rate").single(),
-      supabase.from("profiles").select("id, avatar_url"),
+      supabase.from("profiles").select("id, avatar_url, full_name"),
       supabase.from("dealer_payments").select("*").order("created_at", { ascending: false }),
       supabase.from("dealer_payment_items").select("*"),
     ]);
@@ -195,18 +195,18 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
     const banks = bankRes.data || [];
     const proofs = proofsRes.data || [];
     const currentBcvRate = Number(bcvSettingRes.data?.setting_value || 0);
-    const auctionMap: Record<string, { title: string; operation_number: string | null; funds_released: boolean; payment_status: string; current_price: number }> = {};
+    const auctionMap: Record<string, { title: string; operation_number: string | null; funds_released: boolean; payment_status: string; current_price: number; created_by: string }> = {};
     (auctionsRes.data || []).forEach((a: any) => {
-      auctionMap[a.id] = { title: a.title, operation_number: a.operation_number, funds_released: !!a.funds_released_at, payment_status: a.payment_status, current_price: Number(a.current_price) };
+      auctionMap[a.id] = { title: a.title, operation_number: a.operation_number, funds_released: !!a.funds_released_at, payment_status: a.payment_status, current_price: Number(a.current_price), created_by: a.created_by };
     });
 
     // Map auction_id -> payment proof info (bcv_rate, amount_bs)
     const proofMap: Record<string, { bcv_rate: number; amount_bs: number }> = {};
     proofs.forEach((p: any) => { proofMap[p.auction_id] = { bcv_rate: Number(p.bcv_rate), amount_bs: Number(p.amount_bs) }; });
 
-    // Map user_id -> avatar_url
-    const avatarMap: Record<string, string | null> = {};
-    (profilesRes.data || []).forEach((p: any) => { avatarMap[p.id] = p.avatar_url; });
+    // Map user_id -> profile info (avatar + full_name)
+    const profileMap: Record<string, { avatar_url: string | null; full_name: string }> = {};
+    (profilesRes.data || []).forEach((p: any) => { profileMap[p.id] = { avatar_url: p.avatar_url, full_name: p.full_name || "Sin nombre" }; });
 
     // Map dealer_id -> payments with items
     const allPayments = (paymentsRes as any).data || [];
@@ -217,33 +217,54 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       paymentItemsByPayment[pi.payment_id].push({ earning_id: pi.earning_id, amount: Number(pi.amount) });
     });
 
-    const dealerData: DealerSalesData[] = dealerList.map((d: any) => {
-      const dealerEarnings = earnings.filter((e: any) => e.dealer_id === d.user_id);
-      const dealerWithdrawals = withdrawals.filter((w: any) => w.dealer_id === d.user_id);
-      const bankAccount = banks.find((b: any) => b.user_id === d.user_id);
+    // ── Merge dealer sources: dealer_verification + platform_earnings + auction creators ──
+    const dealerIdSet = new Set<string>();
+    // 1. From dealer_verification (approved)
+    dealerList.forEach((d: any) => dealerIdSet.add(d.user_id));
+    // 2. From platform_earnings (any dealer with earnings)
+    earnings.forEach((e: any) => { if (e.dealer_id) dealerIdSet.add(e.dealer_id); });
+    // 3. From auctions with winners (creators = dealers who sold)
+    Object.values(auctionMap).forEach((a: any) => {
+      if (a.created_by) dealerIdSet.add(a.created_by);
+    });
+
+    // Build dealer verification lookup
+    const dealerVerifMap: Record<string, any> = {};
+    dealerList.forEach((d: any) => { dealerVerifMap[d.user_id] = d; });
+
+    const dealerData: DealerSalesData[] = Array.from(dealerIdSet).map((dealerId) => {
+      const verif = dealerVerifMap[dealerId];
+      const profile = profileMap[dealerId];
+      const dealerEarnings = earnings.filter((e: any) => e.dealer_id === dealerId);
+      const dealerWithdrawals = withdrawals.filter((w: any) => w.dealer_id === dealerId);
+      const bankAccount = banks.find((b: any) => b.user_id === dealerId);
       const totalPaid = dealerWithdrawals.filter((w: any) => w.status === "approved").reduce((acc: number, w: any) => acc + Number(w.amount), 0);
 
+      // Use dealer_verification data if available, otherwise fallback to profile
+      const dealerName = verif?.full_name || verif?.business_name || profile?.full_name || "Dealer";
+      const businessName = verif?.business_name || profile?.full_name || "—";
+      const dealerBalance = verif ? Number(verif.dealer_balance) || 0 : 0;
+      const accountStatus = verif?.account_status || "active";
+
       return {
-        dealer_id: d.user_id,
-        dealer_name: d.full_name || d.business_name,
-        business_name: d.business_name,
-        avatar_url: avatarMap[d.user_id] || null,
-        dealer_balance: Number(d.dealer_balance) || 0,
-        account_status: d.account_status,
+        dealer_id: dealerId,
+        dealer_name: dealerName,
+        business_name: businessName,
+        avatar_url: profile?.avatar_url || null,
+        dealer_balance: dealerBalance,
+        account_status: accountStatus,
         total_sales: dealerEarnings.length,
         total_revenue: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.sale_amount), 0),
         total_commission: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.commission_amount), 0),
         total_dealer_net: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.dealer_net), 0),
         total_paid: totalPaid,
-        pending_balance: Number(d.dealer_balance) || 0,
+        pending_balance: dealerBalance,
         sales: dealerEarnings.map((e: any) => {
           const proof = proofMap[e.auction_id];
           const auctionInfo = auctionMap[e.auction_id];
           const saleAmount = Number(e.sale_amount);
-          // Use proof data if available, otherwise calculate from current BCV rate
           const bcvRate = proof?.bcv_rate || (currentBcvRate > 0 ? currentBcvRate : null);
           const amountBs = proof?.amount_bs || (bcvRate ? saleAmount * bcvRate : null);
-          // Use manual is_paid from platform_earnings only
           const isPaid = !!e.is_paid;
           return {
             earning_id: e.id,
@@ -269,7 +290,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
           processed_at: w.processed_at,
           admin_notes: w.admin_notes,
         })),
-        payments: allPayments.filter((p: any) => p.dealer_id === d.user_id).map((p: any) => ({
+        payments: allPayments.filter((p: any) => p.dealer_id === dealerId).map((p: any) => ({
           id: p.id,
           total_amount: Number(p.total_amount),
           payment_method: p.payment_method,
