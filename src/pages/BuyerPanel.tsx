@@ -1196,6 +1196,7 @@ const BuyerPanel = () => {
 
   // Overview
   const openDisputes = disputes.filter(d => d.status === "open" || d.status === "mediation").length;
+  const pendingPayments = wonAuctions.filter(a => a.payment_status === "pending").length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -1211,11 +1212,13 @@ const BuyerPanel = () => {
           <span className="text-foreground">Mi Panel</span>
         </div>
 
-        {/* Welcome header with buyer badge */}
-        <div className="bg-card border border-border rounded-sm p-4 sm:p-6 mb-6 overflow-hidden">
+        {/* Welcome header with gradient accent */}
+        <div className="bg-card border border-border rounded-sm overflow-hidden mb-6 relative">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+
           {/* Mobile: compact layout */}
-          <div className="flex items-center gap-3 sm:hidden">
-            <Avatar className="h-14 w-14 border-2 border-border shadow-sm shrink-0">
+          <div className="flex items-center gap-3 sm:hidden p-4 pt-5">
+            <Avatar className="h-14 w-14 border-2 border-primary/20 shadow-sm shrink-0">
               {(profile as any)?.avatar_url && <AvatarImage src={(profile as any).avatar_url} alt={profile?.full_name || ""} className="object-cover" />}
               <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                 {(profile?.full_name || "U").charAt(0).toUpperCase()}
@@ -1237,7 +1240,7 @@ const BuyerPanel = () => {
           </div>
 
           {/* Desktop: full layout with avatar upload */}
-          <div className="hidden sm:flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4 p-4 sm:p-6 pt-5 sm:pt-7">
             <ProfileAvatarUpload
               avatarUrl={(profile as any)?.avatar_url || null}
               userName={profile?.full_name || "Usuario"}
@@ -1262,7 +1265,7 @@ const BuyerPanel = () => {
           </div>
 
           {/* Buyer reputation bar */}
-          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border flex items-center gap-2 sm:gap-4 flex-wrap">
+          <div className="px-4 sm:px-6 pb-4 sm:pb-5 pt-0 flex items-center gap-2 sm:gap-4 flex-wrap">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Star className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-amber-400" />
               <span className="text-[10px] sm:text-xs font-semibold">Mi Reputación</span>
@@ -1278,179 +1281,226 @@ const BuyerPanel = () => {
           </div>
         </div>
 
-        {/* Action cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {/* Mis Compras */}
-          <Card
-            className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary transition-colors group bg-primary/5 dark:bg-[#A6E300]/5"
-            onClick={() => setView("purchases")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/15 dark:bg-[#A6E300]/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 dark:group-hover:bg-[#A6E300]/25 transition-colors">
-                <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: "Compras", value: wonAuctions.length + storeOrders.length, icon: Package, color: "text-primary dark:text-accent", onClick: () => setView("purchases"), highlight: pendingPayments > 0 },
+            { label: "Favoritos", value: favoriteAuctions.length, icon: Heart, color: "text-red-500 dark:text-accent", onClick: () => setView("favoritos") },
+            { label: "Dealers", value: followedDealers.length, icon: Users, color: "text-blue-500 dark:text-accent", onClick: () => setView("dealers") },
+            { label: "Disputas", value: openDisputes, icon: Shield, color: openDisputes > 0 ? "text-amber-500" : "text-emerald-500 dark:text-accent", onClick: () => setView("disputes"), highlight: openDisputes > 0 },
+          ].map((stat, idx) => (
+            <button
+              key={idx}
+              onClick={stat.onClick}
+              className={`border rounded-sm text-left transition-all p-3 hover:border-primary/30 hover:bg-secondary/30 ${stat.highlight ? "border-amber-400/40 bg-amber-500/5" : "border-border"}`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{stat.label}</span>
               </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mis Compras</p>
-                <p className="text-xs text-muted-foreground">
-                  {loadingAuctions ? "Cargando..." : wonAuctions.length > 0 ? `${wonAuctions.length} subasta${wonAuctions.length !== 1 ? "s" : ""} ganada${wonAuctions.length !== 1 ? "s" : ""}` : "Ver tus subastas ganadas"}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-primary dark:text-[#A6E300] ml-auto shrink-0" />
-            </CardContent>
-          </Card>
+              <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.value}</p>
+            </button>
+          ))}
+        </div>
 
-          {/* Mis Direcciones */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("addresses")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <MapPin className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mis Direcciones</p>
-                <p className="text-xs text-muted-foreground">
-                  {(profile as any)?.city && (profile as any)?.state
-                    ? `${(profile as any).city}, ${(profile as any).state}`
-                    : "Configura tu dirección de envío"}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
+        {/* Pending Payment Alert */}
+        {pendingPayments > 0 && (
+          <div className="mb-6 p-3 bg-amber-500/10 border border-amber-400/30 rounded-sm flex items-center gap-3 cursor-pointer hover:bg-amber-500/15 transition-colors" onClick={() => setView("purchases")}>
+            <div className="h-9 w-9 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+              <CreditCard className="h-4 w-4 text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-amber-600 dark:text-amber-400">{pendingPayments} pago{pendingPayments !== 1 ? "s" : ""} pendiente{pendingPayments !== 1 ? "s" : ""}</p>
+              <p className="text-[10px] text-muted-foreground">Sube tu comprobante para completar la compra</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-amber-500 shrink-0" />
+          </div>
+        )}
 
-          {/* Disputes */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("disputes")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Shield className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mis Disputas</p>
-                <p className="text-xs text-muted-foreground">
-                  {openDisputes > 0 ? `${openDisputes} disputa(s) activa(s)` : "Sin disputas activas"}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
-
-          {/* Mis Favoritos */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("favoritos")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Heart className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mis Favoritos</p>
-                <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                  {favoriteAuctions.length > 0 ? `${favoriteAuctions.length} subasta${favoriteAuctions.length !== 1 ? "s" : ""} guardada${favoriteAuctions.length !== 1 ? "s" : ""}` : "Guarda tus subastas favoritas"}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
-
-          {/* Mis Dealers */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("dealers")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Users className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Mis Dealers</p>
-                <p className="text-xs text-muted-foreground">
-                  {followedDealers.length > 0 ? `${followedDealers.length} dealer${followedDealers.length !== 1 ? "s" : ""} favorito${followedDealers.length !== 1 ? "s" : ""}` : "Sigue tus dealers favoritos"}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
-
-          {/* Ser Dealer */}
-          {!isDealer && !isAdmin && (
+        {/* Primary Action Cards */}
+        <div className="mb-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+            <Package className="h-3 w-3" /> Actividad
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Mis Compras */}
             <Card
-              className="border border-accent/40 rounded-sm cursor-pointer hover:border-accent transition-colors group bg-accent/5"
-              onClick={() => navigate("/dealer/apply")}
+              className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary hover:shadow-md transition-all group bg-primary/5 dark:bg-[#A6E300]/5 hover:scale-[1.01]"
+              onClick={() => setView("purchases")}
             >
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-                  <Store className="h-5 w-5 text-accent" />
+                <div className="h-11 w-11 rounded-sm bg-primary/15 dark:bg-[#A6E300]/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 dark:group-hover:bg-[#A6E300]/25 transition-colors">
+                  <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm text-accent">Ser Dealer</p>
-                  <p className="text-xs text-muted-foreground">Vende tus productos en subastas</p>
+                  <p className="font-heading font-bold text-sm">Mis Compras</p>
+                  <p className="text-xs text-muted-foreground">
+                    {loadingAuctions ? "Cargando..." : wonAuctions.length > 0 ? `${wonAuctions.length} subasta${wonAuctions.length !== 1 ? "s" : ""} ganada${wonAuctions.length !== 1 ? "s" : ""}` : "Ver tus subastas ganadas"}
+                  </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-accent ml-auto shrink-0" />
+                <ChevronRight className="h-4 w-4 text-primary dark:text-[#A6E300] ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
               </CardContent>
             </Card>
-          )}
 
-          {/* Soporte */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => navigate("/contacto")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Headphones className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Soporte y Ayuda</p>
-                <p className="text-xs text-muted-foreground">Crea tickets y recibe asistencia</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
-
-
-
-          {/* Perfil */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("profile")}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4 mb-3">
-                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+            {/* Mis Favoritos */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => setView("favoritos")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-11 w-11 rounded-sm bg-red-500/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Heart className="h-5 w-5 text-red-500 dark:text-[#A6E300]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mi Perfil</p>
-                  <p className="text-xs text-muted-foreground">Datos personales y verificación</p>
+                  <p className="font-heading font-bold text-sm">Mis Favoritos</p>
+                  <p className="text-xs text-muted-foreground">
+                    {favoriteAuctions.length > 0 ? `${favoriteAuctions.length} subasta${favoriteAuctions.length !== 1 ? "s" : ""} guardada${favoriteAuctions.length !== 1 ? "s" : ""}` : "Guarda tus subastas favoritas"}
+                  </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-              </div>
-              <ProfileCompletionBar profile={profile as any} compact onGoToProfile={() => setView("profile")} />
-            </CardContent>
-          </Card>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
 
-          {/* Seguridad */}
-          <Card
-            className="border border-border rounded-sm cursor-pointer hover:border-primary/30 transition-colors group"
-            onClick={() => setView("security")}
-          >
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                <Lock className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-heading font-bold text-sm">Seguridad</p>
-                <p className="text-xs text-muted-foreground">Contraseña y acceso</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </CardContent>
-          </Card>
+            {/* Mis Dealers */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => setView("dealers")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-11 w-11 rounded-sm bg-blue-500/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Users className="h-5 w-5 text-blue-500 dark:text-[#A6E300]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Mis Dealers</p>
+                  <p className="text-xs text-muted-foreground">
+                    {followedDealers.length > 0 ? `${followedDealers.length} dealer${followedDealers.length !== 1 ? "s" : ""} favorito${followedDealers.length !== 1 ? "s" : ""}` : "Sigue tus dealers favoritos"}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Secondary Action Cards */}
+        <div className="mb-6">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
+            <Shield className="h-3 w-3" /> Cuenta y Soporte
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Mis Direcciones */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => setView("addresses")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <MapPin className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Mis Direcciones</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(profile as any)?.city && (profile as any)?.state
+                      ? `${(profile as any).city}, ${(profile as any).state}`
+                      : "Configura tu dirección de envío"}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
+
+            {/* Disputes */}
+            <Card
+              className={`border rounded-sm cursor-pointer hover:shadow-md transition-all group hover:scale-[1.01] ${openDisputes > 0 ? "border-amber-400/30 bg-amber-500/5" : "border-border hover:border-primary/30"}`}
+              onClick={() => setView("disputes")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className={`h-11 w-11 rounded-sm flex items-center justify-center shrink-0 transition-colors ${openDisputes > 0 ? "bg-amber-500/15 group-hover:bg-amber-500/25" : "bg-primary/10 dark:bg-[#A6E300]/10 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20"}`}>
+                  <Shield className={`h-5 w-5 ${openDisputes > 0 ? "text-amber-500" : "text-primary dark:text-[#A6E300]"}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Mis Disputas</p>
+                  <p className="text-xs text-muted-foreground">
+                    {openDisputes > 0 ? `${openDisputes} disputa(s) activa(s)` : "Sin disputas activas"}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
+
+            {/* Soporte */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => navigate("/contacto")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Headphones className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Soporte y Ayuda</p>
+                  <p className="text-xs text-muted-foreground">Crea tickets y recibe asistencia</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
+
+            {/* Perfil */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => setView("profile")}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                    <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-heading font-bold text-sm">Mi Perfil</p>
+                    <p className="text-xs text-muted-foreground">Datos personales y verificación</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+                <ProfileCompletionBar profile={profile as any} compact onGoToProfile={() => setView("profile")} />
+              </CardContent>
+            </Card>
+
+            {/* Seguridad */}
+            <Card
+              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+              onClick={() => setView("security")}
+            >
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Lock className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-sm">Seguridad</p>
+                  <p className="text-xs text-muted-foreground">Contraseña y acceso</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              </CardContent>
+            </Card>
+
+            {/* Ser Dealer */}
+            {!isDealer && !isAdmin && (
+              <Card
+                className="border border-accent/40 rounded-sm cursor-pointer hover:border-accent hover:shadow-md transition-all group bg-accent/5 hover:scale-[1.01]"
+                onClick={() => navigate("/dealer/apply")}
+              >
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className="h-11 w-11 rounded-sm bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
+                    <Store className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-heading font-bold text-sm text-accent">Ser Dealer</p>
+                    <p className="text-xs text-muted-foreground">Vende tus productos en subastas</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-accent ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
         {/* Favorites section */}
