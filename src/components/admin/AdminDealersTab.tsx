@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -11,8 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings, Loader2,
+  Users, ShieldCheck, Clock, UserCheck
+} from "lucide-react";
 import { DEALER_TIERS } from "@/components/VerifiedBadge";
 
 interface Props {
@@ -39,6 +42,56 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
   const [rejectionDialogApp, setRejectionDialogApp] = useState<{ appId: string; userId: string } | null>(null);
   const [selectedRejectionReason, setSelectedRejectionReason] = useState("");
   const [customRejectionNote, setCustomRejectionNote] = useState("");
+
+  // Extra dealers from user_roles not in dealer_verification
+  const [extraDealers, setExtraDealers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchExtraDealers();
+  }, [dealerApps]);
+
+  const fetchExtraDealers = async () => {
+    // Get all users with dealer role
+    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "dealer");
+    if (!roles || roles.length === 0) { setExtraDealers([]); return; }
+
+    // Find which ones are NOT in dealerApps
+    const verifUserIds = new Set(dealerApps.map((a: any) => a.user_id));
+    const missingIds = roles.map((r: any) => r.user_id).filter(id => !verifUserIds.has(id));
+
+    if (missingIds.length === 0) { setExtraDealers([]); return; }
+
+    // Get their profiles
+    const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url, phone").in("id", missingIds);
+    const profileMap: Record<string, any> = {};
+    (profiles || []).forEach((p: any) => { profileMap[p.id] = p; });
+
+    const extras = missingIds.map(id => {
+      const p = profileMap[id];
+      return {
+        id: `role_${id}`,
+        user_id: id,
+        full_name: p?.full_name || "Dealer",
+        business_name: p?.full_name || "—",
+        phone: p?.phone || "—",
+        avatar_url: p?.avatar_url || null,
+        status: "role_only",
+        created_at: new Date().toISOString(),
+      };
+    });
+    setExtraDealers(extras);
+  };
+
+  // Merge dealer_verification apps + role-only dealers
+  const allDealers = [...dealerApps, ...extraDealers];
+
+  const stats = {
+    total: allDealers.length,
+    pending: dealerApps.filter((a: any) => a.status === "pending").length,
+    approved: dealerApps.filter((a: any) => a.status === "approved").length,
+    rejected: dealerApps.filter((a: any) => a.status === "rejected").length,
+    roleOnly: extraDealers.length,
+  };
 
   const handleDealerAction = async (appId: string, action: "approved" | "rejected", userId: string) => {
     if (action === "rejected") {
@@ -78,57 +131,111 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
     fetchAllData();
   };
 
+  const getStatusBadge = (status: string) => {
+    if (status === "approved") return { label: "Verificado", color: "bg-primary/15 text-primary dark:text-accent", icon: "✓" };
+    if (status === "rejected") return { label: "Rechazado", color: "bg-destructive/15 text-destructive", icon: "✗" };
+    if (status === "role_only") return { label: "Activo (sin KYC)", color: "bg-warning/15 text-warning", icon: "⚡" };
+    return { label: "Pendiente", color: "bg-warning/20 text-warning", icon: "⏳" };
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Eye className="h-5 w-5 text-primary dark:text-accent" /> Verificación de Dealers</h1>
+          <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Eye className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Dealers</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {dealerApps.filter(a => a.status === "pending").length} pendientes · {dealerApps.filter(a => a.status === "approved").length} aprobados · {dealerApps.filter(a => a.status === "rejected").length} rechazados
+            {stats.pending} pendientes · {stats.approved} verificados · {stats.roleOnly} activos sin KYC · {stats.rejected} rechazados
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">{dealerApps.length} registros</Badge>
+        <Badge variant="outline" className="text-xs">{stats.total} dealers</Badge>
       </div>
-      <Card className="border border-border rounded-md overflow-hidden">
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Dealers", value: stats.total, icon: Users, color: "text-primary dark:text-accent" },
+          { label: "Verificados", value: stats.approved, icon: ShieldCheck, color: "text-primary dark:text-accent" },
+          { label: "Pendientes KYC", value: stats.pending, icon: Clock, color: "text-warning" },
+          { label: "Activos sin KYC", value: stats.roleOnly, icon: UserCheck, color: "text-muted-foreground" },
+        ].map((s, idx) => (
+          <Card key={idx} className="border border-border rounded-sm">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{s.label}</span>
+              </div>
+              <p className={`text-lg font-heading font-bold ${s.color}`}>{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border border-border rounded-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-secondary/50 border-b border-border">
                 <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Dealer</th>
                 <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Teléfono</th>
-                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Verificación</th>
+                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Estado</th>
                 <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {dealerApps.map((app: any) => (
-                <tr key={app.id} className="hover:bg-secondary/20">
-                  <td className="px-4 py-3"><p className="font-medium">{app.full_name || app.business_name}</p><p className="text-muted-foreground text-[10px]">{app.business_name}</p></td>
-                  <td className="px-4 py-3 hidden sm:table-cell">{app.phone}</td>
-                  <td className="px-4 py-3 text-center">
-                    <Badge className={`text-[10px] border-0 ${app.status === "approved" ? "bg-primary/15 text-primary dark:text-accent" : app.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
-                      {app.status === "approved" ? "Aprobado" : app.status === "rejected" ? "Rechazado" : "Pendiente"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <Button size="sm" variant="outline" className="text-[10px] h-7 px-2 rounded-sm" onClick={async () => {
-                        setSelectedDealer(app);
-                        const docs = [{ key: "selfie", path: app.selfie_url }, { key: "cedula_front", path: app.cedula_front_url }, { key: "cedula_back", path: app.cedula_back_url }, { key: "address_proof", path: app.address_proof_url }].filter(d => d.path);
-                        const urls: Record<string, string> = {};
-                        await Promise.all(docs.map(async (doc) => { const { data } = await supabase.storage.from("dealer-documents").createSignedUrl(doc.path, 600); if (data?.signedUrl) urls[doc.key] = data.signedUrl; }));
-                        setDealerDocUrls(urls);
-                      }}><Eye className="h-3 w-3 mr-1" />Ver</Button>
-                      {app.status === "pending" && (
-                        <>
-                          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-[10px] h-7 px-2" onClick={() => handleDealerAction(app.id, "approved", app.user_id)} disabled={processingApp === app.id}><CheckCircle className="h-3 w-3" /></Button>
-                          <Button size="sm" variant="outline" className="text-destructive border-destructive/30 rounded-sm text-[10px] h-7 px-2" onClick={() => handleDealerAction(app.id, "rejected", app.user_id)} disabled={processingApp === app.id}><XCircle className="h-3 w-3" /></Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
+              {allDealers.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-8 text-muted-foreground">No hay dealers registrados</td>
                 </tr>
-              ))}
+              )}
+              {allDealers.map((app: any) => {
+                const badge = getStatusBadge(app.status);
+                return (
+                  <tr key={app.id} className="hover:bg-secondary/20">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          {app.avatar_url && <AvatarImage src={app.avatar_url} alt={app.full_name} className="object-cover" />}
+                          <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary dark:text-accent">
+                            {(app.full_name || app.business_name || "D").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{app.full_name || app.business_name}</p>
+                          <p className="text-muted-foreground text-[10px]">{app.business_name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{app.phone}</td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge className={`text-[10px] border-0 ${badge.color}`}>
+                        {badge.icon} {badge.label}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        {app.status !== "role_only" && (
+                          <Button size="sm" variant="outline" className="text-[10px] h-7 px-2 rounded-sm" onClick={async () => {
+                            setSelectedDealer(app);
+                            const docs = [{ key: "selfie", path: app.selfie_url }, { key: "cedula_front", path: app.cedula_front_url }, { key: "cedula_back", path: app.cedula_back_url }, { key: "address_proof", path: app.address_proof_url }].filter(d => d.path);
+                            const urls: Record<string, string> = {};
+                            await Promise.all(docs.map(async (doc) => { const { data } = await supabase.storage.from("dealer-documents").createSignedUrl(doc.path, 600); if (data?.signedUrl) urls[doc.key] = data.signedUrl; }));
+                            setDealerDocUrls(urls);
+                          }}><Eye className="h-3 w-3 mr-1" />Ver</Button>
+                        )}
+                        {app.status === "pending" && (
+                          <>
+                            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-[10px] h-7 px-2" onClick={() => handleDealerAction(app.id, "approved", app.user_id)} disabled={processingApp === app.id}><CheckCircle className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="outline" className="text-destructive border-destructive/30 rounded-sm text-[10px] h-7 px-2" onClick={() => handleDealerAction(app.id, "rejected", app.user_id)} disabled={processingApp === app.id}><XCircle className="h-3 w-3" /></Button>
+                          </>
+                        )}
+                        {app.status === "role_only" && (
+                          <Badge variant="outline" className="text-[9px]">Solo rol</Badge>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -165,24 +272,26 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                   <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Cédula</p><p className="text-sm font-medium">{selectedDealer.cedula_number || "No registrada"}</p></div>
                   <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Fecha</p><p className="text-sm font-medium">{new Date(selectedDealer.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</p></div>
                   <div className="bg-secondary/30 rounded-md p-3"><p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wider mb-1">Estado</p>
-                    <Badge className={`text-[10px] border-0 ${selectedDealer.status === "approved" ? "bg-primary/15 text-primary dark:text-accent" : selectedDealer.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-warning/20 text-warning"}`}>
-                      {selectedDealer.status === "approved" ? "Aprobado" : selectedDealer.status === "rejected" ? "Rechazado" : "Pendiente"}
+                    <Badge className={`text-[10px] border-0 ${getStatusBadge(selectedDealer.status).color}`}>
+                      {getStatusBadge(selectedDealer.status).icon} {getStatusBadge(selectedDealer.status).label}
                     </Badge>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-heading font-bold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary dark:text-accent" /> Documentos KYC</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[{ key: "selfie", label: "📸 Selfie" }, { key: "cedula_front", label: "🪪 Cédula (Frontal)" }, { key: "cedula_back", label: "🪪 Cédula (Reverso)" }, { key: "address_proof", label: "🏠 Comprobante" }].map(doc => (
-                      <div key={doc.key} className="border border-border rounded-md overflow-hidden">
-                        <div className="bg-secondary/30 px-3 py-2"><p className="text-[11px] font-semibold">{doc.label}</p></div>
-                        <div className="p-2 min-h-[140px] flex items-center justify-center bg-muted/30">
-                          {dealerDocUrls[doc.key] ? <img src={dealerDocUrls[doc.key]} alt={doc.label} className="max-h-[200px] w-full object-contain rounded-sm cursor-pointer" onClick={() => window.open(dealerDocUrls[doc.key], "_blank")} /> : <p className="text-xs text-muted-foreground">No proporcionado</p>}
+                {selectedDealer.status !== "role_only" && (
+                  <div>
+                    <h3 className="text-sm font-heading font-bold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary dark:text-accent" /> Documentos KYC</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[{ key: "selfie", label: "📸 Selfie" }, { key: "cedula_front", label: "🪪 Cédula (Frontal)" }, { key: "cedula_back", label: "🪪 Cédula (Reverso)" }, { key: "address_proof", label: "🏠 Comprobante" }].map(doc => (
+                        <div key={doc.key} className="border border-border rounded-md overflow-hidden">
+                          <div className="bg-secondary/30 px-3 py-2"><p className="text-[11px] font-semibold">{doc.label}</p></div>
+                          <div className="p-2 min-h-[140px] flex items-center justify-center bg-muted/30">
+                            {dealerDocUrls[doc.key] ? <img src={dealerDocUrls[doc.key]} alt={doc.label} className="max-h-[200px] w-full object-contain rounded-sm cursor-pointer" onClick={() => window.open(dealerDocUrls[doc.key], "_blank")} /> : <p className="text-xs text-muted-foreground">No proporcionado</p>}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 {selectedDealer.status === "pending" && (
                   <div className="flex gap-2 border-t border-border pt-4">
                     <Button size="sm" onClick={() => { handleDealerAction(selectedDealer.id, "approved", selectedDealer.user_id); setSelectedDealer(null); }} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm text-xs h-8 flex-1"><CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprobar</Button>
