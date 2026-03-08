@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle, Mail,
+  Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle, Mail, MailPlus,
   Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell, LogOut
 } from "lucide-react";
 import AdminBadge from "@/components/AdminBadge";
@@ -29,6 +29,7 @@ import AdminDealerSalesTab from "@/components/admin/AdminDealerSalesTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminNotificationsTab from "@/components/admin/AdminNotificationsTab";
 import AdminEmailsTab from "@/components/admin/AdminEmailsTab";
+import AdminMassEmailTab from "@/components/admin/AdminMassEmailTab";
 import type { AdminTab, AuctionExtended, WinnerInfo, BannerImage, DealerUser, Message, SiteSetting, SiteSection } from "@/components/admin/types";
 
 const Admin = () => {
@@ -337,6 +338,7 @@ const Admin = () => {
       items: [
         { key: "messages", label: "Mensajes", icon: MessageCircle, badge: newMessages || undefined, urgent: newMessages > 0 },
         { key: "emails", label: "Soporte & Correos", icon: Mail, badge: openTickets || undefined, urgent: openTickets > 0 },
+        { key: "mass_email", label: "Correo Masivo", icon: MailPlus },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
       ],
@@ -486,6 +488,7 @@ const Admin = () => {
             {activeTab === "reports" && <AdminReportsTab auctionReports={auctionReports} fetchAllData={fetchAllData} />}
             {activeTab === "campaigns" && <AdminCampaignsTab />}
             {activeTab === "notifications" && <AdminNotificationsTab />}
+            {activeTab === "mass_email" && <AdminMassEmailTab />}
             {activeTab === "users" && <UserManagementPanel allUsers={allUsers} onRefresh={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "team" && <TeamPanel />}
           </div>
