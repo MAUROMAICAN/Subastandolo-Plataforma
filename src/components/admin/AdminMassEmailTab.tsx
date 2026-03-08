@@ -20,15 +20,21 @@ function emailLayout(accentGradient: string, accentTextColor: string, emoji: str
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>:root { color-scheme: light only; } body { margin:0; padding:0; }</style>
+  <style>
+    :root { color-scheme: light only; }
+    body { margin:0; padding:0; }
+    .email-logo-header { background-color: #111827 !important; }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background:#f3f4f6;padding:32px 16px;">
     <tr><td align="center">
       <table width="100%" style="max-width:580px;" cellpadding="0" cellspacing="0">
         <tr>
-          <td bgcolor="#111827" style="background-color:#111827;padding:28px 32px;border-radius:12px 12px 0 0;text-align:center;">
-            <img src="${LOGO_URL}" alt="Subastandolo" width="160" style="width:160px;max-width:160px;height:auto;display:block;margin:0 auto;border:0;outline:0;" />
+          <td class="email-logo-header" bgcolor="#111827" style="background-color:#111827 !important;background:#111827 !important;padding:32px 32px;border-radius:12px 12px 0 0;text-align:center;">
+            <div style="background-color:#111827;padding:0;text-align:center;">
+              <img src="${LOGO_URL}" alt="Subastandolo" width="180" style="width:180px;max-width:180px;height:auto;display:block;margin:0 auto;border:0;outline:0;" />
+            </div>
           </td>
         </tr>
         <tr>
