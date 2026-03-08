@@ -56,6 +56,22 @@ export async function isAdmin(req: Request): Promise<boolean> {
     return (data && data.length > 0) || false;
 }
 
+/**
+ * Returns true if the caller is either the service role OR an admin user.
+ * Use for functions invoked from admin panel AND from other Edge Functions.
+ */
+export async function isServiceRoleOrAdmin(req: Request): Promise<boolean> {
+    return isServiceRole(req) || await isAdmin(req);
+}
+
+/**
+ * Returns true if the caller is either the service role OR any authenticated user.
+ * Use for functions invoked from client code (any logged-in user) AND from other Edge Functions.
+ */
+export async function isServiceRoleOrUser(req: Request): Promise<boolean> {
+    return isServiceRole(req) || (await getCallerUser(req)) !== null;
+}
+
 /** Standard 401 response */
 export function unauthorized(corsHeaders: Record<string, string>) {
     return new Response(

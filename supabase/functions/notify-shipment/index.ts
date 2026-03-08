@@ -9,9 +9,9 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // ── Auth guard: service role only ──
-  const { isServiceRole, unauthorized } = await import("../_shared/auth.ts");
-  if (!isServiceRole(req)) return unauthorized(corsHeaders);
+  // ── Auth guard: authenticated user or service role ──
+  const { isServiceRoleOrUser, unauthorized } = await import("../_shared/auth.ts");
+  if (!await isServiceRoleOrUser(req)) return unauthorized(corsHeaders);
 
   try {
     const { email, name, auctionTitle, auctionId, trackingNumber, shippingCompany, imageUrl } = await req.json();
