@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   MessageCircle, Send, Search, Loader2, Users, Mail, MailOpen,
-  MessagesSquare, Trash2, CheckCheck, Check
+  MessagesSquare, Trash2, CheckCheck, Check, UserPlus
 } from "lucide-react";
 
 interface ContactUser {
@@ -43,6 +43,9 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [contactSearch, setContactSearch] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [searchResults, setSearchResults] = useState<ContactUser[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { if (globalSearch) setContactSearch(globalSearch); }, [globalSearch]);
 
@@ -143,6 +146,53 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
     const q = contactSearch.toLowerCase();
     return contacts.filter(c => c.full_name.toLowerCase().includes(q));
   }, [contacts, contactSearch]);
+
+  // Search all users when typing
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!contactSearch || contactSearch.length < 2) {
+      setSearchResults([]);
+      return undefined;
+    }
+    searchTimeout.current = setTimeout(() => {
+      searchAllUsers(contactSearch);
+    }, 400);
+    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
+  }, [contactSearch]);
+
+  const searchAllUsers = async (query: string) => {
+    if (!user) return;
+    setSearchingUsers(true);
+    const q = query.toLowerCase().trim();
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .ilike("full_name", `%${q}%`)
+      .limit(15);
+
+    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+    const rolesMap: Record<string, string> = {};
+    (roles || []).forEach((r: any) => {
+      if (r.role === "admin") rolesMap[r.user_id] = "admin";
+      else if (!rolesMap[r.user_id]) rolesMap[r.user_id] = r.role === "dealer" ? "dealer" : "user";
+    });
+
+    const existingIds = new Set(contacts.map(c => c.id));
+    const results: ContactUser[] = (profiles || [])
+      .filter(p => p.id !== user.id && !existingIds.has(p.id))
+      .map(p => ({
+        id: p.id,
+        full_name: p.full_name || "Sin nombre",
+        avatar_url: (p as any).avatar_url || null,
+        role: rolesMap[p.id] || "user",
+        last_message: "",
+        last_message_at: "",
+        unread_count: 0,
+      }));
+
+    setSearchResults(results);
+    setSearchingUsers(false);
+  };
 
   // Messages for selected contact
   const chatMessages = useMemo(() => {
@@ -296,8 +346,11 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
               <div className="flex flex-col items-center justify-center py-8 text-center px-4">
                 <Users className="h-8 w-8 text-muted-foreground/20 mb-2" />
                 <p className="text-xs text-muted-foreground">
-                  {contactSearch ? "Sin resultados" : "No hay conversaciones"}
+                  {contactSearch ? "Sin conversaciones previas" : "No hay conversaciones"}
                 </p>
+                {contactSearch && contactSearch.length >= 2 && searchingUsers && (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary mt-2" />
+                )}
               </div>
             ) : (
               filteredContacts.map(contact => (
@@ -340,6 +393,53 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
                   </div>
                 </button>
               ))
+            )}
+
+            {/* Global search results — new users not in contacts */}
+            {contactSearch && contactSearch.length >= 2 && searchResults.length > 0 && (
+              <>
+                <div className="px-3 py-2 bg-secondary/30 border-y border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium flex items-center gap-1">
+                    <UserPlus className="h-3 w-3" /> Nuevos usuarios encontrados
+                  </p>
+                </div>
+                {searchResults.map(result => (
+                  <button
+                    key={result.id}
+                    onClick={() => {
+                      // Add to contacts and select
+                      setContacts(prev => {
+                        if (prev.some(c => c.id === result.id)) return prev;
+                        return [result, ...prev];
+                      });
+                      setSelectedContact(result);
+                      setContactSearch("");
+                      setSearchResults([]);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-primary/5 transition-colors"
+                  >
+                    <Avatar className="h-9 w-9 shrink-0">
+                      {result.avatar_url && <AvatarImage src={result.avatar_url} alt={result.full_name} />}
+                      <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">
+                        {(result.full_name || "?").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium block truncate">{result.full_name}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {getRoleBadge(result.role)}
+                        <span className="text-[10px] text-muted-foreground">Iniciar conversación</span>
+                      </div>
+                    </div>
+                    <UserPlus className="h-3.5 w-3.5 text-primary dark:text-accent shrink-0" />
+                  </button>
+                ))}
+              </>
+            )}
+            {contactSearch && contactSearch.length >= 2 && searchingUsers && searchResults.length === 0 && filteredContacts.length > 0 && (
+              <div className="flex items-center justify-center py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              </div>
             )}
           </div>
         </div>
