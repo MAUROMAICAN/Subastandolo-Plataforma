@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +38,23 @@ const Admin = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Smart alert badges: track last-seen timestamp per tab via localStorage
+  const [tabLastSeen, setTabLastSeen] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem("admin_tab_last_seen");
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
+  const markTabAsSeen = useCallback((tabKey: string) => {
+    const now = new Date().toISOString();
+    setTabLastSeen(prev => {
+      const next = { ...prev, [tabKey]: now };
+      localStorage.setItem("admin_tab_last_seen", JSON.stringify(next));
+      return next;
+    });
+  }, []);
   const [loading, setLoading] = useState(true);
 
   // Data states
@@ -274,16 +291,25 @@ const Admin = () => {
 
   // Computed values
   const commissionPct = parseFloat(editingSettings["commission_percentage"] || "0");
-  const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
-  const activeAuctions = auctions.filter(a => a.status === "active").length;
-  const dealers = allUsers.filter(u => u.role === "dealer");
-  const pendingDealerApps = dealerApps.filter((d: any) => d.status === "pending").length;
-  const totalMessages = messages.length;
   const unreadMessages = messages.filter(m => m.receiver_id === user?.id && !m.is_read).length;
-  const openDisputes = adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation").length;
   const pendingPayments = paymentProofs.filter((p: any) => p.status === "pending").length;
-  const pendingReports = auctionReports.filter((r: any) => r.status === "pending" || !r.status).length;
-  const totalUsers = allUsers.length;
+  const openDisputes = adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation").length;
+
+  // Helper: count items created after the last time admin visited a given tab
+  const countNewSince = (tabKey: string, items: any[]) => {
+    const lastSeen = tabLastSeen[tabKey];
+    if (!lastSeen) return 0; // first visit → nothing is "new"
+    return items.filter(i => i.created_at && new Date(i.created_at) > new Date(lastSeen)).length;
+  };
+
+  // Smart badge counts — only items NEW since last visit
+  const newReviews = countNewSince("review", auctions.filter(a => a.status === "pending" || a.status === "in_review"));
+  const newUsers = countNewSince("users", allUsers);
+  const newDealerApps = countNewSince("dealers", dealerApps.filter((d: any) => d.status === "pending"));
+  const newMessages = countNewSince("messages", messages.filter(m => m.receiver_id === user?.id));
+  const newPayments = countNewSince("payments", paymentProofs.filter((p: any) => p.status === "pending"));
+  const newDisputes = countNewSince("disputes", adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation"));
+  const newReports = countNewSince("reports", auctionReports.filter((r: any) => r.status === "pending" || !r.status));
 
   // Grouped sidebar sections for professional navigation
   const sidebarGroups: { label: string; items: { key: AdminTab; label: string; icon: any; badge?: number; urgent?: boolean }[] }[] = [
@@ -291,17 +317,17 @@ const Admin = () => {
       label: "Operaciones",
       items: [
         { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { key: "review", label: "Revisión", icon: Eye, badge: pendingAuctions.length, urgent: pendingAuctions.length > 0 },
-        { key: "auctions", label: "Subastas", icon: Gavel, badge: activeAuctions },
+        { key: "review", label: "Revisión", icon: Eye, badge: newReviews || undefined, urgent: newReviews > 0 },
+        { key: "auctions", label: "Subastas", icon: Gavel },
         { key: "won", label: "Ganadas", icon: Trophy },
-        { key: "payments", label: "Pagos", icon: CreditCard, badge: pendingPayments, urgent: pendingPayments > 0 },
+        { key: "payments", label: "Pagos", icon: CreditCard, badge: newPayments || undefined, urgent: newPayments > 0 },
       ],
     },
     {
       label: "Usuarios",
       items: [
-        { key: "users", label: "Usuarios", icon: Users, badge: totalUsers || undefined },
-        { key: "dealers", label: "Dealers", icon: Package, badge: pendingDealerApps || dealers.length || undefined, urgent: pendingDealerApps > 0 },
+        { key: "users", label: "Usuarios", icon: Users, badge: newUsers || undefined },
+        { key: "dealers", label: "Dealers", icon: Package, badge: newDealerApps || undefined, urgent: newDealerApps > 0 },
         { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
         { key: "team", label: "Equipo", icon: Shield },
       ],
@@ -309,8 +335,8 @@ const Admin = () => {
     {
       label: "Comunicación",
       items: [
-        { key: "messages", label: "Mensajes", icon: MessageCircle, badge: totalMessages || undefined, urgent: unreadMessages > 0 },
-        { key: "emails", label: "Soporte & Correos", icon: Mail, badge: openTickets, urgent: openTickets > 0 },
+        { key: "messages", label: "Mensajes", icon: MessageCircle, badge: newMessages || undefined, urgent: newMessages > 0 },
+        { key: "emails", label: "Soporte & Correos", icon: Mail, badge: openTickets || undefined, urgent: openTickets > 0 },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
       ],
@@ -318,8 +344,8 @@ const Admin = () => {
     {
       label: "Sistema",
       items: [
-        { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: openDisputes, urgent: openDisputes > 0 },
-        { key: "reports", label: "Reportes", icon: Flag, badge: pendingReports, urgent: pendingReports > 0 },
+        { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: newDisputes || undefined, urgent: newDisputes > 0 },
+        { key: "reports", label: "Reportes", icon: Flag, badge: newReports || undefined, urgent: newReports > 0 },
         { key: "cms", label: "Config. Central", icon: Settings },
       ],
     },
@@ -373,7 +399,7 @@ const Admin = () => {
               )}
               <div className="space-y-0.5">
                 {group.items.map(item => (
-                  <button key={item.key} onClick={() => { setActiveTab(item.key); if (window.innerWidth < 1024) setSidebarOpen(false); }}
+                  <button key={item.key} onClick={() => { markTabAsSeen(item.key); setActiveTab(item.key); if (window.innerWidth < 1024) setSidebarOpen(false); }}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-md transition-all relative ${activeTab === item.key
                       ? "bg-accent/90 text-accent-foreground font-semibold shadow-sm"
                       : "text-white/55 hover:text-white hover:bg-white/8"
@@ -383,11 +409,11 @@ const Admin = () => {
                     {item.badge != null && item.badge > 0 && (
                       <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1.5 -right-1.5"} inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 ${item.urgent
                         ? sidebarOpen
-                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-[#A6E300] text-[#1a2332] shadow-[0_0_8px_rgba(166,227,0,0.45)] ring-1 ring-[#A6E300]/40"
-                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-[#A6E300] text-[#1a2332] shadow-[0_0_6px_rgba(166,227,0,0.5)]"
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)] ring-1 ring-red-400/30"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-red-500 text-white shadow-[0_0_6px_rgba(239,68,68,0.6)]"
                         : sidebarOpen
-                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-[#A6E300]/20 text-[#A6E300] ring-1 ring-[#A6E300]/20"
-                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-[#A6E300]/30 text-[#A6E300]"
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-white/15 text-white/70 ring-1 ring-white/10"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-white/20 text-white/80"
                         }`}>{item.badge > 99 ? "99+" : item.badge}</span>
                     )}
                   </button>
