@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings, Loader2,
+  Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings,
   Users, ShieldCheck, Clock, UserCheck
 } from "lucide-react";
 import { DEALER_TIERS } from "@/components/VerifiedBadge";
@@ -51,13 +49,22 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
   }, [dealerApps]);
 
   const fetchExtraDealers = async () => {
-    // Get all users with dealer role
-    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "dealer");
-    if (!roles || roles.length === 0) { setExtraDealers([]); return; }
+    // Get dealers from multiple sources
+    const [rolesRes, auctionsRes, earningsRes] = await Promise.all([
+      supabase.from("user_roles").select("user_id").eq("role", "dealer"),
+      supabase.from("auctions").select("created_by"),
+      supabase.from("platform_earnings").select("dealer_id"),
+    ]);
 
-    // Find which ones are NOT in dealerApps
+    // Merge all unique dealer IDs
+    const allDealerIds = new Set<string>();
+    ((rolesRes.data || []) as any[]).forEach((r: any) => { if (r.user_id) allDealerIds.add(r.user_id); });
+    ((auctionsRes.data || []) as any[]).forEach((a: any) => { if (a.created_by) allDealerIds.add(a.created_by); });
+    ((earningsRes.data || []) as any[]).forEach((e: any) => { if (e.dealer_id) allDealerIds.add(e.dealer_id); });
+
+    // Find which ones are NOT in dealerApps (dealer_verification)
     const verifUserIds = new Set(dealerApps.map((a: any) => a.user_id));
-    const missingIds = roles.map((r: any) => r.user_id).filter(id => !verifUserIds.has(id));
+    const missingIds = Array.from(allDealerIds).filter(id => !verifUserIds.has(id));
 
     if (missingIds.length === 0) { setExtraDealers([]); return; }
 
