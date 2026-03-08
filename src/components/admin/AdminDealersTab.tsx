@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings,
-  Users, ShieldCheck, Clock, UserCheck
+  Users, ShieldCheck, Clock, UserCheck, Phone, MessageSquare
 } from "lucide-react";
 import { DEALER_TIERS } from "@/components/VerifiedBadge";
 
@@ -43,9 +43,11 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
 
   // Extra dealers from user_roles not in dealer_verification
   const [extraDealers, setExtraDealers] = useState<any[]>([]);
+  const [dealerEmails, setDealerEmails] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchExtraDealers();
+    fetchEmails();
   }, [dealerApps]);
 
   const fetchExtraDealers = async () => {
@@ -87,6 +89,17 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
       };
     });
     setExtraDealers(extras);
+  };
+
+  const fetchEmails = async () => {
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-user", {
+        body: { action: "list_users", userId: "all" },
+      });
+      if (data?.emails) setDealerEmails(data.emails);
+    } catch (e) {
+      console.error("Error fetching emails:", e);
+    }
   };
 
   // Merge dealer_verification apps + role-only dealers
@@ -183,7 +196,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
             <thead>
               <tr className="bg-secondary/50 border-b border-border">
                 <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Dealer</th>
-                <th className="text-left font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3 hidden sm:table-cell">Teléfono</th>
+                <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Contacto</th>
                 <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Estado</th>
                 <th className="text-center font-semibold text-muted-foreground dark:text-gray-300 px-4 py-3">Acciones</th>
               </tr>
@@ -212,7 +225,29 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">{app.phone}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {app.phone && app.phone !== "—" && (
+                          <a href={`https://wa.me/${app.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" title={`WhatsApp: ${app.phone}`}>
+                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10">
+                              <Phone className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        )}
+                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title="Mensaje directo" onClick={() => {
+                          toast({ title: "💬 Ir a Mensajes", description: `Abre la pestaña Mensajes para chatear con ${app.full_name}` });
+                        }}>
+                          <MessageSquare className="h-3 w-3" />
+                        </Button>
+                        {dealerEmails[app.user_id] && (
+                          <a href={`mailto:${dealerEmails[app.user_id]}`} title={dealerEmails[app.user_id]}>
+                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm">
+                              <Mail className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <Badge className={`text-[10px] border-0 ${badge.color}`}>
                         {badge.icon} {badge.label}
