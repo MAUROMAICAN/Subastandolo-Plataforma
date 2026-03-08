@@ -1197,322 +1197,312 @@ const BuyerPanel = () => {
   // Overview
   const openDisputes = disputes.filter(d => d.status === "open" || d.status === "mediation").length;
   const pendingPayments = wonAuctions.filter(a => a.payment_status === "pending").length;
+  const totalPurchases = wonAuctions.length + storeOrders.length;
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead title="Mi Panel" description="Panel de control del comprador - Gestiona tus subastas, disputas y favoritos" />
       <Navbar />
       <BackButton />
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-6">
-          <button onClick={() => navigate("/")} className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Inicio
-          </button>
-          <span>/</span>
-          <span className="text-foreground">Mi Panel</span>
-        </div>
+      <main className="container mx-auto px-4 py-6 max-w-5xl pb-24">
 
-        {/* Welcome header with gradient accent */}
-        <div className="bg-card border border-border rounded-sm overflow-hidden mb-6 relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+        {/* ─── HERO SECTION ─── */}
+        <div className="relative rounded-2xl overflow-hidden mb-8">
+          {/* Gradient mesh background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(var(--primary-rgb,132,204,22),0.15),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(var(--accent-rgb,250,204,21),0.1),transparent_50%)]" />
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
 
-          {/* Mobile: compact layout */}
-          <div className="flex items-center gap-3 sm:hidden p-4 pt-5">
-            <Avatar className="h-14 w-14 border-2 border-primary/20 shadow-sm shrink-0">
-              {(profile as any)?.avatar_url && <AvatarImage src={(profile as any).avatar_url} alt={profile?.full_name || ""} className="object-cover" />}
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                {(profile?.full_name || "U").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="text-sm font-heading font-bold truncate">¡Hola, {profile?.full_name || "Usuario"}!</h1>
-                {isAdmin && <AdminBadge size="sm" />}
-                <BuyerBadge size="sm" winsCount={winsCount} isAdmin={isAdmin} manualTier={profile?.manual_buyer_tier} />
+          <div className="relative z-10 p-5 sm:p-8">
+            {/* Row 1: Avatar + Name + Badges */}
+            <div className="flex items-center gap-4 sm:gap-6 mb-6">
+              {/* Avatar — all screens */}
+              <div className="hidden sm:block">
+                <ProfileAvatarUpload
+                  avatarUrl={(profile as any)?.avatar_url || null}
+                  userName={profile?.full_name || "Usuario"}
+                  onAvatarChange={() => { }}
+                  size="lg"
+                  hidePolicies
+                />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Panel de control en {siteName}</p>
-              {(profile as any)?.public_id && (
-                <span className="text-[9px] font-mono bg-secondary text-muted-foreground px-1 py-0.5 rounded-sm border border-border">
-                  {(profile as any).public_id}
-                </span>
-              )}
-            </div>
-          </div>
+              <Avatar className="h-16 w-16 border-2 border-primary/30 shadow-lg ring-2 ring-primary/10 sm:hidden shrink-0">
+                {(profile as any)?.avatar_url && <AvatarImage src={(profile as any).avatar_url} alt={profile?.full_name || ""} className="object-cover" />}
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                  {(profile?.full_name || "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
 
-          {/* Desktop: full layout with avatar upload */}
-          <div className="hidden sm:flex items-center gap-4 p-4 sm:p-6 pt-5 sm:pt-7">
-            <ProfileAvatarUpload
-              avatarUrl={(profile as any)?.avatar_url || null}
-              userName={profile?.full_name || "Usuario"}
-              onAvatarChange={() => { }}
-              size="md"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-heading font-bold">¡Hola, {profile?.full_name || "Usuario"}!</h1>
-                {isAdmin && <AdminBadge size="md" showLabel />}
-                <BuyerBadge size="md" winsCount={winsCount} showLabel isAdmin={isAdmin} manualTier={profile?.manual_buyer_tier} />
-              </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-sm text-muted-foreground">Bienvenido a tu panel de control en {siteName}</p>
-                {(profile as any)?.public_id && (
-                  <span className="text-[9px] font-mono bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border">
-                    {(profile as any).public_id}
-                  </span>
-                )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h1 className="text-lg sm:text-2xl font-heading font-black text-white tracking-tight">
+                    ¡Hola, {(profile?.full_name || "Usuario").split(" ")[0]}!
+                  </h1>
+                  {isAdmin && <AdminBadge size="md" showLabel />}
+                  <BuyerBadge size="md" winsCount={winsCount} showLabel isAdmin={isAdmin} manualTier={profile?.manual_buyer_tier} />
+                </div>
+                <p className="text-sm text-white/50 mb-1">Bienvenido a tu panel de control</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {(profile as any)?.public_id && (
+                    <span className="text-[9px] font-mono bg-white/5 text-white/40 px-2 py-0.5 rounded-full border border-white/10">
+                      ID: {(profile as any).public_id}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-3 w-3 text-amber-400" />
+                    <ReputationThermometer
+                      percentage={buyerStats.positivePercentage}
+                      totalReviews={buyerStats.totalReviews}
+                      size="sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Buyer reputation bar */}
-          <div className="px-4 sm:px-6 pb-4 sm:pb-5 pt-0 flex items-center gap-2 sm:gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Star className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-amber-400" />
-              <span className="text-[10px] sm:text-xs font-semibold">Mi Reputación</span>
+            {/* Row 2: Stats Cards integrated in hero */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              {[
+                { label: "Compras", value: totalPurchases, icon: Package, color: "text-primary dark:text-[#A6E300]", onClick: () => setView("purchases"), highlight: pendingPayments > 0 },
+                { label: "Favoritos", value: favoriteAuctions.length, icon: Heart, color: "text-rose-400", onClick: () => setView("favoritos") },
+                { label: "Dealers", value: followedDealers.length, icon: Users, color: "text-sky-400", onClick: () => setView("dealers") },
+                { label: "Disputas", value: openDisputes, icon: Shield, color: openDisputes > 0 ? "text-amber-400" : "text-emerald-400", onClick: () => setView("disputes"), highlight: openDisputes > 0 },
+              ].map((stat, idx) => (
+                <button
+                  key={idx}
+                  onClick={stat.onClick}
+                  className={`backdrop-blur-sm rounded-xl p-3 sm:p-4 text-left transition-all hover:scale-[1.03] active:scale-[0.98] ${stat.highlight ? "bg-amber-500/10 border border-amber-400/20" : "bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08]"}`}
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <stat.icon className={`h-3 w-3 ${stat.color}`} />
+                    <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">{stat.label}</span>
+                  </div>
+                  <p className={`text-xl sm:text-2xl font-heading font-black ${stat.color}`}>{stat.value}</p>
+                </button>
+              ))}
             </div>
-            <ReputationThermometer
-              percentage={buyerStats.positivePercentage}
-              totalReviews={buyerStats.totalReviews}
-              size="sm"
-            />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">
-              {winsCount} {winsCount === 1 ? "ganada" : "ganadas"}
-            </span>
           </div>
         </div>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {[
-            { label: "Compras", value: wonAuctions.length + storeOrders.length, icon: Package, color: "text-primary dark:text-accent", onClick: () => setView("purchases"), highlight: pendingPayments > 0 },
-            { label: "Favoritos", value: favoriteAuctions.length, icon: Heart, color: "text-red-500 dark:text-accent", onClick: () => setView("favoritos") },
-            { label: "Dealers", value: followedDealers.length, icon: Users, color: "text-blue-500 dark:text-accent", onClick: () => setView("dealers") },
-            { label: "Disputas", value: openDisputes, icon: Shield, color: openDisputes > 0 ? "text-amber-500" : "text-emerald-500 dark:text-accent", onClick: () => setView("disputes"), highlight: openDisputes > 0 },
-          ].map((stat, idx) => (
-            <button
-              key={idx}
-              onClick={stat.onClick}
-              className={`border rounded-sm text-left transition-all p-3 hover:border-primary/30 hover:bg-secondary/30 ${stat.highlight ? "border-amber-400/40 bg-amber-500/5" : "border-border"}`}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{stat.label}</span>
-              </div>
-              <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.value}</p>
-            </button>
-          ))}
-        </div>
-
-        {/* Pending Payment Alert */}
+        {/* ─── PENDING PAYMENT ALERT ─── */}
         {pendingPayments > 0 && (
-          <div className="mb-6 p-3 bg-amber-500/10 border border-amber-400/30 rounded-sm flex items-center gap-3 cursor-pointer hover:bg-amber-500/15 transition-colors" onClick={() => setView("purchases")}>
-            <div className="h-9 w-9 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-              <CreditCard className="h-4 w-4 text-amber-500" />
+          <div
+            className="mb-6 p-4 bg-amber-500/10 border border-amber-400/20 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-amber-500/15 transition-all hover:scale-[1.005] group"
+            onClick={() => setView("purchases")}
+          >
+            <div className="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+              <CreditCard className="h-5 w-5 text-amber-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-amber-600 dark:text-amber-400">{pendingPayments} pago{pendingPayments !== 1 ? "s" : ""} pendiente{pendingPayments !== 1 ? "s" : ""}</p>
-              <p className="text-[10px] text-muted-foreground">Sube tu comprobante para completar la compra</p>
+              <p className="text-sm font-bold text-amber-600 dark:text-amber-400">{pendingPayments} pago{pendingPayments !== 1 ? "s" : ""} pendiente{pendingPayments !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-muted-foreground">Sube tu comprobante para completar la compra</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-amber-500 shrink-0" />
+            <ChevronRight className="h-5 w-5 text-amber-500/60 shrink-0 group-hover:translate-x-1 transition-transform" />
           </div>
         )}
 
-        {/* Primary Action Cards */}
-        <div className="mb-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
-            <Package className="h-3 w-3" /> Actividad
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* ─── QUICK ACCESS ─── */}
+        <div className="mb-8">
+          <h2 className="text-sm font-heading font-bold text-muted-foreground mb-4 flex items-center gap-2">
+            <div className="h-4 w-1 rounded-full bg-primary" />
+            Acceso Rápido
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Mis Compras */}
-            <Card
-              className="border border-primary/30 rounded-sm cursor-pointer hover:border-primary hover:shadow-md transition-all group bg-primary/5 dark:bg-[#A6E300]/5 hover:scale-[1.01]"
+            <div
+              className="bg-card border border-primary/20 rounded-xl p-5 cursor-pointer hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5 bg-gradient-to-br from-primary/5 to-transparent"
               onClick={() => setView("purchases")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-primary/15 dark:bg-[#A6E300]/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 dark:group-hover:bg-[#A6E300]/25 transition-colors">
-                  <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Package className="h-6 w-6 text-primary dark:text-[#A6E300]" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mis Compras</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mis Compras</p>
                   <p className="text-xs text-muted-foreground">
-                    {loadingAuctions ? "Cargando..." : wonAuctions.length > 0 ? `${wonAuctions.length} subasta${wonAuctions.length !== 1 ? "s" : ""} ganada${wonAuctions.length !== 1 ? "s" : ""}` : "Ver tus subastas ganadas"}
+                    {loadingAuctions ? "Cargando..." : totalPurchases > 0 ? `${totalPurchases} compra${totalPurchases !== 1 ? "s" : ""} total${totalPurchases !== 1 ? "es" : ""}` : "Ver tus subastas ganadas"}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-primary dark:text-[#A6E300] ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-4 w-4 text-primary/40 shrink-0 group-hover:translate-x-1 group-hover:text-primary transition-all" />
+              </div>
+            </div>
 
             {/* Mis Favoritos */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-rose-400/30 hover:shadow-lg hover:shadow-rose-500/5 transition-all group hover:-translate-y-0.5"
               onClick={() => setView("favoritos")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-red-500/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <Heart className="h-5 w-5 text-red-500 dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-rose-500/10 flex items-center justify-center shrink-0 group-hover:bg-rose-500/20 transition-colors">
+                  <Heart className="h-6 w-6 text-rose-500 dark:text-rose-400" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mis Favoritos</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mis Favoritos</p>
                   <p className="text-xs text-muted-foreground">
                     {favoriteAuctions.length > 0 ? `${favoriteAuctions.length} subasta${favoriteAuctions.length !== 1 ? "s" : ""} guardada${favoriteAuctions.length !== 1 ? "s" : ""}` : "Guarda tus subastas favoritas"}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 group-hover:text-rose-400 transition-all" />
+              </div>
+            </div>
 
             {/* Mis Dealers */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-sky-400/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all group hover:-translate-y-0.5"
               onClick={() => setView("dealers")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-blue-500/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <Users className="h-5 w-5 text-blue-500 dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 group-hover:bg-sky-500/20 transition-colors">
+                  <Users className="h-6 w-6 text-sky-500 dark:text-sky-400" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mis Dealers</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mis Dealers</p>
                   <p className="text-xs text-muted-foreground">
-                    {followedDealers.length > 0 ? `${followedDealers.length} dealer${followedDealers.length !== 1 ? "s" : ""} favorito${followedDealers.length !== 1 ? "s" : ""}` : "Sigue tus dealers favoritos"}
+                    {followedDealers.length > 0 ? `Siguiendo a ${followedDealers.length} dealer${followedDealers.length !== 1 ? "s" : ""}` : "Sigue tus dealers favoritos"}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 group-hover:text-sky-400 transition-all" />
+              </div>
+            </div>
 
-        {/* Secondary Action Cards */}
-        <div className="mb-6">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3 flex items-center gap-1.5">
-            <Shield className="h-3 w-3" /> Cuenta y Soporte
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Disputas */}
+            <div
+              className={`bg-card border rounded-xl p-5 cursor-pointer hover:shadow-lg transition-all group hover:-translate-y-0.5 ${openDisputes > 0 ? "border-amber-400/20 hover:border-amber-400/40 hover:shadow-amber-500/5" : "border-border hover:border-primary/30 hover:shadow-primary/5"}`}
+              onClick={() => setView("disputes")}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-colors ${openDisputes > 0 ? "bg-amber-500/10 group-hover:bg-amber-500/20" : "bg-primary/10 dark:bg-[#A6E300]/10 group-hover:bg-primary/20"}`}>
+                  <Shield className={`h-6 w-6 ${openDisputes > 0 ? "text-amber-500" : "text-primary dark:text-[#A6E300]"}`} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mis Disputas</p>
+                  <p className="text-xs text-muted-foreground">
+                    {openDisputes > 0 ? `${openDisputes} disputa${openDisputes !== 1 ? "s" : ""} activa${openDisputes !== 1 ? "s" : ""}` : "Sin disputas activas"}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+
             {/* Mis Direcciones */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5"
               onClick={() => setView("addresses")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <MapPin className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <MapPin className="h-6 w-6 text-primary dark:text-[#A6E300]" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mis Direcciones</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mis Direcciones</p>
                   <p className="text-xs text-muted-foreground">
                     {(profile as any)?.city && (profile as any)?.state
                       ? `${(profile as any).city}, ${(profile as any).state}`
                       : "Configura tu dirección de envío"}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
-
-            {/* Disputes */}
-            <Card
-              className={`border rounded-sm cursor-pointer hover:shadow-md transition-all group hover:scale-[1.01] ${openDisputes > 0 ? "border-amber-400/30 bg-amber-500/5" : "border-border hover:border-primary/30"}`}
-              onClick={() => setView("disputes")}
-            >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className={`h-11 w-11 rounded-sm flex items-center justify-center shrink-0 transition-colors ${openDisputes > 0 ? "bg-amber-500/15 group-hover:bg-amber-500/25" : "bg-primary/10 dark:bg-[#A6E300]/10 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20"}`}>
-                  <Shield className={`h-5 w-5 ${openDisputes > 0 ? "text-amber-500" : "text-primary dark:text-[#A6E300]"}`} />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Mis Disputas</p>
-                  <p className="text-xs text-muted-foreground">
-                    {openDisputes > 0 ? `${openDisputes} disputa(s) activa(s)` : "Sin disputas activas"}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
 
             {/* Soporte */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5"
               onClick={() => navigate("/contacto")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <Headphones className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Headphones className="h-6 w-6 text-primary dark:text-[#A6E300]" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Soporte y Ayuda</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Soporte y Ayuda</p>
                   <p className="text-xs text-muted-foreground">Crea tickets y recibe asistencia</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* ─── ACCOUNT & SETTINGS ─── */}
+        <div className="mb-8">
+          <h2 className="text-sm font-heading font-bold text-muted-foreground mb-4 flex items-center gap-2">
+            <div className="h-4 w-1 rounded-full bg-accent" />
+            Mi Cuenta
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Perfil */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5"
               onClick={() => setView("profile")}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                    <User className="h-5 w-5 text-primary dark:text-[#A6E300]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-heading font-bold text-sm">Mi Perfil</p>
-                    <p className="text-xs text-muted-foreground">Datos personales y verificación</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              <div className="flex items-center gap-4 mb-3">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <User className="h-6 w-6 text-primary dark:text-[#A6E300]" />
                 </div>
-                <ProfileCompletionBar profile={profile as any} compact onGoToProfile={() => setView("profile")} />
-              </CardContent>
-            </Card>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Mi Perfil</p>
+                  <p className="text-xs text-muted-foreground">Datos personales y verificación</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 transition-all" />
+              </div>
+              <ProfileCompletionBar profile={profile as any} compact onGoToProfile={() => setView("profile")} />
+            </div>
 
             {/* Seguridad */}
-            <Card
-              className="border border-border rounded-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group hover:scale-[1.01]"
+            <div
+              className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all group hover:-translate-y-0.5"
               onClick={() => setView("security")}
             >
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="h-11 w-11 rounded-sm bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
-                  <Lock className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 dark:bg-[#A6E300]/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 dark:group-hover:bg-[#A6E300]/20 transition-colors">
+                  <Lock className="h-6 w-6 text-primary dark:text-[#A6E300]" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-heading font-bold text-sm">Seguridad</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-sm mb-0.5">Seguridad</p>
                   <p className="text-xs text-muted-foreground">Contraseña y acceso</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
 
             {/* Ser Dealer */}
             {!isDealer && !isAdmin && (
-              <Card
-                className="border border-accent/40 rounded-sm cursor-pointer hover:border-accent hover:shadow-md transition-all group bg-accent/5 hover:scale-[1.01]"
+              <div
+                className="bg-card border border-accent/30 rounded-xl p-5 cursor-pointer hover:border-accent/60 hover:shadow-lg hover:shadow-accent/10 transition-all group hover:-translate-y-0.5 bg-gradient-to-br from-accent/5 to-transparent"
                 onClick={() => navigate("/dealer/apply")}
               >
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-sm bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-                    <Store className="h-5 w-5 text-accent" />
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
+                    <Store className="h-6 w-6 text-accent" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-heading font-bold text-sm text-accent">Ser Dealer</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-heading font-bold text-sm text-accent mb-0.5">Ser Dealer</p>
                     <p className="text-xs text-muted-foreground">Vende tus productos en subastas</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-accent ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                </CardContent>
-              </Card>
+                  <ChevronRight className="h-4 w-4 text-accent/40 shrink-0 group-hover:translate-x-1 group-hover:text-accent transition-all" />
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Favorites section */}
+        {/* ─── FAVORITES PREVIEW ─── */}
         {favoriteAuctions.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-heading font-bold mb-4 flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500 fill-red-500" />
-              Mis Favoritos
-              <span className="text-xs font-normal text-muted-foreground">({favoriteAuctions.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {favoriteAuctions.map(a => (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-heading font-bold text-muted-foreground flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-rose-500" />
+                Mis Favoritos
+                <span className="text-xs font-normal text-muted-foreground/60">({favoriteAuctions.length})</span>
+              </h2>
+              <button onClick={() => setView("favoritos")} className="text-xs text-primary hover:text-primary/80 font-medium transition-colors flex items-center gap-1">
+                Ver todos <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {favoriteAuctions.slice(0, 6).map(a => (
                 <AuctionCard
                   key={a.id}
                   auction={a}

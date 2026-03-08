@@ -122,10 +122,12 @@ export default function ProfileAvatarUpload({ avatarUrl, userName, onAvatarChang
     setDeleting(false);
   };
 
+  const [showPolicies, setShowPolicies] = useState(false);
+
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative group">
-        <Avatar className={`${sizeClasses[size]} border-2 border-border shadow-sm`}>
+    <div className="flex items-center gap-4">
+      <div className="relative group shrink-0">
+        <Avatar className={`${sizeClasses[size]} border-2 border-primary/20 shadow-lg ring-2 ring-primary/10`}>
           {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} className="object-cover" />}
           <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
             {initials}
@@ -154,56 +156,66 @@ export default function ProfileAvatarUpload({ avatarUrl, userName, onAvatarChang
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-[10px] h-7 gap-1 rounded-sm"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
-          {avatarUrl ? "Cambiar" : "Subir foto"}
-        </Button>
+      <div className="flex flex-col gap-2 min-w-0">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[10px] h-7 gap-1 rounded-sm"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+            {avatarUrl ? "Cambiar" : "Subir foto"}
+          </Button>
 
-        {avatarUrl && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-[10px] h-7 gap-1 rounded-sm text-destructive border-destructive/30" disabled={deleting}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Eliminar foto de perfil?</AlertDialogTitle>
-                <AlertDialogDescription>Se eliminará tu foto actual y se mostrará tu inicial.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDelete}>
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {avatarUrl && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-[10px] h-7 gap-1 rounded-sm text-destructive border-destructive/30" disabled={deleting}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar foto de perfil?</AlertDialogTitle>
+                  <AlertDialogDescription>Se eliminará tu foto actual y se mostrará tu inicial.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDelete}>
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
+        {!hidePolicies && (
+          <button
+            onClick={() => setShowPolicies(!showPolicies)}
+            className="text-left"
+          >
+            <p className="text-[9px] text-amber-600 dark:text-amber-400 flex items-center gap-1 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
+              <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+              <span className="font-medium">Políticas de imagen</span>
+              <span className="text-amber-500/60">·</span>
+              <span className="text-muted-foreground font-normal">Solo fotos personales o logos</span>
+            </p>
+            {showPolicies && (
+              <div className="mt-1.5 text-[9px] text-muted-foreground space-y-0.5">
+                {AVATAR_POLICIES.map((p, i) => (
+                  <p key={i} className="flex items-start gap-1">
+                    <span className="text-amber-500 shrink-0">•</span>
+                    {p}
+                  </p>
+                ))}
+              </div>
+            )}
+          </button>
         )}
       </div>
-
-      {!hidePolicies && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 max-w-[280px]">
-          <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1 mb-1.5">
-            <AlertTriangle className="h-3 w-3 shrink-0" /> Políticas de imagen
-          </p>
-          <ul className="space-y-0.5">
-            {AVATAR_POLICIES.map((p, i) => (
-              <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                <span className="text-amber-600 shrink-0">•</span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
