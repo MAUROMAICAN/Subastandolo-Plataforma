@@ -284,7 +284,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                         </Button>
                         {dealerEmails[app.user_id] && (
                           <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title={dealerEmails[app.user_id]} onClick={() => {
-                            window.location.href = `mailto:${dealerEmails[app.user_id]}`;
+                            window.open(`mailto:${dealerEmails[app.user_id]}`, '_blank');
                           }}>
                             <Mail className="h-3 w-3" />
                           </Button>
