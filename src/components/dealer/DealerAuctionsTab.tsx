@@ -583,7 +583,7 @@ export default function DealerAuctionsTab({
                           variant="outline"
                           size="sm"
                           onClick={() => setPreviewAuction(auction)}
-                          className="text-primary border-primary/30 hover:bg-primary/10 rounded-xl text-xs h-8 font-bold"
+                          className="text-foreground border-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 rounded-xl text-xs h-8 font-bold"
                         >
                           <Eye className="h-3 w-3 mr-1" /> Vista previa
                         </Button>
