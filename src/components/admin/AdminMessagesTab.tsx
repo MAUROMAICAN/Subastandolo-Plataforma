@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,10 @@ import {
   MessageCircle, Send, Search, Loader2, Users, Mail, MailOpen,
   MessagesSquare, Trash2, CheckCheck, Check, UserPlus
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 
 interface ContactUser {
   id: string;
@@ -46,6 +49,7 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
   const [searchResults, setSearchResults] = useState<ContactUser[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [contactFilter, setContactFilter] = useState<"all" | "unread" | "today">("all");
 
   useEffect(() => { if (globalSearch) setContactSearch(globalSearch); }, [globalSearch]);
 
@@ -140,12 +144,26 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
     return { totalMessages, unreadMessages, activeConversations, todayMessages };
   }, [allMessages, contacts, user]);
 
-  // Filtered contacts
+  // Filtered contacts (search + filter)
   const filteredContacts = useMemo(() => {
-    if (!contactSearch) return contacts;
-    const q = contactSearch.toLowerCase();
-    return contacts.filter(c => c.full_name.toLowerCase().includes(q));
-  }, [contacts, contactSearch]);
+    let list = contacts;
+
+    // Apply filter
+    if (contactFilter === "unread") {
+      list = list.filter(c => c.unread_count > 0);
+    } else if (contactFilter === "today") {
+      const today = new Date().toDateString();
+      list = list.filter(c => c.last_message_at && new Date(c.last_message_at).toDateString() === today);
+    }
+
+    // Apply search
+    if (contactSearch) {
+      const q = contactSearch.toLowerCase();
+      list = list.filter(c => c.full_name.toLowerCase().includes(q));
+    }
+
+    return list;
+  }, [contacts, contactSearch, contactFilter]);
 
   // Search all users when typing
   useEffect(() => {
@@ -286,6 +304,37 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
     }
   };
 
+  const handleDeleteConversation = async (contactId: string) => {
+    if (!user) return;
+    // Delete all messages between admin and this contact
+    const { error: e1 } = await supabase.from("messages").delete()
+      .eq("sender_id", user.id).eq("receiver_id", contactId);
+    const { error: e2 } = await supabase.from("messages").delete()
+      .eq("sender_id", contactId).eq("receiver_id", user.id);
+    if (e1 || e2) {
+      toast({ title: "Error eliminando", variant: "destructive" });
+    } else {
+      setContacts(prev => prev.filter(c => c.id !== contactId));
+      setAllMessages(prev => prev.filter(m =>
+        !((m.sender_id === user.id && m.receiver_id === contactId) ||
+          (m.sender_id === contactId && m.receiver_id === user.id))
+      ));
+      if (selectedContact?.id === contactId) setSelectedContact(null);
+      toast({ title: "🗑️ Conversación eliminada" });
+    }
+  };
+
+  const handleMarkAllRead = async (contactId: string) => {
+    if (!user) return;
+    await supabase.from("messages").update({ is_read: true })
+      .eq("sender_id", contactId).eq("receiver_id", user.id).eq("is_read", false);
+    setContacts(prev => prev.map(c => c.id === contactId ? { ...c, unread_count: 0 } : c));
+    setAllMessages(prev => prev.map(m =>
+      m.sender_id === contactId && m.receiver_id === user.id ? { ...m, is_read: true } : m
+    ));
+    toast({ title: "✅ Marcado como leído" });
+  };
+
   const getRoleBadge = (role: string) => {
     const config: Record<string, { label: string; class: string }> = {
       admin: { label: "Admin", class: "bg-primary/10 text-primary dark:text-accent border-primary/20" },
@@ -331,23 +380,30 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Filter Buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Conversaciones", value: stats.activeConversations, icon: MessagesSquare, color: "text-primary dark:text-accent" },
-          { label: "Sin Leer", value: stats.unreadMessages, icon: Mail, color: stats.unreadMessages > 0 ? "text-destructive" : "text-primary dark:text-accent" },
-          { label: "Mensajes Hoy", value: stats.todayMessages, icon: MailOpen, color: "text-foreground" },
-          { label: "Total Mensajes", value: stats.totalMessages, icon: MessageCircle, color: "text-muted-foreground" },
+          { key: "all" as const, label: "Conversaciones", value: stats.activeConversations, icon: MessagesSquare, color: "text-primary dark:text-accent" },
+          { key: "unread" as const, label: "Sin Leer", value: stats.unreadMessages, icon: Mail, color: stats.unreadMessages > 0 ? "text-destructive" : "text-primary dark:text-accent" },
+          { key: "today" as const, label: "Mensajes Hoy", value: stats.todayMessages, icon: MailOpen, color: "text-foreground" },
+          { key: "all" as const, label: "Total Mensajes", value: stats.totalMessages, icon: MessageCircle, color: "text-muted-foreground" },
         ].map((stat, idx) => (
-          <Card key={idx} className="border border-border rounded-sm">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-                <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-medium uppercase tracking-wide">{stat.label}</span>
-              </div>
-              <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.value}</p>
-            </CardContent>
-          </Card>
+          <button
+            key={idx}
+            onClick={() => setContactFilter(stat.key === contactFilter && stat.key !== "all" ? "all" : stat.key)}
+            className={`border rounded-sm text-left transition-all p-3 ${contactFilter === stat.key && stat.key !== "all"
+              ? "border-primary/50 bg-primary/10 ring-1 ring-primary/30"
+              : idx === 0 && contactFilter === "all"
+                ? "border-primary/50 bg-primary/10 ring-1 ring-primary/30"
+                : "border-border hover:border-primary/30 hover:bg-secondary/30"
+              }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+              <span className="text-[10px] text-muted-foreground dark:text-gray-300 font-medium uppercase tracking-wide">{stat.label}</span>
+            </div>
+            <p className={`text-lg font-heading font-bold ${stat.color}`}>{stat.value}</p>
+          </button>
         ))}
       </div>
 
@@ -379,11 +435,11 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
 
             {/* Existing contacts */}
             {filteredContacts.map(contact => (
-              <button
+              <div
                 key={contact.id}
-                onClick={() => handleSelectContact(contact)}
-                className={`w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-secondary/30 transition-colors ${selectedContact?.id === contact.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
+                className={`w-full flex items-center gap-2.5 px-3 py-3 text-left border-b border-border/50 hover:bg-secondary/30 transition-colors group/contact cursor-pointer ${selectedContact?.id === contact.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
                   }`}
+                onClick={() => handleSelectContact(contact)}
               >
                 <div className="relative shrink-0">
                   <Avatar className="h-9 w-9">
@@ -403,20 +459,61 @@ const AdminMessagesTab = ({ globalSearch = "" }: { globalSearch?: string }) => {
                     <span className={`text-xs truncate ${contact.unread_count > 0 ? "font-bold" : "font-medium"}`}>
                       {contact.full_name}
                     </span>
-                    {contact.last_message_at && (
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {formatTime(contact.last_message_at)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {contact.last_message_at && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatTime(contact.last_message_at)}
+                        </span>
+                      )}
+                      {contact.unread_count > 0 && (
+                        <span className="w-2 h-2 bg-primary rounded-full"></span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {getRoleBadge(contact.role)}
-                    <span className={`text-[10px] truncate ${contact.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                    <span className={`text-[10px] truncate flex-1 ${contact.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                       {contact.last_message || "Sin mensajes"}
                     </span>
+                    {/* Action buttons on hover */}
+                    <div className="hidden group-hover/contact:flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                      {contact.unread_count > 0 && (
+                        <button
+                          onClick={() => handleMarkAllRead(contact.id)}
+                          className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                          title="Marcar como leído"
+                        >
+                          <CheckCheck className="h-3 w-3" />
+                        </button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            title="Eliminar conversación"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar conversación con {contact.full_name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Se eliminarán todos los mensajes de esta conversación. Esta acción no se puede deshacer.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDeleteConversation(contact.id)}>
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
 
             {/* Global search results — new users not in contacts */}
