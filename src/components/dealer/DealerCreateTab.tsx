@@ -220,147 +220,203 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
   };
 
   return (
-    <Card className="border border-border rounded-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base font-heading">
-          <Plus className="h-4 w-4 text-primary" />
-          Publicar Producto para Subasta
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          {isGoldPlus
-            ? "Como dealer de nivel Oro o superior, tus subastas se publican directamente sin necesidad de revisión."
-            : "Tu producto será revisado por un administrador antes de ser publicado. Selecciona la duración deseada y el administrador podrá ajustarla si lo considera necesario."
-          }
-          {" "}
-          <a href="/politicas-publicacion" target="_blank" className="text-primary underline underline-offset-2 font-medium hover:text-primary/80">
-            Ver Políticas de Publicación
-          </a>
-        </p>
-        {isGoldPlus && (
-          <Badge variant="outline" className="mt-1 text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/25">
-            ⚡ Publicación Directa
-          </Badge>
-        )}
-        {isDuplicate && (
-          <div className="mt-3 flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-sm p-3">
-            <Copy className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-            <div className="text-xs">
-              <p className="font-semibold text-amber-600 dark:text-amber-400">📋 Borrador basado en una publicación anterior</p>
-              <p className="text-muted-foreground mt-0.5">El título, descripción y precio han sido copiados. <strong className="text-foreground">Debes realizar cambios</strong> (ej. nuevas fotos, ajustar precio o descripción) antes de enviarla a revisión.</p>
+    <div className="space-y-6">
+      {/* ── HEADER ── */}
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(132,204,22,0.12),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(250,204,21,0.08),transparent_50%)]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
+        <div className="relative z-10 p-5 sm:p-7">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <Plus className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-heading font-black text-white">Publicar Producto</h2>
+              {isGoldPlus && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 mt-0.5">
+                  ⚡ Publicación Directa
+                </span>
+              )}
             </div>
           </div>
-        )}
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Título del Producto *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ej: Refrigerador Samsung 2024" className="rounded-sm" maxLength={200} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Descripción del Producto *</Label>
-            <textarea
-              ref={descTextareaRef}
-              value={description}
-              required
-              maxLength={2000}
-              lang="es"
-              spellCheck={true}
-              placeholder="Describe detalladamente el producto: condición, características, modelo, etc."
-              rows={8}
-              className="flex w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden"
-              style={{ minHeight: "12rem" }}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                autoResizeTextarea();
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Precio Inicial ($) *</Label>
-            <Input type="number" min="1" step="0.01" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} required placeholder="100" className="rounded-sm max-w-xs" />
-          </div>
+          <p className="text-xs text-white/40 leading-relaxed max-w-2xl">
+            {isGoldPlus
+              ? "Como dealer de nivel Oro o superior, tus subastas se publican directamente sin necesidad de revisión."
+              : "Tu producto será revisado por un administrador antes de ser publicado."
+            }
+            {" "}
+            <a href="/politicas-publicacion" target="_blank" className="text-primary dark:text-[#A6E300] underline underline-offset-2 font-medium hover:opacity-80">
+              Ver Políticas
+            </a>
+          </p>
+        </div>
+      </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Estado del Producto *</Label>
-            <div className="grid grid-cols-3 gap-2 max-w-sm">
-              {([
-                { value: "nuevo", label: "Nuevo", emoji: "✨", desc: "Sin uso" },
-                { value: "usado_buen_estado", label: "Usado", emoji: "👍", desc: "Buen estado" },
-                { value: "para_reparar", label: "Para reparar", emoji: "🔧", desc: "Necesita reparación" },
-              ] as const).map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setProductCondition(opt.value)}
-                  className={`flex flex-col items-center gap-0.5 rounded-sm border p-2.5 text-center transition-all ${productCondition === opt.value
-                      ? "border-primary bg-primary/10 text-primary dark:border-[#A6E300] dark:bg-[#A6E300]/10 dark:text-[#A6E300]"
-                      : "border-border hover:border-primary/40 hover:bg-secondary/50"
-                    }`}
-                >
-                  <span className="text-lg leading-none">{opt.emoji}</span>
-                  <span className="text-[11px] font-bold leading-tight">{opt.label}</span>
-                  <span className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</span>
-                </button>
-              ))}
+      {/* Duplicate warning */}
+      {isDuplicate && (
+        <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl p-4">
+          <Copy className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <p className="font-bold text-amber-500">📋 Borrador basado en una publicación anterior</p>
+            <p className="text-muted-foreground mt-0.5">El título, descripción y precio han sido copiados. <strong className="text-foreground">Realiza cambios</strong> antes de enviar.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── FORM ── */}
+      <form onSubmit={handleCreate} className="space-y-5">
+
+        {/* STEP 1: Info básica */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+            <span className="w-7 h-7 rounded-lg bg-sky-500 text-white flex items-center justify-center text-xs font-black shrink-0">1</span>
+            <span className="text-sm font-heading font-bold">Información del Producto</span>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Título del Producto <span className="text-destructive">*</span></Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ej: Refrigerador Samsung 2024" className="rounded-xl h-11" maxLength={200} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Descripción del Producto <span className="text-destructive">*</span></Label>
+              <textarea
+                ref={descTextareaRef}
+                value={description}
+                required
+                maxLength={2000}
+                lang="es"
+                spellCheck={true}
+                placeholder="Describe detalladamente el producto: condición, características, modelo, etc."
+                rows={6}
+                className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden"
+                style={{ minHeight: "10rem" }}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  autoResizeTextarea();
+                }}
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{description.length}/2000</p>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Duración deseada de la Subasta *</Label>
-            <select
-              value={auctionDuration}
-              onChange={(e) => setAuctionDuration(e.target.value)}
-              className="flex h-10 w-full max-w-xs rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="1">1 hora</option>
-              <option value="2">2 horas</option>
-              <option value="3">3 horas</option>
-              <option value="4">4 horas</option>
-              <option value="5">5 horas</option>
-              <option value="6">6 horas</option>
-              <option value="12">12 horas</option>
-              <option value="24">1 día (24 horas)</option>
-              <option value="48">2 días (48 horas)</option>
-              <option value="72">3 días (72 horas)</option>
-              <option value="96">4 días (96 horas)</option>
-              <option value="120">5 días (120 horas)</option>
-              <option value="144">6 días (144 horas)</option>
-            </select>
-            <p className="text-[10px] text-muted-foreground">
-              {isGoldPlus
-                ? "Como dealer nivel Oro o superior, tu subasta se publica directamente con esta duración."
-                : "El administrador revisará tu solicitud y podrá ajustar la duración si lo considera necesario."
-              }
-            </p>
+        {/* STEP 2: Precio y Estado */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+            <span className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-xs font-black shrink-0">2</span>
+            <span className="text-sm font-heading font-bold">Precio y Estado</span>
           </div>
+          <div className="p-5 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Precio Inicial ($) <span className="text-destructive">*</span></Label>
+              <div className="relative max-w-xs">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
+                <Input type="number" min="1" step="0.01" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} required placeholder="100" className="rounded-xl h-11 pl-8" />
+              </div>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Fecha de inicio programada (opcional)</Label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              className="max-w-xs rounded-sm"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              La fecha y el tiempo de publicación serán tomados en cuenta para activar la subasta. Si dejas la fecha vacía o algún campo sin completar, el departamento de revisión podrá activarla sin necesidad de confirmación. El tiempo mínimo de duración será de 1 día.
-            </p>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Estado del Producto <span className="text-destructive">*</span></Label>
+              <div className="grid grid-cols-3 gap-2.5 max-w-md">
+                {([
+                  { value: "nuevo", label: "Nuevo", emoji: "✨", desc: "Sin uso" },
+                  { value: "usado_buen_estado", label: "Usado", emoji: "👍", desc: "Buen estado" },
+                  { value: "para_reparar", label: "Para reparar", emoji: "🔧", desc: "Necesita reparación" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setProductCondition(opt.value)}
+                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all hover:-translate-y-0.5 ${productCondition === opt.value
+                      ? "border-primary bg-primary/10 text-primary dark:border-[#A6E300] dark:bg-[#A6E300]/10 dark:text-[#A6E300] shadow-md shadow-primary/10"
+                      : "border-border hover:border-primary/30 hover:bg-secondary/30"
+                      }`}
+                  >
+                    <span className="text-xl leading-none">{opt.emoji}</span>
+                    <span className="text-[11px] font-bold leading-tight">{opt.label}</span>
+                    <span className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs">Fotos del Producto * (mínimo 1, máximo 10)</Label>
-            <label className="flex items-center gap-2 px-4 py-3 rounded-sm border border-dashed border-primary/40 text-sm text-primary cursor-pointer hover:bg-primary/5 transition-colors w-full justify-center">
-              <Upload className="h-4 w-4" />
-              Seleccionar fotos ({imageFiles.length}/10)
+        {/* STEP 3: Duración y Programación */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+            <span className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-black shrink-0">3</span>
+            <span className="text-sm font-heading font-bold">Duración y Programación</span>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Duración de la Subasta <span className="text-destructive">*</span></Label>
+              <select
+                value={auctionDuration}
+                onChange={(e) => setAuctionDuration(e.target.value)}
+                className="flex h-11 w-full max-w-xs rounded-xl border border-input bg-background px-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="1">1 hora</option>
+                <option value="2">2 horas</option>
+                <option value="3">3 horas</option>
+                <option value="4">4 horas</option>
+                <option value="5">5 horas</option>
+                <option value="6">6 horas</option>
+                <option value="12">12 horas</option>
+                <option value="24">1 día (24 horas)</option>
+                <option value="48">2 días (48 horas)</option>
+                <option value="72">3 días (72 horas)</option>
+                <option value="96">4 días (96 horas)</option>
+                <option value="120">5 días (120 horas)</option>
+                <option value="144">6 días (144 horas)</option>
+              </select>
+              <p className="text-[10px] text-muted-foreground">
+                {isGoldPlus
+                  ? "Tu subasta se activa directamente con esta duración."
+                  : "El administrador podrá ajustar la duración si lo considera necesario."
+                }
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Fecha de inicio programada <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="max-w-xs rounded-xl h-11"
+              />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Si dejas la fecha vacía, el departamento de revisión podrá activarla sin necesidad de confirmación.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* STEP 4: Fotos */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+            <span className="w-7 h-7 rounded-lg bg-violet-500 text-white flex items-center justify-center text-xs font-black shrink-0">4</span>
+            <span className="text-sm font-heading font-bold">Fotos del Producto</span>
+            <span className="ml-auto text-[10px] text-muted-foreground font-medium">{imageFiles.length}/10</span>
+          </div>
+          <div className="p-5 space-y-3">
+            <label className="flex flex-col items-center gap-2 px-6 py-8 rounded-xl border-2 border-dashed border-primary/30 text-sm cursor-pointer hover:bg-primary/5 hover:border-primary/50 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all">
+                <Upload className="h-6 w-6 text-primary dark:text-[#A6E300]" />
+              </div>
+              <span className="font-heading font-bold text-sm text-foreground">Arrastra o haz clic para subir fotos</span>
+              <span className="text-[10px] text-muted-foreground">Mínimo 1, máximo 10 imágenes. Se aplica marca de agua automáticamente.</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
             </label>
 
             {imageFiles.length > 0 && (
               <>
                 <p className="text-[10px] text-muted-foreground">Arrastra las imágenes para reordenar. La primera será la principal.</p>
-                <div className="grid grid-cols-5 gap-2 mt-1">
+                <div className="grid grid-cols-5 gap-2.5">
                   {imageFiles.map((file, index) => (
                     <div
                       key={`${file.name}-${file.size}-${index}`}
@@ -369,20 +425,20 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={() => handleDrop(index)}
                       onDragEnd={handleDragEnd}
-                      className={`relative group aspect-square rounded-sm overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${dragOverIndex === index ? "border-primary scale-105" : dragIndex === index ? "border-primary/50 opacity-50" : "border-border"
+                      className={`relative group aspect-square rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${dragOverIndex === index ? "border-primary scale-105 shadow-lg" : dragIndex === index ? "border-primary/50 opacity-50" : "border-border hover:border-primary/30"
                         }`}
                     >
                       <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover pointer-events-none" />
-                      <span className="absolute top-1 left-1 w-5 h-5 bg-background/80 text-foreground rounded-full flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
+                      <span className="absolute top-1.5 left-1.5 w-5 h-5 bg-background/80 backdrop-blur-sm text-foreground rounded-lg flex items-center justify-center text-[10px] font-black">{index + 1}</span>
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1.5 right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-lg flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
                       >
                         ×
                       </button>
                       {index === 0 && (
-                        <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center py-0.5">Principal</span>
+                        <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-primary-foreground text-[9px] text-center py-1 font-bold">PRINCIPAL</span>
                       )}
                     </div>
                   ))}
@@ -390,67 +446,75 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
               </>
             )}
           </div>
+        </div>
 
-          <div className="bg-destructive/5 border border-destructive/15 rounded-sm p-3 text-xs space-y-1.5">
-            <p className="font-semibold text-destructive flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Compromiso del Vendedor
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              Al publicar una subasta, te comprometes a <strong className="text-foreground">enviar el producto al ganador</strong> una vez finalizada y cobrada la subasta.
-              El incumplimiento puede resultar en la suspensión de tu cuenta y acciones legales.
-            </p>
+        {/* ── WARNINGS & INFO ── */}
+        <div className="space-y-3">
+          {/* Seller commitment */}
+          <div className="bg-destructive/5 border border-destructive/15 rounded-xl p-4 text-xs flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </div>
+            <div>
+              <p className="font-bold text-destructive mb-0.5">Compromiso del Vendedor</p>
+              <p className="text-muted-foreground leading-relaxed">
+                Al publicar, te comprometes a <strong className="text-foreground">enviar el producto al ganador</strong> una vez cobrada. El incumplimiento puede resultar en suspensión de tu cuenta.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-secondary/50 rounded-sm p-3 text-xs text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">ℹ️ Proceso de publicación:</p>
+          {/* Publication process */}
+          <div className="bg-secondary/30 border border-border rounded-xl p-4 text-xs">
+            <p className="font-bold text-foreground mb-2 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">ℹ️</span>
+              Proceso de publicación
+            </p>
             {isGoldPlus ? (
-              <ol className="list-decimal ml-4 space-y-0.5">
-                <li>Envías tu producto → Estado: <strong>Activa</strong> (publicación directa por tu nivel de confianza)</li>
+              <ol className="list-decimal ml-4 space-y-1 text-muted-foreground">
+                <li>Envías tu producto → <strong className="text-foreground">Activa</strong> (publicación directa)</li>
                 <li>Finaliza la subasta → Recibes datos del ganador</li>
                 <li>El departamento de cobranza gestiona el pago</li>
                 <li>Envías el producto → Se libera el pago</li>
               </ol>
             ) : (
-              <ol className="list-decimal ml-4 space-y-0.5">
-                <li>Envías tu producto → Estado: <strong>Pendiente</strong></li>
-                <li>El admin revisa fotos y detalles → Estado: <strong>En Revisión</strong></li>
-                <li>El admin aprueba y asigna el tiempo de subasta → Estado: <strong>Activa</strong></li>
-                <li>Finaliza la subasta → Recibes datos del ganador</li>
-                <li>El departamento de cobranza gestiona el pago</li>
-                <li>Envías el producto → Se libera el pago</li>
+              <ol className="list-decimal ml-4 space-y-1 text-muted-foreground">
+                <li>Envías tu producto → <strong className="text-foreground">Pendiente</strong></li>
+                <li>El admin revisa → <strong className="text-foreground">En Revisión</strong></li>
+                <li>El admin aprueba → <strong className="text-foreground">Activa</strong></li>
+                <li>Finaliza → Recibes datos del ganador</li>
+                <li>Se gestiona el pago → Envías → Pago liberado</li>
               </ol>
             )}
             {isGoldPlus && (
-              <p className="text-[10px] text-primary mt-1">⚠️ Nota: El administrador puede pausar tu subasta si detecta alguna irregularidad.</p>
+              <p className="text-[10px] text-amber-500 mt-2">⚠️ El admin puede pausar tu subasta si detecta irregularidades.</p>
             )}
           </div>
 
-          <div className="bg-primary/5 border border-primary/15 rounded-sm p-3 flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">
-              <p>¿Tienes un error en tu publicación o necesitas ayuda?</p>
-            </div>
+          {/* Support */}
+          <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">¿Necesitas ayuda con tu publicación?</p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs rounded-sm shrink-0"
+              className="text-xs rounded-xl shrink-0 font-bold hover:border-primary/30"
               onClick={() => navigate("/contacto")}
             >
-              <Headphones className="h-3.5 w-3.5 mr-1" />
-              Contactar Soporte
+              <Headphones className="h-3.5 w-3.5 mr-1.5" />
+              Soporte
             </Button>
           </div>
+        </div>
 
-          <Button type="submit" disabled={creating || imageFiles.length < 1} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-sm">
-            {creating ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" />{uploading ? "Subiendo fotos..." : "Enviando..."}</>
-            ) : (
-              isGoldPlus ? "🚀 Publicar Subasta" : "Enviar a Revisión"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        {/* ── SUBMIT ── */}
+        <Button type="submit" disabled={creating || imageFiles.length < 1} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold rounded-xl h-12 text-sm shadow-lg shadow-accent/20 hover:shadow-accent/30 transition-all">
+          {creating ? (
+            <><Loader2 className="h-4 w-4 animate-spin mr-2" />{uploading ? "Subiendo fotos..." : "Enviando..."}</>
+          ) : (
+            isGoldPlus ? "🚀 Publicar Subasta" : "📤 Enviar a Revisión"
+          )}
+        </Button>
+      </form>
+    </div>
   );
 }
