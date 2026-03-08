@@ -53,6 +53,7 @@ const Admin = () => {
   const [adminDisputes, setAdminDisputes] = useState<any[]>([]);
   const [auctionReports, setAuctionReports] = useState<any[]>([]);
   const [paymentProofs, setPaymentProofs] = useState<any[]>([]);
+  const [openTickets, setOpenTickets] = useState(0);
 
   // CMS / settings
   const [editingSettings, setEditingSettings] = useState<Record<string, string>>({});
@@ -227,6 +228,12 @@ const Admin = () => {
     }));
     setAuctionReports(reportsList);
 
+    // Fetch open support tickets count
+    try {
+      const { count } = await supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["open", "pending"]);
+      setOpenTickets(count || 0);
+    } catch { /* support_tickets table may not exist */ }
+
     setLoading(false);
   };
 
@@ -268,10 +275,19 @@ const Admin = () => {
   // Computed values
   const commissionPct = parseFloat(editingSettings["commission_percentage"] || "0");
   const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
+  const activeAuctions = auctions.filter(a => a.status === "active").length;
   const dealers = allUsers.filter(u => u.role === "dealer");
+  const pendingDealerApps = dealerApps.filter((d: any) => d.status === "pending").length;
   const unreadMessages = messages.filter(m => m.receiver_id === user?.id && !m.is_read).length;
   const openDisputes = adminDisputes.filter((d: any) => d.status === "open" || d.status === "mediation").length;
   const pendingPayments = paymentProofs.filter((p: any) => p.status === "pending").length;
+  const pendingReports = auctionReports.filter((r: any) => r.status === "pending" || !r.status).length;
+  const newUsersToday = allUsers.filter(u => {
+    if (!u.created_at) return false;
+    const d = new Date(u.created_at);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  }).length;
 
   // Grouped sidebar sections for professional navigation
   const sidebarGroups: { label: string; items: { key: AdminTab; label: string; icon: any; badge?: number; urgent?: boolean }[] }[] = [
@@ -280,7 +296,7 @@ const Admin = () => {
       items: [
         { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { key: "review", label: "Revisión", icon: Eye, badge: pendingAuctions.length, urgent: pendingAuctions.length > 0 },
-        { key: "auctions", label: "Subastas", icon: Gavel },
+        { key: "auctions", label: "Subastas", icon: Gavel, badge: activeAuctions },
         { key: "won", label: "Ganadas", icon: Trophy },
         { key: "payments", label: "Pagos", icon: CreditCard, badge: pendingPayments, urgent: pendingPayments > 0 },
       ],
@@ -288,8 +304,8 @@ const Admin = () => {
     {
       label: "Usuarios",
       items: [
-        { key: "users", label: "Usuarios", icon: Users },
-        { key: "dealers", label: "Dealers", icon: Package },
+        { key: "users", label: "Usuarios", icon: Users, badge: newUsersToday > 0 ? newUsersToday : undefined },
+        { key: "dealers", label: "Dealers", icon: Package, badge: pendingDealerApps, urgent: pendingDealerApps > 0 },
         { key: "dealer_sales", label: "Ventas Dealers", icon: TrendingUp },
         { key: "team", label: "Equipo", icon: Shield },
       ],
@@ -298,7 +314,7 @@ const Admin = () => {
       label: "Comunicación",
       items: [
         { key: "messages", label: "Mensajes", icon: MessageCircle, badge: unreadMessages, urgent: unreadMessages > 0 },
-        { key: "emails", label: "Soporte & Correos", icon: Mail },
+        { key: "emails", label: "Soporte & Correos", icon: Mail, badge: openTickets, urgent: openTickets > 0 },
         { key: "notifications", label: "Push", icon: Bell },
         { key: "campaigns", label: "Campañas", icon: ImagePlus },
       ],
@@ -307,7 +323,7 @@ const Admin = () => {
       label: "Sistema",
       items: [
         { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: openDisputes, urgent: openDisputes > 0 },
-        { key: "reports", label: "Reportes", icon: Flag },
+        { key: "reports", label: "Reportes", icon: Flag, badge: pendingReports, urgent: pendingReports > 0 },
         { key: "cms", label: "Config. Central", icon: Settings },
       ],
     },
@@ -369,10 +385,14 @@ const Admin = () => {
                     <item.icon className="h-4 w-4 shrink-0" />
                     {sidebarOpen && <span>{item.label}</span>}
                     {item.badge != null && item.badge > 0 && (
-                      <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1 -right-1"} min-w-[18px] h-[18px] px-1 text-[9px] rounded-full flex items-center justify-center font-bold ${item.urgent
-                        ? "bg-red-500 text-white animate-pulse"
-                        : "bg-white/15 text-white/70"
-                        }`}>{item.badge}</span>
+                      <span className={`${sidebarOpen ? "ml-auto" : "absolute -top-1.5 -right-1.5"} inline-flex items-center justify-center font-bold tracking-tight transition-all duration-300 ${item.urgent
+                        ? sidebarOpen
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)] ring-1 ring-red-400/30"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-red-500 text-white shadow-[0_0_6px_rgba(239,68,68,0.6)]"
+                        : sidebarOpen
+                          ? "min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-white/10 text-white/60 ring-1 ring-white/10 backdrop-blur-sm"
+                          : "min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-white/20 text-white/80"
+                        }`}>{item.badge > 99 ? "99+" : item.badge}</span>
                     )}
                   </button>
                 ))}
