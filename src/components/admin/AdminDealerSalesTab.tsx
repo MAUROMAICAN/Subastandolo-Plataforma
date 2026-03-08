@@ -518,7 +518,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
           { label: "Ventas Totales", value: totals.totalSales, icon: ShoppingBag, color: "text-primary dark:text-accent", format: (v: number) => v.toString(), filter: "with_sales" },
           { label: "Ingresos Brutos", value: totals.totalRevenue, icon: DollarSign, color: "text-foreground", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
           { label: "Comisión Plataforma", value: totals.totalCommission, icon: TrendingUp, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
-          { label: "Total Adeudado", value: totals.totalOwed, icon: Wallet, color: "text-warning", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_balance" },
+          { label: "Por Pagar al Dealer", value: totals.totalOwed, icon: Wallet, color: "text-warning", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_balance" },
           { label: "Total Pagado", value: totals.totalPaid, icon: CheckCircle, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "all" },
           { label: "Con Saldo", value: totals.dealersWithBalance, icon: Users, color: "text-destructive", format: (v: number) => v.toString(), filter: "with_balance" },
         ].map((stat, idx) => (
@@ -594,7 +594,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                       <p className="text-xs font-bold">${dealer.total_revenue.toFixed(2)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-muted-foreground">Adeudado</p>
+                      <p className="text-[10px] text-muted-foreground">Por Pagar</p>
                       <p className={`text-xs font-bold ${dealer.pending_balance > 0 ? "text-warning" : "text-primary dark:text-accent"}`}>
                         ${dealer.pending_balance.toFixed(2)}
                       </p>
