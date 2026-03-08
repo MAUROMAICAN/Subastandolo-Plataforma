@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Eye, CheckCircle, XCircle, AlertTriangle, Mail, FileText, Settings,
-  Users, ShieldCheck, Clock, UserCheck, Phone, MessageSquare
+  Users, ShieldCheck, Clock, UserCheck, Phone, MessageSquare, Send, Loader2,
+  Headphones
 } from "lucide-react";
 import { DEALER_TIERS } from "@/components/VerifiedBadge";
 
@@ -44,6 +45,14 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
   // Extra dealers from user_roles not in dealer_verification
   const [extraDealers, setExtraDealers] = useState<any[]>([]);
   const [dealerEmails, setDealerEmails] = useState<Record<string, string>>({});
+
+  // Quick chat dialog state
+  const [chatDealer, setChatDealer] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [sendingChat, setSendingChat] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchExtraDealers();
@@ -100,6 +109,42 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
     } catch (e) {
       console.error("Error fetching emails:", e);
     }
+  };
+
+  const openChat = async (dealer: any) => {
+    setChatDealer(dealer);
+    setLoadingChat(true);
+    setChatInput("");
+    await fetchChatMessages(dealer.user_id);
+    setLoadingChat(false);
+  };
+
+  const fetchChatMessages = async (dealerId: string) => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${dealerId}),and(sender_id.eq.${dealerId},receiver_id.eq.${user.id})`)
+      .order("created_at", { ascending: true });
+    setChatMessages(data || []);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !user || !chatDealer) return;
+    setSendingChat(true);
+    const { error } = await supabase.from("messages").insert({
+      sender_id: user.id,
+      receiver_id: chatDealer.user_id,
+      content: chatInput.trim(),
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setChatInput("");
+      await fetchChatMessages(chatDealer.user_id);
+    }
+    setSendingChat(false);
   };
 
   // Merge dealer_verification apps + role-only dealers
@@ -234,9 +279,7 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
                             </Button>
                           </a>
                         )}
-                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title="Mensaje directo" onClick={() => {
-                          toast({ title: "💬 Ir a Mensajes", description: `Abre la pestaña Mensajes para chatear con ${app.full_name}` });
-                        }}>
+                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-sm" title="Mensaje directo" onClick={() => openChat(app)}>
                           <MessageSquare className="h-3 w-3" />
                         </Button>
                         {dealerEmails[app.user_id] && (
@@ -381,6 +424,68 @@ const AdminDealersTab = ({ dealerApps, fetchAllData }: Props) => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Chat Dialog */}
+      <Dialog open={!!chatDealer} onOpenChange={(open) => { if (!open) { setChatDealer(null); setChatMessages([]); } }}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-4 py-3 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-sm font-heading">
+              <Headphones className="h-4 w-4 text-primary dark:text-accent" />
+              Chat con {chatDealer?.full_name || chatDealer?.business_name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-[250px] max-h-[400px] bg-secondary/10">
+            {loadingChat ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : chatMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <MessageSquare className="h-8 w-8 text-muted-foreground/20 mb-2" />
+                <p className="text-xs text-muted-foreground">Sin mensajes aún. Envía el primero.</p>
+              </div>
+            ) : (
+              chatMessages.map((msg: any) => {
+                const isMe = msg.sender_id === user?.id;
+                return (
+                  <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] rounded-sm px-3 py-2 text-xs ${isMe
+                        ? "bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground"
+                        : "bg-card border border-border"
+                      }`}>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      <p className={`text-[9px] mt-0.5 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                        {new Date(msg.created_at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-border p-3 flex gap-2">
+            <Textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Escribe un mensaje..."
+              className="min-h-[36px] max-h-[60px] text-xs rounded-sm resize-none flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
+            />
+            <Button
+              onClick={sendChatMessage}
+              disabled={sendingChat || !chatInput.trim()}
+              className="rounded-sm bg-primary text-primary-foreground h-9 w-9 p-0 shrink-0"
+            >
+              {sendingChat ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

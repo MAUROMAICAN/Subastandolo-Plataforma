@@ -29,6 +29,7 @@ import DealerShipmentsTab from "@/components/dealer/DealerShipmentsTab";
 import DealerLevelsTab from "@/components/dealer/DealerLevelsTab";
 import DealerPaymentTab from "@/components/dealer/DealerPaymentTab";
 import DealerWalletTab from "@/components/dealer/DealerWalletTab";
+import DealerSupportInbox from "@/components/dealer/DealerSupportInbox";
 
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -490,20 +491,7 @@ const DealerDashboard = () => {
           {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
           {activeTab === "payment" && <DealerPaymentTab />}
           {activeTab === "wallet" && <DealerWalletTab />}
-          {activeTab === "support" && (
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <div className="text-center mb-6">
-                <Headphones className="h-10 w-10 mx-auto mb-3 text-primary dark:text-[#A6E300]" />
-                <h2 className="text-lg font-heading font-bold mb-1">Centro de Soporte</h2>
-                <p className="text-xs text-muted-foreground">¿Necesitas ayuda? Crea un ticket de soporte o revisa los existentes.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => navigate("/contacto")} className="rounded-xl font-bold gap-2 bg-primary text-primary-foreground">
-                  <Headphones className="h-4 w-4" /> Ir al Centro de Soporte
-                </Button>
-              </div>
-            </div>
-          )}
+          {activeTab === "support" && <DealerSupportInbox />}
         </div>
       </main>
       <Footer />
