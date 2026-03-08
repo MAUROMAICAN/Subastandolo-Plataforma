@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import BottomNav from "@/components/BottomNav";
+import SEOHead from "@/components/SEOHead";
 import { useVerifiedDealer } from "@/hooks/useVerifiedDealers";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useUserReviews } from "@/hooks/useReviews";
@@ -250,10 +252,11 @@ const DealerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Panel de Dealer" description="Gestiona tus subastas, envíos, cobros y más desde tu panel de dealer." />
       <Navbar />
       <BackButton />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 max-w-6xl">
+      <main className="container mx-auto px-3 sm:px-4 py-4 max-w-6xl pb-24">
 
         {/* ── STATUS BANNERS ── */}
         {dealer?.accountStatus === "banned" && (
@@ -277,16 +280,15 @@ const DealerDashboard = () => {
 
         {/* ── HERO HEADER ── */}
         {dealer?.isVerified && (
-          <div className="relative mb-5 rounded-2xl overflow-hidden border border-border shadow-lg">
-            {/* Gradient band */}
-            <div
-              className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${tier.colors.fill} 0%, transparent 60%)` }}
-            />
+          <div className="relative mb-5 rounded-2xl overflow-hidden">
+            {/* Dark gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#0d1117]" />
+            <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: `radial-gradient(ellipse at top left, ${tier.colors.fill}22, transparent 60%)` }} />
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: `radial-gradient(ellipse at bottom right, ${tier.colors.fill}18, transparent 50%)` }} />
             {/* Accent top bar */}
-            <div className="h-1 w-full" style={{ background: tier.colors.fill }} />
+            <div className="h-[2px] w-full" style={{ background: `linear-gradient(90deg, transparent, ${tier.colors.fill}, transparent)` }} />
 
-            <div className="bg-card px-4 sm:px-6 py-4 sm:py-5">
+            <div className="relative z-10 px-4 sm:px-6 py-5 sm:py-6">
               <div className="flex items-start gap-4">
                 {/* Avatar */}
                 <div className="relative shrink-0">
@@ -294,15 +296,15 @@ const DealerDashboard = () => {
                     <ProfileAvatarUpload avatarUrl={dealerAvatarUrl} userName={dealer.name} onAvatarChange={url => setDealerAvatarUrl(url)} size="md" />
                   </div>
                   <div className="sm:hidden">
-                    <Avatar className="h-14 w-14 border-2 shadow-md" style={{ borderColor: tier.colors.fill }}>
+                    <Avatar className="h-14 w-14 border-2 shadow-lg" style={{ borderColor: tier.colors.fill }}>
                       {dealerAvatarUrl && <AvatarImage src={dealerAvatarUrl} alt={dealer.name} className="object-cover" />}
-                      <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
+                      <AvatarFallback className="text-sm font-bold bg-white/10 text-white">
                         {(dealer.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                   {/* Tier badge overlay */}
-                  <div className="absolute -bottom-1 -right-1 ring-2 ring-background rounded-full">
+                  <div className="absolute -bottom-1 -right-1 ring-2 ring-[#0d1117] rounded-full">
                     <VerifiedBadge size="sm" salesCount={effectiveSalesCount} showTooltip={false} />
                   </div>
                 </div>
@@ -310,7 +312,7 @@ const DealerDashboard = () => {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-lg sm:text-xl font-heading font-black truncate">{dealer.name}</h1>
+                    <h1 className="text-lg sm:text-xl font-heading font-black text-white truncate">{dealer.name}</h1>
                     <span
                       className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap"
                       style={{ color: tier.colors.fill, borderColor: tier.colors.fill + "55", background: tier.colors.fill + "15" }}
@@ -321,16 +323,16 @@ const DealerDashboard = () => {
 
                   {/* Stat pills */}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
+                    <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
                       <Trophy className="h-3 w-3 text-amber-500" />
                       {salesCount} venta{salesCount !== 1 ? "s" : ""}
                     </span>
-                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
+                    <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
                       <span className="w-2 h-2 rounded-full" style={{ background: dealerStats.totalReviews > 0 ? (dealerStats.positivePercentage >= 80 ? "#22c55e" : dealerStats.positivePercentage >= 50 ? "#eab308" : "#ef4444") : "#6b7280" }} />
                       {dealerStats.totalReviews > 0 ? `${dealerStats.positivePercentage}% positivo` : "Sin reseñas"}
                     </span>
-                    <span className="flex items-center gap-1.5 bg-secondary/60 rounded-full px-3 py-1 text-[11px] font-semibold">
-                      <BarChart3 className="h-3 w-3 text-primary dark:text-[#A6E300]" />
+                    <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
+                      <BarChart3 className="h-3 w-3" style={{ color: tier.colors.fill }} />
                       {dealerStats.totalReviews} reseña{dealerStats.totalReviews !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -338,13 +340,13 @@ const DealerDashboard = () => {
                   {/* Progress to next tier */}
                   {nextTier && (
                     <div className="mt-3 max-w-sm">
-                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                        <span>Próximo nivel: <strong className="text-foreground">{nextTier.label}</strong></span>
+                      <div className="flex justify-between text-[10px] text-white/40 mb-1">
+                        <span>Próximo nivel: <strong className="text-white/70">{nextTier.label}</strong></span>
                         <span>{salesCount} / {nextTier.min}</span>
                       </div>
-                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full rounded-full transition-all duration-700 shadow-sm"
                           style={{ width: `${progressPct}%`, background: tier.colors.fill }}
                         />
                       </div>
@@ -360,7 +362,7 @@ const DealerDashboard = () => {
                 {/* CTA */}
                 <Button
                   onClick={() => setActiveTab("create")}
-                  className="shrink-0 hidden sm:flex rounded-xl gap-1.5 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md"
+                  className="shrink-0 hidden sm:flex rounded-xl gap-1.5 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
                   size="sm"
                 >
                   <Plus className="h-3.5 w-3.5" /> Nueva Subasta
@@ -384,20 +386,18 @@ const DealerDashboard = () => {
 
         {/* ── TAB NAVIGATION ── */}
         <div className="mb-5">
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
             {tabs.map(tab => {
-              // Tabs restricted to admins only until marketplace is live
               const isRestricted = !isAdmin && ["store", "store-orders"].includes(tab.key);
+              const isActive = activeTab === tab.key;
 
               return (
                 <div key={tab.key} className="relative shrink-0">
-                  {/* Próximamente tooltip */}
                   {showComingSoon === tab.key && (
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
                       <div className="bg-foreground text-background text-[10px] font-black px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-xl flex items-center gap-1">
                         🚀 Próximamente
                       </div>
-                      {/* Arrow */}
                       <div className="w-2 h-2 bg-foreground rotate-45 mx-auto -mt-1" />
                     </div>
                   )}
@@ -411,14 +411,14 @@ const DealerDashboard = () => {
                         setActiveTab(tab.key);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${isRestricted
-                      ? "opacity-50 cursor-not-allowed bg-secondary/30 text-muted-foreground"
-                      : activeTab === tab.key
-                        ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 border ${isRestricted
+                      ? "opacity-40 cursor-not-allowed bg-secondary/20 text-muted-foreground border-transparent"
+                      : isActive
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/25 border-primary/50"
+                        : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border-border/50 hover:border-primary/20"
                       }`}
                   >
-                    <tab.icon className="h-3.5 w-3.5" />
+                    <tab.icon className={`h-3.5 w-3.5 ${isActive ? '' : 'opacity-70'}`} />
                     <span className="hidden sm:inline">{tab.label}</span>
                     <span className="sm:hidden">{tab.label.split(" ").pop()}</span>
                     {isRestricted && (
@@ -494,7 +494,9 @@ const DealerDashboard = () => {
           {activeTab === "support" && <DealerSupportInbox />}
         </div>
       </main>
-      <Footer />
+      <div className="hidden sm:block"><Footer /></div>
+      <div className="sm:hidden h-14" />
+      <BottomNav />
     </div>
   );
 };
