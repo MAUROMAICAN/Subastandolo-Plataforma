@@ -304,49 +304,59 @@ export default function DealerAuctionsTab({
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="border-t border-border p-4 sm:p-5 space-y-4 bg-secondary/5">
+                  <div className="border-t border-border p-4 sm:p-5 space-y-3">
+                    {/* Photos gallery */}
                     {auction.images.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold mb-2">Fotos ({auction.images.length})</p>
-                        <div className="flex gap-2.5 overflow-x-auto pb-2">
+                      <div className="bg-secondary/30 border border-border rounded-xl p-3">
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">📷 Fotos ({auction.images.length})</p>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
                           {auction.images.map((img, i) => (
-                            <img key={img.id} src={img.image_url} alt={`Foto ${i + 1}`} className="w-20 h-20 rounded-xl object-cover shrink-0 border border-border/50 hover:scale-105 transition-transform cursor-pointer" />
+                            <div key={img.id} className="relative shrink-0">
+                              <img src={img.image_url} alt={`Foto ${i + 1}`} className="w-24 h-24 rounded-lg object-cover border border-border/50 hover:scale-105 hover:shadow-lg transition-all cursor-pointer" />
+                              {i === 0 && <span className="absolute bottom-1 left-1 text-[8px] bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded font-bold">PRINCIPAL</span>}
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
 
+                    {/* Description */}
                     {auction.description && (
-                      <div>
-                        <p className="text-xs font-bold mb-1">Descripción</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{auction.description}</p>
+                      <div className="bg-secondary/30 border border-border rounded-xl p-3">
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">📝 Descripción</p>
+                        <p className="text-xs text-foreground/80 leading-relaxed max-h-32 overflow-y-auto pr-2">{auction.description}</p>
                       </div>
                     )}
 
+                    {/* Admin notes */}
                     {auction.admin_notes && (
                       <div className="bg-warning/5 border border-warning/20 rounded-xl p-3">
-                        <p className="text-xs font-bold text-warning mb-1">Notas del Administrador</p>
+                        <p className="text-[11px] font-bold text-warning uppercase tracking-wider mb-1">📋 Notas del Administrador</p>
                         <p className="text-xs text-muted-foreground">{auction.admin_notes}</p>
                       </div>
                     )}
 
+                    {/* Active timer */}
                     {auction.status === "active" && (
-                      <div>
-                        <p className="text-xs font-bold mb-1">Finalización</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="bg-secondary/30 border border-border rounded-xl p-3 flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">⏰ Finalización</span>
+                        <span className="text-xs font-bold">
                           {new Date(auction.end_time).toLocaleString("es-MX")}
-                          {isEnded && <span className="text-destructive font-bold ml-2">— FINALIZADA</span>}
-                        </p>
+                          {isEnded && <span className="text-destructive ml-2">— FINALIZADA</span>}
+                        </span>
                       </div>
                     )}
 
+                    {/* Bids table */}
                     {auction.bids.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold mb-2">Pujas ({auction.bids.length})</p>
-                        <div className="bg-card border border-border rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                      <div className="bg-secondary/30 border border-border rounded-xl overflow-hidden">
+                        <div className="px-3 py-2 border-b border-border">
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">🏷️ Pujas ({auction.bids.length})</p>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
                           <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-secondary/30 border-b border-border">
+                            <thead className="sticky top-0">
+                              <tr className="bg-card border-b border-border">
                                 <th className="px-3 py-2 text-left text-muted-foreground font-bold">#</th>
                                 <th className="px-3 py-2 text-left text-muted-foreground font-bold">Postor</th>
                                 <th className="px-3 py-2 text-right text-muted-foreground font-bold">Monto</th>
@@ -355,8 +365,8 @@ export default function DealerAuctionsTab({
                             </thead>
                             <tbody>
                               {auction.bids.map((bid, index) => (
-                                <tr key={bid.id} className={`border-b border-border last:border-0 ${index === 0 ? "bg-primary/5" : ""}`}>
-                                  <td className="px-3 py-2">{index === 0 ? "👑" : index + 1}</td>
+                                <tr key={bid.id} className={`border-b border-border/50 last:border-0 ${index === 0 ? "bg-primary/5" : "hover:bg-secondary/20"}`}>
+                                  <td className="px-3 py-2 font-bold">{index === 0 ? "👑" : index + 1}</td>
                                   <td className="px-3 py-2">{maskName(bid.bidder_name)}</td>
                                   <td className="px-3 py-2 text-right font-bold text-primary dark:text-[#A6E300]">${bid.amount.toLocaleString("es-MX")}</td>
                                   <td className="px-3 py-2 text-right text-muted-foreground">{new Date(bid.created_at).toLocaleDateString("es-MX")}</td>
