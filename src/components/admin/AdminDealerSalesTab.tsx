@@ -176,7 +176,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
   const fetchData = async () => {
     setLoading(true);
 
-    const [dealersRes, earningsRes, withdrawalsRes, bankRes, auctionsRes, proofsRes, bcvSettingRes, profilesRes, paymentsRes, paymentItemsRes] = await Promise.all([
+    const [dealersRes, earningsRes, withdrawalsRes, bankRes, auctionsRes, proofsRes, bcvSettingRes, profilesRes, paymentsRes, paymentItemsRes, rolesRes] = await Promise.all([
       supabase.from("dealer_verification").select("user_id, business_name, dealer_balance, account_status, full_name").eq("status", "approved"),
       supabase.from("platform_earnings").select("*").order("created_at", { ascending: false }),
       supabase.from("withdrawal_requests").select("*").order("created_at", { ascending: false }),
@@ -187,6 +187,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       supabase.from("profiles").select("id, avatar_url, full_name"),
       supabase.from("dealer_payments").select("*").order("created_at", { ascending: false }),
       supabase.from("dealer_payment_items").select("*"),
+      supabase.from("user_roles").select("user_id").eq("role", "dealer"),
     ]);
 
     const dealerList = dealersRes.data || [];
@@ -217,16 +218,18 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       paymentItemsByPayment[pi.payment_id].push({ earning_id: pi.earning_id, amount: Number(pi.amount) });
     });
 
-    // ── Merge dealer sources: dealer_verification + platform_earnings + auction creators ──
+    // ── Merge dealer sources: verification + earnings + auction creators + role ──
     const dealerIdSet = new Set<string>();
     // 1. From dealer_verification (approved)
     dealerList.forEach((d: any) => dealerIdSet.add(d.user_id));
     // 2. From platform_earnings (any dealer with earnings)
     earnings.forEach((e: any) => { if (e.dealer_id) dealerIdSet.add(e.dealer_id); });
-    // 3. From auctions with winners (creators = dealers who sold)
+    // 3. From auctions (creators = dealers who sold)
     Object.values(auctionMap).forEach((a: any) => {
       if (a.created_by) dealerIdSet.add(a.created_by);
     });
+    // 4. From user_roles (anyone with dealer role)
+    (rolesRes.data || []).forEach((r: any) => { if (r.user_id) dealerIdSet.add(r.user_id); });
 
     // Build dealer verification lookup
     const dealerVerifMap: Record<string, any> = {};
