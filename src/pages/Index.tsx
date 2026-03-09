@@ -67,7 +67,7 @@ const Index = () => {
     setFetchError(null);
     // Only show loading skeleton if no cached data
     if (auctions.length === 0) setLoading(true);
-    const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
+    const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("sort_order" as any, { ascending: false }).order("end_time", { ascending: true });
     setLoading(false);
     if (error) {
       setFetchError(error.message);
