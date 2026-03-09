@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const RESEND_API = "https://api.resend.com/emails";
 const APP_URL = "https://subastandolo.com";
-const LOGO_URL = "https://subastandolo.com/logo.png";
+const HEADER_IMG = "https://subastandolo.com/email-header.png";
 
 // ─── Shared email layout (same design as send-test-emails) ─────────────────
 function layout(accentColor: string, accentDark: string, emoji: string, heading: string, subheading: string, body: string) {
@@ -22,29 +22,19 @@ function layout(accentColor: string, accentDark: string, emoji: string, heading:
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
   <title>${heading}</title>
-  <style>
-    :root { color-scheme: light only; }
-    /* Gmail dark mode override */
-    [data-ogsc] .email-logo-header,
-    .email-logo-header { background-color: #111827 !important; }
-    u + .body .email-logo-header { background-color: #111827 !important; }
-  </style>
+  <style>:root { color-scheme: light only; }</style>
 </head>
-<body class="body" style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background:#f3f4f6;padding:32px 16px;">
     <tr><td align="center">
       <table width="100%" style="max-width:580px;" cellpadding="0" cellspacing="0">
 
-        <!-- LOGO HEADER (dark bg, bulletproof) -->
+        <!-- LOGO HEADER (precomposed image with dark bg baked in) -->
         <tr>
-          <td class="email-logo-header" bgcolor="#111827" style="background-color:#111827 !important;background:#111827 !important;padding:32px 32px;border-radius:12px 12px 0 0;text-align:center;">
-            <!--[if mso]><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:580px;"><v:fill type="solid" color="#111827"/><v:textbox inset="0,0,0,0"><![endif]-->
-            <div style="background-color:#111827;padding:0;text-align:center;">
-              <img src="${LOGO_URL}" alt="Subastandolo"
-                width="180"
-                style="width:180px;max-width:180px;height:auto;display:block;margin:0 auto;border:0;outline:0;" />
-            </div>
-            <!--[if mso]></v:textbox></v:rect><![endif]-->
+          <td style="padding:0;border-radius:12px 12px 0 0;overflow:hidden;text-align:center;">
+            <img src="${HEADER_IMG}" alt="Subastandolo"
+              width="580"
+              style="width:100%;max-width:580px;height:auto;display:block;border:0;outline:0;border-radius:12px 12px 0 0;" />
           </td>
         </tr>
 
