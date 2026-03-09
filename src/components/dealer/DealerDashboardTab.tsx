@@ -105,7 +105,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                   <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
                     {bcvRate > 0 ? `Bs. ${(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.unpaid.toFixed(2)}`}
                   </p>
-                  {bcvRate > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa {bcvRate.toFixed(2)} Bs/$</p>}
+                  {bcvRate > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa BCV al cierre de cada subasta</p>}
                 </div>
               </div>
               <div className="flex items-center gap-4 sm:gap-6">

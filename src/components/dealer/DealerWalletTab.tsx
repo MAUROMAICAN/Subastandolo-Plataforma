@@ -171,7 +171,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                   {bcvRate > 0 ? `Bs. ${(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${stats.unpaidEarnings.toFixed(2)}`}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {bcvRate > 0 ? `Ref: $${stats.unpaidEarnings.toFixed(2)} · Tasa ${bcvRate.toFixed(2)} Bs/$` : "Ganancias netas por cobrar"}
+                  {bcvRate > 0 ? `Ref: $${stats.unpaidEarnings.toFixed(2)} · Tasa BCV al cierre de cada subasta` : "Ganancias netas por cobrar"}
                 </p>
               </div>
             </div>
