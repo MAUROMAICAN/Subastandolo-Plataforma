@@ -307,8 +307,9 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "No se encontraron usuarios con email" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Send in batches of 49 (Resend limit is 100 per batch, we use 49 for safety)
-    const BATCH_SIZE = 49;
+    // ── PRIVACY FIX: Send ONE email per recipient individually ──
+    // Never put multiple addresses in 'to' — that exposes all emails to every recipient!
+    const BATCH_SIZE = 40; // Process 40 at a time, then pause for rate limiting
     let sent = 0;
     let failed = 0;
     const errors: string[] = [];
@@ -316,28 +317,32 @@ Deno.serve(async (req: Request) => {
     for (let i = 0; i < allEmails.length; i += BATCH_SIZE) {
       const batch = allEmails.slice(i, i + BATCH_SIZE);
 
-      try {
-        const res = await fetch(RESEND_API, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            from: "SUBASTANDOLO <no-reply@subastandolo.com>",
-            to: batch,
-            subject: template.subject,
-            html: template.html,
-          }),
-        });
+      // Send each email individually within this batch (in parallel for speed)
+      const results = await Promise.allSettled(
+        batch.map(email =>
+          fetch(RESEND_API, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "SUBASTANDOLO <no-reply@subastandolo.com>",
+              to: [email],  // ← Single recipient only!
+              subject: template.subject,
+              html: template.html,
+            }),
+          }).then(async (res) => {
+            if (!res.ok) throw new Error(await res.text());
+            return email;
+          })
+        )
+      );
 
-        if (res.ok) {
-          sent += batch.length;
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          sent++;
         } else {
-          const errText = await res.text();
-          failed += batch.length;
-          errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${errText}`);
+          failed++;
+          errors.push(r.reason?.message || "Unknown error");
         }
-      } catch (e) {
-        failed += batch.length;
-        errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${e.message}`);
       }
 
       // Log each batch
@@ -345,14 +350,14 @@ Deno.serve(async (req: Request) => {
         email_type: "mass_email",
         subject: template.subject,
         recipient_email: `batch_${Math.floor(i / BATCH_SIZE) + 1}@mass`,
-        recipient_name: `${batch.length} recipients`,
+        recipient_name: `${batch.length} recipients (individual)`,
         status: failed > 0 ? "failed" : "sent",
-        metadata: { templateKey, batchSize: batch.length, batchIndex: Math.floor(i / BATCH_SIZE) },
+        metadata: { templateKey, batchSize: batch.length, batchIndex: Math.floor(i / BATCH_SIZE), sent, failed },
       });
 
-      // Rate limit: delay between batches
+      // Rate limit: delay between batches to respect Resend limits
       if (i + BATCH_SIZE < allEmails.length) {
-        await delay(1500);
+        await delay(2000);
       }
     }
 
