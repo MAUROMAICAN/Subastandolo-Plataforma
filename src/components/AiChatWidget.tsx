@@ -287,7 +287,6 @@ const AiChatWidget = () => {
                     <img
                         src={SUBA_AVATAR}
                         alt="Suba"
-                        className="suba-wave"
                         style={{ width: "100%", height: "100%", objectFit: "contain" }}
                     />
                 </button>
@@ -631,21 +630,6 @@ const AiChatWidget = () => {
         @keyframes subaTypewriter {
           from { max-width: 0; opacity: 0; padding: 6px 0; }
           to { max-width: 200px; opacity: 1; padding: 6px 14px; }
-        }
-        /* Avatar wave animation */
-        .suba-wave {
-          transform-origin: 70% 70%;
-          animation: subaWaveHand 2.5s ease-in-out infinite;
-        }
-        @keyframes subaWaveHand {
-          0% { transform: rotate(0deg); }
-          10% { transform: rotate(14deg); }
-          20% { transform: rotate(-8deg); }
-          30% { transform: rotate(14deg); }
-          40% { transform: rotate(-4deg); }
-          50% { transform: rotate(10deg); }
-          60% { transform: rotate(0deg); }
-          100% { transform: rotate(0deg); }
         }
       `}</style>
         </>
