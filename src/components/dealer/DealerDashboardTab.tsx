@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useBCVRate } from "@/hooks/useBCVRate";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ interface Props {
 
 export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFilter, sections }: Props) {
   const { user } = useAuth();
+  const bcvRate = useBCVRate() || 0;
 
   // Earnings data (fetched independently for dashboard overview)
   const [dealerEarnings, setDealerEarnings] = useState<any[]>([]);
@@ -82,6 +84,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas · ${metrics.totalRevenue.toLocaleString("es-MX")} ingresos
+          {bcvRate > 0 && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         </p>
       </div>
 
@@ -99,17 +102,20 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
-                  <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">${walletStats.unpaid.toFixed(2)}</p>
+                  <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
+                    {bcvRate > 0 ? `Bs. ${(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.unpaid.toFixed(2)}`}
+                  </p>
+                  {bcvRate > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa {bcvRate.toFixed(2)} Bs/$</p>}
                 </div>
               </div>
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground">Total Ganado</p>
-                  <p className="text-sm font-bold">${walletStats.totalNet.toFixed(2)}</p>
+                  <p className="text-sm font-bold">{bcvRate > 0 ? `Bs. ${(walletStats.totalNet * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.totalNet.toFixed(2)}`}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground">Pagado</p>
-                  <p className="text-sm font-bold text-emerald-500">${walletStats.paid.toFixed(2)}</p>
+                  <p className="text-[10px] text-muted-foreground">Retirado</p>
+                  <p className="text-sm font-bold text-emerald-500">{bcvRate > 0 ? `Bs. ${(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.paid.toFixed(2)}`}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
               </div>
