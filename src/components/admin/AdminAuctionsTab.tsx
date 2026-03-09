@@ -43,6 +43,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
+  const [auctionPanel, setAuctionPanel] = useState<"active" | "ended">("active");
 
   // Create "Próximamente" auction state
   const [showCreateScheduled, setShowCreateScheduled] = useState(false);
@@ -119,11 +120,21 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       a.id.toLowerCase().includes(q)
     );
   });
+  // Split into active vs finalized based on effective status
+  const activeAuctions = filteredAuctions.filter(a => {
+    const effectivelyEnded = a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now());
+    return !effectivelyEnded;
+  });
+  const endedAuctions = filteredAuctions.filter(a => {
+    const effectivelyEnded = a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now());
+    return effectivelyEnded;
+  });
+  const activeListAuctions = auctionPanel === "active" ? activeAuctions : endedAuctions;
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredAuctions.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(activeListAuctions.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
-  const paginatedAuctions = filteredAuctions.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedAuctions = activeListAuctions.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const toggleCard = (id: string) => {
     setExpandedCards(prev => {
@@ -400,7 +411,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
             <option value={100}>100/pág</option>
           </select>
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {filteredAuctions.length} resultado{filteredAuctions.length !== 1 ? "s" : ""}
+            {activeListAuctions.length} resultado{activeListAuctions.length !== 1 ? "s" : ""}
           </span>
         </div>
       </div>
@@ -457,6 +468,23 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
           </CardContent>
         </Card>
       )}
+
+      {/* ═══ Panel Tabs ═══ */}
+      <div className="flex items-center gap-1.5 bg-secondary/30 p-1.5 rounded-lg border border-border">
+        <button onClick={() => { setAuctionPanel("active"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${auctionPanel === "active" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+          <Play className="h-4 w-4" />
+          <span className="hidden sm:inline">En Vivo / Activas</span>
+          <span className="sm:hidden">Activas</span>
+          <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel === "active" ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : ""}`}>{activeAuctions.length}</Badge>
+        </button>
+        <button onClick={() => { setAuctionPanel("ended"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${auctionPanel === "ended" ? "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+          <CheckCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Finalizadas</span>
+          <span className="sm:hidden">Finalizadas</span>
+          <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel === "ended" ? "border-slate-500/30 text-slate-600 dark:text-slate-400" : ""}`}>{endedAuctions.length}</Badge>
+        </button>
+      </div>
+
       {paginatedAuctions.map(auction => {
         const isEnded = new Date(auction.end_time).getTime() <= Date.now();
         const effectiveStatus = (auction.status === "active" && isEnded) ? "finalized" : auction.status;
@@ -1055,7 +1083,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filteredAuctions.length)} de {filteredAuctions.length}
+              Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, activeListAuctions.length)} de {activeListAuctions.length}
             </p>
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
