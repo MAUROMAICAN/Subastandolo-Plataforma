@@ -14,9 +14,10 @@ Subastandolo es una plataforma donde **Dealers** (vendedores verificados) public
 
 ## PROCESO DE SUBASTAS
 1. El Dealer publica un producto con precio inicial y duración.
-2. Los compradores registrados pujan. La puja más alta al cierre gana.
-3. **Extensión automática**: Si alguien puja en los últimos 5 minutos, el cierre se extiende 5 minutos más.
-4. El ganador recibe notificación por email y push.
+2. Los compradores registrados pujan. **El mejor postor al momento exacto del cierre es quien gana.**
+3. **¡Importante!** No hay extensiones automáticas de tiempo. Los compradores deben estar muy atentos al reloj, porque la subasta cierra en el momento indicado.
+4. Algunas subastas pueden tener la etiqueta "Tiempo Extendido" activada por el administrador, lo que significa que el Dealer ha decidido darle más tiempo a esa subasta específica.
+5. El ganador recibe notificación por email y push.
 
 ## PROCESO DE PAGO
 1. El ganador debe pagar dentro de **24-48 horas**.
