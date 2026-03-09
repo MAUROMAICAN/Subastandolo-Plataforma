@@ -34,7 +34,7 @@ const PublicationPolicies = lazy(() => import("./pages/PublicationPolicies"));
 const BuyerFAQ = lazy(() => import("./pages/BuyerFAQ"));
 const DealerPayments = lazy(() => import("./pages/DealerPayments"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const InstallApp = lazy(() => import("./pages/InstallApp"));
+
 const HowItWorksPage = lazy(() => import("./pages/HowItWorks"));
 const AboutPage = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -246,7 +246,7 @@ const App = () => {
                         <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
                         <Route path="/compradores" element={<BuyerFAQ />} />
                         <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
-                        <Route path="/instalar" element={<InstallApp />} />
+
                         <Route path="/como-funciona" element={<HowItWorksPage />} />
                         <Route path="/nosotros" element={<AboutPage />} />
                         <Route path="/contacto" element={<Contact />} />

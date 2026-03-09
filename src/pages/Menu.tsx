@@ -6,9 +6,9 @@ import SEOHead from "@/components/SEOHead";
 import BottomNav from "@/components/BottomNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Home, Search, Heart, ShoppingBag, HelpCircle, Star, Shield,
-  User, Store, FileText, Info, Mail, Download, LogOut, ChevronRight,
-  Gavel, Scale, Settings, BookOpen,
+  Home, Heart, HelpCircle,
+  User, Store, FileText, Info, Mail, LogOut,
+  Gavel, Scale, Settings, BookOpen, Shield,
 } from "lucide-react";
 
 interface MenuItem {
@@ -44,7 +44,6 @@ const Menu = () => {
     { label: "Preguntas Frecuentes", icon: HelpCircle, to: "/compradores" },
     { label: "Nosotros", icon: Info, to: "/nosotros" },
     { label: "Contacto", icon: Mail, to: "/contacto" },
-    { label: "Instalar App", icon: Download, to: "/instalar" },
   ];
 
   const legalItems: MenuItem[] = [
