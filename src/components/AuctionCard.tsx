@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Countdown from "@/components/Countdown";
-import { Trophy, Heart, Zap, Timer } from "lucide-react";
+import { Trophy, Heart, Zap, Timer, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
@@ -96,6 +96,13 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
         {/* ── INFO ZONE ── */}
         <div className="flex flex-col flex-1 px-3 pt-2.5 pb-2.5">
+
+          {/* Sponsored badge */}
+          {(auction as any).is_sponsored && (
+            <div className="mb-1.5 inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full w-fit border shadow-sm bg-gradient-to-r from-amber-400/15 to-yellow-500/20 border-amber-400/40 text-amber-700 dark:text-amber-300">
+              <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" /> Patrocinado
+            </div>
+          )}
 
           {/* Extended badge */}
           {(auction as any).is_extended && (

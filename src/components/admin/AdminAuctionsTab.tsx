@@ -103,6 +103,16 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     }
   };
 
+  const handleToggleSponsored = async (auctionId: string, current: boolean) => {
+    const { error } = await supabase.from("auctions").update({ is_sponsored: !current } as any).eq("id", auctionId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: !current ? "⭐ Etiqueta 'Patrocinado' activada" : "Etiqueta removida" });
+      fetchAllData();
+    }
+  };
+
   const handleSortOrder = async (auctionId: string, newOrder: number) => {
     const { error } = await supabase.from("auctions").update({ sort_order: newOrder } as any).eq("id", auctionId);
     if (error) {
@@ -666,6 +676,13 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                         <p className="text-[10px] text-muted-foreground">Visible para compradores en la tarjeta de subasta</p>
                       </div>
                       <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border pt-2">
+                      <div>
+                        <p className="text-xs font-medium flex items-center gap-1"><span className="text-sm">⭐</span> Etiqueta "Patrocinado"</p>
+                        <p className="text-[10px] text-muted-foreground">Muestra un badge dorado premium en la tarjeta de subasta</p>
+                      </div>
+                      <Switch checked={(auction as any).is_sponsored || false} onCheckedChange={() => handleToggleSponsored(auction.id, (auction as any).is_sponsored || false)} />
                     </div>
                   </div>
                 )}
