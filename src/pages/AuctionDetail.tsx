@@ -298,7 +298,8 @@ const AuctionDetail = () => {
   }
 
   const isScheduled = auction.status === "scheduled";
-  const isEnded = !isScheduled && new Date(auction.end_time).getTime() <= Date.now();
+  const timeExpired = new Date(auction.end_time).getTime() <= Date.now();
+  const isEnded = auction.status === "finalized" || (!isScheduled && auction.status !== "active" && timeExpired);
   const currentPrice = auction.current_price > 0 ? auction.current_price : auction.starting_price;
 
   const canReviewDealer = isEnded && user && auction.winner_id === user.id && !auctionReviews.some(r => r.reviewer_id === user.id && r.review_type === "buyer_to_dealer");

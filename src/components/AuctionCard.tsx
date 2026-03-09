@@ -22,7 +22,8 @@ interface AuctionCardProps {
 const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionCardProps) => {
   const { user } = useAuth();
   const bcvRate = useBCVRate();
-  const isEnded = auction.status !== "scheduled" && new Date(auction.end_time).getTime() <= Date.now();
+  const timeExpired = new Date(auction.end_time).getTime() <= Date.now();
+  const isEnded = auction.status === "finalized" || (auction.status !== "active" && auction.status !== "scheduled" && timeExpired);
   const startTime = (auction as any).start_time;
   const isScheduled = auction.status === "scheduled" || (startTime && new Date(startTime).getTime() > Date.now());
   const displayPrice = auction.current_price > 0 ? auction.current_price : auction.starting_price;
@@ -131,8 +132,8 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
           {/* Condition badge */}
           {(auction as any).condition && (auction as any).condition !== 'nuevo' ? (
             <span className={`mt-1 inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full w-fit border ${(auction as any).condition === 'usado_buen_estado'
-                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-400/30'
-                : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-400/30'
+              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-400/30'
+              : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-400/30'
               }`}>
               {(auction as any).condition === 'usado_buen_estado' ? '👍 Usado' : '🔧 Para reparar'}
             </span>

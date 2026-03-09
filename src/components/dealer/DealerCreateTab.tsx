@@ -141,12 +141,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
     const autoApprove = isGoldPlus && dealerAccountStatus === "active";
     const durationHours = parseInt(auctionDuration) || 24;
     const scheduledStart = startDate ? new Date(startDate + "T09:00:00").toISOString() : null;
-    const scheduledStartMs = scheduledStart ? new Date(scheduledStart).getTime() : 0;
-    // If scheduled start is in the future, use it; otherwise use now
-    const baseTime = scheduledStartMs > Date.now() ? scheduledStartMs : Date.now();
-    const endTime = autoApprove
-      ? new Date(baseTime + durationHours * 60 * 60 * 1000).toISOString()
-      : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    // Placeholder end_time — will be recalculated server-side for auto-approve
+    const endTime = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await supabase.from("auctions").insert({
       title,
@@ -157,7 +153,7 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
       start_time: scheduledStart,
       created_by: user.id,
       image_url: uploadedUrls[0] || null,
-      status: (autoApprove ? "active" : "pending") as any,
+      status: "pending" as any,
       requested_duration_hours: durationHours,
       condition: productCondition,
     } as any).select().single();
@@ -177,7 +173,24 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
       await supabase.from("auction_images").insert(imageInserts);
     }
 
-    if (autoApprove) {
+    if (autoApprove && data) {
+      // Use server-side RPC to set end_time with DB server clock (avoid client clock skew)
+      const { error: rpcError } = await (supabase.rpc as any)("auto_approve_auction", {
+        p_auction_id: data.id,
+        p_duration_hours: durationHours,
+        p_scheduled_start: scheduledStart,
+      });
+      if (rpcError) {
+        // Fallback to client-side
+        console.warn("RPC auto_approve_auction not available, using fallback:", rpcError.message);
+        const baseTime = (scheduledStart && new Date(scheduledStart).getTime() > Date.now())
+          ? new Date(scheduledStart).getTime() : Date.now();
+        await supabase.from("auctions").update({
+          status: "active",
+          start_time: new Date(baseTime).toISOString(),
+          end_time: new Date(baseTime + durationHours * 60 * 60 * 1000).toISOString(),
+        } as any).eq("id", data.id);
+      }
       toast({ title: "🚀 ¡Subasta publicada!", description: "Tu subasta está activa gracias a tu nivel de confianza." });
     } else {
       toast({ title: "¡Producto enviado a revisión!", description: "Un administrador revisará tu publicación." });

@@ -62,16 +62,33 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       return;
     }
     setSavingTime(true);
-    const newEndTime = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-    const { error } = await supabase.from("auctions").update({ end_time: newEndTime } as any).eq("id", auctionId);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: `⏱️ Tiempo actualizado a ${hours}h desde ahora` });
-      setEditingTime(null);
-      setNewDurationHours("");
-      fetchAllData();
+
+    // Use server-side RPC to avoid client clock skew
+    const { data: rpcResult, error: rpcError } = await (supabase.rpc as any)("set_auction_end_time", {
+      p_auction_id: auctionId,
+      p_duration_hours: hours,
+    });
+
+    if (rpcError) {
+      // Fallback to client-side
+      console.warn("RPC set_auction_end_time not available, using fallback:", rpcError.message);
+      const newEndTime = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from("auctions").update({ end_time: newEndTime } as any).eq("id", auctionId);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        setSavingTime(false);
+        return;
+      }
+    } else if (rpcResult?.error) {
+      toast({ title: "Error", description: rpcResult.error, variant: "destructive" });
+      setSavingTime(false);
+      return;
     }
+
+    toast({ title: `⏱️ Tiempo actualizado a ${hours}h desde ahora` });
+    setEditingTime(null);
+    setNewDurationHours("");
+    fetchAllData();
     setSavingTime(false);
   };
 
@@ -170,60 +187,75 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   };
 
   const handleActivateScheduled = async (auctionId: string, hours: number, scheduleDate?: string) => {
-    const updateData: any = { status: "active" };
-    if (scheduleDate) {
-      const startTime = new Date(scheduleDate).toISOString();
-      updateData.start_time = startTime;
-      updateData.end_time = new Date(new Date(scheduleDate).getTime() + hours * 60 * 60 * 1000).toISOString();
-    } else {
-      updateData.start_time = new Date().toISOString();
-      updateData.end_time = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+    // Use server-side RPC to avoid client clock skew
+    const { data: rpcResult, error: rpcError } = await (supabase.rpc as any)("activate_scheduled_auction", {
+      p_auction_id: auctionId,
+      p_duration_hours: hours,
+      p_schedule_start: scheduleDate ? new Date(scheduleDate).toISOString() : null,
+    });
+
+    if (rpcError) {
+      // Fallback to client-side
+      console.warn("RPC activate_scheduled_auction not available, using fallback:", rpcError.message);
+      const updateData: any = { status: "active" };
+      if (scheduleDate) {
+        const startTime = new Date(scheduleDate).toISOString();
+        updateData.start_time = startTime;
+        updateData.end_time = new Date(new Date(scheduleDate).getTime() + hours * 60 * 60 * 1000).toISOString();
+      } else {
+        updateData.start_time = new Date().toISOString();
+        updateData.end_time = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+      }
+      updateData.requested_duration_hours = hours;
+      const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+    } else if (rpcResult?.error) {
+      toast({ title: "Error", description: rpcResult.error, variant: "destructive" });
+      return;
     }
-    updateData.requested_duration_hours = hours;
-    const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "✅ Subasta activada" });
-      // Notify users who favorited this auction (in-app + push)
-      const { data: favUsers } = await supabase.from("favorites").select("user_id").eq("auction_id", auctionId);
-      if (favUsers && favUsers.length > 0) {
-        const auction = auctions.find(a => a.id === auctionId);
-        const auctionTitle = auction?.title || "subasta";
-        const notifications = favUsers.map(f => ({
-          user_id: f.user_id,
-          title: "🚀 ¡Subasta activada!",
-          message: `La subasta "${auctionTitle}" que marcaste como favorita ya está activa. ¡Puja ahora!`,
-          type: "auction_activated",
-          link: `/auction/${auctionId}`,
-        }));
-        await supabase.from("notifications").insert(notifications);
 
-        // Send push notifications to favorited users
-        const favUserIds = favUsers.map(f => f.user_id);
-        const { data: pushSubs } = await supabase
-          .from("push_subscriptions")
-          .select("*")
-          .in("user_id", favUserIds);
+    toast({ title: "✅ Subasta activada" });
+    // Notify users who favorited this auction (in-app + push)
+    const { data: favUsers } = await supabase.from("favorites").select("user_id").eq("auction_id", auctionId);
+    if (favUsers && favUsers.length > 0) {
+      const auction = auctions.find(a => a.id === auctionId);
+      const auctionTitle = auction?.title || "subasta";
+      const notifications = favUsers.map(f => ({
+        user_id: f.user_id,
+        title: "🚀 ¡Subasta activada!",
+        message: `La subasta "${auctionTitle}" que marcaste como favorita ya está activa. ¡Puja ahora!`,
+        type: "auction_activated",
+        link: `/auction/${auctionId}`,
+      }));
+      await supabase.from("notifications").insert(notifications);
 
-        if (pushSubs && pushSubs.length > 0) {
-          try {
-            await supabase.functions.invoke("send-push-to-users", {
-              body: {
-                userIds: favUserIds,
-                title: "🚀 ¡Subasta activada!",
-                body: `"${auctionTitle}" ya está activa. ¡Puja ahora!`,
-                url: `/auction/${auctionId}`,
-                tag: "auction_activated",
-              },
-            });
-          } catch (e) {
-            console.error("Push notification error:", e);
-          }
+      // Send push notifications to favorited users
+      const favUserIds = favUsers.map(f => f.user_id);
+      const { data: pushSubs } = await supabase
+        .from("push_subscriptions")
+        .select("*")
+        .in("user_id", favUserIds);
+
+      if (pushSubs && pushSubs.length > 0) {
+        try {
+          await supabase.functions.invoke("send-push-to-users", {
+            body: {
+              userIds: favUserIds,
+              title: "🚀 ¡Subasta activada!",
+              body: `"${auctionTitle}" ya está activa. ¡Puja ahora!`,
+              url: `/auction/${auctionId}`,
+              tag: "auction_activated",
+            },
+          });
+        } catch (e) {
+          console.error("Push notification error:", e);
         }
       }
-      fetchAllData();
     }
+    fetchAllData();
   };
 
   const handlePauseAuction = async (auctionId: string, currentStatus: string) => {

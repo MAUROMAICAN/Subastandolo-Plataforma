@@ -114,7 +114,7 @@ const Index = () => {
   const filtered = useMemo(() => {
     let result = auctions;
     if (activeFilter === "active") {
-      result = result.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now());
+      result = result.filter(a => a.status === "active");
     } else if (activeFilter === "my_bids") {
       result = result.filter(a => userBidAuctionIds.has(a.id));
     }
@@ -128,8 +128,8 @@ const Index = () => {
   }, [auctions, searchQuery, activeFilter, userBidAuctionIds]);
 
   const scheduledAuctions = filtered.filter(a => a.status === "scheduled");
-  const activeAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now());
-  const endedAuctions = filtered.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() <= Date.now());
+  const activeAuctions = filtered.filter(a => a.status === "active");
+  const endedAuctions = filtered.filter(a => a.status === "finalized");
 
   const visibleSections = sections.filter(s =>
     s.is_visible &&
@@ -165,7 +165,7 @@ const Index = () => {
 
   const filterButtons = [
     { key: "all" as const, icon: Search, label: "Todas", count: auctions.length },
-    { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => a.status !== "scheduled" && new Date(a.end_time).getTime() > Date.now()).length },
+    { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => a.status === "active").length },
   ];
 
   return (
@@ -276,7 +276,7 @@ const Index = () => {
               <span><strong className="text-foreground text-sm">{auctions.length}</strong> productos</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                <strong className="text-foreground text-sm">{auctions.filter(a => new Date(a.end_time).getTime() > Date.now()).length}</strong> en vivo
+                <strong className="text-foreground text-sm">{auctions.filter(a => a.status === "active").length}</strong> en vivo
               </span>
             </div>
           </div>

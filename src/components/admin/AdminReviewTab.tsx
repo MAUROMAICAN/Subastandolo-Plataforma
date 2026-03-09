@@ -24,34 +24,65 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
 
   const handleAuctionReview = async (auctionId: string, action: "in_review" | "approved" | "rejected") => {
     setProcessingAuction(auctionId);
-    const updateData: any = { status: action };
+
     if (action === "approved") {
       const auction = auctions.find(a => a.id === auctionId);
       const durationHours = parseInt(reviewEndTime[auctionId] || String((auction as any)?.requested_duration_hours || "24")) || 24;
-      // El tiempo SIEMPRE empieza desde el momento de aprobación
-      updateData.end_time = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
-      updateData.start_time = new Date().toISOString();
-      updateData.status = "active";
-      updateData.requested_duration_hours = durationHours;
-      updateData.status = "active";
-      updateData.requested_duration_hours = durationHours;
-    }
-    if (reviewNotes[auctionId]) updateData.admin_notes = reviewNotes[auctionId];
-    const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: action === "rejected" ? "❌ Rechazada" : action === "in_review" ? "👁️ En revisión" : "✅ Aprobada" });
-      try {
-        await supabase.functions.invoke("notify-auction-status", {
-          body: { auction_id: auctionId, action, reason: reviewNotes[auctionId] || "" },
-        });
-        toast({ title: "📧 Notificación enviada al dealer" });
-      } catch (e) {
-        console.error("Error sending auction status notification:", e);
+      const notes = reviewNotes[auctionId] || null;
+
+      // Use server-side RPC to calculate end_time with DB server clock (avoid client clock skew)
+      const { data: rpcResult, error: rpcError } = await (supabase.rpc as any)("approve_auction", {
+        p_auction_id: auctionId,
+        p_duration_hours: durationHours,
+        p_admin_notes: notes,
+      });
+
+      if (rpcError) {
+        // Fallback: if RPC doesn't exist yet, use client-side calculation
+        console.warn("RPC approve_auction not available, using fallback:", rpcError.message);
+        const updateData: any = {
+          status: "active",
+          end_time: new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString(),
+          start_time: new Date().toISOString(),
+          requested_duration_hours: durationHours,
+        };
+        if (notes) updateData.admin_notes = notes;
+        const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
+        if (error) {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
+          setProcessingAuction(null);
+          return;
+        }
+      } else if (rpcResult?.error) {
+        toast({ title: "Error", description: rpcResult.error, variant: "destructive" });
+        setProcessingAuction(null);
+        return;
       }
-      fetchAllData();
+
+      toast({ title: "✅ Aprobada" });
+    } else {
+      // in_review or rejected — simple status update
+      const updateData: any = { status: action };
+      if (reviewNotes[auctionId]) updateData.admin_notes = reviewNotes[auctionId];
+      const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        setProcessingAuction(null);
+        return;
+      }
+      toast({ title: action === "rejected" ? "❌ Rechazada" : "👁️ En revisión" });
     }
+
+    // Send notification to dealer
+    try {
+      await supabase.functions.invoke("notify-auction-status", {
+        body: { auction_id: auctionId, action, reason: reviewNotes[auctionId] || "" },
+      });
+      toast({ title: "📧 Notificación enviada al dealer" });
+    } catch (e) {
+      console.error("Error sending auction status notification:", e);
+    }
+    fetchAllData();
     setProcessingAuction(null);
   };
 
