@@ -16,6 +16,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import ScrollRestoration from "@/components/ScrollRestoration";
 import SplashScreen from "@/components/SplashScreen";
 import CookieConsent from "@/components/CookieConsent";
+import AiChatWidget from "@/components/AiChatWidget";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Loader2 } from "lucide-react";
 
@@ -260,6 +261,7 @@ const App = () => {
                       </Routes>
                     </Suspense>
                     <CookieConsent />
+                    <AiChatWidget />
                   </SiteProvider>
                 </AuthProvider>
               </ErrorBoundary>
