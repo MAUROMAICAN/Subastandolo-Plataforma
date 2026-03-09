@@ -34,6 +34,7 @@ import {
 import ProfileCompletionBar from "@/components/ProfileCompletionBar";
 import { useToast } from "@/hooks/use-toast";
 import ProfileView from "@/components/buyer/ProfileView";
+import PaymentFlow from "@/components/PaymentFlow";
 import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -76,6 +77,10 @@ const BuyerPanel = () => {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [purchasesTab, setPurchasesTab] = useState<"subastas" | "tienda">("subastas");
 
+  // Batch payment state
+  const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
+  const [showBatchPayment, setShowBatchPayment] = useState(false);
+
   const siteName = getSetting("site_name", "SUBASTANDOLO");
 
   useEffect(() => {
@@ -85,13 +90,19 @@ const BuyerPanel = () => {
   useEffect(() => {
     if (!user) return;
     const fetchWon = async () => {
+      // Fetch finalized + expired-but-active auctions the user won
       const { data } = await supabase
         .from("auctions")
         .select("*")
         .eq("winner_id", user.id)
-        .eq("status", "finalized")
+        .in("status", ["finalized", "active"])
         .order("end_time", { ascending: false });
-      setWonAuctions(data || []);
+      // Filter: keep finalized + active that have ended
+      const now = Date.now();
+      const filtered = (data || []).filter(a =>
+        a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= now)
+      );
+      setWonAuctions(filtered);
       setLoadingAuctions(false);
     };
     fetchWon();
@@ -628,62 +639,207 @@ const BuyerPanel = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {wonAuctions.map(a => {
-                  const st = auctionStatuses[a.delivery_status === "delivered" ? "delivered" : a.delivery_status === "shipped" ? "shipped" : a.payment_status] || auctionStatuses.pending;
-                  const isPending = a.payment_status === "pending";
+              <>
+                {/* === Batch payment banner === */}
+                {(() => {
+                  const pendingAuctions = wonAuctions.filter(a => a.payment_status === "pending");
+                  // Group by dealer (created_by)
+                  const dealerGroups: Record<string, typeof pendingAuctions> = {};
+                  pendingAuctions.forEach(a => {
+                    const dealer = (a as any).created_by || "unknown";
+                    if (!dealerGroups[dealer]) dealerGroups[dealer] = [];
+                    dealerGroups[dealer].push(a);
+                  });
+                  const multiDealerGroups = Object.entries(dealerGroups).filter(([, aucs]) => aucs.length > 1);
+
+                  if (multiDealerGroups.length === 0) return null;
+
                   return (
-                    <div key={a.id} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors group">
-                      <div className="flex items-center gap-4 p-4">
-                        {/* Image */}
-                        <div className="h-18 w-18 shrink-0 rounded-xl overflow-hidden bg-secondary/30 flex items-center justify-center border border-border" style={{ height: "72px", width: "72px" }}>
-                          {a.image_url
-                            ? <img src={a.image_url} alt={a.title} className="h-full w-full object-contain" />
-                            : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                    <div className="mb-4 space-y-3">
+                      {multiDealerGroups.map(([dealerId, aucs]) => {
+                        const allSelected = aucs.every(a => selectedForBatch.has(a.id));
+                        const someSelected = aucs.some(a => selectedForBatch.has(a.id));
+                        const selectedCount = aucs.filter(a => selectedForBatch.has(a.id)).length;
+                        const selectedTotal = aucs.filter(a => selectedForBatch.has(a.id)).reduce((s, a) => s + a.current_price, 0);
+
+                        return (
+                          <div key={dealerId} className="bg-gradient-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10 border border-primary/20 rounded-2xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                                <span className="text-xs font-bold text-foreground">
+                                  {aucs.length} subastas del mismo dealer · Pago pendiente
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const next = new Set(selectedForBatch);
+                                  if (allSelected) {
+                                    aucs.forEach(a => next.delete(a.id));
+                                  } else {
+                                    aucs.forEach(a => next.add(a.id));
+                                  }
+                                  setSelectedForBatch(next);
+                                }}
+                                className="text-[10px] font-semibold text-primary dark:text-[#A6E300] hover:underline"
+                              >
+                                {allSelected ? "Deseleccionar" : "Seleccionar todas"}
+                              </button>
+                            </div>
+
+                            <div className="space-y-1.5 mb-3">
+                              {aucs.map(a => (
+                                <label key={a.id} className="flex items-center gap-3 cursor-pointer hover:bg-white/30 dark:hover:bg-white/5 rounded-xl p-2 transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedForBatch.has(a.id)}
+                                    onChange={() => {
+                                      const next = new Set(selectedForBatch);
+                                      if (next.has(a.id)) next.delete(a.id); else next.add(a.id);
+                                      setSelectedForBatch(next);
+                                    }}
+                                    className="h-4 w-4 rounded border-primary/30 text-primary focus:ring-primary accent-[#A6E300]"
+                                  />
+                                  <div className="h-10 w-10 rounded-lg overflow-hidden bg-secondary/30 border border-border shrink-0">
+                                    {a.image_url ? <img src={a.image_url} alt="" className="h-full w-full object-cover" /> : <Package className="h-4 w-4 m-3 text-muted-foreground/30" />}
+                                  </div>
+                                  <span className="flex-1 text-xs font-semibold truncate">{a.title}</span>
+                                  <span className="text-xs font-black shrink-0">${a.current_price}</span>
+                                </label>
+                              ))}
+                            </div>
+
+                            {selectedCount >= 2 && (
+                              <button
+                                onClick={() => setShowBatchPayment(true)}
+                                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-md"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                                Pagar {selectedCount} subastas juntas · ${selectedTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })} USD
+                              </button>
+                            )}
+                            {someSelected && selectedCount < 2 && (
+                              <p className="text-[10px] text-muted-foreground text-center mt-1">Selecciona al menos 2 subastas para pago unificado</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                <div className="space-y-3">
+                  {wonAuctions.map(a => {
+                    const st = auctionStatuses[a.delivery_status === "delivered" ? "delivered" : a.delivery_status === "shipped" ? "shipped" : a.payment_status] || auctionStatuses.pending;
+                    const isPending = a.payment_status === "pending";
+                    return (
+                      <div key={a.id} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors group">
+                        <div className="flex items-center gap-4 p-4">
+                          {/* Image */}
+                          <div className="h-18 w-18 shrink-0 rounded-xl overflow-hidden bg-secondary/30 flex items-center justify-center border border-border" style={{ height: "72px", width: "72px" }}>
+                            {a.image_url
+                              ? <img src={a.image_url} alt={a.title} className="h-full w-full object-contain" />
+                              : <Package className="h-6 w-6 text-muted-foreground/30" />}
+                          </div>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-heading font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{a.title}</p>
+                            <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">{new Date(a.end_time).toLocaleDateString("es-VE")}</p>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <span className="font-black text-sm text-foreground">${a.current_price.toLocaleString("es-MX")} <span className="text-[10px] font-normal text-muted-foreground">USD</span></span>
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                                {st.label}
+                              </span>
+                            </div>
+                          </div>
+                          {/* CTA */}
+                          <button
+                            onClick={() => navigate(`/mi-compra/${a.id}`)}
+                            className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isPending
+                              ? "bg-primary text-primary-foreground hover:bg-primary/90 animate-pulse-slow"
+                              : "bg-secondary text-foreground hover:bg-secondary/80"}`}
+                          >
+                            {isPending ? "💳 Pagar" : "Ver →"}
+                          </button>
                         </div>
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-heading font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{a.title}</p>
-                          <p className="text-xs text-muted-foreground dark:text-slate-400 mt-0.5">{new Date(a.end_time).toLocaleDateString("es-VE")}</p>
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <span className="font-black text-sm text-foreground">${a.current_price.toLocaleString("es-MX")} <span className="text-[10px] font-normal text-muted-foreground">USD</span></span>
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
-                              {st.label}
-                            </span>
+                        {/* Progress bar mini */}
+                        <div className="px-4 pb-3">
+                          <div className="flex items-center gap-1">
+                            {["pending", "under_review", "verified", "shipped", "delivered"].map((step, idx) => {
+                              const current = a.delivery_status === "delivered" ? 4 :
+                                a.delivery_status === "shipped" ? 3 :
+                                  a.payment_status === "verified" ? 2 :
+                                    a.payment_status === "under_review" ? 1 : 0;
+                              return (
+                                <div key={step} className={`h-1 flex-1 rounded-full transition-all ${idx <= current ? "bg-primary" : "bg-border"}`} />
+                              );
+                            })}
+                          </div>
+                          <div className="flex justify-between mt-1 text-[9px] text-muted-foreground dark:text-slate-500">
+                            <span>Pago</span><span>Revisión</span><span>Verificado</span><span>Enviado</span><span>Entregado</span>
                           </div>
                         </div>
-                        {/* CTA */}
-                        <button
-                          onClick={() => navigate(`/mi-compra/${a.id}`)}
-                          className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all ${isPending
-                            ? "bg-primary text-primary-foreground hover:bg-primary/90 animate-pulse-slow"
-                            : "bg-secondary text-foreground hover:bg-secondary/80"}`}
-                        >
-                          {isPending ? "💳 Pagar" : "Ver →"}
-                        </button>
                       </div>
-                      {/* Progress bar mini */}
-                      <div className="px-4 pb-3">
-                        <div className="flex items-center gap-1">
-                          {["pending", "under_review", "verified", "shipped", "delivered"].map((step, idx) => {
-                            const current = a.delivery_status === "delivered" ? 4 :
-                              a.delivery_status === "shipped" ? 3 :
-                                a.payment_status === "verified" ? 2 :
-                                  a.payment_status === "under_review" ? 1 : 0;
-                            return (
-                              <div key={step} className={`h-1 flex-1 rounded-full transition-all ${idx <= current ? "bg-primary" : "bg-border"}`} />
-                            );
-                          })}
+                    );
+                  })}
+                </div>
+
+                {/* === Batch Payment Modal === */}
+                {showBatchPayment && (() => {
+                  const batchAuctions = wonAuctions
+                    .filter(a => selectedForBatch.has(a.id) && a.payment_status === "pending")
+                    .map(a => ({ id: a.id, title: a.title, amount: a.current_price, image_url: a.image_url }));
+                  if (batchAuctions.length < 2) return null;
+
+                  return (
+                    <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                      <div className="relative bg-card w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl">
+                        {/* Header */}
+                        <div className="sticky top-0 bg-card/95 backdrop-blur-md border-b border-border px-5 py-4 flex items-center justify-between z-10 rounded-t-3xl">
+                          <div>
+                            <h3 className="font-heading font-bold text-base">Pago Unificado</h3>
+                            <p className="text-xs text-muted-foreground">{batchAuctions.length} subastas · ${batchAuctions.reduce((s, a) => s + a.amount, 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })} USD</p>
+                          </div>
+                          <button
+                            onClick={() => setShowBatchPayment(false)}
+                            className="h-8 w-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center text-muted-foreground"
+                          >
+                            ✕
+                          </button>
                         </div>
-                        <div className="flex justify-between mt-1 text-[9px] text-muted-foreground dark:text-slate-500">
-                          <span>Pago</span><span>Revisión</span><span>Verificado</span><span>Enviado</span><span>Entregado</span>
+                        {/* PaymentFlow in batch mode */}
+                        <div className="p-5">
+                          <PaymentFlow
+                            auctionId={batchAuctions[0].id}
+                            amountUsd={batchAuctions.reduce((s, a) => s + a.amount, 0)}
+                            userId={user!.id}
+                            batchAuctions={batchAuctions}
+                            onBatchComplete={() => {
+                              setShowBatchPayment(false);
+                              setSelectedForBatch(new Set());
+                              // Refresh won auctions
+                              supabase
+                                .from("auctions")
+                                .select("*")
+                                .eq("winner_id", user!.id)
+                                .in("status", ["finalized", "active"])
+                                .order("end_time", { ascending: false })
+                                .then(({ data }) => {
+                                  const now = Date.now();
+                                  const filtered = (data || []).filter(a =>
+                                    a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= now)
+                                  );
+                                  setWonAuctions(filtered);
+                                });
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                })()}
+              </>
             )
           )}
 

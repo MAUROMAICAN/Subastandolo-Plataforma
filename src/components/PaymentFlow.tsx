@@ -13,11 +13,21 @@ import { useAuth } from "@/hooks/useAuth";
 
 type PaymentProof = Tables<"payment_proofs">;
 
+interface BatchAuction {
+  id: string;
+  title: string;
+  amount: number;
+  image_url?: string | null;
+}
+
 interface PaymentFlowProps {
   auctionId: string;
   amountUsd: number;
   userId: string;
   showCommission?: boolean;
+  // Batch mode: pay for multiple auctions at once
+  batchAuctions?: BatchAuction[];
+  onBatchComplete?: () => void;
 }
 
 const BANK_INFO = {
@@ -28,7 +38,10 @@ const BANK_INFO = {
   name: "UNIFORMES KRONUS C.A",
 };
 
-const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: PaymentFlowProps) => {
+const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, batchAuctions, onBatchComplete }: PaymentFlowProps) => {
+  const isBatchMode = batchAuctions && batchAuctions.length > 1;
+  const totalBatchUsd = isBatchMode ? batchAuctions.reduce((s, a) => s + a.amount, 0) : amountUsd;
+  const displayAmountUsd = isBatchMode ? totalBatchUsd : amountUsd;
   const { toast } = useToast();
   const { profile } = useAuth();
   const { getSetting } = useSiteSettings();
@@ -95,15 +108,28 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   }, [auctionId]);
 
   const fetchExistingProof = async () => {
-    const { data } = await supabase
-      .from("payment_proofs")
-      .select("*")
-      .eq("auction_id", auctionId)
-      .eq("buyer_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data) setExistingProof(data as PaymentProof);
+    // In batch mode, check if ANY of the auctions already has a proof
+    if (isBatchMode) {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("*")
+        .in("auction_id", batchAuctions.map(a => a.id))
+        .eq("buyer_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setExistingProof(data as PaymentProof);
+    } else {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("*")
+        .eq("auction_id", auctionId)
+        .eq("buyer_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setExistingProof(data as PaymentProof);
+    }
   };
 
   useEffect(() => { fetchExistingProof(); }, [auctionId]);
@@ -116,7 +142,6 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
   };
 
   const handleSubmit = async () => {
-    // Android fix: state may have reset — fall back to the DOM input ref
     const fileToUpload = proofFile ?? fileInputRef.current?.files?.[0] ?? null;
     if (!fileToUpload) {
       toast({ title: "Falta el comprobante", description: "Por favor selecciona el archivo nuevamente.", variant: "destructive" });
@@ -125,57 +150,108 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
     setSubmitting(true);
     try {
       const currentRate = bcvRate || 0;
-      const amountBs = currentRate ? amountUsd * currentRate : 0;
 
       const ext = fileToUpload.name.split(".").pop();
       const filePath = `${userId}/${auctionId}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(filePath, fileToUpload);
       if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase.from("payment_proofs").insert({
-        auction_id: auctionId,
-        buyer_id: userId,
-        amount_usd: amountUsd,
-        amount_bs: amountBs,
-        bcv_rate: currentRate,
-        reference_number: reference.trim() || "",
-        proof_url: filePath,
-      });
-      if (insertError) {
-        // Clean up the orphaned file from storage before throwing
-        await supabase.storage.from("payment-proofs").remove([filePath]).catch(() => { });
-        // Provide a friendlier message for RLS violations
-        if (insertError.code === "42501" || insertError.message?.includes("row-level security")) {
-          throw new Error(
-            "No se pudo registrar el comprobante. Asegúrate de que eres el ganador de esta subasta y que la subasta haya finalizado. Si el problema persiste, contacta a soporte."
-          );
+      if (isBatchMode) {
+        // === BATCH MODE: insert one row per auction with shared batch_id ===
+        const batchId = crypto.randomUUID();
+        const rows = batchAuctions.map(a => ({
+          auction_id: a.id,
+          buyer_id: userId,
+          amount_usd: a.amount,
+          amount_bs: currentRate ? a.amount * currentRate : 0,
+          bcv_rate: currentRate,
+          reference_number: reference.trim() || "",
+          proof_url: filePath,
+          batch_id: batchId,
+        }));
+
+        for (const row of rows) {
+          const { error: insertError } = await supabase.from("payment_proofs").insert(row);
+          if (insertError) {
+            if (insertError.code === "42501" || insertError.message?.includes("row-level security")) {
+              throw new Error(`No se pudo registrar el comprobante para una de las subastas. Contacta a soporte.`);
+            }
+            throw insertError;
+          }
         }
-        throw insertError;
+
+        // Update payment_status for all auctions
+        for (const a of batchAuctions) {
+          await supabase.from("auctions").update({ payment_status: "under_review" } as any).eq("id", a.id);
+        }
+
+        toast({ title: "¡Comprobante enviado!", description: `Pago unificado para ${batchAuctions.length} subastas registrado.` });
+        onBatchComplete?.();
+
+        // Notify dealers (fire-and-forget) — all should be same dealer, notify once
+        const firstAuction = batchAuctions[0];
+        supabase.from("auctions").select("created_by, title, image_url").eq("id", firstAuction.id).single().then(({ data: auc }) => {
+          if (auc?.created_by) {
+            supabase.functions.invoke("notify-payment-received", {
+              body: {
+                dealerUserId: auc.created_by,
+                buyerName: profile?.full_name || "El comprador",
+                auctionTitle: `Pago unificado (${batchAuctions.length} subastas)`,
+                auctionId: firstAuction.id,
+                amountUsd: totalBatchUsd,
+                imageUrl: auc.image_url || null,
+              },
+            }).catch(() => { });
+          }
+        });
+
+      } else {
+        // === SINGLE MODE (original) ===
+        const amountBsCalc = currentRate ? amountUsd * currentRate : 0;
+        const { error: insertError } = await supabase.from("payment_proofs").insert({
+          auction_id: auctionId,
+          buyer_id: userId,
+          amount_usd: amountUsd,
+          amount_bs: amountBsCalc,
+          bcv_rate: currentRate,
+          reference_number: reference.trim() || "",
+          proof_url: filePath,
+        });
+        if (insertError) {
+          await supabase.storage.from("payment-proofs").remove([filePath]).catch(() => { });
+          if (insertError.code === "42501" || insertError.message?.includes("row-level security")) {
+            throw new Error(
+              "No se pudo registrar el comprobante. Asegúrate de que eres el ganador de esta subasta y que la subasta haya finalizado. Si el problema persiste, contacta a soporte."
+            );
+          }
+          throw insertError;
+        }
+
+        toast({ title: "¡Comprobante enviado!", description: "Tu pago será verificado pronto." });
+
+        // Notify dealer via email (fire-and-forget)
+        supabase.from("auctions").select("created_by, title, image_url").eq("id", auctionId).single().then(({ data: auc }) => {
+          if (auc?.created_by) {
+            supabase.functions.invoke("notify-payment-received", {
+              body: {
+                dealerUserId: auc.created_by,
+                buyerName: profile?.full_name || "El comprador",
+                auctionTitle: auc.title,
+                auctionId,
+                amountUsd,
+                imageUrl: auc.image_url || null,
+              },
+            }).catch(() => { });
+          }
+        });
       }
 
-      toast({ title: "¡Comprobante enviado!", description: "Tu pago será verificado pronto." });
       setReference("");
       sessionStorage.removeItem(sessionKey);
       setProofFile(null);
       setProofFileName(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       fetchExistingProof();
-
-      // Notify dealer via email (fire-and-forget)
-      supabase.from("auctions").select("created_by, title, image_url").eq("id", auctionId).single().then(({ data: auc }) => {
-        if (auc?.created_by) {
-          supabase.functions.invoke("notify-payment-received", {
-            body: {
-              dealerUserId: auc.created_by,
-              buyerName: profile?.full_name || "El comprador",
-              auctionTitle: auc.title,
-              auctionId,
-              amountUsd,
-              imageUrl: auc.image_url || null,
-            },
-          }).catch(() => { });
-        }
-      });
 
     } catch (err: any) {
       toast({ title: "Error al enviar comprobante", description: err.message, variant: "destructive" });
@@ -307,9 +383,27 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false }: P
         </div>
         <div className="px-5 py-4 space-y-3">
           <p className="text-3xl font-black text-primary dark:text-[#A6E300]">
-            ${amountUsd.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+            ${displayAmountUsd.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
             <span className="text-base font-semibold text-muted-foreground dark:text-slate-400 ml-1">USD</span>
           </p>
+
+          {/* Batch breakdown */}
+          {isBatchMode && (
+            <div className="bg-secondary/40 dark:bg-white/5 rounded-xl p-3 space-y-2">
+              <p className="text-[10px] text-muted-foreground dark:text-slate-400 uppercase font-semibold tracking-wide">Desglose por subasta</p>
+              {batchAuctions.map(a => (
+                <div key={a.id} className="flex items-center gap-2 text-xs">
+                  {a.image_url && <img src={a.image_url} className="h-8 w-8 rounded object-cover border border-border shrink-0" alt="" />}
+                  <span className="flex-1 min-w-0 truncate text-foreground">{a.title}</span>
+                  <span className="font-bold text-foreground shrink-0">${a.amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                </div>
+              ))}
+              <div className="border-t border-border pt-2 flex justify-between text-sm font-black">
+                <span>Total</span>
+                <span className="text-primary dark:text-[#A6E300]">${totalBatchUsd.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          )}
 
           {rateLoading ? (
             <p className="text-xs text-muted-foreground dark:text-slate-400 flex items-center gap-1.5">
