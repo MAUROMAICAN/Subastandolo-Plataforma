@@ -154,6 +154,7 @@ const Admin = () => {
       user_id: p.id,
       full_name: p.full_name,
       phone: p.phone,
+      avatar_url: p.avatar_url || null,
       role: rolesMap[p.id]?.includes("admin") ? "admin" : rolesMap[p.id]?.includes("dealer") ? "dealer" : "user",
       roles: rolesMap[p.id] || ["user"],
       created_at: p.created_at,

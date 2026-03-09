@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import AdminBadge from "@/components/AdminBadge";
 import UserActionMenu from "./UserActionMenu";
@@ -7,6 +7,7 @@ interface DealerUser {
   user_id: string;
   full_name: string;
   phone: string | null;
+  avatar_url?: string | null;
   role: string;
   roles: string[];
   created_at: string;
@@ -39,6 +40,7 @@ export default function UserTableRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9 shrink-0">
+            {u.avatar_url && <AvatarImage src={u.avatar_url} alt={u.full_name} className="object-cover" />}
             <AvatarFallback className="bg-primary/10 text-primary dark:text-accent text-xs font-bold">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
@@ -66,11 +68,10 @@ export default function UserTableRow({
             <Badge
               key={r}
               variant="outline"
-              className={`text-[9px] px-1.5 py-0 ${
-                r === "admin" ? "bg-primary/10 text-primary dark:text-accent border-primary/30" :
-                r === "dealer" ? "bg-accent/10 text-accent-foreground border-accent/30" :
-                "bg-secondary text-muted-foreground"
-              }`}
+              className={`text-[9px] px-1.5 py-0 ${r === "admin" ? "bg-primary/10 text-primary dark:text-accent border-primary/30" :
+                  r === "dealer" ? "bg-accent/10 text-accent-foreground border-accent/30" :
+                    "bg-secondary text-muted-foreground"
+                }`}
             >
               {r === "admin" ? "Admin" : r === "dealer" ? "Dealer" : "Usuario"}
             </Badge>
