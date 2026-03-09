@@ -88,6 +88,27 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </p>
       </div>
 
+      {/* Wallet Balance — Loading skeleton */}
+      {(!earningsLoaded || bcvRate === null) && (
+        <Card className="border-2 border-emerald-500/20 rounded-sm bg-emerald-500/5 animate-pulse">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-500/10 rounded-sm">
+                <Wallet className="h-7 w-7 text-emerald-500/40" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-24 bg-emerald-500/10 rounded" />
+                <div className="h-7 w-40 bg-emerald-500/10 rounded" />
+                <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                  Cargando billetera...
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Wallet Balance — Prominent */}
       {earningsLoaded && bcvRate !== null && (
         <Card
