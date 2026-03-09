@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: winnerProf } = await supabase.from("profiles").select("full_name").eq("id", auction.winner_id).single();
       const winnerName = winnerProf?.full_name || "Ganador";
-      const auctionUrl = `${appUrl}/subasta/${auction.id}`;
+      const auctionUrl = `${appUrl}/auction/${auction.id}`;
       const title = auction.title || "la subasta";
       const amount = auction.current_price
         ? `$${Number(auction.current_price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`

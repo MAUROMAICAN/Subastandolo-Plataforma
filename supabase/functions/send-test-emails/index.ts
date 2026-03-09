@@ -6,7 +6,7 @@ const corsHeaders = {
 const RESEND_API = "https://api.resend.com/emails";
 const APP_URL = "https://subastandolo.com";
 const HEADER_IMG = "https://subastandolo.com/email-header.png";
-const FAKE_AUCTION_URL = `${APP_URL}/subasta/test-123`;
+const FAKE_AUCTION_URL = `${APP_URL}/auction/test-123`;
 const FAKE_IMAGE = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80";
 
 async function send(resendKey: string, to: string, subject: string, html: string) {

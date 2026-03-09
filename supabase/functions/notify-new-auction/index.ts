@@ -32,7 +32,8 @@ Deno.serve(async (req: Request) => {
     const dealer = dealerProf?.full_name || "Tu Dealer";
 
     const appUrl = "https://subastandolo.com";
-    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const logoUrl = `${appUrl}/logo-dark.png`;
+    const auctionUrl = `${appUrl}/auction/${auctionId}`;
     const title = auctionTitle || "Nueva subasta";
     const price = startingPrice ? `$${Number(startingPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
     const endsText = endsAt ? new Date(endsAt).toLocaleString("es-VE", { dateStyle: "medium", timeStyle: "short" }) : "";
@@ -43,6 +44,10 @@ Deno.serve(async (req: Request) => {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#0f0f1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a4e;">
+    <!-- Logo Strip -->
+    <div style="background:#0f0f1a;padding:16px 30px;text-align:center;border-bottom:1px solid #2a2a4e;">
+      <a href="${appUrl}" style="text-decoration:none;"><img src="${logoUrl}" alt="Subastandolo" style="height:36px;" /></a>
+    </div>
     <div style="background:linear-gradient(135deg,#EAB308,#F59E0B);padding:36px 30px;text-align:center;">
       <div style="font-size:48px;margin-bottom:10px;">🔔</div>
       <h1 style="margin:0;color:#1a1a2e;font-size:24px;font-weight:800;">¡Nueva subasta disponible!</h1>

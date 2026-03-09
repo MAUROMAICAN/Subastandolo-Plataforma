@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
     );
 
     const appUrl = "https://subastandolo.com";
-    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const logoUrl = `${appUrl}/logo-dark.png`;
+    const auctionUrl = `${appUrl}/auction/${auctionId}`;
     const userName = name || "Usuario";
     const title = auctionTitle || "tu producto";
     const tracking = trackingNumber || "N/D";
@@ -38,6 +39,11 @@ Deno.serve(async (req) => {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#0f0f1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a4e;">
+
+    <!-- Logo Strip -->
+    <div style="background:#0f0f1a;padding:16px 30px;text-align:center;border-bottom:1px solid #2a2a4e;">
+      <a href="${appUrl}" style="text-decoration:none;"><img src="${logoUrl}" alt="Subastandolo" style="height:36px;" /></a>
+    </div>
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);padding:36px 30px;text-align:center;">

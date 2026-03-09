@@ -26,10 +26,21 @@ Deno.serve(async (req) => {
     );
 
     const appUrl = "https://subastandolo.com";
-    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const logoUrl = `${appUrl}/logo-dark.png`;
+    const auctionUrl = `${appUrl}/auction/${auctionId}`;
     const userName = name || "Usuario";
     const title = auctionTitle || "la subasta";
-    const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
+
+    // Fetch BCV rate for Bs. conversion
+    let bcvRate = 0;
+    try {
+      const { data: rateData } = await supabaseAdmin.from("global_settings").select("value").eq("setting_key", "bcv_rate").single();
+      if (rateData?.value) bcvRate = parseFloat(rateData.value);
+    } catch (_) { /* fallback: no Bs. shown */ }
+
+    const usdAmount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
+    const bsAmount = (winningBid && bcvRate) ? `Bs. ${(Number(winningBid) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "";
+    const amount = bsAmount ? `${usdAmount} / ${bsAmount}` : usdAmount;
 
 
     const html = `
@@ -38,6 +49,11 @@ Deno.serve(async (req) => {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0f0f1a;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#0f0f1a;border-radius:16px;overflow:hidden;border:1px solid #2a2a4e;">
+
+    <!-- Logo Strip -->
+    <div style="background:#0f0f1a;padding:16px 30px;text-align:center;border-bottom:1px solid #2a2a4e;">
+      <a href="${appUrl}" style="text-decoration:none;"><img src="${logoUrl}" alt="Subastandolo" style="height:36px;" /></a>
+    </div>
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#EAB308,#F59E0B);padding:40px 30px;text-align:center;">
@@ -182,7 +198,7 @@ Deno.serve(async (req) => {
             title: `🏆 ¡Ganaste "${title}"!`,
             message: amount ? `Tu puja de ${amount} fue la ganadora. Procede al pago.` : "Eres el ganador. Procede al pago.",
             type: "auction_won",
-            link: `/subasta/${auctionId}`,
+            link: `/auction/${auctionId}`,
           },
         });
       } catch (pushErr) {
