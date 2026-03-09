@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 // ── System prompt with full platform knowledge ──
@@ -84,8 +85,10 @@ Subastandolo es una plataforma donde **Dealers** (vendedores verificados) public
 - Si el usuario saluda, responde amigablemente y pregunta en qué puedes ayudar.
 `;
 
-Deno.serve(async (req) => {
-    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+Deno.serve(async (req: Request) => {
+    if (req.method === "OPTIONS") {
+        return new Response("ok", { status: 200, headers: corsHeaders });
+    }
 
     try {
         const geminiKey = Deno.env.get("GEMINI_API_KEY");
