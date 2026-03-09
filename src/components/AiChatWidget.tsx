@@ -240,29 +240,27 @@ const AiChatWidget = () => {
             )}
 
             {/* ── Floating trigger button ── */}
-            {/* Floating close button — hidden on mobile (header X is used instead) */}
+            {/* Floating close button */}
             {isOpen && (
                 <button
                     id="suba-chat-trigger"
                     onClick={() => { setIsOpen(false); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Cerrar chat"
-                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 hidden sm:flex"
+                    className="fixed z-[60] flex items-center justify-center"
                     style={{
                         bottom: "80px",
-                        right: "16px",
-                        width: "48px",
-                        height: "48px",
+                        right: "12px",
+                        width: "40px",
+                        height: "40px",
                         borderRadius: "50%",
                         border: "none",
                         cursor: "pointer",
                         background: "#ef4444",
                         boxShadow: "0 4px 20px rgba(239,68,68,0.4)",
-                        alignItems: "center",
-                        justifyContent: "center",
                         padding: 0,
                     }}
                 >
-                    <X size={20} color="#fff" strokeWidth={2.5} />
+                    <X size={18} color="#fff" strokeWidth={2.5} />
                 </button>
             )}
             {/* Avatar trigger — smaller on mobile */}
@@ -296,7 +294,7 @@ const AiChatWidget = () => {
             {isOpen && (
                 <div
                     id="suba-chat-panel"
-                    className="fixed z-50 flex flex-col inset-0 sm:inset-auto sm:bottom-[140px] sm:right-4 sm:w-[400px] sm:h-[min(560px,calc(100vh-200px))] sm:rounded-[20px] sm:border sm:border-[rgba(181,251,5,0.12)]"
+                    className="fixed z-50 flex flex-col bottom-[130px] right-3 w-[calc(100vw-24px)] max-w-[340px] h-[min(440px,calc(100vh-180px))] sm:bottom-[140px] sm:right-4 sm:w-[340px] sm:h-[min(500px,calc(100vh-200px))] rounded-2xl border border-[rgba(181,251,5,0.12)]"
                     style={{
                         overflow: "hidden",
                         background: "#0a0a14",
