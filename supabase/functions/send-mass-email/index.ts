@@ -125,7 +125,7 @@ function getTemplates(customMessage?: string): Record<string, EmailTemplate> {
               </tr>
             </table>`
         )}
-         ${ctaButton(`${APP_URL}/explorar`, "🔨 Ver Subastas Ahora", "#EAB308", "#1a1a2e")}
+         ${ctaButton(`${APP_URL}/#subastas`, "🔨 Ver Subastas Ahora", "#EAB308", "#1a1a2e")}
          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">No te quedes sin pujar — las subastas cierran en tiempo real ⏰</p>`
       ),
     },
@@ -171,7 +171,7 @@ function getTemplates(customMessage?: string): Record<string, EmailTemplate> {
               Ingresa ahora y pujas antes que los demás.
             </p>`
         )}
-         ${ctaButton(`${APP_URL}/explorar`, "🔨 Ver Ofertas Flash", "#ef4444", "#ffffff")}
+         ${ctaButton(`${APP_URL}/#subastas`, "🔨 Ver Ofertas Flash", "#ef4444", "#ffffff")}
          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">Las subastas flash cierran en tiempo real — ¡no pierdas tu oportunidad!</p>`
       ),
     },
