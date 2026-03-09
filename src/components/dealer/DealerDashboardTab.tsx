@@ -124,6 +124,15 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </Card>
       )}
 
+      {/* Bs explanation */}
+      {earningsLoaded && bcvRate > 0 && (
+        <div className="bg-secondary/40 border border-border rounded-sm px-4 py-3 flex items-start gap-2.5">
+          <span className="text-base mt-0.5">💱</span>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Los montos se reflejan en <strong className="text-foreground">bolívares (Bs)</strong> ya que cada subasta cierra a la tasa BCV del día de su finalización, y a esa tasa se cobra al comprador. Solo se aceptan pagos en Bs.
+          </p>
+        </div>
+      )}
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
