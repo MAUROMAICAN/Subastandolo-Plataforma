@@ -40,7 +40,7 @@ interface AuctionLike {
 export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionLike[] }) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const bcvRate = useBCVRate() || 0;
+  const bcvRate = useBCVRate();
 
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -137,7 +137,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
     rejected: { label: "Rechazado", color: "bg-destructive/10 text-destructive border-destructive/20", icon: "❌" },
   };
 
-  if (loading) {
+  if (loading || bcvRate === null) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-primary dark:text-[#A6E300]" />
@@ -153,7 +153,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
           <Wallet className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mi Billetera
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {stats.totalSales} venta{stats.totalSales !== 1 ? "s" : ""} · ${stats.totalEarnings.toFixed(2)} ganados · ${stats.unpaidEarnings.toFixed(2)} disponible
+          {stats.totalSales} venta{stats.totalSales !== 1 ? "s" : ""} · Bs. {(stats.totalEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ganados · Bs. {(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} disponible
         </p>
       </div>
 
@@ -168,10 +168,10 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
               <div>
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
                 <p className="text-3xl font-heading font-bold text-emerald-500">
-                  {bcvRate > 0 ? `Bs. ${(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${stats.unpaidEarnings.toFixed(2)}`}
+                  Bs. {(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {bcvRate > 0 ? `Ref: $${stats.unpaidEarnings.toFixed(2)} · Tasa BCV al cierre de cada subasta` : "Ganancias netas por cobrar"}
+                  Ref: ${stats.unpaidEarnings.toFixed(2)} · Tasa BCV al cierre de cada subasta
                 </p>
               </div>
             </div>
@@ -196,9 +196,9 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Ventas Totales", value: stats.totalSales.toString(), icon: ShoppingBag, color: "text-primary dark:text-[#A6E300]" },
-          { label: "Ingresos Brutos", value: bcvRate > 0 ? `Bs. ${(stats.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "text-foreground" },
-          { label: "Comisión (5%)", value: bcvRate > 0 ? `Bs. ${(stats.totalCommission * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${stats.totalCommission.toFixed(2)}`, icon: TrendingUp, color: "text-muted-foreground" },
-          { label: "Total Retirado", value: bcvRate > 0 ? `Bs. ${(stats.approvedWithdrawals * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${stats.approvedWithdrawals.toFixed(2)}`, icon: CheckCircle, color: "text-emerald-500" },
+          { label: "Ingresos Brutos", value: `Bs. ${(stats.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "text-foreground" },
+          { label: "Comisión (5%)", value: `Bs. ${(stats.totalCommission * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, color: "text-muted-foreground" },
+          { label: "Total Retirado", value: `Bs. ${(stats.approvedWithdrawals * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: CheckCircle, color: "text-emerald-500" },
         ].map((stat, idx) => (
           <Card key={idx} className="border border-border rounded-sm">
             <CardContent className="p-3">
@@ -244,9 +244,9 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         {new Date(e.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-medium">{bcvRate > 0 ? `Bs. ${(e.sale_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${e.sale_amount.toFixed(2)}`}</td>
-                      <td className="px-4 py-2.5 text-right text-muted-foreground hidden sm:table-cell">-{bcvRate > 0 ? `Bs. ${(e.commission_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${e.commission_amount.toFixed(2)}`}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-emerald-500">{bcvRate > 0 ? `Bs. ${(e.dealer_net * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${e.dealer_net.toFixed(2)}`}</td>
+                      <td className="px-4 py-2.5 text-right font-medium">Bs. {(e.sale_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-2.5 text-right text-muted-foreground hidden sm:table-cell">-Bs. {(e.commission_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-emerald-500">Bs. {(e.dealer_net * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="px-4 py-2.5 text-right">
                         {e.is_paid ? (
                           <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Retirado</Badge>

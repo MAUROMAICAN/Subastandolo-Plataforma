@@ -19,7 +19,7 @@ interface Props {
 
 export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFilter, sections }: Props) {
   const { user } = useAuth();
-  const bcvRate = useBCVRate() || 0;
+  const bcvRate = useBCVRate();
 
   // Earnings data (fetched independently for dashboard overview)
   const [dealerEarnings, setDealerEarnings] = useState<any[]>([]);
@@ -89,7 +89,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       </div>
 
       {/* Wallet Balance — Prominent */}
-      {earningsLoaded && (
+      {earningsLoaded && bcvRate !== null && (
         <Card
           className="border-2 border-emerald-500/30 rounded-sm bg-emerald-500/5 cursor-pointer hover:border-emerald-500/50 transition-all group"
           onClick={() => setActiveTab("wallet")}
@@ -103,19 +103,19 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <div>
                   <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
                   <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
-                    {bcvRate > 0 ? `Bs. ${(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.unpaid.toFixed(2)}`}
+                    Bs. {(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
-                  {bcvRate > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa BCV al cierre de cada subasta</p>}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa BCV al cierre de cada subasta</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground">Total Ganado</p>
-                  <p className="text-sm font-bold">{bcvRate > 0 ? `Bs. ${(walletStats.totalNet * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.totalNet.toFixed(2)}`}</p>
+                  <p className="text-sm font-bold">Bs. {(walletStats.totalNet * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground">Retirado</p>
-                  <p className="text-sm font-bold text-emerald-500">{bcvRate > 0 ? `Bs. ${(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${walletStats.paid.toFixed(2)}`}</p>
+                  <p className="text-sm font-bold text-emerald-500">Bs. {(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
               </div>
@@ -125,7 +125,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       )}
 
       {/* Bs explanation */}
-      {earningsLoaded && bcvRate > 0 && (
+      {earningsLoaded && bcvRate !== null && (
         <div className="bg-secondary/40 border border-border rounded-sm px-4 py-3 flex items-start gap-2.5">
           <span className="text-base mt-0.5">💱</span>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
