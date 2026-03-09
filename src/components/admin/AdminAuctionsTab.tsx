@@ -929,6 +929,12 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                     return;
                                   }
                                   const mainImage = auction.images[0]?.image_url || auction.image_url;
+                                  // Fetch buyer's shipping info for this auction
+                                  const { data: shipData } = await supabase
+                                    .from("shipping_info")
+                                    .select("full_name, cedula, phone, shipping_company, state, city, office_name")
+                                    .eq("auction_id", auction.id)
+                                    .maybeSingle();
                                   const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
                                     body: {
                                       email: dealerEmail,
@@ -940,6 +946,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                       userId: (auction as any).user_id,
                                       operationNumber: (auction as any).operation_number || null,
                                       buyerName: winner?.full_name || "el comprador",
+                                      shippingInfo: shipData || null,
                                     },
                                   });
                                   if (error || data?.error) {

@@ -504,8 +504,14 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                                         setSendingShipReminder(a.id);
                                         try {
                                           if (!dealer.email) { toast({ title: "Dealer sin email", variant: "destructive" }); setSendingShipReminder(null); return; }
+                                          // Fetch buyer's shipping info for this auction
+                                          const { data: shipData } = await supabase
+                                            .from("shipping_info")
+                                            .select("full_name, cedula, phone, shipping_company, state, city, office_name")
+                                            .eq("auction_id", a.id)
+                                            .maybeSingle();
                                           const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
-                                            body: { email: dealer.email, name: dealer.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.created_by, operationNumber: a.operation_number || null, buyerName: winner?.full_name || "el comprador" },
+                                            body: { email: dealer.email, name: dealer.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.created_by, operationNumber: a.operation_number || null, buyerName: winner?.full_name || "el comprador", shippingInfo: shipData || null },
                                           });
                                           if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
                                           else toast({ title: "📧 Recordatorio de envío enviado", description: `A ${dealer.email}` });

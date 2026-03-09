@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   if (!await isServiceRoleOrAdmin(req)) return unauthorized(corsHeaders);
 
   try {
-    const { email, name, auctionTitle, auctionId, winningBid, imageUrl, userId, operationNumber, buyerName } = await req.json();
+    const { email, name, auctionTitle, auctionId, winningBid, imageUrl, userId, operationNumber, buyerName, shippingInfo } = await req.json();
     if (!email || !auctionId) throw new Error("email y auctionId son requeridos");
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
@@ -26,12 +26,23 @@ Deno.serve(async (req) => {
     );
 
     const appUrl = "https://subastandolo.com";
-    const auctionUrl = `${appUrl}/subasta/${auctionId}`;
+    const auctionUrl = `${appUrl}/auction/${auctionId}`;
+
     const dealerName = name || "Dealer";
     const title = auctionTitle || "la subasta";
     const amount = winningBid ? `$${Number(winningBid).toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "";
     const opNumber = operationNumber || "N/A";
     const buyer = buyerName || "el comprador";
+
+    // Shipping details from buyer
+    const ship = shippingInfo || {};
+    const shippingCompany = ship.shipping_company || "No especificado";
+    const shippingState = ship.state || "";
+    const shippingCity = ship.city || "";
+    const shippingOffice = ship.office_name || "";
+    const shippingPhone = ship.phone || "";
+    const shippingCedula = ship.cedula || "";
+    const shippingFullName = ship.full_name || buyer;
 
     const subject = `📦 Acción requerida: Envío pendiente de "${title}"`;
 
@@ -81,6 +92,37 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Comprador:</td>
             <td style="padding:6px 0;color:#e0e0e0;font-size:13px;">${buyer}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Shipping Details Box -->
+      <div style="background:#1a1a2e;border:1px solid #2a2a4e;border-left:4px solid #22c55e;border-radius:12px;padding:20px;margin-bottom:20px;">
+        <p style="margin:0 0 14px;font-size:14px;color:#22c55e;font-weight:700;">🚚 Datos de envío del comprador:</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;width:140px;">Método:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;font-weight:700;">${shippingCompany}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Destinatario:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;">${shippingFullName}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Cédula:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;font-family:monospace;">${shippingCedula || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Teléfono:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;">${shippingPhone || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Ubicación:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;">${shippingCity}${shippingState ? ', ' + shippingState : ''}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#9ca3af;font-size:13px;">Oficina/Punto:</td>
+            <td style="padding:6px 0;color:#e0e0e0;font-size:13px;">${shippingOffice || 'N/A'}</td>
           </tr>
         </table>
       </div>
@@ -167,7 +209,7 @@ Deno.serve(async (req) => {
             user_id: userId,
             title: `📦 Envío pendiente: "${title}"`,
             body: `El comprador ${buyer} ya pagó ${amount}. Por favor, procede con el envío del artículo.`,
-            data: { url: `/subasta/${auctionId}` },
+            data: { url: `/auction/${auctionId}` },
           },
         });
       } catch (_e) { /* push optional */ }
