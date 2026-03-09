@@ -1,28 +1,40 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
  * Saves and restores scroll position per route.
- * When navigating away, saves current scroll. When navigating back, restores it.
- * Uses sessionStorage so positions persist across browser back/forward.
  * 
- * Uses a retry loop because async-loaded content (auctions, products) may not
- * be rendered yet when navigation completes — the page might be too short to
- * scroll to the saved position immediately.
+ * Key insight: useEffect cleanup runs AFTER the new render, when the browser
+ * has already scrolled to 0 for the new page. So we can't save scroll position
+ * in cleanup. Instead, we save it continuously on every scroll event (debounced).
  */
 const ScrollRestoration = () => {
     const { pathname, key } = useLocation();
 
-    // Save scroll position before leaving the current page
+    // Continuously save scroll position while the user scrolls (debounced)
+    const saveScroll = useCallback(() => {
+        sessionStorage.setItem(`scroll:${pathname}`, String(window.scrollY));
+    }, [pathname]);
+
     useEffect(() => {
         if ("scrollRestoration" in window.history) {
             window.history.scrollRestoration = "manual";
         }
 
-        return () => {
-            sessionStorage.setItem(`scroll:${pathname}`, String(window.scrollY));
+        let ticking = false;
+        const onScroll = () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(() => {
+                    saveScroll();
+                    ticking = false;
+                });
+            }
         };
-    }, [pathname]);
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, [saveScroll]);
 
     // Restore scroll position when arriving at a page
     useEffect(() => {
@@ -39,7 +51,7 @@ const ScrollRestoration = () => {
 
         // Retry scrolling until the page is tall enough or we time out (3 seconds)
         let attempts = 0;
-        const maxAttempts = 30; // 30 x 100ms = 3 seconds
+        const maxAttempts = 30;
         const intervalId = setInterval(() => {
             const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
             attempts++;
@@ -47,8 +59,6 @@ const ScrollRestoration = () => {
             if (maxScroll >= targetY || attempts >= maxAttempts) {
                 window.scrollTo(0, Math.min(targetY, maxScroll));
                 clearInterval(intervalId);
-                // Clean up saved position after restoring
-                sessionStorage.removeItem(`scroll:${pathname}`);
             }
         }, 100);
 
