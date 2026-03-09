@@ -23,8 +23,15 @@ import type { Tables } from "@/integrations/supabase/types";
 const Index = () => {
   const { getSetting, sections } = useSiteSettings();
   const { user } = useAuth();
-  const [auctions, setAuctions] = useState<Tables<"auctions">[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize from cache for instant render on back navigation
+  const cachedAuctions = useMemo(() => {
+    try {
+      const cached = sessionStorage.getItem("cache:auctions");
+      return cached ? JSON.parse(cached) as Tables<"auctions">[] : [];
+    } catch { return []; }
+  }, []);
+  const [auctions, setAuctions] = useState<Tables<"auctions">[]>(cachedAuctions);
+  const [loading, setLoading] = useState(cachedAuctions.length === 0);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -58,7 +65,8 @@ const Index = () => {
 
   const fetchAuctions = useCallback(async () => {
     setFetchError(null);
-    setLoading(true);
+    // Only show loading skeleton if no cached data
+    if (auctions.length === 0) setLoading(true);
     const { data, error } = await supabase.from("auctions").select("*").in("status", ["active", "finalized", "scheduled"]).is("archived_at", null).order("end_time", { ascending: true });
     setLoading(false);
     if (error) {
@@ -66,6 +74,8 @@ const Index = () => {
       return;
     }
     setAuctions(data || []);
+    // Cache for instant render on back navigation
+    try { sessionStorage.setItem("cache:auctions", JSON.stringify(data || [])); } catch { }
   }, []);
 
   useEffect(() => {

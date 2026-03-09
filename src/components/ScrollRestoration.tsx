@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
@@ -12,8 +12,6 @@ import { useLocation } from "react-router-dom";
  */
 const ScrollRestoration = () => {
     const { pathname, key } = useLocation();
-    const prevPathname = useRef(pathname);
-    const prevKey = useRef(key);
 
     // Save scroll position before leaving the current page
     useEffect(() => {
@@ -28,12 +26,6 @@ const ScrollRestoration = () => {
 
     // Restore scroll position when arriving at a page
     useEffect(() => {
-        // Detect if this is a "back" navigation (same pathname but different key)
-        // or a fresh visit
-        const isReturning = prevPathname.current !== pathname;
-        prevPathname.current = pathname;
-        prevKey.current = key;
-
         const saved = sessionStorage.getItem(`scroll:${pathname}`);
         const targetY = saved ? parseInt(saved, 10) : 0;
 
@@ -42,7 +34,7 @@ const ScrollRestoration = () => {
             if (!window.location.hash) {
                 window.scrollTo(0, 0);
             }
-            return;
+            return undefined;
         }
 
         // Retry scrolling until the page is tall enough or we time out (3 seconds)
