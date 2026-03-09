@@ -196,8 +196,8 @@ ${shipping.length > 0
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[ai-assistant] Error:", msg);
-        return new Response(JSON.stringify({ error: msg }), {
-            status: 400,
+        return new Response(JSON.stringify({ error: msg, reply: null }), {
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }

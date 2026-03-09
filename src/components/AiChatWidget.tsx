@@ -132,7 +132,24 @@ const AiChatWidget = () => {
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error("[Suba] Functions error:", error);
+                // Try to extract response body from FunctionsHttpError
+                let detail = error.message || "Error desconocido";
+                if (error.context?.body) {
+                    try {
+                        const reader = error.context.body.getReader();
+                        const { value } = await reader.read();
+                        detail = new TextDecoder().decode(value);
+                    } catch { /* ignore */ }
+                }
+                throw new Error(detail);
+            }
+
+            // Check if edge function returned an error in the response body
+            if (data?.error) {
+                throw new Error(data.error);
+            }
 
             setMessages(prev => [...prev, {
                 id: `suba-${Date.now()}`,
@@ -140,8 +157,9 @@ const AiChatWidget = () => {
                 content: data?.reply || "Lo siento, no pude procesar tu mensaje.",
                 timestamp: new Date(),
             }]);
-        } catch (err) {
-            console.error("[Suba] Error:", err);
+        } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error("[Suba] Error:", errMsg);
             setMessages(prev => [...prev, {
                 id: `error-${Date.now()}`,
                 role: "assistant",
