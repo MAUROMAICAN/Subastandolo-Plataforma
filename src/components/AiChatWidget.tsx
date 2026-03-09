@@ -22,19 +22,18 @@ const SubaAvatar = ({ size = 28, radius = 10 }: { size?: number; radius?: number
                 borderRadius: radius,
                 overflow: "hidden",
                 flexShrink: 0,
-                background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
             }}
         >
             {err ? (
-                <span style={{ fontSize: size * 0.5, fontWeight: 900, color: "#0f0f1a" }}>S</span>
+                <span style={{ fontSize: size * 0.5, fontWeight: 900, color: "#B5FB05" }}>S</span>
             ) : (
                 <img
                     src={SUBA_AVATAR}
                     alt="Suba"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
                     onError={() => setErr(true)}
                 />
             )}
@@ -268,36 +267,59 @@ const AiChatWidget = () => {
             )}
 
             {/* ── Floating trigger button ── */}
-            <button
-                id="suba-chat-trigger"
-                onClick={() => { setIsOpen(!isOpen); setShowTooltip(false); setTooltipDismissed(true); }}
-                aria-label={isOpen ? "Cerrar chat" : "Hablar con Suba"}
-                className={`fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 ${!isOpen ? 'suba-float' : ''}`}
-                style={{
-                    bottom: "80px",
-                    right: "16px",
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "50%",
-                    border: "none",
-                    cursor: "pointer",
-                    background: isOpen ? "#ef4444" : "linear-gradient(135deg, #B5FB05, #8BC34A)",
-                    boxShadow: isOpen
-                        ? "0 4px 20px rgba(239,68,68,0.4)"
-                        : "0 4px 24px rgba(181,251,5,0.35), 0 0 0 3px rgba(181,251,5,0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    padding: 0,
-                }}
-            >
-                {isOpen ? (
-                    <X size={26} color="#fff" strokeWidth={2.5} />
-                ) : (
-                    <SubaAvatar size={64} radius={32} />
-                )}
-            </button>
+            {isOpen ? (
+                <button
+                    id="suba-chat-trigger"
+                    onClick={() => { setIsOpen(false); setShowTooltip(false); setTooltipDismissed(true); }}
+                    aria-label="Cerrar chat"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95"
+                    style={{
+                        bottom: "80px",
+                        right: "16px",
+                        width: "52px",
+                        height: "52px",
+                        borderRadius: "50%",
+                        border: "none",
+                        cursor: "pointer",
+                        background: "#ef4444",
+                        boxShadow: "0 4px 20px rgba(239,68,68,0.4)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                    }}
+                >
+                    <X size={24} color="#fff" strokeWidth={2.5} />
+                </button>
+            ) : (
+                <button
+                    id="suba-chat-trigger"
+                    onClick={() => { setIsOpen(true); setShowTooltip(false); setTooltipDismissed(true); }}
+                    aria-label="Hablar con Suba"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float"
+                    style={{
+                        bottom: "68px",
+                        right: "6px",
+                        width: "80px",
+                        height: "80px",
+                        borderRadius: "0",
+                        border: "none",
+                        cursor: "pointer",
+                        background: "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))",
+                    }}
+                >
+                    <img
+                        src={SUBA_AVATAR}
+                        alt="Suba"
+                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    />
+                </button>
+            )}
 
             {/* ── Chat Panel ── */}
             {isOpen && (
