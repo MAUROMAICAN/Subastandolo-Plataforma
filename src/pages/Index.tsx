@@ -121,16 +121,24 @@ const Index = () => {
   const { dealers } = useVerifiedDealers(creatorIds);
   const { isFavorite, toggleFavorite } = useFavorites();
 
+  // Helper: treat auctions with past end_time as effectively finalized
+  const isEffectivelyActive = useCallback((a: Tables<"auctions">) => {
+    return a.status === "active" && new Date(a.end_time).getTime() > Date.now();
+  }, []);
+  const isEffectivelyFinalized = useCallback((a: Tables<"auctions">) => {
+    return a.status === "finalized" || new Date(a.end_time).getTime() <= Date.now();
+  }, []);
+
   const filtered = useMemo(() => {
     let result = auctions;
     if (activeFilter === "active") {
-      result = result.filter(a => a.status === "active");
+      result = result.filter(a => isEffectivelyActive(a));
     } else if (activeFilter === "ending_soon") {
-      result = result.filter(a => a.status === "active").sort((a, b) => new Date(a.end_time).getTime() - new Date(b.end_time).getTime());
+      result = result.filter(a => isEffectivelyActive(a)).sort((a, b) => new Date(a.end_time).getTime() - new Date(b.end_time).getTime());
     } else if (activeFilter === "newest") {
-      result = result.filter(a => a.status === "active" || a.status === "scheduled").sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      result = result.filter(a => isEffectivelyActive(a) || a.status === "scheduled").sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } else if (activeFilter === "finalized") {
-      result = result.filter(a => a.status === "finalized").sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime());
+      result = result.filter(a => isEffectivelyFinalized(a)).sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime());
     } else if (activeFilter === "my_bids") {
       result = result.filter(a => userBidAuctionIds.has(a.id));
     }
@@ -141,11 +149,11 @@ const Index = () => {
       (a) => a.title + " " + (a.description || ""),
       (a) => (a as any).operation_number,
     );
-  }, [auctions, searchQuery, activeFilter, userBidAuctionIds]);
+  }, [auctions, searchQuery, activeFilter, userBidAuctionIds, isEffectivelyActive, isEffectivelyFinalized]);
 
   const scheduledAuctions = filtered.filter(a => a.status === "scheduled");
-  const activeAuctions = filtered.filter(a => a.status === "active");
-  const endedAuctions = filtered.filter(a => a.status === "finalized");
+  const activeAuctions = filtered.filter(a => isEffectivelyActive(a));
+  const endedAuctions = filtered.filter(a => isEffectivelyFinalized(a));
 
   const visibleSections = sections.filter(s =>
     s.is_visible &&
@@ -181,10 +189,10 @@ const Index = () => {
 
   const filterButtons = [
     { key: "all" as const, icon: Search, label: "Todas", count: auctions.length },
-    { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => a.status === "active").length },
-    { key: "ending_soon" as const, icon: Clock, label: "Por Terminar", count: auctions.filter(a => a.status === "active").length },
-    { key: "newest" as const, icon: Sparkles, label: "Nuevas", count: auctions.filter(a => a.status === "active" || a.status === "scheduled").length },
-    { key: "finalized" as const, icon: Gavel, label: "Finalizadas", count: auctions.filter(a => a.status === "finalized").length },
+    { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => isEffectivelyActive(a)).length },
+    { key: "ending_soon" as const, icon: Clock, label: "Por Terminar", count: auctions.filter(a => isEffectivelyActive(a)).length },
+    { key: "newest" as const, icon: Sparkles, label: "Nuevas", count: auctions.filter(a => isEffectivelyActive(a) || a.status === "scheduled").length },
+    { key: "finalized" as const, icon: Gavel, label: "Finalizadas", count: auctions.filter(a => isEffectivelyFinalized(a)).length },
   ];
 
   return (
@@ -295,7 +303,7 @@ const Index = () => {
               <span><strong className="text-foreground text-sm">{auctions.length}</strong> productos</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                <strong className="text-foreground text-sm">{auctions.filter(a => a.status === "active").length}</strong> en vivo
+                <strong className="text-foreground text-sm">{auctions.filter(a => isEffectivelyActive(a)).length}</strong> en vivo
               </span>
             </div>
           </div>

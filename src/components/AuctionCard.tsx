@@ -23,7 +23,7 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
   const { user } = useAuth();
   const bcvRate = useBCVRate();
   const timeExpired = new Date(auction.end_time).getTime() <= Date.now();
-  const isEnded = auction.status === "finalized" || (auction.status !== "active" && auction.status !== "scheduled" && timeExpired);
+  const isEnded = auction.status === "finalized" || timeExpired;
   const startTime = (auction as any).start_time;
   const isScheduled = auction.status === "scheduled" || (startTime && new Date(startTime).getTime() > Date.now());
   const displayPrice = auction.current_price > 0 ? auction.current_price : auction.starting_price;
