@@ -66,7 +66,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     }
 
     // Fallback: compute from finalized auctions with 5% commission
-    const COMMISSION_RATE = 0.05;
+    const COMMISSION_RATE = 0.10;
     const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0);
     const totalSales = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0);
     const totalCommission = totalSales * COMMISSION_RATE;
@@ -228,7 +228,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
             <div className="bg-secondary/40 border border-border rounded-sm p-4 text-center">
               <div className="text-2xl mb-1">💰</div>
               <p className="text-xs font-bold text-foreground mb-1">Comisión por venta</p>
-              <p className="text-lg font-extrabold text-accent">Solo 5%</p>
+              <p className="text-lg font-extrabold text-accent">Solo 10%</p>
               <p className="text-[10px] text-muted-foreground">del valor final</p>
             </div>
             <div className="bg-secondary/40 border border-border rounded-sm p-4 text-center">
@@ -242,7 +242,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           <div className="bg-secondary/30 border border-border rounded-sm p-4">
             <p className="text-xs font-bold text-foreground mb-2">📊 Ejemplo:</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-accent">$95</strong> en bolívares a la tasa BCV del cierre. <strong className="text-foreground">La comisión más baja del mercado.</strong>
+              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-accent">$90</strong> en bolívares a la tasa BCV del cierre. <strong className="text-foreground">La comisión más baja del mercado.</strong>
             </p>
           </div>
 

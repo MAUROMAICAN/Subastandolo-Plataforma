@@ -75,7 +75,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
   };
 
   // Compute from dealer_earnings if available, otherwise from auctions
-  const COMMISSION_RATE = 0.05;
+  const COMMISSION_RATE = 0.10;
   const computedEarnings = useMemo(() => {
     if (earnings.length > 0) return earnings;
     // Build from finalized auctions
@@ -197,7 +197,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
         {[
           { label: "Ventas Totales", value: stats.totalSales.toString(), icon: ShoppingBag, color: "text-primary dark:text-[#A6E300]" },
           { label: "Ingresos Brutos", value: `Bs. ${(stats.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "text-foreground" },
-          { label: "Comisión (5%)", value: `Bs. ${(stats.totalCommission * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, color: "text-muted-foreground" },
+          { label: "Comisión (10%)", value: `Bs. ${(stats.totalCommission * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, color: "text-muted-foreground" },
           { label: "Total Retirado", value: `Bs. ${(stats.approvedWithdrawals * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: CheckCircle, color: "text-emerald-500" },
         ].map((stat, idx) => (
           <Card key={idx} className="border border-border rounded-sm">
