@@ -48,19 +48,10 @@ const AiChatWidget = () => {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
-    const [showTooltip, setShowTooltip] = useState(false);
-    const [tooltipDismissed, setTooltipDismissed] = useState(false);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
-
-    // Show tooltip after 3 seconds if not dismissed and chat not open
-    useEffect(() => {
-        if (tooltipDismissed || isOpen) return;
-        const timer = setTimeout(() => setShowTooltip(true), 3000);
-        return () => clearTimeout(timer);
-    }, [tooltipDismissed, isOpen]);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -199,74 +190,24 @@ const AiChatWidget = () => {
 
     return (
         <>
-            {/* ── Floating tooltip bubble ── */}
-            {showTooltip && !isOpen && (
-                <div
-                    className="fixed z-50"
-                    style={{
-                        bottom: "148px",
-                        right: "16px",
-                        animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                    }}
-                    onClick={() => { setTooltipDismissed(true); setShowTooltip(false); setIsOpen(true); }}
-                >
-                    <div
-                        style={{
-                            background: "#0f1525",
-                            border: "1px solid rgba(181,251,5,0.2)",
-                            borderRadius: "14px 14px 4px 14px",
-                            padding: "10px 14px",
-                            maxWidth: "220px",
-                            cursor: "pointer",
-                            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                        }}
-                    >
-                        <p style={{ margin: 0, color: "#e2e8f0", fontSize: "12px", lineHeight: 1.5, fontWeight: 500 }}>
-                            ¡Hola! 👋 Soy <strong style={{ color: "#B5FB05" }}>Suba</strong>, ¿puedo ayudarte?
-                        </p>
-                    </div>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setTooltipDismissed(true); setShowTooltip(false); }}
-                        style={{
-                            position: "absolute",
-                            top: "-6px",
-                            right: "-4px",
-                            width: "18px",
-                            height: "18px",
-                            borderRadius: "50%",
-                            background: "#1a1a2e",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            color: "#9ca3af",
-                            fontSize: "10px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: 0,
-                            lineHeight: 1,
-                        }}
-                    >✕</button>
-                </div>
-            )}
-
             {/* ── Floating trigger button ── */}
             <button
                 id="suba-chat-trigger"
-                onClick={() => { setIsOpen(!isOpen); setShowTooltip(false); setTooltipDismissed(true); }}
+                onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Cerrar chat" : "Hablar con Suba"}
-                className={`fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 ${!isOpen ? 'suba-float' : ''}`}
+                className="fixed z-50 transition-all duration-300 hover:scale-105 active:scale-95 group"
                 style={{
                     bottom: "80px",
                     right: "16px",
-                    width: "64px",
-                    height: "64px",
+                    width: "60px",
+                    height: "60px",
                     borderRadius: "50%",
                     border: "none",
                     cursor: "pointer",
                     background: isOpen ? "#ef4444" : "linear-gradient(135deg, #B5FB05, #8BC34A)",
                     boxShadow: isOpen
                         ? "0 4px 20px rgba(239,68,68,0.4)"
-                        : "0 4px 24px rgba(181,251,5,0.35), 0 0 0 3px rgba(181,251,5,0.1)",
+                        : "0 4px 24px rgba(181,251,5,0.35), 0 0 0 3px rgba(181,251,5,0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -277,7 +218,7 @@ const AiChatWidget = () => {
                 {isOpen ? (
                     <X size={26} color="#fff" strokeWidth={2.5} />
                 ) : (
-                    <SubaAvatar size={64} radius={32} />
+                    <SubaAvatar size={60} radius={30} />
                 )}
             </button>
 
@@ -575,26 +516,15 @@ const AiChatWidget = () => {
           from { opacity: 0; transform: translateY(16px) scale(0.97); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes subaTooltipIn {
-          from { opacity: 0; transform: translateY(8px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .suba-float {
-          animation: subaFloatBounce 3s ease-in-out infinite;
-        }
-        @keyframes subaFloatBounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
         .suba-dot {
           display: inline-block;
           width: 6px;
           height: 6px;
           border-radius: 50%;
           background: #B5FB05;
-          animation: subaDotBounce 1.2s ease-in-out infinite;
+          animation: subaBounce 1.2s ease-in-out infinite;
         }
-        @keyframes subaDotBounce {
+        @keyframes subaBounce {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
           30% { transform: translateY(-6px); opacity: 1; }
         }
