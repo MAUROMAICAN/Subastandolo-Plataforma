@@ -462,7 +462,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
                         <div className="bg-card rounded-lg border border-border p-3 space-y-2">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acciones</p>
                           <div className="flex flex-col gap-1.5">
-                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => window.open(`/subasta/${proof.auction_id}`, "_blank")}>
+                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => window.open(`/auction/${proof.auction_id}`, "_blank")}>
                               <Eye className="h-3.5 w-3.5" /> Ver subasta
                             </Button>
                             {isPending && proof.buyer_id && (
@@ -509,7 +509,7 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
                                           title: `⚠️ Pago pendiente: "${proof.auction_title}"`,
                                           message: `Hola ${proof.buyer_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`,
                                           type: "payment_reminder",
-                                          link: `/subasta/${proof.auction_id}`,
+                                          link: `/auction/${proof.auction_id}`,
                                         },
                                       });
                                       if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });

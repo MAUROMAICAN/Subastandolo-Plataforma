@@ -479,7 +479,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                                       try {
                                         const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
                                         const { data, error } = await supabase.functions.invoke("notify-push", {
-                                          body: { user_id: a.winner_id, title: `⚠️ Pago pendiente: "${a.title}"`, message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`, type: "payment_reminder", link: `/subasta/${a.id}` },
+                                          body: { user_id: a.winner_id, title: `⚠️ Pago pendiente: "${a.title}"`, message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`, type: "payment_reminder", link: `/auction/${a.id}` },
                                         });
                                         if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
                                         else toast({ title: "🔔 Notificación enviada", description: `A ${winner.full_name}` });
@@ -524,7 +524,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
                                         try {
                                           const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
                                           const { data, error } = await supabase.functions.invoke("notify-push", {
-                                            body: { user_id: a.created_by, title: `📦 Envío pendiente: "${a.title}"`, message: `Hola ${dealer.full_name}, ${winner?.full_name || "el comprador"} ya pagó ${amount}. Procede con el envío.`, type: "shipping_reminder", link: `/subasta/${a.id}` },
+                                            body: { user_id: a.created_by, title: `📦 Envío pendiente: "${a.title}"`, message: `Hola ${dealer.full_name}, ${winner?.full_name || "el comprador"} ya pagó ${amount}. Procede con el envío.`, type: "shipping_reminder", link: `/auction/${a.id}` },
                                           });
                                           if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
                                           else toast({ title: "🔔 Notificación enviada al dealer", description: `A ${dealer.full_name}` });

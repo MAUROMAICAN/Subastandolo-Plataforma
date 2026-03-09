@@ -842,7 +842,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                         title: `⚠️ Pago pendiente: "${auction.title}"`,
                                         message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount} para recibir tu producto. Ingresa a la plataforma y sube tu comprobante.`,
                                         type: "payment_reminder",
-                                        link: `/subasta/${auction.id}`,
+                                        link: `/auction/${auction.id}`,
                                       },
                                     });
                                     if (error || data?.error) {
@@ -973,7 +973,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                                       title: `📦 Envío pendiente: "${auction.title}"`,
                                       message: `Hola ${dealerName}, el comprador ${winner?.full_name || ""} ya pagó ${amount}. Por favor, procede con el envío del artículo.`,
                                       type: "shipping_reminder",
-                                      link: `/subasta/${auction.id}`,
+                                      link: `/auction/${auction.id}`,
                                     },
                                   });
                                   if (error || data?.error) {
