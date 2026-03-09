@@ -576,17 +576,18 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                             ? "border-orange-500/50 bg-orange-500/20 text-orange-500 dark:text-orange-300 dark:bg-orange-500/20"
                             : "border-border bg-secondary text-foreground"
                           }`}
+                        style={{ colorScheme: "dark" }}
                         title="Exposición en la página principal"
                       >
-                        <option value={100}>🔝 Máxima (100)</option>
-                        <option value={50}>⬆️ Alta (50)</option>
-                        <option value={10}>↗️ Elevada (10)</option>
-                        <option value={0}>➡️ Normal (0)</option>
-                        <option value={-10}>↘️ Reducida (-10)</option>
-                        <option value={-50}>⬇️ Baja (-50)</option>
-                        <option value={-100}>🔽 Mínima (-100)</option>
+                        <option value={100} className="bg-neutral-800 text-white">🔝 Máxima (100)</option>
+                        <option value={50} className="bg-neutral-800 text-white">⬆️ Alta (50)</option>
+                        <option value={10} className="bg-neutral-800 text-white">↗️ Elevada (10)</option>
+                        <option value={0} className="bg-neutral-800 text-white">➡️ Normal (0)</option>
+                        <option value={-10} className="bg-neutral-800 text-white">↘️ Reducida (-10)</option>
+                        <option value={-50} className="bg-neutral-800 text-white">⬇️ Baja (-50)</option>
+                        <option value={-100} className="bg-neutral-800 text-white">🔽 Mínima (-100)</option>
                         {![100, 50, 10, 0, -10, -50, -100].includes((auction as any).sort_order || 0) && (
-                          <option value={(auction as any).sort_order || 0}>📌 Personalizado ({(auction as any).sort_order})</option>
+                          <option value={(auction as any).sort_order || 0} className="bg-neutral-800 text-white">📌 Personalizado ({(auction as any).sort_order})</option>
                         )}
                       </select>
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver subasta" onClick={() => navigate(`/auction/${auction.id}`)}>
