@@ -271,7 +271,7 @@ const AiChatWidget = () => {
                     id="suba-chat-trigger"
                     onClick={() => { setIsOpen(true); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Hablar con Suba"
-                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float suba-wave w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
                     style={{
                         borderRadius: "0",
                         border: "none",
@@ -287,6 +287,7 @@ const AiChatWidget = () => {
                     <img
                         src={SUBA_AVATAR}
                         alt="Suba"
+                        className="suba-wave"
                         style={{ width: "100%", height: "100%", objectFit: "contain" }}
                     />
                 </button>
