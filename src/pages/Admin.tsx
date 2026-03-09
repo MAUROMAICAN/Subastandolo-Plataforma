@@ -107,7 +107,7 @@ const Admin = () => {
     const [imagesRes, bidsRes, profilesRes, rolesRes] = await Promise.all([
       auctionIds.length > 0 ? supabase.from("auction_images").select("*").in("auction_id", auctionIds).order("display_order") : { data: [] },
       auctionIds.length > 0 ? supabase.from("bids").select("auction_id").in("auction_id", auctionIds) : { data: [] },
-      supabase.from("profiles").select("id, full_name, phone, created_at"),
+      supabase.from("profiles").select("id, full_name, phone, created_at, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
     ]);
 
