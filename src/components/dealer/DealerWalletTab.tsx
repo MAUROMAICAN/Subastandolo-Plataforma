@@ -123,7 +123,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
         amount: stats.unpaidEarnings,
       } as any);
       if (error) throw error;
-      toast({ title: "✅ Solicitud Enviada", description: `Retiro de $${stats.unpaidEarnings.toFixed(2)} solicitado. El admin lo procesará.` });
+      toast({ title: "✅ Solicitud Enviada", description: `Retiro de Bs. ${(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} solicitado. El admin lo procesará.` });
       fetchWalletData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -171,7 +171,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                   Bs. {(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Ref: ${stats.unpaidEarnings.toFixed(2)} · Tasa BCV al cierre de cada subasta
+                  Tasa BCV al cierre de cada subasta
                 </p>
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                 return (
                   <div key={w.id} className="flex items-center justify-between px-4 py-3 hover:bg-secondary/20 transition-colors">
                     <div>
-                      <p className="text-sm font-bold">${Number(w.amount).toFixed(2)}</p>
+                      <p className="text-sm font-bold">Bs. {(Number(w.amount) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(w.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
                     <Badge variant="outline" className={`text-[10px] ${st.color}`}>

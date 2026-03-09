@@ -83,8 +83,8 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           <BarChart3 className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Panel del Dealer
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas · ${metrics.totalRevenue.toLocaleString("es-MX")} ingresos
-          {bcvRate > 0 && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas
+          {bcvRate !== null && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ingresos`}
         </p>
       </div>
 
@@ -126,7 +126,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                   <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
                     Bs. {(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Ref: ${walletStats.unpaid.toFixed(2)} · Tasa BCV al cierre de cada subasta</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Tasa BCV al cierre de cada subasta</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 sm:gap-6">
@@ -183,7 +183,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
               <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
               <p className="text-xs text-muted-foreground">Ingresos Totales</p>
             </div>
-            <p className="text-xl font-heading font-bold text-primary dark:text-[#A6E300]">${metrics.totalRevenue.toLocaleString("es-MX")}</p>
+            <p className="text-xl font-heading font-bold text-primary dark:text-[#A6E300]">{bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "..."}</p>
           </CardContent>
         </Card>
         <Card className="border border-border rounded-sm">
@@ -201,7 +201,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
               <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
               <p className="text-xs text-muted-foreground">Precio Promedio</p>
             </div>
-            <p className="text-xl font-heading font-bold">${metrics.avgPrice.toFixed(2)}</p>
+            <p className="text-xl font-heading font-bold">{bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "..."}</p>
           </CardContent>
         </Card>
       </div>
