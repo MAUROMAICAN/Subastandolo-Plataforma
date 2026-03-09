@@ -13,6 +13,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { Helmet } from "react-helmet-async";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ScrollRestoration from "@/components/ScrollRestoration";
 import SplashScreen from "@/components/SplashScreen";
 import CookieConsent from "@/components/CookieConsent";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -216,6 +217,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <ErrorBoundary>
+                <ScrollRestoration />
                 <AuthProvider>
                   <SiteProvider>
                     <SiteHead />
