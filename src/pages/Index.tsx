@@ -153,7 +153,7 @@ const Index = () => {
 
   const scheduledAuctions = filtered.filter(a => a.status === "scheduled");
   const activeAuctions = filtered.filter(a => isEffectivelyActive(a));
-  const endedAuctions = filtered.filter(a => isEffectivelyFinalized(a));
+  const endedAuctions = filtered.filter(a => isEffectivelyFinalized(a)).sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime());
 
   const visibleSections = sections.filter(s =>
     s.is_visible &&
