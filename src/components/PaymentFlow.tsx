@@ -61,48 +61,49 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
   const [copied, setCopied] = useState<string | null>(null);
 
   // Load BCV rate: admin manual rate first, then external APIs
-  useEffect(() => {
-    const loadRate = async () => {
-      setRateLoading(true);
-      try {
-        // 1. Try admin-configured manual rate from site_settings
-        const manualRate = getSetting("bcv_rate", "");
-        const commissionPct = parseFloat(getSetting("commission_percentage", "0") || "0");
-        if (!isNaN(commissionPct)) setCommission(commissionPct);
+  const loadRate = async () => {
+    setRateLoading(true);
+    try {
+      // 1. Try admin-configured manual rate from site_settings
+      const manualRate = getSetting("bcv_rate", "");
+      const commissionPct = parseFloat(getSetting("commission_percentage", "0") || "0");
+      if (!isNaN(commissionPct)) setCommission(commissionPct);
 
-        if (manualRate) {
-          const parsed = parseFloat(manualRate);
-          if (!isNaN(parsed) && parsed > 0) {
-            setBcvRate(parsed);
-            setRateLoading(false);
-            return;
-          }
+      if (manualRate) {
+        const parsed = parseFloat(manualRate);
+        if (!isNaN(parsed) && parsed > 0) {
+          setBcvRate(parsed);
+          setRateLoading(false);
+          return;
         }
-
-        // 2. Fallback: ve.dolarapi.com (official BCV rate)
-        try {
-          const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
-          if (res.ok) {
-            const data = await res.json();
-            const value = data?.promedio ?? data?.venta;
-            if (value && !isNaN(Number(value))) { setBcvRate(Number(value)); setRateLoading(false); return; }
-          }
-        } catch { /* try next */ }
-
-        // 3. Last resort: open.er-api.com (USD→VES)
-        try {
-          const res2 = await fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(5000) });
-          if (res2.ok) {
-            const data2 = await res2.json();
-            const value2 = data2?.rates?.VES ?? data2?.rates?.VEF;
-            if (value2 && !isNaN(Number(value2))) { setBcvRate(Number(value2)); setRateLoading(false); return; }
-          }
-        } catch { /* no more fallbacks */ }
-
-      } finally {
-        setRateLoading(false);
       }
-    };
+
+      // 2. Fallback: ve.dolarapi.com (official BCV rate)
+      try {
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const data = await res.json();
+          const value = data?.promedio ?? data?.venta;
+          if (value && !isNaN(Number(value))) { setBcvRate(Number(value)); setRateLoading(false); return; }
+        }
+      } catch { /* try next */ }
+
+      // 3. Last resort: open.er-api.com (USD→VES)
+      try {
+        const res2 = await fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(5000) });
+        if (res2.ok) {
+          const data2 = await res2.json();
+          const value2 = data2?.rates?.VES ?? data2?.rates?.VEF;
+          if (value2 && !isNaN(Number(value2))) { setBcvRate(Number(value2)); setRateLoading(false); return; }
+        }
+      } catch { /* no more fallbacks */ }
+
+    } finally {
+      setRateLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadRate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctionId]);
@@ -421,7 +422,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
               </p>
             </div>
           ) : (
-            <p className="text-xs text-destructive dark:text-white/70">No se pudo obtener la tasa. Intenta de nuevo más tarde.</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex-1">⚠️ No se pudo obtener la tasa BCV. Puedes enviar tu comprobante de todas formas.</p>
+              <button onClick={loadRate} className="shrink-0 text-xs font-bold text-primary dark:text-accent underline">Reintentar</button>
+            </div>
           )}
 
           {showCommission && commission > 0 && (
