@@ -296,29 +296,14 @@ const AiChatWidget = () => {
             {isOpen && (
                 <div
                     id="suba-chat-panel"
-                    className="fixed z-50 flex flex-col inset-0 sm:inset-auto sm:bottom-[152px] sm:right-4"
+                    className="fixed z-50 flex flex-col inset-0 sm:inset-auto sm:bottom-[140px] sm:right-4 sm:w-[400px] sm:h-[min(560px,calc(100vh-200px))] sm:rounded-[20px] sm:border sm:border-[rgba(181,251,5,0.12)]"
                     style={{
-                        width: undefined,
-                        maxWidth: "100%",
                         overflow: "hidden",
-                        border: "none",
                         background: "#0a0a14",
                         boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
                         animation: "subaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                 >
-                    {/* Desktop-only sizing via inline style override */}
-                    <style>{`
-                        @media (min-width: 640px) {
-                            #suba-chat-panel {
-                                width: min(400px, calc(100vw - 32px)) !important;
-                                height: min(560px, calc(100vh - 200px)) !important;
-                                border-radius: 20px !important;
-                                border: 1px solid rgba(181,251,5,0.12) !important;
-                                inset: auto !important;
-                            }
-                        }
-                    `}</style>
                     {/* ── Header ── */}
                     <div
                         style={{
