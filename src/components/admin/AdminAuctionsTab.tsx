@@ -570,11 +570,11 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                       <select
                         value={(auction as any).sort_order || 0}
                         onChange={(e) => handleSortOrder(auction.id, parseInt(e.target.value))}
-                        className={`h-7 text-[10px] font-bold rounded-lg border pl-1.5 pr-5 mr-1 cursor-pointer transition-colors appearance-auto ${((auction as any).sort_order || 0) > 0
-                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        className={`h-8 text-xs font-bold rounded-lg border px-2 pr-6 mr-1 cursor-pointer transition-colors ${((auction as any).sort_order || 0) > 0
+                          ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-500 dark:text-emerald-300 dark:bg-emerald-500/20"
                           : ((auction as any).sort_order || 0) < 0
-                            ? "border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-400"
-                            : "border-border bg-secondary/50 text-muted-foreground"
+                            ? "border-orange-500/50 bg-orange-500/20 text-orange-500 dark:text-orange-300 dark:bg-orange-500/20"
+                            : "border-border bg-secondary text-foreground"
                           }`}
                         title="Exposición en la página principal"
                       >
