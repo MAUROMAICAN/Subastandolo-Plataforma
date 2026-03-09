@@ -58,8 +58,8 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [sendingShipReminder, setSendingShipReminder] = useState<string | null>(null);
   const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
 
-  // Won auctions
-  const wonAuctions = useMemo(() => auctions.filter(a => !!a.winner_id), [auctions]);
+  // Only show auctions that are FINALIZED and have a winner — not just any auction with a bid
+  const wonAuctions = useMemo(() => auctions.filter(a => !!a.winner_id && a.status === "finalized"), [auctions]);
 
   // Filtered & sorted
   const filtered = useMemo(() => {

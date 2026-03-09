@@ -89,8 +89,7 @@ const BuyerPanel = () => {
         .from("auctions")
         .select("*")
         .eq("winner_id", user.id)
-        .in("status", ["finalized", "active"])
-        .lte("end_time", new Date().toISOString())
+        .eq("status", "finalized")
         .order("end_time", { ascending: false });
       setWonAuctions(data || []);
       setLoadingAuctions(false);
