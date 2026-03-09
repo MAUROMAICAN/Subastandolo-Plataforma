@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 
 const DescriptionToggle = ({ text, maxLength = 120 }: { text: string; maxLength?: number }) => {
@@ -39,7 +39,7 @@ import ReviewCard from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Trophy, TrendingUp, ChevronLeft, ChevronRight, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin, Heart } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, TrendingUp, User, Star, MessageSquare, AlertTriangle, Clock, Zap, X, MapPin, Heart } from "lucide-react";
 import ReportAuctionButton from "@/components/ReportAuctionButton";
 import SEO from "@/components/SEO";
 import type { Tables } from "@/integrations/supabase/types";
@@ -86,6 +86,12 @@ const AuctionDetail = () => {
   const [autoBidMax, setAutoBidMax] = useState("");
   const [autoBidActive, setAutoBidActive] = useState<{ id: string; max_amount: number } | null>(null);
   const [savingAutoBid, setSavingAutoBid] = useState(false);
+
+  // Image gallery swipe/drag state
+  const [dragStart, setDragStart] = useState<{ x: number; t: number } | null>(null);
+  const [dragDelta, setDragDelta] = useState(0);
+  const [galleryTransition, setGalleryTransition] = useState(false);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   const dealerUserId = auction?.created_by;
   const dealer = useVerifiedDealer(dealerUserId);
@@ -348,7 +354,38 @@ const AuctionDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Image gallery */}
           <div className="space-y-3">
-            <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm">
+            <div
+              ref={galleryRef}
+              className="aspect-square bg-card border border-border rounded-2xl overflow-hidden relative shadow-sm select-none touch-pan-y"
+              onPointerDown={(e) => {
+                if ((e.target as HTMLElement).closest("button")) return;
+                setDragStart({ x: e.clientX, t: Date.now() });
+                setDragDelta(0);
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                if (!dragStart) return;
+                setDragDelta(e.clientX - dragStart.x);
+              }}
+              onPointerUp={(e) => {
+                if (!dragStart) return;
+                const dx = e.clientX - dragStart.x;
+                const dt = Date.now() - dragStart.t;
+                const velocity = Math.abs(dx) / dt;
+                const threshold = velocity > 0.3 ? 20 : 60;
+                setGalleryTransition(true);
+                if (dx < -threshold && currentImage < allImages.length - 1) {
+                  setCurrentImage(prev => prev + 1);
+                } else if (dx > threshold && currentImage > 0) {
+                  setCurrentImage(prev => prev - 1);
+                }
+                setDragStart(null);
+                setDragDelta(0);
+                setTimeout(() => setGalleryTransition(false), 300);
+              }}
+              onPointerCancel={() => { setDragStart(null); setDragDelta(0); }}
+              style={{ cursor: dragStart ? "grabbing" : allImages.length > 1 ? "grab" : "default" }}
+            >
               {/* Favorite heart button */}
               {user && (
                 <button
@@ -359,27 +396,44 @@ const AuctionDetail = () => {
                   <Heart className={`h-4 w-4 transition-colors ${isFavorite(id!) ? "fill-red-400 text-red-400" : ""}`} />
                 </button>
               )}
+
               {allImages.length > 0 ? (
                 <>
-                  <img src={allImages[currentImage]} alt={auction.title} className="w-full h-full object-contain p-4" />
-                  {allImages.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentImage(prev => (prev - 1 + allImages.length) % allImages.length)}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 hover:bg-card border border-border/50 text-foreground flex items-center justify-center shadow-md transition-colors"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setCurrentImage(prev => (prev + 1) % allImages.length)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 hover:bg-card border border-border/50 text-foreground flex items-center justify-center shadow-md transition-colors"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-foreground/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
-                        {currentImage + 1} / {allImages.length}
+                  {/* Sliding image track */}
+                  <div
+                    className="flex h-full"
+                    style={{
+                      transform: `translateX(calc(-${currentImage * 100}% + ${dragDelta}px))`,
+                      transition: galleryTransition || !dragStart ? "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)" : "none",
+                      willChange: "transform",
+                    }}
+                  >
+                    {allImages.map((url, i) => (
+                      <div key={i} className="w-full h-full shrink-0 flex items-center justify-center p-4">
+                        <img
+                          src={url}
+                          alt={`${auction.title} - foto ${i + 1}`}
+                          className="max-w-full max-h-full object-contain"
+                          draggable={false}
+                        />
                       </div>
-                    </>
+                    ))}
+                  </div>
+
+                  {/* Modern dot indicators */}
+                  {allImages.length > 1 && (
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full z-10">
+                      {allImages.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={(e) => { e.stopPropagation(); setGalleryTransition(true); setCurrentImage(i); setTimeout(() => setGalleryTransition(false), 300); }}
+                          className={`rounded-full transition-all duration-300 ${i === currentImage
+                            ? "w-5 h-1.5 bg-white"
+                            : "w-1.5 h-1.5 bg-white/40 hover:bg-white/70"
+                            }`}
+                        />
+                      ))}
+                    </div>
                   )}
                 </>
               ) : (
@@ -389,14 +443,14 @@ const AuctionDetail = () => {
 
             {/* Thumbnails */}
             {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {allImages.map((url, i) => (
                   <button
                     key={i}
-                    onClick={() => setCurrentImage(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${i === currentImage ? "border-primary shadow-md" : "border-border hover:border-primary/50"}`}
+                    onClick={() => { setGalleryTransition(true); setCurrentImage(i); setTimeout(() => setGalleryTransition(false), 300); }}
+                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all duration-200 ${i === currentImage ? "border-primary shadow-md scale-105" : "border-border/50 hover:border-primary/50 opacity-60 hover:opacity-100"}`}
                   >
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
                   </button>
                 ))}
               </div>
