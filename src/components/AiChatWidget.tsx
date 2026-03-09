@@ -1,20 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { X, Send, Loader2, ArrowDown, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
+    id: string;
     role: "user" | "assistant";
     content: string;
+    timestamp: Date;
 }
+
+const SUBA_AVATAR = "/suba-avatar.png";
 
 const AiChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showScrollBtn, setShowScrollBtn] = useState(false);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
     const scrollToBottom = useCallback(() => {
@@ -31,12 +37,26 @@ const AiChatWidget = () => {
         }
     }, [isOpen]);
 
-    // Add welcome message on first open
+    // Detect scroll position for scroll-down button
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 100);
+        };
+        container.addEventListener("scroll", handleScroll);
+        return () => container.removeEventListener("scroll", handleScroll);
+    }, [isOpen]);
+
+    // Welcome message on first open
     useEffect(() => {
         if (isOpen && messages.length === 0) {
             setMessages([{
+                id: "welcome",
                 role: "assistant",
-                content: "¡Hola! 👋 Soy **SubastBot**, tu asistente virtual de Subastandolo. ¿En qué puedo ayudarte hoy?\n\nPuedes preguntarme sobre:\n• 🔨 Cómo funcionan las subastas\n• 💳 Proceso de pago\n• 📦 Estado de envíos\n• 🛡️ Disputas y protección\n• 👤 Tu cuenta y perfil",
+                content: "¡Hola! 👋 Soy **Suba**, tu asistente de Subastandolo. ¿En qué te puedo ayudar?",
+                timestamp: new Date(),
             }]);
         }
     }, [isOpen, messages.length]);
@@ -45,14 +65,21 @@ const AiChatWidget = () => {
         const trimmed = input.trim();
         if (!trimmed || isLoading) return;
 
-        const userMessage: Message = { role: "user", content: trimmed };
+        const userMessage: Message = {
+            id: `user-${Date.now()}`,
+            role: "user",
+            content: trimmed,
+            timestamp: new Date(),
+        };
         const updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
         setInput("");
         setIsLoading(true);
 
+        // Reset textarea height
+        if (inputRef.current) inputRef.current.style.height = "40px";
+
         try {
-            // Send only last 10 messages as history to keep context manageable
             const historyToSend = updatedMessages.slice(-10).map(m => ({
                 role: m.role,
                 content: m.content,
@@ -61,7 +88,7 @@ const AiChatWidget = () => {
             const { data, error } = await supabase.functions.invoke("ai-assistant", {
                 body: {
                     message: trimmed,
-                    history: historyToSend.slice(0, -1), // Don't include the current message in history
+                    history: historyToSend.slice(0, -1),
                     userId: user?.id || null,
                 },
             });
@@ -69,14 +96,18 @@ const AiChatWidget = () => {
             if (error) throw error;
 
             setMessages(prev => [...prev, {
+                id: `suba-${Date.now()}`,
                 role: "assistant",
-                content: data?.reply || "Lo siento, no pude procesar tu mensaje. Intenta de nuevo.",
+                content: data?.reply || "Lo siento, no pude procesar tu mensaje.",
+                timestamp: new Date(),
             }]);
         } catch (err) {
-            console.error("[AiChatWidget] Error:", err);
+            console.error("[Suba] Error:", err);
             setMessages(prev => [...prev, {
+                id: `error-${Date.now()}`,
                 role: "assistant",
-                content: "⚠️ Hubo un error al procesar tu mensaje. Por favor intenta de nuevo o contacta a soporte@subastandolo.com.",
+                content: "⚠️ Hubo un error. Intenta de nuevo o escribe a soporte@subastandolo.com",
+                timestamp: new Date(),
             }]);
         } finally {
             setIsLoading(false);
@@ -90,14 +121,34 @@ const AiChatWidget = () => {
         }
     };
 
-    // Simple markdown-like rendering for bold text
+    // Auto-resize textarea
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setInput(e.target.value);
+        const ta = e.target;
+        ta.style.height = "40px";
+        ta.style.height = Math.min(ta.scrollHeight, 100) + "px";
+    };
+
+    const clearChat = () => {
+        setMessages([{
+            id: "welcome-new",
+            role: "assistant",
+            content: "Chat reiniciado. ¿En qué te puedo ayudar? 😊",
+            timestamp: new Date(),
+        }]);
+    };
+
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
+    };
+
+    // Markdown-like rendering
     const renderContent = (text: string) => {
         const parts = text.split(/(\*\*.*?\*\*)/g);
         return parts.map((part, i) => {
             if (part.startsWith("**") && part.endsWith("**")) {
-                return <strong key={i} style={{ color: "#EAB308" }}>{part.slice(2, -2)}</strong>;
+                return <strong key={i} className="text-[#B5FB05] font-bold">{part.slice(2, -2)}</strong>;
             }
-            // Handle newlines
             return part.split("\n").map((line, j) => (
                 <span key={`${i}-${j}`}>
                     {j > 0 && <br />}
@@ -109,184 +160,275 @@ const AiChatWidget = () => {
 
     return (
         <>
-            {/* Floating Button */}
+            {/* ── Floating trigger button ── */}
             <button
-                id="ai-chat-toggle"
+                id="suba-chat-trigger"
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed z-50 shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
+                aria-label={isOpen ? "Cerrar chat" : "Hablar con Suba"}
+                className="fixed z-50 transition-all duration-300 hover:scale-105 active:scale-95 group"
                 style={{
                     bottom: "80px",
-                    right: "20px",
-                    width: "56px",
-                    height: "56px",
+                    right: "16px",
+                    width: "60px",
+                    height: "60px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #EAB308, #F59E0B)",
                     border: "none",
                     cursor: "pointer",
+                    background: isOpen ? "#ef4444" : "linear-gradient(135deg, #B5FB05, #8BC34A)",
+                    boxShadow: isOpen
+                        ? "0 4px 20px rgba(239,68,68,0.4)"
+                        : "0 4px 24px rgba(181,251,5,0.35), 0 0 0 3px rgba(181,251,5,0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 4px 24px rgba(234, 179, 8, 0.4)",
+                    overflow: "hidden",
+                    padding: 0,
                 }}
             >
                 {isOpen ? (
-                    <X size={24} color="#1a1a2e" strokeWidth={2.5} />
+                    <X size={26} color="#fff" strokeWidth={2.5} />
                 ) : (
-                    <MessageCircle size={24} color="#1a1a2e" strokeWidth={2.5} />
+                    <img
+                        src={SUBA_AVATAR}
+                        alt="Suba"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                        onError={(e) => {
+                            // Fallback to text if avatar not found
+                            (e.target as HTMLImageElement).style.display = "none";
+                            (e.target as HTMLImageElement).parentElement!.innerHTML = `<span style="font-size:28px;font-weight:900;color:#0f0f1a;">S</span>`;
+                        }}
+                    />
                 )}
             </button>
 
-            {/* Chat Panel */}
+            {/* ── Chat Panel ── */}
             {isOpen && (
                 <div
                     className="fixed z-50 flex flex-col"
                     style={{
-                        bottom: "148px",
-                        right: "20px",
-                        width: "min(380px, calc(100vw - 40px))",
-                        height: "min(520px, calc(100vh - 200px))",
-                        borderRadius: "16px",
+                        bottom: "152px",
+                        right: "16px",
+                        width: "min(400px, calc(100vw - 32px))",
+                        height: "min(560px, calc(100vh - 200px))",
+                        borderRadius: "20px",
                         overflow: "hidden",
-                        border: "1px solid #2a2a4e",
-                        background: "#0f0f1a",
-                        boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
-                        animation: "slideUp 0.3s ease-out",
+                        border: "1px solid rgba(181,251,5,0.12)",
+                        background: "#0a0a14",
+                        boxShadow: "0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)",
+                        animation: "subaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                 >
-                    {/* Header */}
+                    {/* ── Header ── */}
                     <div
                         style={{
-                            background: "linear-gradient(135deg, #1a1a2e, #252550)",
-                            padding: "16px 20px",
+                            background: "linear-gradient(135deg, #0f1525 0%, #141830 100%)",
+                            padding: "14px 16px",
                             display: "flex",
                             alignItems: "center",
                             gap: "12px",
-                            borderBottom: "1px solid #2a2a4e",
+                            borderBottom: "1px solid rgba(181,251,5,0.08)",
                         }}
                     >
+                        {/* Avatar */}
                         <div
                             style={{
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "50%",
-                                background: "linear-gradient(135deg, #EAB308, #F59E0B)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                width: "40px",
+                                height: "40px",
+                                borderRadius: "14px",
+                                overflow: "hidden",
                                 flexShrink: 0,
+                                border: "2px solid rgba(181,251,5,0.3)",
+                                background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
                             }}
                         >
-                            <Bot size={20} color="#1a1a2e" strokeWidth={2.5} />
+                            <img
+                                src={SUBA_AVATAR}
+                                alt="Suba"
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                            />
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <p style={{ margin: 0, color: "#fff", fontSize: "14px", fontWeight: 700 }}>SubastBot</p>
-                            <p style={{ margin: 0, color: "#22c55e", fontSize: "11px", fontWeight: 600 }}>● En línea</p>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ color: "#fff", fontSize: "15px", fontWeight: 800, letterSpacing: "-0.01em" }}>Suba</span>
+                                <span style={{
+                                    fontSize: "8px",
+                                    fontWeight: 700,
+                                    color: "#B5FB05",
+                                    background: "rgba(181,251,5,0.1)",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    letterSpacing: "0.05em",
+                                    textTransform: "uppercase",
+                                }}>IA</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1px" }}>
+                                <span style={{
+                                    width: "6px",
+                                    height: "6px",
+                                    borderRadius: "50%",
+                                    background: "#22c55e",
+                                    boxShadow: "0 0 6px rgba(34,197,94,0.5)",
+                                    display: "inline-block",
+                                }} />
+                                <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "11px", fontWeight: 500 }}>En línea · Responde al instante</span>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "4px",
-                                borderRadius: "8px",
-                                display: "flex",
-                            }}
-                        >
-                            <X size={18} color="#9ca3af" />
-                        </button>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                            <button
+                                onClick={clearChat}
+                                title="Reiniciar chat"
+                                style={{
+                                    background: "rgba(255,255,255,0.05)",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    padding: "6px",
+                                    borderRadius: "8px",
+                                    display: "flex",
+                                    transition: "background 0.2s",
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                            >
+                                <Trash2 size={14} color="#9ca3af" />
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                style={{
+                                    background: "rgba(255,255,255,0.05)",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    padding: "6px",
+                                    borderRadius: "8px",
+                                    display: "flex",
+                                    transition: "background 0.2s",
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+                                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                            >
+                                <X size={14} color="#9ca3af" />
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Messages */}
+                    {/* ── Messages ── */}
                     <div
+                        ref={messagesContainerRef}
                         className="flex-1 overflow-y-auto"
                         style={{
                             padding: "16px",
                             display: "flex",
                             flexDirection: "column",
-                            gap: "12px",
+                            gap: "16px",
+                            background: "linear-gradient(180deg, #0a0a14 0%, #0d0d1a 100%)",
                         }}
                     >
-                        {messages.map((msg, i) => (
+                        {messages.map((msg) => (
                             <div
-                                key={i}
+                                key={msg.id}
                                 style={{
                                     display: "flex",
-                                    gap: "8px",
+                                    gap: "10px",
                                     flexDirection: msg.role === "user" ? "row-reverse" : "row",
-                                    alignItems: "flex-start",
+                                    alignItems: "flex-end",
                                 }}
                             >
                                 {/* Avatar */}
-                                <div
-                                    style={{
-                                        width: "28px",
-                                        height: "28px",
-                                        borderRadius: "50%",
-                                        background: msg.role === "assistant"
-                                            ? "linear-gradient(135deg, #EAB308, #F59E0B)"
-                                            : "linear-gradient(135deg, #3b82f6, #2563eb)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    {msg.role === "assistant" ? (
-                                        <Bot size={14} color="#1a1a2e" />
-                                    ) : (
-                                        <User size={14} color="#fff" />
-                                    )}
-                                </div>
+                                {msg.role === "assistant" && (
+                                    <div
+                                        style={{
+                                            width: "28px",
+                                            height: "28px",
+                                            borderRadius: "10px",
+                                            overflow: "hidden",
+                                            flexShrink: 0,
+                                            background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
+                                        }}
+                                    >
+                                        <img
+                                            src={SUBA_AVATAR}
+                                            alt="Suba"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).outerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:14px;font-weight:900;color:#0f0f1a;">S</span>`;
+                                            }}
+                                        />
+                                    </div>
+                                )}
                                 {/* Bubble */}
-                                <div
-                                    style={{
-                                        maxWidth: "78%",
-                                        padding: "10px 14px",
-                                        borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                                        background: msg.role === "user" ? "#2563eb" : "#1a1a2e",
-                                        border: msg.role === "user" ? "none" : "1px solid #2a2a4e",
-                                        color: "#e0e0e0",
-                                        fontSize: "13px",
-                                        lineHeight: "1.6",
-                                        wordBreak: "break-word",
-                                    }}
-                                >
-                                    {renderContent(msg.content)}
+                                <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: "3px", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                                    <div
+                                        style={{
+                                            padding: "10px 14px",
+                                            borderRadius: msg.role === "user"
+                                                ? "16px 16px 4px 16px"
+                                                : "16px 16px 16px 4px",
+                                            background: msg.role === "user"
+                                                ? "linear-gradient(135deg, #B5FB05, #9EE206)"
+                                                : "rgba(255,255,255,0.05)",
+                                            border: msg.role === "user"
+                                                ? "none"
+                                                : "1px solid rgba(255,255,255,0.06)",
+                                            color: msg.role === "user" ? "#0a0a14" : "#e2e8f0",
+                                            fontSize: "13px",
+                                            lineHeight: "1.65",
+                                            wordBreak: "break-word",
+                                            fontWeight: msg.role === "user" ? 600 : 400,
+                                            backdropFilter: msg.role === "assistant" ? "blur(8px)" : "none",
+                                        }}
+                                    >
+                                        {renderContent(msg.content)}
+                                    </div>
+                                    <span style={{
+                                        fontSize: "9px",
+                                        color: "rgba(255,255,255,0.2)",
+                                        padding: "0 4px",
+                                        fontWeight: 500,
+                                    }}>
+                                        {formatTime(msg.timestamp)}
+                                    </span>
                                 </div>
                             </div>
                         ))}
 
-                        {/* Loading indicator */}
+                        {/* Typing indicator */}
                         {isLoading && (
-                            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
                                 <div
                                     style={{
                                         width: "28px",
                                         height: "28px",
-                                        borderRadius: "50%",
-                                        background: "linear-gradient(135deg, #EAB308, #F59E0B)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
+                                        borderRadius: "10px",
+                                        overflow: "hidden",
                                         flexShrink: 0,
+                                        background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
                                     }}
                                 >
-                                    <Bot size={14} color="#1a1a2e" />
+                                    <img
+                                        src={SUBA_AVATAR}
+                                        alt="Suba"
+                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).outerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:14px;font-weight:900;color:#0f0f1a;">S</span>`;
+                                        }}
+                                    />
                                 </div>
                                 <div
                                     style={{
-                                        padding: "12px 16px",
-                                        borderRadius: "14px 14px 14px 4px",
-                                        background: "#1a1a2e",
-                                        border: "1px solid #2a2a4e",
+                                        padding: "12px 18px",
+                                        borderRadius: "16px 16px 16px 4px",
+                                        background: "rgba(255,255,255,0.05)",
+                                        border: "1px solid rgba(255,255,255,0.06)",
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "6px",
+                                        gap: "4px",
                                     }}
                                 >
-                                    <Loader2 size={14} color="#EAB308" className="animate-spin" />
-                                    <span style={{ color: "#9ca3af", fontSize: "12px" }}>SubastBot está escribiendo...</span>
+                                    <span className="suba-dot" style={{ animationDelay: "0s" }} />
+                                    <span className="suba-dot" style={{ animationDelay: "0.15s" }} />
+                                    <span className="suba-dot" style={{ animationDelay: "0.3s" }} />
                                 </div>
                             </div>
                         )}
@@ -294,34 +436,69 @@ const AiChatWidget = () => {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input */}
+                    {/* Scroll to bottom button */}
+                    {showScrollBtn && (
+                        <button
+                            onClick={scrollToBottom}
+                            style={{
+                                position: "absolute",
+                                bottom: "76px",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                width: "32px",
+                                height: "32px",
+                                borderRadius: "50%",
+                                background: "rgba(181,251,5,0.15)",
+                                border: "1px solid rgba(181,251,5,0.2)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backdropFilter: "blur(8px)",
+                                transition: "all 0.2s",
+                            }}
+                        >
+                            <ArrowDown size={14} color="#B5FB05" />
+                        </button>
+                    )}
+
+                    {/* ── Input area ── */}
                     <div
                         style={{
-                            padding: "12px 16px",
-                            borderTop: "1px solid #2a2a4e",
-                            background: "#0f0f1a",
+                            padding: "10px 14px",
+                            borderTop: "1px solid rgba(255,255,255,0.05)",
+                            background: "#0c0c18",
                             display: "flex",
                             gap: "8px",
-                            alignItems: "center",
+                            alignItems: "flex-end",
                         }}
                     >
-                        <input
+                        <textarea
                             ref={inputRef}
                             value={input}
-                            onChange={e => setInput(e.target.value)}
+                            onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
-                            placeholder="Escribe tu pregunta..."
+                            placeholder="Pregúntale algo a Suba..."
                             disabled={isLoading}
+                            rows={1}
                             style={{
                                 flex: 1,
-                                background: "#1a1a2e",
-                                border: "1px solid #2a2a4e",
-                                borderRadius: "12px",
+                                background: "rgba(255,255,255,0.04)",
+                                border: "1px solid rgba(255,255,255,0.06)",
+                                borderRadius: "14px",
                                 padding: "10px 14px",
-                                color: "#e0e0e0",
+                                color: "#e2e8f0",
                                 fontSize: "13px",
                                 outline: "none",
+                                resize: "none",
+                                minHeight: "40px",
+                                maxHeight: "100px",
+                                lineHeight: "1.5",
+                                fontFamily: "inherit",
+                                transition: "border-color 0.2s",
                             }}
+                            onFocus={e => (e.target.style.borderColor = "rgba(181,251,5,0.3)")}
+                            onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.06)")}
                         />
                         <button
                             onClick={sendMessage}
@@ -331,8 +508,8 @@ const AiChatWidget = () => {
                                 height: "40px",
                                 borderRadius: "12px",
                                 background: input.trim() && !isLoading
-                                    ? "linear-gradient(135deg, #EAB308, #F59E0B)"
-                                    : "#2a2a4e",
+                                    ? "linear-gradient(135deg, #B5FB05, #9EE206)"
+                                    : "rgba(255,255,255,0.04)",
                                 border: "none",
                                 cursor: input.trim() && !isLoading ? "pointer" : "default",
                                 display: "flex",
@@ -340,19 +517,48 @@ const AiChatWidget = () => {
                                 justifyContent: "center",
                                 transition: "all 0.2s",
                                 flexShrink: 0,
+                                transform: input.trim() && !isLoading ? "scale(1)" : "scale(0.95)",
                             }}
                         >
-                            <Send size={16} color={input.trim() && !isLoading ? "#1a1a2e" : "#555"} />
+                            {isLoading ? (
+                                <Loader2 size={16} color="#B5FB05" className="animate-spin" />
+                            ) : (
+                                <Send size={16} color={input.trim() ? "#0a0a14" : "#555"} />
+                            )}
                         </button>
+                    </div>
+
+                    {/* Powered by line */}
+                    <div style={{
+                        textAlign: "center",
+                        padding: "4px 0 6px",
+                        background: "#0c0c18",
+                        borderTop: "1px solid rgba(255,255,255,0.02)",
+                    }}>
+                        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)", fontWeight: 500 }}>
+                            Impulsado por Subastandolo IA
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* CSS Animation */}
+            {/* ── Animations ── */}
             <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes subaSlideUp {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .suba-dot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #B5FB05;
+          animation: subaBounce 1.2s ease-in-out infinite;
+        }
+        @keyframes subaBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+          30% { transform: translateY(-6px); opacity: 1; }
         }
       `}</style>
         </>
