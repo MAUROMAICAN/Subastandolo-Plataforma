@@ -222,47 +222,25 @@ const AiChatWidget = () => {
                     className="fixed z-50"
                     style={{
                         bottom: "148px",
-                        right: "16px",
+                        right: "20px",
                         animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                     onClick={() => { setTooltipDismissed(true); setShowTooltip(false); setIsOpen(true); }}
                 >
-                    <div
+                    <span
                         style={{
-                            background: "#0f1525",
-                            border: "1px solid rgba(181,251,5,0.2)",
-                            borderRadius: "14px 14px 4px 14px",
-                            padding: "10px 14px",
-                            maxWidth: "220px",
+                            background: "#000",
+                            color: "#fff",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            padding: "6px 14px",
+                            borderRadius: "20px",
                             cursor: "pointer",
-                            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                            display: "inline-block",
+                            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+                            letterSpacing: "0.02em",
                         }}
-                    >
-                        <p style={{ margin: 0, color: "#e2e8f0", fontSize: "12px", lineHeight: 1.5, fontWeight: 500 }}>
-                            ¡Hola! 👋 Soy <strong style={{ color: "#B5FB05" }}>Suba</strong>, ¿puedo ayudarte?
-                        </p>
-                    </div>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setTooltipDismissed(true); setShowTooltip(false); }}
-                        style={{
-                            position: "absolute",
-                            top: "-6px",
-                            right: "-4px",
-                            width: "18px",
-                            height: "18px",
-                            borderRadius: "50%",
-                            background: "#1a1a2e",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            color: "#9ca3af",
-                            fontSize: "10px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: 0,
-                            lineHeight: 1,
-                        }}
-                    >✕</button>
+                    >Hola</span>
                 </div>
             )}
 
