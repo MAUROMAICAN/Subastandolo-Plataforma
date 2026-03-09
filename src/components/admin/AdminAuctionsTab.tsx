@@ -359,7 +359,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         <div>
           <h1 className="text-xl font-heading font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary dark:text-accent" /> Gestión de Subastas</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {auctions.filter(a => a.status === "active").length} activas · {auctions.filter(a => a.status === "finalized").length} finalizadas · {auctions.filter(a => a.status === "scheduled").length} programadas
+            {auctions.filter(a => a.status === "active" && new Date(a.end_time).getTime() > Date.now()).length} activas · {auctions.filter(a => a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())).length} finalizadas · {auctions.filter(a => a.status === "scheduled").length} programadas
           </p>
         </div>
         <div className="flex items-center gap-1 flex-wrap">
@@ -459,6 +459,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       )}
       {paginatedAuctions.map(auction => {
         const isEnded = new Date(auction.end_time).getTime() <= Date.now();
+        const effectiveStatus = (auction.status === "active" && isEnded) ? "finalized" : auction.status;
         const winner = auction.winner_id ? winnerProfiles[auction.winner_id] : null;
         const mainImage = auction.images[0]?.image_url || auction.image_url;
         const isArchived = !!auction.archived_at;
@@ -495,8 +496,8 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                     >
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h4 className="font-heading font-bold text-sm truncate group-hover:text-primary dark:group-hover:text-accent transition-colors">{auction.title}</h4>
-                        <Badge variant="outline" className={`text-[10px] font-semibold ${statusStyles[auction.status] || ""}`}>
-                          {statusLabels[auction.status] || auction.status}
+                        <Badge variant="outline" className={`text-[10px] font-semibold ${statusStyles[effectiveStatus] || ""}`}>
+                          {statusLabels[effectiveStatus] || effectiveStatus}
                         </Badge>
                         {isArchived && <Badge variant="secondary" className="text-[10px]">📦 Archivada</Badge>}
                         {(auction as any).is_extended && (

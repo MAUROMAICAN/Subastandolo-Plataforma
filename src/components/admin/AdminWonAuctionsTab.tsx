@@ -46,6 +46,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   // Pagination & expand
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [activePanel, setActivePanel] = useState<"attention" | "process">("attention");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   // Detail modal
@@ -58,8 +59,10 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   const [sendingShipReminder, setSendingShipReminder] = useState<string | null>(null);
   const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
 
-  // Only show auctions that are FINALIZED and have a winner — not just any auction with a bid
-  const wonAuctions = useMemo(() => auctions.filter(a => !!a.winner_id && a.status === "finalized"), [auctions]);
+  // Show auctions that have a winner AND are either finalized or expired (end_time passed but status stuck as "active")
+  const wonAuctions = useMemo(() => auctions.filter(a =>
+    !!a.winner_id && (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
+  ), [auctions]);
 
   // Filtered & sorted
   const filtered = useMemo(() => {
@@ -94,21 +97,26 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
     return list;
   }, [wonAuctions, search, paymentFilter, deliveryFilter, dateFrom, dateTo, sortField, sortDir, winnerProfiles, dealerProfiles]);
 
-  useMemo(() => { setPage(1); }, [search, paymentFilter, deliveryFilter, dateFrom, dateTo]);
+  const attentionList = useMemo(() => filtered.filter(a => a.payment_status === "pending" || a.payment_status === "under_review"), [filtered]);
+  const processList = useMemo(() => filtered.filter(a => a.payment_status !== "pending" && a.payment_status !== "under_review"), [filtered]);
+  const activeList = activePanel === "attention" ? attentionList : processList;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useMemo(() => { setPage(1); }, [search, paymentFilter, deliveryFilter, dateFrom, dateTo, activePanel]);
+
+  const totalPages = Math.max(1, Math.ceil(activeList.length / pageSize));
   const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginated = activeList.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Stats
   const stats = useMemo(() => {
     const total = wonAuctions.length;
     const totalRevenue = wonAuctions.reduce((s, a) => s + a.current_price, 0);
     const pendingPayment = wonAuctions.filter(a => a.payment_status === "pending").length;
+    const underReview = wonAuctions.filter(a => a.payment_status === "under_review").length;
     const verified = wonAuctions.filter(a => a.payment_status === "verified" || a.payment_status === "released").length;
     const delivered = wonAuctions.filter(a => a.delivery_status === "delivered").length;
     const shipped = wonAuctions.filter(a => a.delivery_status === "shipped" || a.delivery_status === "in_transit").length;
-    return { total, totalRevenue, pendingPayment, verified, delivered, shipped };
+    return { total, totalRevenue, pendingPayment, underReview, verified, delivered, shipped };
   }, [wonAuctions]);
 
   const toggleCard = (id: string) => {
@@ -176,23 +184,24 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
             <Trophy className="h-5 w-5 text-primary dark:text-accent" /> Subastas Ganadas
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {stats.total} ganadas · ${stats.totalRevenue.toLocaleString("es-MX")} ingresos · {stats.pendingPayment} pago pendiente · {stats.delivered} entregadas
+            {stats.total} ganadas · ${stats.totalRevenue.toLocaleString("es-MX")} ingresos · {stats.pendingPayment} pago pendiente · {stats.underReview} en revisión · {stats.delivered} entregadas
           </p>
         </div>
         <Badge variant="outline" className="text-xs self-start sm:self-auto shrink-0 font-mono">
-          {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+          {activeList.length} resultado{activeList.length !== 1 ? "s" : ""}
         </Badge>
       </div>
 
       {/* ═══ Stats Cards ═══ */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
         {[
           { label: "Total", value: stats.total, icon: Trophy, color: "text-primary dark:text-accent", bg: "bg-primary/5 dark:bg-accent/5", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
           { label: "Ingresos", value: `$${stats.totalRevenue.toLocaleString("es-MX")}`, icon: DollarSign, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setPaymentFilter("all"); setDeliveryFilter("all"); } },
-          { label: "Pago Pend.", value: stats.pendingPayment, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/5", action: () => { setPaymentFilter("pending"); setDeliveryFilter("all"); } },
-          { label: "Verificados", value: stats.verified, icon: CheckCircle, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/5", action: () => { setPaymentFilter("verified"); setDeliveryFilter("all"); } },
-          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/5", action: () => { setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
-          { label: "Entregados", value: stats.delivered, icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
+          { label: "Pago Pend.", value: stats.pendingPayment, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/5", action: () => { setActivePanel("attention"); setPaymentFilter("pending"); setDeliveryFilter("all"); } },
+          { label: "En Revisión", value: stats.underReview, icon: Search, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/5", action: () => { setActivePanel("attention"); setPaymentFilter("under_review"); setDeliveryFilter("all"); } },
+          { label: "Verificados", value: stats.verified, icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setActivePanel("process"); setPaymentFilter("verified"); setDeliveryFilter("all"); } },
+          { label: "Enviados", value: stats.shipped, icon: Truck, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/5", action: () => { setActivePanel("process"); setDeliveryFilter("shipped"); setPaymentFilter("all"); } },
+          { label: "Entregados", value: stats.delivered, icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5", action: () => { setActivePanel("process"); setDeliveryFilter("delivered"); setPaymentFilter("all"); } },
         ].map((s, i) => (
           <div
             key={i}
@@ -277,12 +286,28 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
         </div>
       </div>
 
+      {/* ═══ Panel Tabs ═══ */}
+      <div className="flex items-center gap-1.5 bg-secondary/30 p-1.5 rounded-lg border border-border">
+        <button onClick={() => { setActivePanel("attention"); setPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${activePanel === "attention" ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+          <Clock className="h-4 w-4" />
+          <span className="hidden sm:inline">Requiere Atención</span>
+          <span className="sm:hidden">Pendientes</span>
+          <Badge variant="outline" className={`ml-1 text-[10px] ${activePanel === "attention" ? "border-amber-500/30 text-amber-600 dark:text-amber-400" : ""}`}>{attentionList.length}</Badge>
+        </button>
+        <button onClick={() => { setActivePanel("process"); setPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${activePanel === "process" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+          <CheckCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">En Proceso / Completadas</span>
+          <span className="sm:hidden">Procesadas</span>
+          <Badge variant="outline" className={`ml-1 text-[10px] ${activePanel === "process" ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : ""}`}>{processList.length}</Badge>
+        </button>
+      </div>
+
       {/* ═══ Auction Cards ═══ */}
       {filtered.length === 0 ? (
         <Card className="border border-border rounded-sm">
           <CardContent className="p-12 text-center">
             <Trophy className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">No hay subastas ganadas que coincidan con los filtros.</p>
+            <p className="text-sm text-muted-foreground">No hay subastas en esta sección que coincidan con los filtros.</p>
           </CardContent>
         </Card>
       ) : (
@@ -561,7 +586,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-border pt-4">
           <p className="text-xs text-muted-foreground">
-            Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} de {filtered.length}
+            Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, activeList.length)} de {activeList.length}
           </p>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" className="h-8 text-xs rounded-sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
