@@ -28,7 +28,15 @@ interface Withdrawal {
   admin_notes?: string;
 }
 
-export default function DealerWalletTab() {
+interface AuctionLike {
+  id: string;
+  title: string;
+  status: string;
+  current_price: number;
+  end_time: string;
+}
+
+export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionLike[] }) {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -64,14 +72,32 @@ export default function DealerWalletTab() {
     setLoading(false);
   };
 
-  // Computed values
+  // Compute from dealer_earnings if available, otherwise from auctions
+  const COMMISSION_RATE = 0.05;
+  const computedEarnings = useMemo(() => {
+    if (earnings.length > 0) return earnings;
+    // Build from finalized auctions
+    return auctions
+      .filter(a => a.status === "finalized" && a.current_price > 0)
+      .map(a => ({
+        id: a.id,
+        auction_id: a.id,
+        title: a.title,
+        sale_amount: a.current_price,
+        commission_amount: +(a.current_price * COMMISSION_RATE).toFixed(2),
+        dealer_net: +(a.current_price * (1 - COMMISSION_RATE)).toFixed(2),
+        is_paid: false,
+        created_at: a.end_time,
+      }));
+  }, [earnings, auctions]);
+
   const stats = useMemo(() => {
-    const totalEarnings = earnings.reduce((acc, e) => acc + e.dealer_net, 0);
-    const totalSales = earnings.length;
-    const totalRevenue = earnings.reduce((acc, e) => acc + e.sale_amount, 0);
-    const totalCommission = earnings.reduce((acc, e) => acc + e.commission_amount, 0);
-    const paidEarnings = earnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-    const unpaidEarnings = earnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+    const totalEarnings = computedEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
+    const totalSales = computedEarnings.length;
+    const totalRevenue = computedEarnings.reduce((acc, e) => acc + e.sale_amount, 0);
+    const totalCommission = computedEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
+    const paidEarnings = computedEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+    const unpaidEarnings = computedEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
     const approvedWithdrawals = withdrawals.filter(w => w.status === "approved").reduce((acc, w) => acc + Number(w.amount), 0);
     const pendingWithdrawals = withdrawals.filter(w => w.status === "pending");
     const hasPendingWithdrawal = pendingWithdrawals.length > 0;
@@ -81,7 +107,7 @@ export default function DealerWalletTab() {
       paidEarnings, unpaidEarnings, approvedWithdrawals,
       hasPendingWithdrawal, pendingWithdrawals
     };
-  }, [earnings, withdrawals]);
+  }, [computedEarnings, withdrawals]);
 
   const handleRequestWithdrawal = async () => {
     if (stats.unpaidEarnings <= 0) {
@@ -186,9 +212,9 @@ export default function DealerWalletTab() {
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
             <p className="text-sm font-heading font-bold">Detalle de Ganancias</p>
-            <Badge variant="outline" className="text-[10px] ml-auto">{earnings.length} ventas</Badge>
+            <Badge variant="outline" className="text-[10px] ml-auto">{computedEarnings.length} ventas</Badge>
           </div>
-          {earnings.length === 0 ? (
+          {computedEarnings.length === 0 ? (
             <div className="text-center py-8">
               <ShoppingBag className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
               <p className="text-sm text-muted-foreground">Aún no tienes ventas</p>
@@ -207,7 +233,7 @@ export default function DealerWalletTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {earnings.map((e) => (
+                  {computedEarnings.map((e) => (
                     <tr key={e.id} className="hover:bg-secondary/20 transition-colors">
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         {new Date(e.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}

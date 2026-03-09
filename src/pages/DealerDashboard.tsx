@@ -490,7 +490,7 @@ const DealerDashboard = () => {
           )}
           {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
           {activeTab === "payment" && <DealerPaymentTab />}
-          {activeTab === "wallet" && <DealerWalletTab />}
+          {activeTab === "wallet" && <DealerWalletTab auctions={auctions} />}
           {activeTab === "support" && <DealerSupportInbox />}
         </div>
       </main>

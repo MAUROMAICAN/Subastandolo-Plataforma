@@ -54,12 +54,24 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
   }, [auctions]);
 
   const walletStats = useMemo(() => {
-    const totalNet = dealerEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
-    const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-    const paid = dealerEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-    const totalCommission = dealerEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
-    return { totalNet, unpaid, paid, totalCommission };
-  }, [dealerEarnings]);
+    // If dealer_earnings has records, use them (future: admin creates these on payment)
+    if (dealerEarnings.length > 0) {
+      const totalNet = dealerEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
+      const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+      const paid = dealerEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+      const totalCommission = dealerEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
+      return { totalNet, unpaid, paid, totalCommission };
+    }
+
+    // Fallback: compute from finalized auctions with 5% commission
+    const COMMISSION_RATE = 0.05;
+    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0);
+    const totalSales = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0);
+    const totalCommission = totalSales * COMMISSION_RATE;
+    const totalNet = totalSales - totalCommission;
+    // All earnings are unpaid until admin marks them as paid
+    return { totalNet, unpaid: totalNet, paid: 0, totalCommission };
+  }, [dealerEarnings, auctions]);
 
   return (
     <div className="space-y-5">
