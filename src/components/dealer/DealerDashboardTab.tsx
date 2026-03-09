@@ -242,7 +242,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           <div className="bg-secondary/30 border border-border rounded-sm p-4">
             <p className="text-xs font-bold text-foreground mb-2">📊 Ejemplo:</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-accent hover:underline cursor-help" title="Descontando el 5% de comisión">$95</strong> y nosotros gestionamos toda la seguridad de la transacción por solo <strong className="text-foreground">$5</strong>.
+              Si tu producto se subasta en <strong className="text-foreground">$100</strong>, tú recibes <strong className="text-accent">$95</strong> en bolívares a la tasa BCV del cierre. <strong className="text-foreground">La comisión más baja del mercado.</strong>
             </p>
           </div>
 
