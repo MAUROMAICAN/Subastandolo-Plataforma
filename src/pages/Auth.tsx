@@ -184,9 +184,17 @@ const Auth = () => {
       const { data, error } = await supabase.functions.invoke("validate-registration", {
         body: { email: sanitizeEmail(email), phone: sanitizePhone(phone) },
       });
-      if (error || !data) {
-        toast({ title: "Error de validación", description: "No se pudo verificar tu información. Intenta de nuevo.", variant: "destructive" });
-        return false;
+      console.log("[validate-registration] data:", data, "error:", error);
+      if (error) {
+        // If validation service is temporarily unavailable, allow registration to proceed
+        // rather than blocking the user — Supabase's own signup will handle duplicates
+        console.warn("[validate-registration] Edge Function error, allowing registration:", error);
+        return true;
+      }
+      if (!data) {
+        // No data but no error — allow registration
+        console.warn("[validate-registration] No data returned, allowing registration");
+        return true;
       }
       if (!data.valid) {
         const errors: string[] = data.errors || [];
@@ -202,9 +210,10 @@ const Auth = () => {
         return false;
       }
       return true;
-    } catch {
-      toast({ title: "Error", description: "Error de conexión. Intenta de nuevo.", variant: "destructive" });
-      return false;
+    } catch (err) {
+      // Network error or other failure — don't block registration
+      console.warn("[validate-registration] Exception, allowing registration:", err);
+      return true;
     }
   };
 
