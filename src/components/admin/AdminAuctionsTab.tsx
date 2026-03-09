@@ -631,7 +631,21 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
               {/* ═══ Collapsible Body ═══ */}
               {isExpanded && <div className="border-t border-border">
 
-                {/* Time editing & Extended toggle */}
+                {/* Etiquetas: Patrocinado + Extendida — always visible when expanded */}
+                <div className="p-3 flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">⭐</span>
+                    <span className="text-xs font-bold">Patrocinado</span>
+                    <Switch checked={(auction as any).is_sponsored || false} onCheckedChange={() => handleToggleSponsored(auction.id, (auction as any).is_sponsored || false)} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-3.5 w-3.5 text-accent" />
+                    <span className="text-xs font-bold">Extendida</span>
+                    <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
+                  </div>
+                </div>
+
+                {/* Time editing */}
                 {editingTime === auction.id && (
                   <div className="p-3 rounded-sm bg-secondary/50 border border-border space-y-3">
                     <p className="text-xs font-heading font-bold flex items-center gap-1.5">
@@ -670,20 +684,6 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                         Nuevo fin: <strong className="text-foreground">{new Date(Date.now() + parseFloat(newDurationHours) * 60 * 60 * 1000).toLocaleString("es-MX")}</strong>
                       </p>
                     )}
-                    <div className="flex items-center justify-between border-t border-border pt-2">
-                      <div>
-                        <p className="text-xs font-medium flex items-center gap-1"><Zap className="h-3 w-3 text-accent" /> Etiqueta "Tiempo Extendido"</p>
-                        <p className="text-[10px] text-muted-foreground">Visible para compradores en la tarjeta de subasta</p>
-                      </div>
-                      <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
-                    </div>
-                    <div className="flex items-center justify-between border-t border-border pt-2">
-                      <div>
-                        <p className="text-xs font-medium flex items-center gap-1"><span className="text-sm">⭐</span> Etiqueta "Patrocinado"</p>
-                        <p className="text-[10px] text-muted-foreground">Muestra un badge dorado premium en la tarjeta de subasta</p>
-                      </div>
-                      <Switch checked={(auction as any).is_sponsored || false} onCheckedChange={() => handleToggleSponsored(auction.id, (auction as any).is_sponsored || false)} />
-                    </div>
                   </div>
                 )}
 
