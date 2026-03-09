@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -103,14 +103,14 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     }
   };
 
-  const handleSortOrder = async (auctionId: string, currentOrder: number, direction: "up" | "down") => {
-    const newOrder = direction === "up" ? currentOrder + 1 : currentOrder - 1;
+  const handleSortOrder = async (auctionId: string, newOrder: number) => {
     const { error } = await supabase.from("auctions").update({ sort_order: newOrder } as any).eq("id", auctionId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       fetchAllData();
-      toast({ title: `Exposición ${direction === "up" ? "subida ↑" : "bajada ↓"}`, description: `Posición: ${newOrder}` });
+      const labels: Record<number, string> = { 100: "🔝 Máxima", 50: "⬆️ Alta", 0: "➡️ Normal", [-50]: "⬇️ Baja", [-100]: "🔽 Mínima" };
+      toast({ title: "Exposición actualizada", description: labels[newOrder] || `Posición: ${newOrder}` });
     }
   };
 
@@ -556,16 +556,29 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                       </p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-                      {/* Sort order controls */}
-                      <div className="flex items-center gap-0 border border-border rounded-lg mr-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-r-none hover:bg-emerald-500/10" title="Subir exposición" onClick={() => handleSortOrder(auction.id, (auction as any).sort_order || 0, "up")}>
-                          <ArrowUp className="h-3 w-3 text-emerald-500" />
-                        </Button>
-                        <span className="text-[10px] font-mono font-bold text-muted-foreground px-1.5 min-w-[24px] text-center border-x border-border" title="Posición actual">{(auction as any).sort_order || 0}</span>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-l-none hover:bg-orange-500/10" title="Bajar exposición" onClick={() => handleSortOrder(auction.id, (auction as any).sort_order || 0, "down")}>
-                          <ArrowDown className="h-3 w-3 text-orange-500" />
-                        </Button>
-                      </div>
+                      {/* Sort order — preset dropdown */}
+                      <select
+                        value={(auction as any).sort_order || 0}
+                        onChange={(e) => handleSortOrder(auction.id, parseInt(e.target.value))}
+                        className={`h-7 text-[10px] font-bold rounded-lg border pl-1.5 pr-5 mr-1 cursor-pointer transition-colors appearance-auto ${((auction as any).sort_order || 0) > 0
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : ((auction as any).sort_order || 0) < 0
+                            ? "border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                            : "border-border bg-secondary/50 text-muted-foreground"
+                          }`}
+                        title="Exposición en la página principal"
+                      >
+                        <option value={100}>🔝 Máxima (100)</option>
+                        <option value={50}>⬆️ Alta (50)</option>
+                        <option value={10}>↗️ Elevada (10)</option>
+                        <option value={0}>➡️ Normal (0)</option>
+                        <option value={-10}>↘️ Reducida (-10)</option>
+                        <option value={-50}>⬇️ Baja (-50)</option>
+                        <option value={-100}>🔽 Mínima (-100)</option>
+                        {![100, 50, 10, 0, -10, -50, -100].includes((auction as any).sort_order || 0) && (
+                          <option value={(auction as any).sort_order || 0}>📌 Personalizado ({(auction as any).sort_order})</option>
+                        )}
+                      </select>
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver subasta" onClick={() => navigate(`/auction/${auction.id}`)}>
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
