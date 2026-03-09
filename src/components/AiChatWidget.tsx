@@ -223,7 +223,7 @@ const AiChatWidget = () => {
                     style={{ animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
                     onClick={() => { setTooltipDismissed(true); setShowTooltip(false); setIsOpen(true); }}
                 >
-                    <span
+                    <span className="suba-typewriter"
                         style={{
                             background: "#000",
                             color: "#fff",
@@ -235,7 +235,7 @@ const AiChatWidget = () => {
                             display: "inline-block",
                             boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
                         }}
-                    >Hola</span>
+                    >Hoy soy Suba ✋</span>
                 </div>
             )}
 
@@ -271,7 +271,7 @@ const AiChatWidget = () => {
                     id="suba-chat-trigger"
                     onClick={() => { setIsOpen(true); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Hablar con Suba"
-                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float suba-wave w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
                     style={{
                         borderRadius: "0",
                         border: "none",
@@ -619,6 +619,32 @@ const AiChatWidget = () => {
         @keyframes subaDotBounce {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
           30% { transform: translateY(-6px); opacity: 1; }
+        }
+        /* Typewriter-like reveal */
+        .suba-typewriter {
+          overflow: hidden;
+          white-space: nowrap;
+          animation: subaTypewriter 0.8s steps(16) forwards;
+          max-width: 0;
+        }
+        @keyframes subaTypewriter {
+          from { max-width: 0; opacity: 0; padding: 6px 0; }
+          to { max-width: 200px; opacity: 1; padding: 6px 14px; }
+        }
+        /* Avatar wave animation */
+        .suba-wave {
+          transform-origin: 70% 70%;
+          animation: subaWaveHand 2.5s ease-in-out infinite;
+        }
+        @keyframes subaWaveHand {
+          0% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-8deg); }
+          30% { transform: rotate(14deg); }
+          40% { transform: rotate(-4deg); }
+          50% { transform: rotate(10deg); }
+          60% { transform: rotate(0deg); }
+          100% { transform: rotate(0deg); }
         }
       `}</style>
         </>
