@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Navbar from "@/components/Navbar";
 import SEO from "@/components/SEO";
-import { Search, Flame, Clock, Gavel, ArrowRight, Store, Globe } from "lucide-react";
+import { Search, Flame, Clock, Gavel, ArrowRight, Store, Globe, Sparkles } from "lucide-react";
 import { AuctionGridSkeleton } from "@/components/AuctionCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -35,7 +35,7 @@ const Index = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "my_bids">("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "ending_soon" | "newest" | "finalized" | "my_bids">("all");
   const [userBidAuctionIds, setUserBidAuctionIds] = useState<Set<string>>(new Set());
   const [banners, setBanners] = useState<{ id: string; image_url: string; title: string | null; subtitle: string | null; description: string | null }[]>([]);
 
@@ -125,6 +125,12 @@ const Index = () => {
     let result = auctions;
     if (activeFilter === "active") {
       result = result.filter(a => a.status === "active");
+    } else if (activeFilter === "ending_soon") {
+      result = result.filter(a => a.status === "active").sort((a, b) => new Date(a.end_time).getTime() - new Date(b.end_time).getTime());
+    } else if (activeFilter === "newest") {
+      result = result.filter(a => a.status === "active" || a.status === "scheduled").sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (activeFilter === "finalized") {
+      result = result.filter(a => a.status === "finalized").sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime());
     } else if (activeFilter === "my_bids") {
       result = result.filter(a => userBidAuctionIds.has(a.id));
     }
@@ -176,6 +182,9 @@ const Index = () => {
   const filterButtons = [
     { key: "all" as const, icon: Search, label: "Todas", count: auctions.length },
     { key: "active" as const, icon: Flame, label: "En Vivo", count: auctions.filter(a => a.status === "active").length },
+    { key: "ending_soon" as const, icon: Clock, label: "Por Terminar", count: auctions.filter(a => a.status === "active").length },
+    { key: "newest" as const, icon: Sparkles, label: "Nuevas", count: auctions.filter(a => a.status === "active" || a.status === "scheduled").length },
+    { key: "finalized" as const, icon: Gavel, label: "Finalizadas", count: auctions.filter(a => a.status === "finalized").length },
   ];
 
   return (
@@ -293,32 +302,46 @@ const Index = () => {
         </div>
 
         {/* Filters */}
-        <div className="sticky top-12 sm:top-14 z-30 bg-background border-b border-border/50">
+        <div className="sticky top-12 sm:top-14 z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
           <div className="container mx-auto px-4">
-            <div className="flex gap-1.5 overflow-x-auto py-2.5 scrollbar-hide">
+            <div className="flex gap-1 overflow-x-auto py-2 scrollbar-hide -mx-1 px-1">
               {filterButtons.map(f => (
                 <button
                   key={f.key}
                   onClick={() => setActiveFilter(f.key)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${activeFilter === f.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all duration-200 ${activeFilter === f.key
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     }`}
                 >
-                  <f.icon className="h-3 w-3" />
-                  {f.label} ({f.count})
+                  <f.icon className="h-3.5 w-3.5" />
+                  {f.label}
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${activeFilter === f.key
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-secondary text-muted-foreground"
+                    }`}>{f.count}</span>
+                  {activeFilter === f.key && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary-foreground/50" />
+                  )}
                 </button>
               ))}
               {user && (
                 <button
                   onClick={() => setActiveFilter("my_bids")}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${activeFilter === "my_bids"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all duration-200 ${activeFilter === "my_bids"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     }`}
                 >
-                  <Gavel className="h-3 w-3" />
-                  Mis Pujas ({userBidAuctionIds.size})
+                  <Gavel className="h-3.5 w-3.5" />
+                  Mis Pujas
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${activeFilter === "my_bids"
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-secondary text-muted-foreground"
+                    }`}>{userBidAuctionIds.size}</span>
+                  {activeFilter === "my_bids" && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary-foreground/50" />
+                  )}
                 </button>
               )}
             </div>
@@ -343,9 +366,24 @@ const Index = () => {
             <div className="text-center py-16">
               <h2 className="text-base font-heading font-semibold text-muted-foreground">No hay subastas disponibles</h2>
             </div>
+          ) : activeFilter !== "all" ? (
+            /* Single flat grid for specific filters */
+            <div>
+              <h2 className="text-sm sm:text-base font-heading font-bold mb-3 flex items-center gap-2 px-0.5">
+                {activeFilter === "active" && <><span className="w-2 h-2 rounded-full bg-success animate-pulse" />Subastas En Vivo</>}
+                {activeFilter === "ending_soon" && <><Clock className="h-4 w-4 text-orange-400" />Por Terminar</>}
+                {activeFilter === "newest" && <><Sparkles className="h-4 w-4 text-primary" />Más Recientes</>}
+                {activeFilter === "finalized" && <><Gavel className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Finalizadas</span></>}
+                {activeFilter === "my_bids" && <><Gavel className="h-4 w-4 text-primary" />Mis Pujas</>}
+                <span className="text-[10px] font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{filtered.length}</span>
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                {filtered.map(a => <AuctionCard key={a.id} auction={a} dealer={dealers[a.created_by]} isFavorite={isFavorite(a.id)} onToggleFavorite={toggleFavorite} />)}
+              </div>
+            </div>
           ) : (
             <div className="space-y-6 sm:space-y-8">
-              {scheduledAuctions.length > 0 && activeFilter !== "active" && (
+              {scheduledAuctions.length > 0 && (
                 <div>
                   <h2 className="text-sm sm:text-base font-heading font-bold mb-3 flex items-center gap-2 px-0.5">
                     <Clock className="h-4 w-4 text-primary" />
@@ -369,7 +407,7 @@ const Index = () => {
                   </div>
                 </div>
               )}
-              {endedAuctions.length > 0 && activeFilter !== "active" && (
+              {endedAuctions.length > 0 && (
                 <div>
                   <h2 className="text-sm sm:text-base font-heading font-bold mb-3 text-muted-foreground px-0.5 flex items-center gap-2">
                     <Gavel className="h-4 w-4" />
