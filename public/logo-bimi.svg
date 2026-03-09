@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" width="96" height="96" viewBox="0 0 96 96">
+  <title>Subastandolo</title>
+  <desc>Logo de Subastandolo - Plataforma de subastas en línea</desc>
+  <rect width="96" height="96" rx="0" fill="#0f0f1a"/>
+  <g transform="translate(16, 10) scale(0.01224)">
+    <polygon fill="#B5FB05" points="5178.13,4208.29 5113.03,3104.49 3192.62,2017.35 5233.08,1200.58 4688.09,0 1451.8,1250.65 1512.96,2588.86 3205.75,3562.8 0,4864 115.85,6140.46"/>
+  </g>
+</svg>
