@@ -219,12 +219,8 @@ const AiChatWidget = () => {
             {/* ── Floating tooltip bubble ── */}
             {showTooltip && !isOpen && (
                 <div
-                    className="fixed z-50"
-                    style={{
-                        bottom: "148px",
-                        right: "20px",
-                        animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                    }}
+                    className="fixed z-50 bottom-[120px] sm:bottom-[148px] right-3 sm:right-5"
+                    style={{ animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
                     onClick={() => { setTooltipDismissed(true); setShowTooltip(false); setIsOpen(true); }}
                 >
                     <span
@@ -238,48 +234,45 @@ const AiChatWidget = () => {
                             cursor: "pointer",
                             display: "inline-block",
                             boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
-                            letterSpacing: "0.02em",
                         }}
                     >Hola</span>
                 </div>
             )}
 
             {/* ── Floating trigger button ── */}
-            {isOpen ? (
+            {/* Floating close button — hidden on mobile (header X is used instead) */}
+            {isOpen && (
                 <button
                     id="suba-chat-trigger"
                     onClick={() => { setIsOpen(false); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Cerrar chat"
-                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 hidden sm:flex"
                     style={{
                         bottom: "80px",
                         right: "16px",
-                        width: "52px",
-                        height: "52px",
+                        width: "48px",
+                        height: "48px",
                         borderRadius: "50%",
                         border: "none",
                         cursor: "pointer",
                         background: "#ef4444",
                         boxShadow: "0 4px 20px rgba(239,68,68,0.4)",
-                        display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         padding: 0,
                     }}
                 >
-                    <X size={24} color="#fff" strokeWidth={2.5} />
+                    <X size={20} color="#fff" strokeWidth={2.5} />
                 </button>
-            ) : (
+            )}
+            {/* Avatar trigger — smaller on mobile */}
+            {!isOpen && (
                 <button
                     id="suba-chat-trigger"
                     onClick={() => { setIsOpen(true); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Hablar con Suba"
-                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float"
+                    className="fixed z-50 transition-all duration-300 hover:scale-110 active:scale-95 suba-float w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
                     style={{
-                        bottom: "68px",
-                        right: "6px",
-                        width: "80px",
-                        height: "80px",
                         borderRadius: "0",
                         border: "none",
                         cursor: "pointer",
@@ -302,20 +295,30 @@ const AiChatWidget = () => {
             {/* ── Chat Panel ── */}
             {isOpen && (
                 <div
-                    className="fixed z-50 flex flex-col"
+                    id="suba-chat-panel"
+                    className="fixed z-50 flex flex-col inset-0 sm:inset-auto sm:bottom-[152px] sm:right-4"
                     style={{
-                        bottom: "152px",
-                        right: "16px",
-                        width: "min(400px, calc(100vw - 32px))",
-                        height: "min(560px, calc(100vh - 200px))",
-                        borderRadius: "20px",
+                        width: undefined,
+                        maxWidth: "100%",
                         overflow: "hidden",
-                        border: "1px solid rgba(181,251,5,0.12)",
+                        border: "none",
                         background: "#0a0a14",
-                        boxShadow: "0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)",
+                        boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
                         animation: "subaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                 >
+                    {/* Desktop-only sizing via inline style override */}
+                    <style>{`
+                        @media (min-width: 640px) {
+                            #suba-chat-panel {
+                                width: min(400px, calc(100vw - 32px)) !important;
+                                height: min(560px, calc(100vh - 200px)) !important;
+                                border-radius: 20px !important;
+                                border: 1px solid rgba(181,251,5,0.12) !important;
+                                inset: auto !important;
+                            }
+                        }
+                    `}</style>
                     {/* ── Header ── */}
                     <div
                         style={{
@@ -438,6 +441,7 @@ const AiChatWidget = () => {
                                             fontSize: "13px",
                                             lineHeight: "1.65",
                                             wordBreak: "break-word",
+                                            overflowWrap: "anywhere",
                                             fontWeight: msg.role === "user" ? 600 : 400,
                                             backdropFilter: msg.role === "assistant" ? "blur(8px)" : "none",
                                         }}
