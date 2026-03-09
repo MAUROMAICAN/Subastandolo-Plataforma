@@ -637,12 +637,20 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                   <div className="flex items-center gap-2">
                     <span className="text-sm">⭐</span>
                     <span className="text-xs font-bold">Patrocinado</span>
-                    <Switch checked={(auction as any).is_sponsored || false} onCheckedChange={() => handleToggleSponsored(auction.id, (auction as any).is_sponsored || false)} />
+                    <Switch
+                      checked={(auction as any).is_sponsored || false}
+                      onCheckedChange={() => handleToggleSponsored(auction.id, (auction as any).is_sponsored || false)}
+                      className={(auction as any).is_sponsored ? "data-[state=checked]:bg-[#A6E300]" : ""}
+                    />
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap className="h-3.5 w-3.5 text-accent" />
                     <span className="text-xs font-bold">Extendida</span>
-                    <Switch checked={(auction as any).is_extended || false} onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)} />
+                    <Switch
+                      checked={(auction as any).is_extended || false}
+                      onCheckedChange={() => handleToggleExtended(auction.id, (auction as any).is_extended || false)}
+                      className={(auction as any).is_extended ? "data-[state=checked]:bg-[#A6E300]" : ""}
+                    />
                   </div>
                 </div>
 
