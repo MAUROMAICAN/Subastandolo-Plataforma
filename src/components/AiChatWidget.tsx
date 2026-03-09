@@ -12,6 +12,36 @@ interface Message {
 
 const SUBA_AVATAR = "/suba-avatar.png";
 
+const SubaAvatar = ({ size = 28, radius = 10 }: { size?: number; radius?: number }) => {
+    const [err, setErr] = useState(false);
+    return (
+        <div
+            style={{
+                width: size,
+                height: size,
+                borderRadius: radius,
+                overflow: "hidden",
+                flexShrink: 0,
+                background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
+            {err ? (
+                <span style={{ fontSize: size * 0.5, fontWeight: 900, color: "#0f0f1a" }}>S</span>
+            ) : (
+                <img
+                    src={SUBA_AVATAR}
+                    alt="Suba"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={() => setErr(true)}
+                />
+            )}
+        </div>
+    );
+};
+
 const AiChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -188,16 +218,7 @@ const AiChatWidget = () => {
                 {isOpen ? (
                     <X size={26} color="#fff" strokeWidth={2.5} />
                 ) : (
-                    <img
-                        src={SUBA_AVATAR}
-                        alt="Suba"
-                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-                        onError={(e) => {
-                            // Fallback to text if avatar not found
-                            (e.target as HTMLImageElement).style.display = "none";
-                            (e.target as HTMLImageElement).parentElement!.innerHTML = `<span style="font-size:28px;font-weight:900;color:#0f0f1a;">S</span>`;
-                        }}
-                    />
+                    <SubaAvatar size={60} radius={30} />
                 )}
             </button>
 
@@ -230,25 +251,8 @@ const AiChatWidget = () => {
                         }}
                     >
                         {/* Avatar */}
-                        <div
-                            style={{
-                                width: "40px",
-                                height: "40px",
-                                borderRadius: "14px",
-                                overflow: "hidden",
-                                flexShrink: 0,
-                                border: "2px solid rgba(181,251,5,0.3)",
-                                background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
-                            }}
-                        >
-                            <img
-                                src={SUBA_AVATAR}
-                                alt="Suba"
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = "none";
-                                }}
-                            />
+                        <div style={{ border: "2px solid rgba(181,251,5,0.3)", borderRadius: "16px", flexShrink: 0 }}>
+                            <SubaAvatar size={40} radius={14} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -337,25 +341,7 @@ const AiChatWidget = () => {
                             >
                                 {/* Avatar */}
                                 {msg.role === "assistant" && (
-                                    <div
-                                        style={{
-                                            width: "28px",
-                                            height: "28px",
-                                            borderRadius: "10px",
-                                            overflow: "hidden",
-                                            flexShrink: 0,
-                                            background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
-                                        }}
-                                    >
-                                        <img
-                                            src={SUBA_AVATAR}
-                                            alt="Suba"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).outerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:14px;font-weight:900;color:#0f0f1a;">S</span>`;
-                                            }}
-                                        />
-                                    </div>
+                                    <SubaAvatar />
                                 )}
                                 {/* Bubble */}
                                 <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: "3px", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
@@ -396,25 +382,7 @@ const AiChatWidget = () => {
                         {/* Typing indicator */}
                         {isLoading && (
                             <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
-                                <div
-                                    style={{
-                                        width: "28px",
-                                        height: "28px",
-                                        borderRadius: "10px",
-                                        overflow: "hidden",
-                                        flexShrink: 0,
-                                        background: "linear-gradient(135deg, #B5FB05, #8BC34A)",
-                                    }}
-                                >
-                                    <img
-                                        src={SUBA_AVATAR}
-                                        alt="Suba"
-                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).outerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:14px;font-weight:900;color:#0f0f1a;">S</span>`;
-                                        }}
-                                    />
-                                </div>
+                                <SubaAvatar />
                                 <div
                                     style={{
                                         padding: "12px 18px",
