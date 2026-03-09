@@ -26,7 +26,7 @@ const dealerFaqs = [
   },
   {
     question: "¿Cuál es la comisión de la plataforma?",
-    answer: "Cobramos una comisión fija del 5% sobre el precio final de cada subasta exitosa. Esta comisión se descuenta automáticamente del monto que recibe el vendedor al momento de liberar los fondos. El comprador no paga ninguna comisión adicional. Ejemplo: si un producto se vende en $100, el vendedor recibe $95 y Subastándolo retiene $5 para cubrir los costos de operación, soporte técnico y seguridad de la plataforma.",
+    answer: "Cobramos una comisión fija del 10% sobre el precio final de cada subasta exitosa. Esta comisión se descuenta automáticamente del monto que recibe el vendedor al momento de liberar los fondos. El comprador no paga ninguna comisión adicional. Ejemplo: si un producto se vende en $100, el vendedor recibe $90 y Subastándolo retiene $10 para cubrir los costos de operación, soporte técnico y seguridad de la plataforma.",
     icon: DollarSign,
   },
   {

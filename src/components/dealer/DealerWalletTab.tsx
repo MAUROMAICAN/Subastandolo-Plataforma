@@ -300,7 +300,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
       <div className="bg-secondary/50 rounded-sm p-4 text-xs text-muted-foreground space-y-2">
         <p className="font-semibold text-foreground">ℹ️ ¿Cómo funciona tu billetera?</p>
         <ul className="list-disc ml-4 space-y-1">
-          <li>Cuando se verifica el pago de un comprador, tu ganancia neta (95%) se acredita.</li>
+          <li>Cuando se verifica el pago de un comprador, tu ganancia neta (90%) se acredita.</li>
           <li>El <strong className="text-emerald-500">Saldo a Favor</strong> muestra lo que te debemos — se actualiza automáticamente con cada venta y pago.</li>
           <li>Solicita un retiro y el admin lo procesará a tu cuenta bancaria registrada.</li>
           <li>Solo puedes tener un retiro pendiente a la vez.</li>

@@ -20,7 +20,7 @@ const SEO: React.FC<SEOProps> = ({
 }) => {
     const siteTitle = 'Subastandolo.com | Subastas Online en Venezuela';
     const fullTitle = title ? `${title} | Subastandolo.com` : siteTitle;
-    const defaultDescription = 'La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!';
+    const defaultDescription = 'La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 10% de comisión. ¡El mejor postor gana!';
     const metaDescription = description || defaultDescription;
 
     return (

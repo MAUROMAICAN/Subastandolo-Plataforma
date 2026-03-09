@@ -183,7 +183,7 @@ const Index = () => {
       <CampaignModal />
       <SEO
         title="Subastas Online en Venezuela - Tú pones el precio"
-        description="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 5% de comisión. ¡El mejor postor gana!"
+        description="La plataforma de subastas más segura de Venezuela. Compra tecnología, hogar y más con solo el 10% de comisión. ¡El mejor postor gana!"
         schemaData={{
           "@context": "https://schema.org",
           "@type": "WebSite",

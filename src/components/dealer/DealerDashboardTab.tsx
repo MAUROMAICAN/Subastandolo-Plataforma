@@ -65,7 +65,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       return { totalNet, unpaid, paid, totalCommission };
     }
 
-    // Fallback: compute from finalized auctions with 5% commission
+    // Fallback: compute from finalized auctions with 10% commission
     const COMMISSION_RATE = 0.10;
     const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0);
     const totalSales = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0);
