@@ -7,7 +7,7 @@ import {
   Loader2, Trash2, Image as ImageIcon, Eye, Clock, CheckCircle,
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
-  Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeft, ArrowRight, X as XIcon, ChevronLeft, ChevronRight
+  Edit3, Save, RotateCcw, Copy, ZoomIn, GripVertical, X as XIcon, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +72,8 @@ export default function DealerAuctionsTab({
   const [previewAuction, setPreviewAuction] = useState<AuctionWithImages | null>(null);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Swap two image positions in Supabase
   const handleSwapImages = async (auction: AuctionWithImages, idxA: number, idxB: number) => {
@@ -392,51 +394,56 @@ export default function DealerAuctionsTab({
                           <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-2">📷 Fotos ({auction.images.length})</p>
                           <div className="flex gap-2 overflow-x-auto pb-1">
                             {auction.images.map((img, i) => {
-                              const canReorder = auction.status === "pending" || auction.status === "in_review";
+                              const canReorder = (auction.status === "pending" || auction.status === "in_review") && auction.images.length > 1;
+                              const isDragging = dragIdx === i;
+                              const isDragOver = dragOverIdx === i;
                               return (
-                                <div key={img.id} className="relative shrink-0 group">
+                                <div
+                                  key={img.id}
+                                  className={`relative shrink-0 group rounded-lg transition-all ${canReorder ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                                    } ${isDragging ? "opacity-40 scale-95" : ""} ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                                  draggable={canReorder}
+                                  onDragStart={(e) => {
+                                    if (!canReorder) return;
+                                    setDragIdx(i);
+                                    e.dataTransfer.effectAllowed = "move";
+                                    e.dataTransfer.setData("text/plain", String(i));
+                                  }}
+                                  onDragOver={(e) => {
+                                    if (!canReorder || dragIdx === null) return;
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = "move";
+                                    setDragOverIdx(i);
+                                  }}
+                                  onDragLeave={() => setDragOverIdx(null)}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                    setDragIdx(null);
+                                    setDragOverIdx(null);
+                                    if (!isNaN(fromIdx) && fromIdx !== i) handleSwapImages(auction, fromIdx, i);
+                                  }}
+                                  onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                                >
                                   <img
                                     src={img.image_url}
                                     alt={`Foto ${i + 1}`}
-                                    className="w-24 h-24 rounded-lg object-cover border border-border/50 group-hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
-                                    onClick={() => { setLightboxImages(auction.images.map(im => im.image_url)); setLightboxIndex(i); }}
+                                    className="w-24 h-24 rounded-lg object-cover border border-border/50 group-hover:border-primary/50 hover:shadow-lg transition-all"
+                                    onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(im => im.image_url)); setLightboxIndex(i); } }}
                                   />
                                   {/* Zoom overlay */}
-                                  <div
-                                    className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center pointer-events-none"
-                                  >
-                                    <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center pointer-events-none">
+                                    {canReorder
+                                      ? <GripVertical className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                      : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
                                   </div>
                                   {i === 0 && <span className="absolute bottom-1 left-1 text-[8px] bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
-                                  {/* Reorder arrows */}
-                                  {canReorder && auction.images.length > 1 && (
-                                    <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 z-10">
-                                      {i > 0 && (
-                                        <button
-                                          className="bg-black/70 hover:bg-black/90 text-white rounded p-0.5 transition-colors"
-                                          title="Mover a la izquierda"
-                                          onClick={(e) => { e.stopPropagation(); handleSwapImages(auction, i, i - 1); }}
-                                        >
-                                          <ArrowLeft className="h-3 w-3" />
-                                        </button>
-                                      )}
-                                      {i < auction.images.length - 1 && (
-                                        <button
-                                          className="bg-black/70 hover:bg-black/90 text-white rounded p-0.5 transition-colors"
-                                          title="Mover a la derecha"
-                                          onClick={(e) => { e.stopPropagation(); handleSwapImages(auction, i, i + 1); }}
-                                        >
-                                          <ArrowRight className="h-3 w-3" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
                                 </div>
                               );
                             })}
                           </div>
                           {(auction.status === "pending" || auction.status === "in_review") && auction.images.length > 1 && (
-                            <p className="text-[10px] text-muted-foreground/60 mt-1.5">💡 Usa las flechas para reordenar las imágenes. La primera imagen será la principal.</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1.5">💡 Arrastra y suelta para reordenar. La primera imagen será la principal.</p>
                           )}
                         </div>
                       )}
