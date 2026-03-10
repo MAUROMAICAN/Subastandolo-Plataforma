@@ -745,7 +745,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
             })}
           </div>
         ))
-
+      }
       {/* ═══ Pagination ═══ */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-border pt-4">
