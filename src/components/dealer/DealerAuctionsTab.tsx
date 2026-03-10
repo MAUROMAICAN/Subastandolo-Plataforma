@@ -400,7 +400,7 @@ export default function DealerAuctionsTab({
                               return (
                                 <div
                                   key={img.id}
-                                  className={`relative shrink-0 group rounded-lg transition-all ${canReorder ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                                  className={`relative shrink-0 group rounded-lg transition-all cursor-pointer ${canReorder ? "active:cursor-grabbing" : ""
                                     } ${isDragging ? "opacity-40 scale-95" : ""} ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                                   draggable={canReorder}
                                   onDragStart={(e) => {
@@ -424,19 +424,22 @@ export default function DealerAuctionsTab({
                                     if (!isNaN(fromIdx) && fromIdx !== i) handleSwapImages(auction, fromIdx, i);
                                   }}
                                   onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                                  onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(im => im.image_url)); setLightboxIndex(i); } }}
                                 >
                                   <img
                                     src={img.image_url}
                                     alt={`Foto ${i + 1}`}
                                     className="w-24 h-24 rounded-lg object-cover border border-border/50 group-hover:border-primary/50 hover:shadow-lg transition-all"
-                                    onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(im => im.image_url)); setLightboxIndex(i); } }}
                                   />
-                                  {/* Zoom overlay */}
+                                  {/* Zoom overlay — always visible on hover */}
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center pointer-events-none">
-                                    {canReorder
-                                      ? <GripVertical className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                                      : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                    <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                                   </div>
+                                  {canReorder && (
+                                    <div className="absolute top-0.5 left-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                      <GripVertical className="h-4 w-4 text-white/80 drop-shadow-lg" />
+                                    </div>
+                                  )}
                                   {i === 0 && <span className="absolute bottom-1 left-1 text-[8px] bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
                                 </div>
                               );
