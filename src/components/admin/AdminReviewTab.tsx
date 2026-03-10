@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, CheckCircle, XCircle, Clock, AlertTriangle, Loader2, ZoomIn, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Clock, AlertTriangle, ZoomIn, GripVertical, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { AuctionExtended } from "./types";
 
 interface Props {
@@ -21,8 +21,51 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
+
+  // Swap two image positions in Supabase
+  const handleSwapImages = async (auction: AuctionExtended, fromIdx: number, toIdx: number) => {
+    const images = [...auction.images];
+    if (toIdx < 0 || toIdx >= images.length || fromIdx === toIdx) return;
+    const imgA = images[fromIdx];
+    const imgB = images[toIdx];
+    const [resA, resB] = await Promise.all([
+      supabase.from("auction_images").update({ display_order: imgB.display_order } as any).eq("id", imgA.id),
+      supabase.from("auction_images").update({ display_order: imgA.display_order } as any).eq("id", imgB.id),
+    ]);
+    if (resA.error || resB.error) {
+      toast({ title: "Error al reordenar", variant: "destructive" });
+      return;
+    }
+    if (fromIdx === 0 || toIdx === 0) {
+      const newMainUrl = fromIdx === 0 ? imgB.image_url : imgA.image_url;
+      await supabase.from("auctions").update({ image_url: newMainUrl } as any).eq("id", auction.id);
+    }
+    fetchAllData();
+    toast({ title: "📸 Imágenes reordenadas" });
+  };
+
+  // Delete an image from an auction
+  const handleDeleteImage = async (auction: AuctionExtended, imgId: string, imgIdx: number) => {
+    if (auction.images.length <= 1) {
+      toast({ title: "Debe haber al menos una imagen", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("auction_images").delete().eq("id", imgId);
+    if (error) {
+      toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+      return;
+    }
+    // If we deleted the main image (idx 0), update auction.image_url to the next one
+    if (imgIdx === 0 && auction.images.length > 1) {
+      await supabase.from("auctions").update({ image_url: auction.images[1].image_url } as any).eq("id", auction.id);
+    }
+    fetchAllData();
+    toast({ title: "🗑️ Imagen eliminada" });
+  };
 
   const handleAuctionReview = async (auctionId: string, action: "in_review" | "approved" | "rejected") => {
     setProcessingAuction(auctionId);
@@ -121,19 +164,55 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
                 <Badge variant="outline" className="text-[10px] shrink-0">{auction.status === "pending" ? "Pendiente" : "En Revisión"}</Badge>
               </div>
               {auction.images.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {auction.images.map((img, idx) => (
-                    <div
-                      key={img.id}
-                      className="relative group cursor-pointer shrink-0"
-                      onClick={() => { setLightboxImages(auction.images.map(i => i.image_url)); setLightboxIndex(idx); }}
-                    >
-                      <img src={img.image_url} className="w-24 h-24 rounded-sm object-cover border border-border group-hover:border-primary/50 transition-all" alt="" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-sm transition-all flex items-center justify-center">
-                        <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider mb-1.5">📷 Imágenes ({auction.images.length})</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {auction.images.map((img, idx) => {
+                      const isDragging = dragIdx === idx;
+                      const isDragOver = dragOverIdx === idx;
+                      const canDrag = auction.images.length > 1;
+                      return (
+                        <div
+                          key={img.id}
+                          className={`relative group shrink-0 rounded-sm transition-all ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                            } ${isDragging ? "opacity-40 scale-95" : ""} ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                          draggable={canDrag}
+                          onDragStart={(e) => { setDragIdx(idx); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(idx)); }}
+                          onDragOver={(e) => { if (dragIdx === null) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverIdx(idx); }}
+                          onDragLeave={() => setDragOverIdx(null)}
+                          onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData("text/plain"), 10); setDragIdx(null); setDragOverIdx(null); if (!isNaN(from) && from !== idx) handleSwapImages(auction, from, idx); }}
+                          onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                        >
+                          <img
+                            src={img.image_url}
+                            className="w-24 h-24 rounded-sm object-cover border border-border group-hover:border-primary/50 transition-all"
+                            alt=""
+                            onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(i => i.image_url)); setLightboxIndex(idx); } }}
+                          />
+                          {/* Hover overlay with grip icon */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-sm transition-all flex items-center justify-center pointer-events-none">
+                            {canDrag
+                              ? <GripVertical className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                              : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          </div>
+                          {idx === 0 && <span className="absolute bottom-1 left-1 text-[7px] bg-primary/80 text-primary-foreground px-1 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
+                          {/* Delete button */}
+                          {auction.images.length > 1 && (
+                            <button
+                              className="absolute top-0.5 right-0.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                              title="Eliminar imagen"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteImage(auction, img.id, idx); }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {auction.images.length > 1 && (
+                    <p className="text-[9px] text-muted-foreground/50 mt-1">💡 Arrastra para reordenar · Haz clic en X para eliminar</p>
+                  )}
                 </div>
               )}
               <div className="space-y-3 pt-2 border-t border-border">
