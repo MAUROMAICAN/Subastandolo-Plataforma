@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell, AlertTriangle, PackageCheck } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -43,7 +43,17 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [auctionPanel, setAuctionPanel] = useState<"active" | "ended">("active");
+  const [auctionPanel, setAuctionPanel] = useState<"active" | "ended" | "pending_payment" | "in_transit" | "delivered" | "disputed" | "released">("active");
+
+  // Fetch dispute auction IDs for classification
+  const [disputeAuctionIds, setDisputeAuctionIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const fetchDisputes = async () => {
+      const { data } = await supabase.from("disputes").select("auction_id").in("status", ["open", "under_review"]);
+      if (data) setDisputeAuctionIds(new Set(data.map((d: any) => d.auction_id).filter(Boolean)));
+    };
+    fetchDisputes();
+  }, []);
 
   // Create "Próximamente" auction state
   const [showCreateScheduled, setShowCreateScheduled] = useState(false);
@@ -150,7 +160,35 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     const effectivelyEnded = a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now());
     return effectivelyEnded;
   });
-  const activeListAuctions = auctionPanel === "active" ? activeAuctions : endedAuctions;
+
+  // Sub-classify ended auctions by lifecycle status
+  const pendingPaymentAuctions = useMemo(() => endedAuctions.filter(a =>
+    a.winner_id && (a.payment_status === "pending" || a.payment_status === "under_review" || !a.payment_status)
+  ), [endedAuctions]);
+  const inTransitAuctions = useMemo(() => endedAuctions.filter(a =>
+    a.payment_status === "verified" && (a.delivery_status === "shipped" || a.delivery_status === "in_transit" || (a.tracking_number && a.delivery_status !== "delivered"))
+  ), [endedAuctions]);
+  const deliveredAuctions = useMemo(() => endedAuctions.filter(a =>
+    a.delivery_status === "delivered"
+  ), [endedAuctions]);
+  const disputedAuctions = useMemo(() => endedAuctions.filter(a =>
+    disputeAuctionIds.has(a.id)
+  ), [endedAuctions, disputeAuctionIds]);
+  const releasedAuctions = useMemo(() => endedAuctions.filter(a =>
+    a.payment_status === "released"
+  ), [endedAuctions]);
+
+  const activeListAuctions = useMemo(() => {
+    switch (auctionPanel) {
+      case "active": return activeAuctions;
+      case "pending_payment": return pendingPaymentAuctions;
+      case "in_transit": return inTransitAuctions;
+      case "delivered": return deliveredAuctions;
+      case "disputed": return disputedAuctions;
+      case "released": return releasedAuctions;
+      case "ended": default: return endedAuctions;
+    }
+  }, [auctionPanel, activeAuctions, endedAuctions, pendingPaymentAuctions, inTransitAuctions, deliveredAuctions, disputedAuctions, releasedAuctions]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(activeListAuctions.length / pageSize));
@@ -491,19 +529,58 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       )}
 
       {/* ═══ Panel Tabs ═══ */}
-      <div className="flex items-center gap-1.5 bg-secondary/30 p-1.5 rounded-lg border border-border">
-        <button onClick={() => { setAuctionPanel("active"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${auctionPanel === "active" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
-          <Play className="h-4 w-4" />
-          <span className="hidden sm:inline">En Vivo / Activas</span>
-          <span className="sm:hidden">Activas</span>
-          <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel === "active" ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : ""}`}>{activeAuctions.length}</Badge>
-        </button>
-        <button onClick={() => { setAuctionPanel("ended"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${auctionPanel === "ended" ? "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
-          <CheckCircle className="h-4 w-4" />
-          <span className="hidden sm:inline">Finalizadas</span>
-          <span className="sm:hidden">Finalizadas</span>
-          <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel === "ended" ? "border-slate-500/30 text-slate-600 dark:text-slate-400" : ""}`}>{endedAuctions.length}</Badge>
-        </button>
+      <div className="space-y-2">
+        {/* Main tabs: Active vs Finalized */}
+        <div className="flex items-center gap-1.5 bg-secondary/30 dark:bg-white/5 p-1 rounded-xl border border-border/50">
+          <button onClick={() => { setAuctionPanel("active"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${auctionPanel === "active" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+            <Play className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">En Vivo / Activas</span>
+            <span className="sm:hidden">Activas</span>
+            <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel === "active" ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : ""}`}>{activeAuctions.length}</Badge>
+          </button>
+          <button onClick={() => { setAuctionPanel("ended"); setCurrentPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${auctionPanel !== "active" ? "bg-slate-500/15 text-slate-600 dark:text-slate-300 border border-slate-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+            <CheckCircle className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Finalizadas</span>
+            <span className="sm:hidden">Finalizadas</span>
+            <Badge variant="outline" className={`ml-1 text-[10px] ${auctionPanel !== "active" ? "border-slate-500/30 text-slate-600 dark:text-slate-400" : ""}`}>{endedAuctions.length}</Badge>
+          </button>
+        </div>
+
+        {/* Sub-tabs for finalized auctions */}
+        {auctionPanel !== "active" && (
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide p-1 rounded-xl bg-secondary/20 dark:bg-white/[0.03] border border-border/30">
+            {[
+              { key: "ended" as const, label: "Todas", icon: CheckCircle, count: endedAuctions.length, color: "slate" },
+              { key: "pending_payment" as const, label: "Pago Pendiente", icon: CreditCard, count: pendingPaymentAuctions.length, color: "amber" },
+              { key: "in_transit" as const, label: "En Tránsito", icon: Truck, count: inTransitAuctions.length, color: "blue" },
+              { key: "delivered" as const, label: "Entregadas", icon: PackageCheck, count: deliveredAuctions.length, color: "emerald" },
+              { key: "disputed" as const, label: "En Disputa", icon: AlertTriangle, count: disputedAuctions.length, color: "red" },
+              { key: "released" as const, label: "Liberadas", icon: ShieldCheck, count: releasedAuctions.length, color: "violet" },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => { setAuctionPanel(tab.key); setCurrentPage(1); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${auctionPanel === tab.key
+                    ? `bg-${tab.color}-500/15 text-${tab.color}-600 dark:text-${tab.color}-400 border border-${tab.color}-500/30 shadow-sm`
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  }`}
+                style={auctionPanel === tab.key ? {
+                  backgroundColor: tab.color === "slate" ? "rgba(100,116,139,0.15)" : tab.color === "amber" ? "rgba(245,158,11,0.15)" : tab.color === "blue" ? "rgba(59,130,246,0.15)" : tab.color === "emerald" ? "rgba(16,185,129,0.15)" : tab.color === "red" ? "rgba(239,68,68,0.15)" : "rgba(139,92,246,0.15)",
+                  color: tab.color === "slate" ? "#94a3b8" : tab.color === "amber" ? "#f59e0b" : tab.color === "blue" ? "#3b82f6" : tab.color === "emerald" ? "#10b981" : tab.color === "red" ? "#ef4444" : "#8b5cf6",
+                  borderColor: tab.color === "slate" ? "rgba(100,116,139,0.3)" : tab.color === "amber" ? "rgba(245,158,11,0.3)" : tab.color === "blue" ? "rgba(59,130,246,0.3)" : tab.color === "emerald" ? "rgba(16,185,129,0.3)" : tab.color === "red" ? "rgba(239,68,68,0.3)" : "rgba(139,92,246,0.3)",
+                } : {}}
+              >
+                <tab.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+                <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none ${auctionPanel === tab.key ? "bg-current/10" : "bg-muted/80 dark:bg-white/10"
+                  }`}
+                  style={auctionPanel === tab.key ? { backgroundColor: "rgba(255,255,255,0.1)" } : {}}
+                >{tab.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {paginatedAuctions.map(auction => {
