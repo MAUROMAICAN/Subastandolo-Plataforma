@@ -146,6 +146,35 @@ export default function DealerAuctionsTab({
     }
   };
 
+  const handleRepublish = async (auction: AuctionWithImages) => {
+    const durationHours = (auction as any).requested_duration_hours || 24;
+    const newEndTime = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
+    const { error } = await supabase.from("auctions").update({
+      status: "active",
+      current_price: 0,
+      winner_id: null,
+      winner_name: null,
+      end_time: newEndTime,
+      start_time: new Date().toISOString(),
+      payment_status: "pending",
+      delivery_status: "pending",
+      tracking_number: null,
+      tracking_photo_url: null,
+      archived_at: null,
+      funds_released_at: null,
+      paid_at: null,
+      delivered_at: null,
+      dealer_ship_deadline: null,
+      is_extended: false,
+    } as any).eq("id", auction.id);
+    if (error) {
+      toast({ title: "Error al republicar", description: error.message, variant: "destructive" });
+    } else {
+      fetchMyAuctions();
+      toast({ title: "🚀 ¡Subasta republicada!", description: "Tu producto está activo nuevamente en la plataforma." });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Preview Modal */}
@@ -290,6 +319,13 @@ export default function DealerAuctionsTab({
                         return (
                           <Badge variant="outline" className="text-[10px] rounded-lg bg-muted text-muted-foreground border-border">
                             <DollarSign className="h-3 w-3 mr-1" /> Pendiente de pago
+                          </Badge>
+                        );
+                      }
+                      if (paymentStatus === "abandoned") {
+                        return (
+                          <Badge variant="outline" className="text-[10px] rounded-lg bg-red-500/10 text-red-500 border-red-500/20">
+                            <XCircle className="h-3 w-3 mr-1" /> Abandonada
                           </Badge>
                         );
                       }
@@ -565,6 +601,24 @@ export default function DealerAuctionsTab({
                           <Button variant="outline" size="sm" onClick={() => handleReactivate(auction)} className="text-primary border-primary/30 dark:text-[#A6E300] hover:bg-primary/10 rounded-xl text-xs h-8 font-bold">
                             <RotateCcw className="h-3 w-3 mr-1" /> Reactivar Producto
                           </Button>
+                        )}
+                        {/* Republish abandoned auctions (skip review) */}
+                        {(auction as any).payment_status === "abandoned" && (
+                          <div className="w-full bg-red-500/5 border border-red-500/20 rounded-xl p-3 space-y-2">
+                            <p className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                              <XCircle className="h-3.5 w-3.5" /> El comprador no completó el pago
+                            </p>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                              Puedes republicar esta subasta directamente sin necesidad de revisión. Tu producto volverá a la plataforma con los mismos datos.
+                            </p>
+                            <Button
+                              size="sm"
+                              onClick={() => handleRepublish(auction)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-8 font-bold w-full gap-1.5"
+                            >
+                              <RotateCcw className="h-3 w-3" /> Republicar Subasta
+                            </Button>
+                          </div>
                         )}
                         <Button
                           variant="outline"

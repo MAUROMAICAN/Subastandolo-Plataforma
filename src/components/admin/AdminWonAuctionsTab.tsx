@@ -470,6 +470,45 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
                           </div>
                         </div>
+                        {/* ═══ Abandonment Warning (48h) ═══ */}
+                        {a.payment_status === "pending" && a.winner_id && (() => {
+                          const hoursSinceEnd = (Date.now() - new Date(a.end_time).getTime()) / (1000 * 60 * 60);
+                          return hoursSinceEnd >= 48;
+                        })() && (
+                            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                                <div>
+                                  <p className="text-xs font-bold text-red-500">⚠️ Abandono de Pago (+48h)</p>
+                                  <p className="text-[10px] text-red-400/80">Han pasado más de 48 horas sin pago.</p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="text-xs h-8 rounded-sm w-full gap-2"
+                                onClick={async () => {
+                                  if (!confirm("¿Marcar esta subasta como ABANDONADA? Se notificará al comprador y al dealer.")) return;
+                                  await supabase.from("auctions").update({ payment_status: "abandoned" } as any).eq("id", a.id);
+                                  supabase.functions.invoke("notify-payment-abandoned", {
+                                    body: { auctionId: a.id, auctionTitle: a.title, buyerId: a.winner_id, dealerId: a.created_by, finalPrice: a.current_price },
+                                  }).catch(() => { });
+                                  toast({ title: "Subasta marcada como abandonada", description: "Se notificó al comprador y al dealer." });
+                                  window.location.reload();
+                                }}
+                              >
+                                <XCircle className="h-3.5 w-3.5" /> Marcar como Abandonada
+                              </Button>
+                            </div>
+                          )}
+                        {a.payment_status === "abandoned" && (
+                          <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                            <p className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                              <XCircle className="h-3.5 w-3.5" /> ABANDONADA — Pago no recibido
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">El dealer puede republicar esta subasta desde su panel.</p>
+                          </div>
+                        )}
                         {/* ═══ Recordatorios ═══ */}
                         {((a.payment_status === "pending" || a.payment_status === "under_review") || (a.delivery_status === "pending" || a.delivery_status === "ready_to_ship")) && (
                           <div className="bg-card rounded-lg border border-border p-3 space-y-2">
