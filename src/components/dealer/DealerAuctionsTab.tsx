@@ -84,6 +84,7 @@ export default function DealerAuctionsTab({
       return;
     }
     setUploadingPhotos(auction.id);
+    let successCount = 0;
     try {
       const { applyWatermark } = await import("@/lib/watermark");
       for (let i = 0; i < files.length; i++) {
@@ -92,26 +93,36 @@ export default function DealerAuctionsTab({
         const filePath = `${crypto.randomUUID()}.webp`;
         const { error: uploadError } = await supabase.storage.from("auction-images").upload(filePath, watermarked);
         if (uploadError) {
+          console.error("Storage upload error:", uploadError);
           toast({ title: "Error subiendo imagen", description: uploadError.message, variant: "destructive" });
           break;
         }
         const { data: urlData } = supabase.storage.from("auction-images").getPublicUrl(filePath);
-        await supabase.from("auction_images").insert({
+        const { error: insertError } = await supabase.from("auction_images").insert({
           auction_id: auction.id,
           image_url: urlData.publicUrl,
           display_order: auction.images.length + i,
         });
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          toast({ title: "Error guardando imagen", description: insertError.message, variant: "destructive" });
+          break;
+        }
+        successCount++;
       }
       // Update main image_url if auction had no images before
-      if (auction.images.length === 0) {
+      if (auction.images.length === 0 && successCount > 0) {
         const { data: firstImg } = await supabase.from("auction_images").select("image_url").eq("auction_id", auction.id).order("display_order", { ascending: true }).limit(1).maybeSingle();
         if (firstImg?.image_url) {
           await supabase.from("auctions").update({ image_url: firstImg.image_url } as any).eq("id", auction.id);
         }
       }
-      toast({ title: "📸 Fotos agregadas correctamente" });
+      if (successCount > 0) {
+        toast({ title: `📸 ${successCount} foto${successCount > 1 ? "s" : ""} agregada${successCount > 1 ? "s" : ""} correctamente` });
+      }
       fetchMyAuctions();
     } catch (err: any) {
+      console.error("Photo upload error:", err);
       toast({ title: "Error", description: err?.message || "Error al subir fotos", variant: "destructive" });
     }
     setUploadingPhotos(null);
