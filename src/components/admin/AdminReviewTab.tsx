@@ -26,22 +26,25 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
 
   const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
 
-  // Swap two image positions in Supabase
+  // Move image from one position to another and reassign sequential display_order
   const handleSwapImages = async (auction: AuctionExtended, fromIdx: number, toIdx: number) => {
     const images = [...auction.images];
     if (toIdx < 0 || toIdx >= images.length || fromIdx === toIdx) return;
-    const imgA = images[fromIdx];
-    const imgB = images[toIdx];
-    const [resA, resB] = await Promise.all([
-      supabase.from("auction_images").update({ display_order: imgB.display_order } as any).eq("id", imgA.id),
-      supabase.from("auction_images").update({ display_order: imgA.display_order } as any).eq("id", imgB.id),
-    ]);
-    if (resA.error || resB.error) {
+    // Rearrange: remove from old position, insert at new position
+    const [moved] = images.splice(fromIdx, 1);
+    images.splice(toIdx, 0, moved);
+    // Assign fresh sequential display_order to ALL images
+    const updates = images.map((img, i) =>
+      supabase.from("auction_images").update({ display_order: i } as any).eq("id", img.id)
+    );
+    const results = await Promise.all(updates);
+    if (results.some(r => r.error)) {
       toast({ title: "Error al reordenar", variant: "destructive" });
       return;
     }
-    if (fromIdx === 0 || toIdx === 0) {
-      const newMainUrl = fromIdx === 0 ? imgB.image_url : imgA.image_url;
+    // Update main image_url if position 0 changed
+    const newMainUrl = images[0].image_url;
+    if (newMainUrl !== auction.image_url) {
       await supabase.from("auctions").update({ image_url: newMainUrl } as any).eq("id", auction.id);
     }
     fetchAllData();

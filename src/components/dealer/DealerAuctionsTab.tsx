@@ -75,26 +75,25 @@ export default function DealerAuctionsTab({
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  // Swap two image positions in Supabase
-  const handleSwapImages = async (auction: AuctionWithImages, idxA: number, idxB: number) => {
+  // Move image from one position to another and reassign sequential display_order
+  const handleSwapImages = async (auction: AuctionWithImages, fromIdx: number, toIdx: number) => {
     const images = [...auction.images];
-    if (idxB < 0 || idxB >= images.length) return;
-    const imgA = images[idxA];
-    const imgB = images[idxB];
-    const orderA = imgA.display_order;
-    const orderB = imgB.display_order;
-    // Swap display_order in DB
-    const [resA, resB] = await Promise.all([
-      supabase.from("auction_images").update({ display_order: orderB } as any).eq("id", imgA.id),
-      supabase.from("auction_images").update({ display_order: orderA } as any).eq("id", imgB.id),
-    ]);
-    if (resA.error || resB.error) {
+    if (toIdx < 0 || toIdx >= images.length || fromIdx === toIdx) return;
+    // Rearrange: remove from old position, insert at new position
+    const [moved] = images.splice(fromIdx, 1);
+    images.splice(toIdx, 0, moved);
+    // Assign fresh sequential display_order to ALL images
+    const updates = images.map((img, i) =>
+      supabase.from("auction_images").update({ display_order: i } as any).eq("id", img.id)
+    );
+    const results = await Promise.all(updates);
+    if (results.some(r => r.error)) {
       toast({ title: "Error al reordenar imágenes", variant: "destructive" });
       return;
     }
-    // Also update image_url on auction if the main image changed
-    if (idxA === 0 || idxB === 0) {
-      const newMainUrl = idxA === 0 ? imgB.image_url : imgA.image_url;
+    // Update main image_url if position 0 changed
+    const newMainUrl = images[0].image_url;
+    if (newMainUrl !== auction.image_url) {
       await supabase.from("auctions").update({ image_url: newMainUrl } as any).eq("id", auction.id);
     }
     fetchMyAuctions();
