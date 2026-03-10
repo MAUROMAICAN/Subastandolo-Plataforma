@@ -12,7 +12,8 @@ import {
   CreditCard, Eye, CheckCircle, XCircle, Loader2, Download,
   Search, Clock, DollarSign, ChevronDown, ChevronUp,
   ChevronLeft, ChevronRight, ChevronsUpDown, AlertTriangle,
-  Calendar, User, FileText, Bell, Mail, ArrowUpDown
+  Calendar, User, FileText, Bell, Mail, ArrowUpDown,
+  Image as ImageIcon, Package, ExternalLink
 } from "lucide-react";
 
 interface Props {
@@ -331,6 +332,15 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
                     {/* Status indicator */}
                     <div className={`w-1 self-stretch shrink-0 ${isPending ? "bg-amber-500" : proof.status === "approved" ? "bg-emerald-500" : "bg-red-500"}`} />
 
+                    {/* Auction thumbnail in row */}
+                    {proof.image_url ? (
+                      <img src={proof.image_url} alt={proof.auction_title} className="w-12 h-12 sm:w-14 sm:h-14 object-cover shrink-0 ml-3 rounded-lg border border-border/50" />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-secondary/50 flex items-center justify-center shrink-0 ml-3 rounded-lg border border-border/50">
+                        <ImageIcon className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                    )}
+
                     <div className="flex-1 min-w-0 px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-heading font-bold text-sm truncate max-w-[250px]">{proof.auction_title}</h4>
@@ -384,7 +394,36 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="border-t border-border px-4 py-3 bg-secondary/10">
+                    <div className="border-t border-border px-4 py-3 bg-secondary/10 space-y-3">
+                      {/* ── Product Preview ── */}
+                      <div className="bg-card rounded-lg border border-border p-3 flex items-center gap-3">
+                        {proof.image_url ? (
+                          <img src={proof.image_url} alt={proof.auction_title} className="w-20 h-20 rounded-lg object-cover border border-border/50 shrink-0" />
+                        ) : (
+                          <div className="w-20 h-20 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0 border border-border/50">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1"><Package className="h-3 w-3" /> Producto Asociado</p>
+                          <h5 className="text-sm font-heading font-bold text-foreground truncate">{proof.auction_title}</h5>
+                          {proof.dealer_name && (
+                            <p className="text-[10px] text-muted-foreground">Vendedor: <span className="font-medium text-foreground/70">{proof.dealer_name}</span></p>
+                          )}
+                          <div className="flex items-center gap-3 text-xs">
+                            {proof.starting_price > 0 && (
+                              <span className="text-muted-foreground">Inicio: <span className="font-mono">${Number(proof.starting_price).toLocaleString("es-MX")}</span></span>
+                            )}
+                            {proof.current_price > 0 && (
+                              <span className="text-primary dark:text-[#A6E300] font-bold">Ganada: <span className="font-mono">${Number(proof.current_price).toLocaleString("es-MX")}</span></span>
+                            )}
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm gap-1.5 shrink-0" onClick={() => window.open(`/auction/${proof.auction_id}`, "_blank")}>
+                          <ExternalLink className="h-3 w-3" /> Ver
+                        </Button>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {/* Payment Info */}
                         <div className="bg-card rounded-lg border border-border p-3 space-y-2">

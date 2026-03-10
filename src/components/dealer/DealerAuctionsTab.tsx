@@ -120,6 +120,8 @@ export default function DealerAuctionsTab({
 
   const handleReactivate = async (auction: AuctionWithImages) => {
     const newEndTime = new Date(Date.now() + ((auction as any).requested_duration_hours || 24) * 60 * 60 * 1000).toISOString();
+    // Delete old bids so the reactivated auction starts fresh
+    await supabase.from("bids").delete().eq("auction_id", auction.id);
     const { error } = await supabase.from("auctions").update({
       status: "pending",
       current_price: 0,
@@ -148,31 +150,44 @@ export default function DealerAuctionsTab({
 
   const handleRepublish = async (auction: AuctionWithImages) => {
     const durationHours = (auction as any).requested_duration_hours || 24;
-    const newEndTime = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
-    const { error } = await supabase.from("auctions").update({
-      status: "active",
-      current_price: 0,
-      winner_id: null,
-      winner_name: null,
-      end_time: newEndTime,
-      start_time: new Date().toISOString(),
-      payment_status: "pending",
-      delivery_status: "pending",
-      tracking_number: null,
-      tracking_photo_url: null,
-      archived_at: null,
-      funds_released_at: null,
-      paid_at: null,
-      delivered_at: null,
-      dealer_ship_deadline: null,
-      is_extended: false,
-    } as any).eq("id", auction.id);
-    if (error) {
-      toast({ title: "Error al republicar", description: error.message, variant: "destructive" });
-    } else {
-      fetchMyAuctions();
-      toast({ title: "🚀 ¡Subasta republicada!", description: "Tu producto está activo nuevamente en la plataforma." });
+
+    // Try server-side RPC first (atomically deletes old bids + resets auction with server timing)
+    const { error: rpcError } = await (supabase.rpc as any)("republish_auction", {
+      p_auction_id: auction.id,
+      p_duration_hours: durationHours,
+    });
+
+    if (rpcError) {
+      // Fallback: delete bids manually then update auction
+      console.warn("RPC republish_auction not available, using fallback:", rpcError.message);
+      await supabase.from("bids").delete().eq("auction_id", auction.id);
+      const newEndTime = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from("auctions").update({
+        status: "active",
+        current_price: 0,
+        winner_id: null,
+        winner_name: null,
+        end_time: newEndTime,
+        start_time: new Date().toISOString(),
+        payment_status: "pending",
+        delivery_status: "pending",
+        tracking_number: null,
+        tracking_photo_url: null,
+        archived_at: null,
+        funds_released_at: null,
+        paid_at: null,
+        delivered_at: null,
+        dealer_ship_deadline: null,
+        is_extended: false,
+      } as any).eq("id", auction.id);
+      if (error) {
+        toast({ title: "Error al republicar", description: error.message, variant: "destructive" });
+        return;
+      }
     }
+
+    fetchMyAuctions();
+    toast({ title: "🚀 ¡Subasta republicada!", description: "Tu producto está activo como una subasta nueva, sin pujas ni datos anteriores." });
   };
 
   return (

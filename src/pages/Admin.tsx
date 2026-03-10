@@ -232,11 +232,18 @@ const Admin = () => {
     }));
     setAdminDisputes(disputesList);
 
-    const paymentsList = (paymentsRes.data || []).map((p: any) => ({
-      ...p,
-      auction_title: auctionList.find(a => a.id === p.auction_id)?.title || "Subasta",
-      buyer_name: dealerNames[p.buyer_id] || "Comprador",
-    }));
+    const paymentsList = (paymentsRes.data || []).map((p: any) => {
+      const auction = auctionList.find(a => a.id === p.auction_id);
+      return {
+        ...p,
+        auction_title: auction?.title || "Subasta",
+        buyer_name: dealerNames[p.buyer_id] || "Comprador",
+        image_url: imagesMap[p.auction_id]?.[0]?.image_url || auction?.image_url || null,
+        starting_price: auction?.starting_price || 0,
+        current_price: auction?.current_price || 0,
+        dealer_name: dealerNames[auction?.created_by] || "Dealer",
+      };
+    });
     setPaymentProofs(paymentsList);
 
     const reportsList = ((reportsRes as any).data || []).map((r: any) => ({
