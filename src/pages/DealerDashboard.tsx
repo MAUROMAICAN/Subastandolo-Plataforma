@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
@@ -43,7 +43,11 @@ const DealerDashboard = () => {
 
   const [auctions, setAuctions] = useState<AuctionWithImages[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "dashboard";
+  const setActiveTab = useCallback((tab: string) => {
+    setSearchParams({ tab }, { replace: false });
+  }, [setSearchParams]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedAuction, setExpandedAuction] = useState<string | null>(null);
   const [winnerProfiles, setWinnerProfiles] = useState<Record<string, WinnerProfile>>({});
