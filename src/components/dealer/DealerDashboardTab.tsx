@@ -56,23 +56,40 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
   }, [auctions]);
 
   const walletStats = useMemo(() => {
-    // If dealer_earnings has records, use them (future: admin creates these on payment)
+    const COMMISSION_RATE = 0.10;
+
+    // If dealer_earnings has records, use them
     if (dealerEarnings.length > 0) {
       const totalNet = dealerEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
-      const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
       const paid = dealerEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+      const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
       const totalCommission = dealerEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
-      return { totalNet, unpaid, paid, totalCommission };
+      // Can't distinguish retained vs available from dealer_earnings alone, treat all unpaid as retained
+      return { totalNet, retained: unpaid, available: 0, paid, totalCommission };
     }
 
-    // Fallback: compute from finalized auctions with 10% commission
-    const COMMISSION_RATE = 0.10;
-    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0);
+    // Fallback: compute from finalized auctions using lifecycle status
+    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id);
+
+    // Retenido: payment verified/approved BUT not delivered yet
+    const retainedAuctions = finalizedWithSale.filter(a =>
+      (a.payment_status === "verified" || a.payment_status === "under_review") &&
+      a.delivery_status !== "delivered"
+    );
+    const retainedTotal = retainedAuctions.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
+
+    // Disponible: delivered OR released (dealer can withdraw)
+    const availableAuctions = finalizedWithSale.filter(a =>
+      a.delivery_status === "delivered" || a.payment_status === "released"
+    );
+    const availableTotal = availableAuctions.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
+
+
     const totalSales = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0);
     const totalCommission = totalSales * COMMISSION_RATE;
     const totalNet = totalSales - totalCommission;
-    // All earnings are unpaid until admin marks them as paid
-    return { totalNet, unpaid: totalNet, paid: 0, totalCommission };
+
+    return { totalNet, retained: retainedTotal, available: availableTotal, paid: 0, totalCommission };
   }, [dealerEarnings, auctions]);
 
   return (
@@ -109,36 +126,53 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </Card>
       )}
 
-      {/* Wallet Balance — Prominent */}
+      {/* Wallet Balance — Three-state display */}
       {earningsLoaded && bcvRate !== null && (
         <Card
           className="border-2 border-emerald-500/30 rounded-sm bg-emerald-500/5 cursor-pointer hover:border-emerald-500/50 transition-all group"
           onClick={() => setActiveTab("wallet")}
         >
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-4">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <div className="p-3 bg-emerald-500/10 rounded-sm group-hover:scale-105 transition-transform">
                   <Wallet className="h-7 w-7 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo Total Neto</p>
                   <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
-                    Bs. {(walletStats.unpaid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    Bs. {(walletStats.totalNet * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Tasa BCV al cierre de cada subasta</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 sm:gap-6">
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground">Total Ganado</p>
-                  <p className="text-sm font-bold">Bs. {(walletStats.totalNet * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground">Retirado</p>
-                  <p className="text-sm font-bold text-emerald-500">Bs. {(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+            </div>
+
+            {/* Three-state breakdown */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
+                <Clock className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+                <p className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wide">Retenido</p>
+                <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
+                  Bs. {(walletStats.retained * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-[8px] text-amber-600/60 dark:text-amber-400/60 mt-0.5">Esperando entrega</p>
+              </div>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
+                <CheckCircle className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
+                <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wide">Disponible</p>
+                <p className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
+                  Bs. {(walletStats.available * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-[8px] text-emerald-600/60 dark:text-emerald-400/60 mt-0.5">Listo para retiro</p>
+              </div>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-center">
+                <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300] mx-auto mb-1" />
+                <p className="text-[9px] text-primary dark:text-[#A6E300] font-semibold uppercase tracking-wide">Retirado</p>
+                <p className="text-sm sm:text-base font-bold text-primary dark:text-[#A6E300]">
+                  Bs. {(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-[8px] text-muted-foreground/60 mt-0.5">Pagado al dealer</p>
               </div>
             </div>
           </CardContent>

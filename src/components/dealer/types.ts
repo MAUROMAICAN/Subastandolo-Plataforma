@@ -12,6 +12,9 @@ export interface AuctionWithImages {
   admin_notes: string | null;
   winner_id: string | null;
   winner_name: string | null;
+  payment_status: string | null;
+  delivery_status: string | null;
+  tracking_number: string | null;
   images: { id: string; image_url: string; display_order: number }[];
   bids: { id: string; amount: number; bidder_name: string; created_at: string; user_id: string }[];
 }
