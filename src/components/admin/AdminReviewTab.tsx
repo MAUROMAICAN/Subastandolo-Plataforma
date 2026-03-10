@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, CheckCircle, XCircle, Clock, AlertTriangle, ZoomIn, GripVertical, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Clock, AlertTriangle, ZoomIn, ChevronLeft, ChevronRight, X, ArrowLeftRight } from "lucide-react";
 import type { AuctionExtended } from "./types";
 
 interface Props {
@@ -21,8 +21,7 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [selectedImgKey, setSelectedImgKey] = useState<string | null>(null); // "auctionId:idx" format
 
   const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
 
@@ -171,37 +170,52 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
                   <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider mb-1.5">📷 Imágenes ({auction.images.length})</p>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {auction.images.map((img, idx) => {
-                      const isDragging = dragIdx === idx;
-                      const isDragOver = dragOverIdx === idx;
-                      const canDrag = auction.images.length > 1;
+                      const canReorder = auction.images.length > 1;
+                      const selKey = `${auction.id}:${idx}`;
+                      const isSelected = selectedImgKey === selKey;
+                      const isSwapTarget = selectedImgKey !== null && selectedImgKey.startsWith(auction.id + ":") && !isSelected;
                       return (
                         <div
                           key={img.id}
-                          className={`relative group shrink-0 rounded-sm transition-all ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
-                            } ${isDragging ? "opacity-40 scale-95" : ""} ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
-                          draggable={canDrag}
-                          onDragStart={(e) => { setDragIdx(idx); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(idx)); }}
-                          onDragOver={(e) => { if (dragIdx === null) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverIdx(idx); }}
-                          onDragLeave={() => setDragOverIdx(null)}
-                          onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData("text/plain"), 10); setDragIdx(null); setDragOverIdx(null); if (!isNaN(from) && from !== idx) handleSwapImages(auction, from, idx); }}
-                          onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                          className={`relative group shrink-0 rounded-sm transition-all cursor-pointer ${isSelected ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background scale-95" : ""
+                            } ${isSwapTarget ? "ring-2 ring-primary/40 ring-offset-1 ring-offset-background hover:ring-primary" : ""}`}
+                          onClick={() => {
+                            if (!canReorder) {
+                              setLightboxImages(auction.images.map(i => i.image_url));
+                              setLightboxIndex(idx);
+                              return;
+                            }
+                            if (isSelected) {
+                              setSelectedImgKey(null); // deselect
+                              return;
+                            }
+                            if (selectedImgKey && selectedImgKey.startsWith(auction.id + ":")) {
+                              const fromIdx = parseInt(selectedImgKey.split(":")[1], 10);
+                              setSelectedImgKey(null);
+                              handleSwapImages(auction, fromIdx, idx);
+                              return;
+                            }
+                            setSelectedImgKey(selKey); // select
+                          }}
                         >
                           <img
                             src={img.image_url}
                             className="w-24 h-24 rounded-sm object-cover border border-border group-hover:border-primary/50 transition-all"
                             alt=""
                             draggable={false}
-                            onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(i => i.image_url)); setLightboxIndex(idx); } }}
                           />
-                          {/* Hover overlay with grip icon */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-sm transition-all flex items-center justify-center pointer-events-none">
-                            {canDrag
-                              ? <GripVertical className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                              : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          {/* Overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-sm transition-all flex items-center justify-center pointer-events-none">
+                            {isSelected
+                              ? <ArrowLeftRight className="h-5 w-5 text-blue-400 opacity-100 animate-pulse" />
+                              : isSwapTarget
+                                ? <ArrowLeftRight className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
                           </div>
+                          {isSelected && <span className="absolute top-0.5 left-0.5 text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold z-10">1º</span>}
                           {idx === 0 && <span className="absolute bottom-1 left-1 text-[7px] bg-primary/80 text-primary-foreground px-1 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
                           {/* Delete button */}
-                          {auction.images.length > 1 && (
+                          {canReorder && (
                             <button
                               className="absolute top-0.5 right-0.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
                               title="Eliminar imagen"
@@ -215,7 +229,7 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
                     })}
                   </div>
                   {auction.images.length > 1 && (
-                    <p className="text-[9px] text-muted-foreground/50 mt-1">💡 Arrastra para reordenar · Haz clic en X para eliminar</p>
+                    <p className="text-[9px] text-muted-foreground/50 mt-1">💡 {selectedImgKey?.startsWith(auction.id) ? "Ahora haz clic en otra imagen para intercambiar posiciones" : "Haz clic en una imagen para moverla · X para eliminar"}</p>
                   )}
                 </div>
               )}

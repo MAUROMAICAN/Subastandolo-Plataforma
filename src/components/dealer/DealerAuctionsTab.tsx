@@ -7,7 +7,7 @@ import {
   Loader2, Trash2, Image as ImageIcon, Eye, Clock, CheckCircle,
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
-  Edit3, Save, RotateCcw, Copy, ZoomIn, GripVertical, X as XIcon, ChevronLeft, ChevronRight
+  Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeftRight, X as XIcon, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,8 +72,7 @@ export default function DealerAuctionsTab({
   const [previewAuction, setPreviewAuction] = useState<AuctionWithImages | null>(null);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [selectedImgKey, setSelectedImgKey] = useState<string | null>(null);
 
   // Move image from one position to another and reassign sequential display_order
   const handleSwapImages = async (auction: AuctionWithImages, fromIdx: number, toIdx: number) => {
@@ -394,36 +393,32 @@ export default function DealerAuctionsTab({
                           <div className="flex gap-2 overflow-x-auto pb-1">
                             {auction.images.map((img, i) => {
                               const canReorder = (auction.status === "pending" || auction.status === "in_review") && auction.images.length > 1;
-                              const isDragging = dragIdx === i;
-                              const isDragOver = dragOverIdx === i;
+                              const selKey = `${auction.id}:${i}`;
+                              const isSelected = selectedImgKey === selKey;
+                              const isSwapTarget = selectedImgKey !== null && selectedImgKey.startsWith(auction.id + ":") && !isSelected && canReorder;
                               return (
                                 <div
                                   key={img.id}
-                                  className={`relative shrink-0 group rounded-lg transition-all cursor-pointer ${canReorder ? "active:cursor-grabbing" : ""
-                                    } ${isDragging ? "opacity-40 scale-95" : ""} ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
-                                  draggable={canReorder}
-                                  onDragStart={(e) => {
-                                    if (!canReorder) return;
-                                    setDragIdx(i);
-                                    e.dataTransfer.effectAllowed = "move";
-                                    e.dataTransfer.setData("text/plain", String(i));
+                                  className={`relative shrink-0 group rounded-lg transition-all cursor-pointer ${isSelected ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background scale-95" : ""
+                                    } ${isSwapTarget ? "ring-2 ring-primary/40 ring-offset-1 ring-offset-background hover:ring-primary" : ""}`}
+                                  onClick={() => {
+                                    if (canReorder) {
+                                      if (isSelected) {
+                                        setSelectedImgKey(null);
+                                        return;
+                                      }
+                                      if (selectedImgKey && selectedImgKey.startsWith(auction.id + ":")) {
+                                        const fromIdx = parseInt(selectedImgKey.split(":")[1], 10);
+                                        setSelectedImgKey(null);
+                                        handleSwapImages(auction, fromIdx, i);
+                                        return;
+                                      }
+                                      setSelectedImgKey(selKey);
+                                    } else {
+                                      setLightboxImages(auction.images.map(im => im.image_url));
+                                      setLightboxIndex(i);
+                                    }
                                   }}
-                                  onDragOver={(e) => {
-                                    if (!canReorder || dragIdx === null) return;
-                                    e.preventDefault();
-                                    e.dataTransfer.dropEffect = "move";
-                                    setDragOverIdx(i);
-                                  }}
-                                  onDragLeave={() => setDragOverIdx(null)}
-                                  onDrop={(e) => {
-                                    e.preventDefault();
-                                    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
-                                    setDragIdx(null);
-                                    setDragOverIdx(null);
-                                    if (!isNaN(fromIdx) && fromIdx !== i) handleSwapImages(auction, fromIdx, i);
-                                  }}
-                                  onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-                                  onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(im => im.image_url)); setLightboxIndex(i); } }}
                                 >
                                   <img
                                     src={img.image_url}
@@ -431,22 +426,22 @@ export default function DealerAuctionsTab({
                                     className="w-24 h-24 rounded-lg object-cover border border-border/50 group-hover:border-primary/50 hover:shadow-lg transition-all"
                                     draggable={false}
                                   />
-                                  {/* Zoom overlay — always visible on hover */}
+                                  {/* Overlay */}
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center pointer-events-none">
-                                    <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                    {isSelected
+                                      ? <ArrowLeftRight className="h-5 w-5 text-blue-400 opacity-100 animate-pulse" />
+                                      : isSwapTarget
+                                        ? <ArrowLeftRight className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />}
                                   </div>
-                                  {canReorder && (
-                                    <div className="absolute top-0.5 left-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                      <GripVertical className="h-4 w-4 text-white/80 drop-shadow-lg" />
-                                    </div>
-                                  )}
+                                  {isSelected && <span className="absolute top-0.5 left-0.5 text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold z-10">1º</span>}
                                   {i === 0 && <span className="absolute bottom-1 left-1 text-[8px] bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
                                 </div>
                               );
                             })}
                           </div>
                           {(auction.status === "pending" || auction.status === "in_review") && auction.images.length > 1 && (
-                            <p className="text-[10px] text-muted-foreground/60 mt-1.5">💡 Arrastra y suelta para reordenar. La primera imagen será la principal.</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1.5">💡 {selectedImgKey?.startsWith(auction.id) ? "Ahora haz clic en otra imagen para intercambiar" : "Haz clic en una imagen para moverla de posición"}</p>
                           )}
                         </div>
                       )}
