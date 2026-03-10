@@ -176,7 +176,7 @@ const Admin = () => {
       ...a,
       status: (a as any).status || 'active',
       admin_notes: (a as any).admin_notes || null,
-      images: imagesMap[a.id] || [],
+      images: (imagesMap[a.id] || []).sort((x: any, y: any) => x.display_order - y.display_order),
       dealer_name: dealerNames[a.created_by] || "Desconocido",
       bids_count: bidsCountMap[a.id] || 0,
     }));
