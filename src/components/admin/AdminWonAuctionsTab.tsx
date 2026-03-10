@@ -13,7 +13,8 @@ import {
   DollarSign, Truck, CreditCard, Clock, CheckCircle,
   Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   User, MapPin, Phone, FileText, Mail, MessageSquare,
-  ChevronsUpDown, XCircle, Bell
+  ChevronsUpDown, XCircle, Bell, AlertCircle, RotateCcw,
+  Image as ImageIcon, ExternalLink
 } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
@@ -46,7 +47,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   // Pagination & expand
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [activePanel, setActivePanel] = useState<"attention" | "process">("attention");
+  const [activePanel, setActivePanel] = useState<"attention" | "process" | "noBid">("attention");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   // Detail modal
@@ -62,6 +63,12 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
   // Show auctions that have a winner AND are either finalized or expired (end_time passed but status stuck as "active")
   const wonAuctions = useMemo(() => auctions.filter(a =>
     !!a.winner_id && (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
+  ), [auctions]);
+
+  // Auctions that finalized without any bids
+  const noBidAuctions = useMemo(() => auctions.filter(a =>
+    !a.winner_id && a.bids_count === 0 &&
+    (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
   ), [auctions]);
 
   // Filtered & sorted
@@ -99,7 +106,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
 
   const attentionList = useMemo(() => filtered.filter(a => a.payment_status === "pending" || a.payment_status === "under_review"), [filtered]);
   const processList = useMemo(() => filtered.filter(a => a.payment_status !== "pending" && a.payment_status !== "under_review"), [filtered]);
-  const activeList = activePanel === "attention" ? attentionList : processList;
+  const activeList = activePanel === "noBid" ? noBidAuctions : activePanel === "attention" ? attentionList : processList;
 
   useMemo(() => { setPage(1); }, [search, paymentFilter, deliveryFilter, dateFrom, dateTo, activePanel]);
 
@@ -184,7 +191,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
             <Trophy className="h-5 w-5 text-primary dark:text-accent" /> Subastas Ganadas
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {stats.total} ganadas · ${stats.totalRevenue.toLocaleString("es-MX")} ingresos · {stats.pendingPayment} pago pendiente · {stats.underReview} en revisión · {stats.delivered} entregadas
+            {stats.total} ganadas · ${stats.totalRevenue.toLocaleString("es-MX")} ingresos · {stats.pendingPayment} pago pendiente · {stats.underReview} en revisión · {stats.delivered} entregadas · {noBidAuctions.length} sin pujas
           </p>
         </div>
         <Badge variant="outline" className="text-xs self-start sm:self-auto shrink-0 font-mono">
@@ -300,326 +307,444 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, payment
           <span className="sm:hidden">Procesadas</span>
           <Badge variant="outline" className={`ml-1 text-[10px] ${activePanel === "process" ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : ""}`}>{processList.length}</Badge>
         </button>
+        <button onClick={() => { setActivePanel("noBid"); setPage(1); }} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${activePanel === "noBid" ? "bg-slate-500/15 text-slate-600 dark:text-slate-300 border border-slate-500/30 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}`}>
+          <AlertCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Sin Pujas</span>
+          <span className="sm:hidden">Sin Pujas</span>
+          <Badge variant="outline" className={`ml-1 text-[10px] ${activePanel === "noBid" ? "border-slate-500/30 text-slate-600 dark:text-slate-300" : ""}`}>{noBidAuctions.length}</Badge>
+        </button>
       </div>
 
-      {/* ═══ Auction Cards ═══ */}
-      {filtered.length === 0 ? (
-        <Card className="border border-border rounded-sm">
-          <CardContent className="p-12 text-center">
-            <Trophy className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">No hay subastas en esta sección que coincidan con los filtros.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {paginated.map((a) => {
-            const winner = winnerProfiles[a.winner_id!];
-            const ps = paymentLabel(a.payment_status);
-            const ds = deliveryLabel(a.delivery_status);
-            const isExpanded = expandedCards.has(a.id);
-            const PayStatusIcon = ps.icon;
-            const DelStatusIcon = ds.icon;
-
-            return (
-              <Card key={a.id} className="border rounded-sm overflow-hidden transition-all hover:border-primary/20 hover:shadow-sm">
-                <CardContent className="p-0">
-                  {/* Row Header — always visible */}
-                  <div className="flex items-center gap-0 cursor-pointer" onClick={() => toggleCard(a.id)}>
-                    {a.image_url && (
-                      <img src={a.image_url} alt="" className="w-16 h-16 object-cover border-r border-border shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0 px-4 py-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-heading font-bold text-sm truncate max-w-[200px]">{a.title}</h4>
-                        {a.operation_number && <span className="font-mono text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded">{a.operation_number}</span>}
+      {/* ═══ No-Bid Auctions Panel ═══ */}
+      {activePanel === "noBid" ? (
+        noBidAuctions.length === 0 ? (
+          <Card className="border border-border rounded-sm">
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">No hay subastas finalizadas sin pujas.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Las subastas que terminen sin recibir ofertas aparecerán aquí.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {noBidAuctions.slice((safePage - 1) * pageSize, safePage * pageSize).map((a) => {
+              const dealer = dealerProfiles[a.created_by];
+              const mainImage = a.images?.[0]?.image_url || a.image_url;
+              const isExpanded = expandedCards.has(a.id);
+              return (
+                <Card key={a.id} className="border rounded-sm overflow-hidden transition-all hover:border-primary/20 hover:shadow-sm">
+                  <CardContent className="p-0">
+                    <div className="flex items-center gap-0 cursor-pointer" onClick={() => toggleCard(a.id)}>
+                      {/* Color bar */}
+                      <div className="w-1 self-stretch shrink-0 bg-slate-500" />
+                      {/* Thumbnail */}
+                      {mainImage ? (
+                        <img src={mainImage} alt={a.title} className="w-14 h-14 sm:w-16 sm:h-16 object-cover shrink-0 ml-3 rounded-lg border border-border/50" />
+                      ) : (
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-secondary/50 flex items-center justify-center shrink-0 ml-3 rounded-lg border border-border/50">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 px-4 py-3">
+                        <h4 className="font-heading font-bold text-sm truncate">{a.title}</h4>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                          <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealer?.full_name || "Dealer"}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                          <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />Inicio: ${a.starting_price?.toLocaleString("es-MX") || "0"}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                        <span className="flex items-center gap-1"><User className="h-3 w-3" />{winner?.full_name || "—"}</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealerProfiles[a.created_by]?.full_name || "—"}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short" })}</span>
+                      <div className="flex items-center gap-2 px-4 shrink-0">
+                        <Badge variant="outline" className="text-[10px] gap-1 bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20">
+                          <AlertCircle className="h-3 w-3" /> Sin pujas
+                        </Badge>
+                        <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title="Ver subasta" onClick={() => navigate(`/auction/${a.id}`)}>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                       </div>
                     </div>
-                    {/* Right side: price + badges + actions */}
-                    <div className="flex items-center gap-3 px-4 shrink-0">
-                      <p className="font-heading font-bold text-sm">${a.current_price.toLocaleString("es-MX")}</p>
-                      <div className="hidden sm:flex items-center gap-1.5">
-                        <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}>
-                          <PayStatusIcon className="h-3 w-3" />{ps.label}
-                        </Badge>
-                        <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}>
-                          <DelStatusIcon className="h-3 w-3" />{ds.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver detalle" onClick={() => openDetail(a)}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title="Ver subasta" onClick={() => navigate(`/auction/${a.id}`)}>
-                          <Package className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  </div>
-
-                  {/* Expanded content */}
-                  {isExpanded && (
-                    <div className="border-t border-border px-4 py-3 bg-secondary/10">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {/* Winner info */}
-                        <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center shrink-0">
-                            <Trophy className="h-5 w-5 text-primary dark:text-accent" />
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div className="border-t border-border px-4 py-3 bg-secondary/10">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Dealer info */}
+                          <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
+                            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                              <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Dealer (Vendedor)</p>
+                              <p className="text-sm font-bold truncate">{dealer?.full_name || "—"}</p>
+                              {dealer?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{dealer.phone}</p>}
+                              {dealer?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{dealer.email}</p>}
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                {dealer?.phone && (
+                                  <Button size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={() => {
+                                      let phone = dealer.phone!.replace(/\D/g, '');
+                                      if (phone.startsWith('0')) phone = phone.slice(1);
+                                      const msg = encodeURIComponent(`Hola ${dealer.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}" que finalizó sin pujas.`);
+                                      window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                    }}
+                                  >
+                                    <MessageSquare className="h-3 w-3" /> WhatsApp
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ganador (Comprador)</p>
-                            <p className="text-sm font-bold truncate">{winner?.full_name || "—"}</p>
-                            {winner?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{winner.phone}</p>}
-                            {winner?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{winner.email}</p>}
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              {winner?.phone && (
+                          {/* Auction details */}
+                          <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Detalles</p>
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Precio inicial:</span>
+                                <span className="font-bold font-mono">${a.starting_price?.toLocaleString("es-MX") || "0"}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Finalización:</span>
+                                <span>{new Date(a.end_time).toLocaleString("es-VE")}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Estado:</span>
+                                <Badge variant="outline" className="text-[10px] bg-slate-500/10 text-slate-500 border-slate-500/20">Finalizada sin pujas</Badge>
+                              </div>
+                            </div>
+                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full mt-2" onClick={() => navigate(`/auction/${a.id}`)}>
+                              <ExternalLink className="h-3.5 w-3.5" /> Ver subasta
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      ) : (
+
+        /* ═══ Won Auction Cards (existing panels) ═══ */
+        activeList.length === 0 ? (
+          <Card className="border border-border rounded-sm">
+            <CardContent className="p-12 text-center">
+              <Trophy className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">No hay subastas en esta sección que coincidan con los filtros.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {paginated.map((a) => {
+              const winner = winnerProfiles[a.winner_id!];
+              const ps = paymentLabel(a.payment_status);
+              const ds = deliveryLabel(a.delivery_status);
+              const isExpanded = expandedCards.has(a.id);
+              const PayStatusIcon = ps.icon;
+              const DelStatusIcon = ds.icon;
+
+              return (
+                <Card key={a.id} className="border rounded-sm overflow-hidden transition-all hover:border-primary/20 hover:shadow-sm">
+                  <CardContent className="p-0">
+                    {/* Row Header — always visible */}
+                    <div className="flex items-center gap-0 cursor-pointer" onClick={() => toggleCard(a.id)}>
+                      {a.image_url && (
+                        <img src={a.image_url} alt="" className="w-16 h-16 object-cover border-r border-border shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0 px-4 py-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-heading font-bold text-sm truncate max-w-[200px]">{a.title}</h4>
+                          {a.operation_number && <span className="font-mono text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded">{a.operation_number}</span>}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                          <span className="flex items-center gap-1"><User className="h-3 w-3" />{winner?.full_name || "—"}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="flex items-center gap-1"><Package className="h-3 w-3" />{dealerProfiles[a.created_by]?.full_name || "—"}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(a.end_time).toLocaleDateString("es-VE", { day: "2-digit", month: "short" })}</span>
+                        </div>
+                      </div>
+                      {/* Right side: price + badges + actions */}
+                      <div className="flex items-center gap-3 px-4 shrink-0">
+                        <p className="font-heading font-bold text-sm">${a.current_price.toLocaleString("es-MX")}</p>
+                        <div className="hidden sm:flex items-center gap-1.5">
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}>
+                            <PayStatusIcon className="h-3 w-3" />{ps.label}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}>
+                            <DelStatusIcon className="h-3 w-3" />{ds.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" title="Ver detalle" onClick={() => openDetail(a)}>
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" title="Ver subasta" onClick={() => navigate(`/auction/${a.id}`)}>
+                            <Package className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </div>
+                    </div>
+
+                    {/* Expanded content */}
+                    {isExpanded && (
+                      <div className="border-t border-border px-4 py-3 bg-secondary/10">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {/* Winner info */}
+                          <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-accent/10 flex items-center justify-center shrink-0">
+                              <Trophy className="h-5 w-5 text-primary dark:text-accent" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Ganador (Comprador)</p>
+                              <p className="text-sm font-bold truncate">{winner?.full_name || "—"}</p>
+                              {winner?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{winner.phone}</p>}
+                              {winner?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{winner.email}</p>}
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                {winner?.phone && (
+                                  <Button
+                                    size="sm"
+                                    className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={() => {
+                                      let phone = winner.phone!.replace(/\D/g, '');
+                                      if (phone.startsWith('0')) phone = phone.slice(1);
+                                      const msg = encodeURIComponent(`Hola ${winner.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
+                                      window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                    }}
+                                  >
+                                    <MessageSquare className="h-3 w-3" /> WhatsApp
+                                  </Button>
+                                )}
+                                {winner?.email && (
+                                  <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                                    onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${winner.email}?subject=${sub}`, '_blank'); }}>
+                                    <Mail className="h-3 w-3" /> Email
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Dealer info */}
+                          {(() => {
+                            const dealer = dealerProfiles[a.created_by];
+                            return (
+                              <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
+                                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                                  <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Dealer (Vendedor)</p>
+                                  <p className="text-sm font-bold truncate">{dealer?.full_name || "—"}</p>
+                                  {dealer?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{dealer.phone}</p>}
+                                  {dealer?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{dealer.email}</p>}
+                                  <div className="flex items-center gap-1.5 mt-1.5">
+                                    {dealer?.phone && (
+                                      <Button
+                                        size="sm"
+                                        className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        onClick={() => {
+                                          let phone = dealer.phone!.replace(/\D/g, '');
+                                          if (phone.startsWith('0')) phone = phone.slice(1);
+                                          const msg = encodeURIComponent(`Hola ${dealer.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
+                                          window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                        }}
+                                      >
+                                        <MessageSquare className="h-3 w-3" /> WhatsApp
+                                      </Button>
+                                    )}
+                                    {dealer?.email && (
+                                      <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
+                                        onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${dealer.email}?subject=${sub}`, '_blank'); }}>
+                                        <Mail className="h-3 w-3" /> Email
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          {/* Status */}
+                          <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estados</p>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground flex items-center gap-1"><CreditCard className="h-3 w-3" /> Pago</span>
+                                <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}><PayStatusIcon className="h-3 w-3" />{ps.label}</Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Envío</span>
+                                <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}><DelStatusIcon className="h-3 w-3" />{ds.label}</Badge>
+                              </div>
+                              {a.tracking_number && (
+                                <p className="text-[10px] font-mono text-muted-foreground">Guía: {a.tracking_number}</p>
+                              )}
+                            </div>
+                          </div>
+                          {/* Actions */}
+                          <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acciones rápidas</p>
+                            <div className="flex flex-col gap-1.5">
+                              <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => openDetail(a)}>
+                                <Eye className="h-3.5 w-3.5" /> Ver detalle completo
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => navigate(`/auction/${a.id}`)}>
+                                <Package className="h-3.5 w-3.5" /> Ir a la subasta
+                              </Button>
+
+                            </div>
+                          </div>
+                          {/* ═══ Abandonment Warning (48h) ═══ */}
+                          {a.payment_status === "pending" && a.winner_id && (() => {
+                            const hoursSinceEnd = (Date.now() - new Date(a.end_time).getTime()) / (1000 * 60 * 60);
+                            return hoursSinceEnd >= 48;
+                          })() && (
+                              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                                  <div>
+                                    <p className="text-xs font-bold text-red-500">⚠️ Abandono de Pago (+48h)</p>
+                                    <p className="text-[10px] text-red-400/80">Han pasado más de 48 horas sin pago.</p>
+                                  </div>
+                                </div>
                                 <Button
+                                  variant="destructive"
                                   size="sm"
-                                  className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  onClick={() => {
-                                    let phone = winner.phone!.replace(/\D/g, '');
-                                    if (phone.startsWith('0')) phone = phone.slice(1);
-                                    const msg = encodeURIComponent(`Hola ${winner.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
-                                    window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
+                                  className="text-xs h-8 rounded-sm w-full gap-2"
+                                  onClick={async () => {
+                                    if (!confirm("¿Marcar esta subasta como ABANDONADA? Se notificará al comprador y al dealer.")) return;
+                                    await supabase.from("auctions").update({ payment_status: "abandoned" } as any).eq("id", a.id);
+                                    supabase.functions.invoke("notify-payment-abandoned", {
+                                      body: { auctionId: a.id, auctionTitle: a.title, buyerId: a.winner_id, dealerId: a.created_by, finalPrice: a.current_price },
+                                    }).catch(() => { });
+                                    toast({ title: "Subasta marcada como abandonada", description: "Se notificó al comprador y al dealer." });
+                                    window.location.reload();
                                   }}
                                 >
-                                  <MessageSquare className="h-3 w-3" /> WhatsApp
+                                  <XCircle className="h-3.5 w-3.5" /> Marcar como Abandonada
                                 </Button>
-                              )}
-                              {winner?.email && (
-                                <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
-                                  onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${winner.email}?subject=${sub}`, '_blank'); }}>
-                                  <Mail className="h-3 w-3" /> Email
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        {/* Dealer info */}
-                        {(() => {
-                          const dealer = dealerProfiles[a.created_by];
-                          return (
-                            <div className="flex items-start gap-3 bg-card rounded-lg border border-border p-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Dealer (Vendedor)</p>
-                                <p className="text-sm font-bold truncate">{dealer?.full_name || "—"}</p>
-                                {dealer?.phone && <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1"><Phone className="h-3 w-3" />{dealer.phone}</p>}
-                                {dealer?.email && <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{dealer.email}</p>}
-                                <div className="flex items-center gap-1.5 mt-1.5">
-                                  {dealer?.phone && (
-                                    <Button
-                                      size="sm"
-                                      className="text-[10px] h-7 px-2 rounded-sm gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                      onClick={() => {
-                                        let phone = dealer.phone!.replace(/\D/g, '');
-                                        if (phone.startsWith('0')) phone = phone.slice(1);
-                                        const msg = encodeURIComponent(`Hola ${dealer.full_name}, te escribimos de Subastandolo respecto a la subasta "${a.title}".`);
-                                        window.open(`https://wa.me/58${phone}?text=${msg}`, '_blank');
-                                      }}
-                                    >
-                                      <MessageSquare className="h-3 w-3" /> WhatsApp
-                                    </Button>
-                                  )}
-                                  {dealer?.email && (
-                                    <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 rounded-sm gap-1"
-                                      onClick={() => { const sub = encodeURIComponent(`Subasta "${a.title}" - Subastandolo`); window.open(`mailto:${dealer.email}?subject=${sub}`, '_blank'); }}>
-                                      <Mail className="h-3 w-3" /> Email
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                        {/* Status */}
-                        <div className="bg-card rounded-lg border border-border p-3 space-y-2">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estados</p>
-                          <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1"><CreditCard className="h-3 w-3" /> Pago</span>
-                              <Badge variant="outline" className={`text-[10px] gap-1 ${ps.class}`}><PayStatusIcon className="h-3 w-3" />{ps.label}</Badge>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Envío</span>
-                              <Badge variant="outline" className={`text-[10px] gap-1 ${ds.class}`}><DelStatusIcon className="h-3 w-3" />{ds.label}</Badge>
-                            </div>
-                            {a.tracking_number && (
-                              <p className="text-[10px] font-mono text-muted-foreground">Guía: {a.tracking_number}</p>
                             )}
-                          </div>
-                        </div>
-                        {/* Actions */}
-                        <div className="bg-card rounded-lg border border-border p-3 space-y-2">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acciones rápidas</p>
-                          <div className="flex flex-col gap-1.5">
-                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => openDetail(a)}>
-                              <Eye className="h-3.5 w-3.5" /> Ver detalle completo
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-xs h-8 rounded-sm justify-start gap-2 w-full" onClick={() => navigate(`/auction/${a.id}`)}>
-                              <Package className="h-3.5 w-3.5" /> Ir a la subasta
-                            </Button>
-
-                          </div>
-                        </div>
-                        {/* ═══ Abandonment Warning (48h) ═══ */}
-                        {a.payment_status === "pending" && a.winner_id && (() => {
-                          const hoursSinceEnd = (Date.now() - new Date(a.end_time).getTime()) / (1000 * 60 * 60);
-                          return hoursSinceEnd >= 48;
-                        })() && (
-                            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
-                              <div className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4 text-red-500 shrink-0" />
-                                <div>
-                                  <p className="text-xs font-bold text-red-500">⚠️ Abandono de Pago (+48h)</p>
-                                  <p className="text-[10px] text-red-400/80">Han pasado más de 48 horas sin pago.</p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="text-xs h-8 rounded-sm w-full gap-2"
-                                onClick={async () => {
-                                  if (!confirm("¿Marcar esta subasta como ABANDONADA? Se notificará al comprador y al dealer.")) return;
-                                  await supabase.from("auctions").update({ payment_status: "abandoned" } as any).eq("id", a.id);
-                                  supabase.functions.invoke("notify-payment-abandoned", {
-                                    body: { auctionId: a.id, auctionTitle: a.title, buyerId: a.winner_id, dealerId: a.created_by, finalPrice: a.current_price },
-                                  }).catch(() => { });
-                                  toast({ title: "Subasta marcada como abandonada", description: "Se notificó al comprador y al dealer." });
-                                  window.location.reload();
-                                }}
-                              >
-                                <XCircle className="h-3.5 w-3.5" /> Marcar como Abandonada
-                              </Button>
+                          {a.payment_status === "abandoned" && (
+                            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                              <p className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                                <XCircle className="h-3.5 w-3.5" /> ABANDONADA — Pago no recibido
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">El dealer puede republicar esta subasta desde su panel.</p>
                             </div>
                           )}
-                        {a.payment_status === "abandoned" && (
-                          <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
-                            <p className="text-xs font-bold text-red-400 flex items-center gap-1.5">
-                              <XCircle className="h-3.5 w-3.5" /> ABANDONADA — Pago no recibido
-                            </p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">El dealer puede republicar esta subasta desde su panel.</p>
-                          </div>
-                        )}
-                        {/* ═══ Recordatorios ═══ */}
-                        {((a.payment_status === "pending" || a.payment_status === "under_review") || (a.delivery_status === "pending" || a.delivery_status === "ready_to_ship")) && (
-                          <div className="bg-card rounded-lg border border-border p-3 space-y-2">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">📧 Recordatorios</p>
-                            <div className="flex flex-col gap-1.5">
-                              {/* Payment reminder - to buyer */}
-                              {(a.payment_status === "pending" || a.payment_status === "under_review") && winner?.email && (
-                                <div className="flex gap-1.5">
-                                  <Button size="sm" variant="outline"
-                                    className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
-                                    disabled={sendingReminder === a.id}
-                                    onClick={async () => {
-                                      setSendingReminder(a.id);
-                                      try {
-                                        const { data, error } = await supabase.functions.invoke("notify-payment-reminder", {
-                                          body: { email: winner.email, name: winner.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.winner_id, operationNumber: a.operation_number || null, auctionDate: new Date(a.end_time).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }) },
-                                        });
-                                        if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
-                                        else toast({ title: "📧 Recordatorio de pago enviado", description: `A ${winner.email}` });
-                                      } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
-                                      setSendingReminder(null);
-                                    }}
-                                  >
-                                    {sendingReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                                    Pago (Correo)
-                                  </Button>
-                                  <Button size="sm" variant="outline"
-                                    className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-blue-500/30 text-blue-600 hover:bg-blue-500/10"
-                                    disabled={sendingNotification === a.id}
-                                    onClick={async () => {
-                                      setSendingNotification(a.id);
-                                      try {
-                                        const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
-                                        const { data, error } = await supabase.functions.invoke("notify-push", {
-                                          body: { user_id: a.winner_id, title: `⚠️ Pago pendiente: "${a.title}"`, message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`, type: "payment_reminder", link: `/auction/${a.id}` },
-                                        });
-                                        if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
-                                        else toast({ title: "🔔 Notificación enviada", description: `A ${winner.full_name}` });
-                                      } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
-                                      setSendingNotification(null);
-                                    }}
-                                  >
-                                    {sendingNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
-                                    Pago (Push)
-                                  </Button>
-                                </div>
-                              )}
-                              {/* Shipping reminder - to dealer */}
-                              {(a.delivery_status === "pending" || a.delivery_status === "ready_to_ship") && (() => {
-                                const dealer = dealerProfiles[a.created_by];
-                                return dealer ? (
+                          {/* ═══ Recordatorios ═══ */}
+                          {((a.payment_status === "pending" || a.payment_status === "under_review") || (a.delivery_status === "pending" || a.delivery_status === "ready_to_ship")) && (
+                            <div className="bg-card rounded-lg border border-border p-3 space-y-2">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">📧 Recordatorios</p>
+                              <div className="flex flex-col gap-1.5">
+                                {/* Payment reminder - to buyer */}
+                                {(a.payment_status === "pending" || a.payment_status === "under_review") && winner?.email && (
                                   <div className="flex gap-1.5">
                                     <Button size="sm" variant="outline"
-                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-purple-500/30 text-purple-600 hover:bg-purple-500/10"
-                                      disabled={sendingShipReminder === a.id}
+                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                                      disabled={sendingReminder === a.id}
                                       onClick={async () => {
-                                        setSendingShipReminder(a.id);
+                                        setSendingReminder(a.id);
                                         try {
-                                          if (!dealer.email) { toast({ title: "Dealer sin email", variant: "destructive" }); setSendingShipReminder(null); return; }
-                                          // Fetch buyer's shipping info for this auction
-                                          const { data: shipData } = await supabase
-                                            .from("shipping_info")
-                                            .select("full_name, cedula, phone, shipping_company, state, city, office_name")
-                                            .eq("auction_id", a.id)
-                                            .maybeSingle();
-                                          const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
-                                            body: { email: dealer.email, name: dealer.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.created_by, operationNumber: a.operation_number || null, buyerName: winner?.full_name || "el comprador", shippingInfo: shipData || null },
+                                          const { data, error } = await supabase.functions.invoke("notify-payment-reminder", {
+                                            body: { email: winner.email, name: winner.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.winner_id, operationNumber: a.operation_number || null, auctionDate: new Date(a.end_time).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }) },
                                           });
                                           if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
-                                          else toast({ title: "📧 Recordatorio de envío enviado", description: `A ${dealer.email}` });
+                                          else toast({ title: "📧 Recordatorio de pago enviado", description: `A ${winner.email}` });
                                         } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
-                                        setSendingShipReminder(null);
+                                        setSendingReminder(null);
                                       }}
                                     >
-                                      {sendingShipReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                                      Envío (Correo)
+                                      {sendingReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                      Pago (Correo)
                                     </Button>
                                     <Button size="sm" variant="outline"
-                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-indigo-500/30 text-indigo-600 hover:bg-indigo-500/10"
-                                      disabled={sendingShipNotification === a.id}
+                                      className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-blue-500/30 text-blue-600 hover:bg-blue-500/10"
+                                      disabled={sendingNotification === a.id}
                                       onClick={async () => {
-                                        setSendingShipNotification(a.id);
+                                        setSendingNotification(a.id);
                                         try {
                                           const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
                                           const { data, error } = await supabase.functions.invoke("notify-push", {
-                                            body: { user_id: a.created_by, title: `📦 Envío pendiente: "${a.title}"`, message: `Hola ${dealer.full_name}, ${winner?.full_name || "el comprador"} ya pagó ${amount}. Procede con el envío.`, type: "shipping_reminder", link: `/auction/${a.id}` },
+                                            body: { user_id: a.winner_id, title: `⚠️ Pago pendiente: "${a.title}"`, message: `Hola ${winner.full_name}, recuerda completar tu pago de ${amount}. Sube tu comprobante en la plataforma.`, type: "payment_reminder", link: `/auction/${a.id}` },
                                           });
                                           if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
-                                          else toast({ title: "🔔 Notificación enviada al dealer", description: `A ${dealer.full_name}` });
+                                          else toast({ title: "🔔 Notificación enviada", description: `A ${winner.full_name}` });
                                         } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
-                                        setSendingShipNotification(null);
+                                        setSendingNotification(null);
                                       }}
                                     >
-                                      {sendingShipNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
-                                      Envío (Push)
+                                      {sendingNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+                                      Pago (Push)
                                     </Button>
                                   </div>
-                                ) : null;
-                              })()}
+                                )}
+                                {/* Shipping reminder - to dealer */}
+                                {(a.delivery_status === "pending" || a.delivery_status === "ready_to_ship") && (() => {
+                                  const dealer = dealerProfiles[a.created_by];
+                                  return dealer ? (
+                                    <div className="flex gap-1.5">
+                                      <Button size="sm" variant="outline"
+                                        className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-purple-500/30 text-purple-600 hover:bg-purple-500/10"
+                                        disabled={sendingShipReminder === a.id}
+                                        onClick={async () => {
+                                          setSendingShipReminder(a.id);
+                                          try {
+                                            if (!dealer.email) { toast({ title: "Dealer sin email", variant: "destructive" }); setSendingShipReminder(null); return; }
+                                            // Fetch buyer's shipping info for this auction
+                                            const { data: shipData } = await supabase
+                                              .from("shipping_info")
+                                              .select("full_name, cedula, phone, shipping_company, state, city, office_name")
+                                              .eq("auction_id", a.id)
+                                              .maybeSingle();
+                                            const { data, error } = await supabase.functions.invoke("notify-shipping-reminder", {
+                                              body: { email: dealer.email, name: dealer.full_name, auctionTitle: a.title, auctionId: a.id, winningBid: a.current_price, imageUrl: a.image_url || null, userId: a.created_by, operationNumber: a.operation_number || null, buyerName: winner?.full_name || "el comprador", shippingInfo: shipData || null },
+                                            });
+                                            if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                            else toast({ title: "📧 Recordatorio de envío enviado", description: `A ${dealer.email}` });
+                                          } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                          setSendingShipReminder(null);
+                                        }}
+                                      >
+                                        {sendingShipReminder === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                        Envío (Correo)
+                                      </Button>
+                                      <Button size="sm" variant="outline"
+                                        className="flex-1 text-[10px] h-7 rounded-sm gap-1 border-indigo-500/30 text-indigo-600 hover:bg-indigo-500/10"
+                                        disabled={sendingShipNotification === a.id}
+                                        onClick={async () => {
+                                          setSendingShipNotification(a.id);
+                                          try {
+                                            const amount = `$${a.current_price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+                                            const { data, error } = await supabase.functions.invoke("notify-push", {
+                                              body: { user_id: a.created_by, title: `📦 Envío pendiente: "${a.title}"`, message: `Hola ${dealer.full_name}, ${winner?.full_name || "el comprador"} ya pagó ${amount}. Procede con el envío.`, type: "shipping_reminder", link: `/auction/${a.id}` },
+                                            });
+                                            if (error || data?.error) toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
+                                            else toast({ title: "🔔 Notificación enviada al dealer", description: `A ${dealer.full_name}` });
+                                          } catch (err: any) { toast({ title: "Error", description: err?.message, variant: "destructive" }); }
+                                          setSendingShipNotification(null);
+                                        }}
+                                      >
+                                        {sendingShipNotification === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+                                        Envío (Push)
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                })()}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ))
 
       {/* ═══ Pagination ═══ */}
       {totalPages > 1 && (
