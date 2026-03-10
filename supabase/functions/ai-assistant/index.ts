@@ -34,6 +34,7 @@ Plataforma de subastas online en Venezuela. Los **Dealers** (vendedores verifica
   • RIF: J413098075
   • Razón social: UNIFORMES KRONUS C.A
 - El monto se calcula en Bs. a la **tasa BCV del día**.
+- La tasa BCV se actualiza diariamente al cierre de la jornada bancaria (después de las 4 PM). La tasa del viernes rige sábado, domingo y lunes hasta que publiquen la nueva.
 - Subes el capture del comprobante en "Mis Compras" y el equipo verifica en máximo 24h.
 - Si no pagas, te pueden sancionar la cuenta. ¡No te duermas!
 - Si ganaste varias subastas del mismo Dealer, puedes hacer un **pago unificado** (la plataforma lo calcula automáticamente).

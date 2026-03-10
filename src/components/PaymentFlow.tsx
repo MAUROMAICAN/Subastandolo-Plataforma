@@ -77,8 +77,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
       const ts = localStorage.getItem(BCV_CACHE_TS_KEY);
       if (cached && ts) {
         const age = Date.now() - Number(ts);
-        // Cache valid for 24 hours
-        if (age < 24 * 60 * 60 * 1000) return Number(cached);
+        // Cache valid for 72 hours (covers weekends: Friday rate → Monday)
+        if (age < 72 * 60 * 60 * 1000) return Number(cached);
       }
     } catch { /* */ }
     return null;
