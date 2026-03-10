@@ -60,9 +60,12 @@ export default function DealerAuctionsTab({
   const { toast } = useToast();
 
   const filteredAuctions = useMemo(() => {
+    const getEffective = (a: AuctionWithImages) =>
+      (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()) ? "finalized" : a.status;
     if (statusFilter === "all") return auctions;
     if (statusFilter === "archived") return auctions.filter(a => (a as any).archived_at);
-    if (statusFilter === "finalized") return auctions.filter(a => a.status === "finalized" && !(a as any).archived_at);
+    if (statusFilter === "finalized") return auctions.filter(a => getEffective(a) === "finalized" && !(a as any).archived_at);
+    if (statusFilter === "active") return auctions.filter(a => getEffective(a) === "active");
     return auctions.filter(a => a.status === statusFilter);
   }, [auctions, statusFilter]);
 
@@ -205,7 +208,7 @@ export default function DealerAuctionsTab({
               <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mis Subastas
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {auctions.filter(a => a.status === "active").length} activas · {auctions.filter(a => a.status === "pending").length} pendientes · {auctions.filter(a => a.status === "finalized").length} finalizadas
+              {auctions.filter(a => a.status === "active" && new Date(a.end_time).getTime() > Date.now()).length} activas · {auctions.filter(a => a.status === "pending").length} pendientes · {auctions.filter(a => a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())).length} finalizadas
             </p>
           </div>
           <Badge variant="outline" className="text-[11px] font-bold">
@@ -220,9 +223,9 @@ export default function DealerAuctionsTab({
           { key: "all", label: "Todas", count: auctions.length },
           { key: "pending", label: "Pendientes", count: auctions.filter(a => a.status === "pending").length },
           { key: "in_review", label: "En Revisión", count: auctions.filter(a => a.status === "in_review").length },
-          { key: "active", label: "Activas", count: auctions.filter(a => a.status === "active").length },
+          { key: "active", label: "Activas", count: auctions.filter(a => a.status === "active" && new Date(a.end_time).getTime() > Date.now()).length },
           { key: "paused", label: "Pausadas", count: auctions.filter(a => a.status === "paused").length },
-          { key: "finalized", label: "Finalizadas", count: auctions.filter(a => a.status === "finalized" && !(a as any).archived_at).length },
+          { key: "finalized", label: "Finalizadas", count: auctions.filter(a => (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())) && !(a as any).archived_at).length },
           { key: "archived", label: "Archivadas", count: auctions.filter(a => (a as any).archived_at).length },
           { key: "rejected", label: "Rechazadas", count: auctions.filter(a => a.status === "rejected").length },
         ].filter(f => f.count > 0 || f.key === "all").map(f => (
@@ -252,10 +255,11 @@ export default function DealerAuctionsTab({
       ) : (
         <div className="space-y-3">
           {filteredAuctions.map((auction) => {
-            const sc = statusConfig[auction.status] || statusConfig.pending;
+            const isEnded = new Date(auction.end_time).getTime() <= Date.now();
+            const effectiveStatus = (auction.status === "active" && isEnded) ? "finalized" : auction.status;
+            const sc = statusConfig[effectiveStatus] || statusConfig.pending;
             const StatusIcon = sc.icon;
             const isExpanded = expandedAuction === auction.id;
-            const isEnded = new Date(auction.end_time).getTime() <= Date.now();
             const winner = auction.winner_id ? winnerProfiles[auction.winner_id] : null;
             const mainImage = auction.images[0]?.image_url || auction.image_url;
 
