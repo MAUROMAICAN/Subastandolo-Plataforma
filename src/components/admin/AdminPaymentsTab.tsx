@@ -135,35 +135,82 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
   };
 
   const getSignedUrl = async (proofUrl: string): Promise<string | null> => {
+    // Extract file path from the stored proof_url
     let filePath = proofUrl;
     if (proofUrl.startsWith("http")) {
       const marker = "/object/public/payment-proofs/";
       const idx = proofUrl.indexOf(marker);
       if (idx !== -1) {
-        filePath = proofUrl.substring(idx + marker.length);
+        filePath = decodeURIComponent(proofUrl.substring(idx + marker.length));
       } else {
         const signedMarker = "/object/sign/payment-proofs/";
         const sIdx = proofUrl.indexOf(signedMarker);
-        if (sIdx !== -1) filePath = proofUrl.substring(sIdx + signedMarker.length).split("?")[0];
+        if (sIdx !== -1) filePath = decodeURIComponent(proofUrl.substring(sIdx + signedMarker.length).split("?")[0]);
       }
     }
+    console.log("[getSignedUrl] filePath:", filePath);
+
+    // Try signed URL first
     const { data, error } = await supabase.storage.from("payment-proofs").createSignedUrl(filePath, 864000);
-    if (error || !data?.signedUrl) return null;
-    return data.signedUrl;
+    if (data?.signedUrl) {
+      console.log("[getSignedUrl] signed URL ok");
+      return data.signedUrl;
+    }
+    console.warn("[getSignedUrl] createSignedUrl failed:", error?.message);
+
+    // Fallback: try public URL
+    const { data: publicData } = supabase.storage.from("payment-proofs").getPublicUrl(filePath);
+    if (publicData?.publicUrl) {
+      console.log("[getSignedUrl] falling back to public URL");
+      return publicData.publicUrl;
+    }
+
+    // Last resort: if it was already a full URL, return it as-is
+    if (proofUrl.startsWith("http")) {
+      console.log("[getSignedUrl] returning original URL as-is");
+      return proofUrl;
+    }
+
+    return null;
   };
 
   const handleViewProof = async (proofUrl: string) => {
+    if (!proofUrl) {
+      toast({ title: "No hay comprobante", description: "Este pago no tiene comprobante adjunto.", variant: "destructive" });
+      return;
+    }
     setProofLoading(true);
-    const url = await getSignedUrl(proofUrl);
-    if (url) setProofImagePreview(url);
-    else toast({ title: "Error al cargar comprobante", variant: "destructive" });
+    try {
+      const url = await getSignedUrl(proofUrl);
+      console.log("[handleViewProof] resolved URL:", url);
+      if (url) setProofImagePreview(url);
+      else toast({ title: "Error al cargar comprobante", description: "No se pudo obtener la URL de la imagen.", variant: "destructive" });
+    } catch (err: any) {
+      console.error("[handleViewProof] error:", err);
+      toast({ title: "Error al cargar comprobante", description: err?.message, variant: "destructive" });
+    }
     setProofLoading(false);
   };
 
   const handleDownloadProof = async (proofUrl: string, reference: string) => {
-    const url = await getSignedUrl(proofUrl);
-    if (url) { const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.download = `comprobante-${reference}`; a.click(); }
-    else toast({ title: "Error al descargar comprobante", variant: "destructive" });
+    if (!proofUrl) {
+      toast({ title: "No hay comprobante", variant: "destructive" });
+      return;
+    }
+    try {
+      const url = await getSignedUrl(proofUrl);
+      if (url) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.download = `comprobante-${reference}`;
+        a.click();
+      } else {
+        toast({ title: "Error al descargar comprobante", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error al descargar", description: err?.message, variant: "destructive" });
+    }
   };
 
   const handlePaymentAction = async (proofId: string, auctionId: string, buyerUserId: string, auctionTitle: string, imageUrl: string | null, action: "approved" | "rejected") => {
