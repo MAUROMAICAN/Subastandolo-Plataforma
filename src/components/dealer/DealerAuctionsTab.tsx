@@ -78,7 +78,8 @@ export default function DealerAuctionsTab({
 
   // Handle adding new photos to an existing auction
   const handleAddPhotos = async (auction: AuctionWithImages, files: FileList) => {
-    const total = auction.images.length + files.length;
+    const fileArray = Array.from(files);
+    const total = auction.images.length + fileArray.length;
     if (total > 10) {
       toast({ title: "Máximo 10 fotos", description: `Ya tienes ${auction.images.length} fotos. Solo puedes agregar ${10 - auction.images.length} más.`, variant: "destructive" });
       return;
@@ -87,43 +88,77 @@ export default function DealerAuctionsTab({
     let successCount = 0;
     try {
       const { applyWatermark } = await import("@/lib/watermark");
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const watermarked = await applyWatermark(file);
+      for (const [i, file] of fileArray.entries()) {
+        // Step 1: Apply watermark
+        let watermarked: File;
+        try {
+          watermarked = await applyWatermark(file);
+        } catch (wmErr: any) {
+          console.error("Watermark error:", wmErr);
+          toast({ title: "Error procesando imagen", description: `No se pudo procesar ${file.name}`, variant: "destructive" });
+          continue;
+        }
+
+        // Step 2: Upload to storage
         const filePath = `${crypto.randomUUID()}.webp`;
-        const { error: uploadError } = await supabase.storage.from("auction-images").upload(filePath, watermarked);
+        const { error: uploadError } = await supabase.storage
+          .from("auction-images")
+          .upload(filePath, watermarked, { cacheControl: "3600", upsert: false });
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
-          toast({ title: "Error subiendo imagen", description: uploadError.message, variant: "destructive" });
-          break;
+          toast({ title: "Error subiendo imagen al servidor", description: uploadError.message, variant: "destructive" });
+          continue;
         }
+
+        // Step 3: Get public URL
         const { data: urlData } = supabase.storage.from("auction-images").getPublicUrl(filePath);
+        const publicUrl = urlData?.publicUrl;
+        if (!publicUrl) {
+          console.error("No public URL returned");
+          toast({ title: "Error obteniendo URL de imagen", variant: "destructive" });
+          continue;
+        }
+
+        // Step 4: Insert into auction_images table
         const { error: insertError } = await supabase.from("auction_images").insert({
           auction_id: auction.id,
-          image_url: urlData.publicUrl,
+          image_url: publicUrl,
           display_order: auction.images.length + i,
         });
         if (insertError) {
-          console.error("Insert error:", insertError);
-          toast({ title: "Error guardando imagen", description: insertError.message, variant: "destructive" });
-          break;
+          console.error("DB insert error:", insertError);
+          toast({ title: "Error registrando imagen", description: insertError.message, variant: "destructive" });
+          continue;
         }
+
         successCount++;
       }
+
       // Update main image_url if auction had no images before
       if (auction.images.length === 0 && successCount > 0) {
-        const { data: firstImg } = await supabase.from("auction_images").select("image_url").eq("auction_id", auction.id).order("display_order", { ascending: true }).limit(1).maybeSingle();
+        const { data: firstImg } = await supabase
+          .from("auction_images")
+          .select("image_url")
+          .eq("auction_id", auction.id)
+          .order("display_order", { ascending: true })
+          .limit(1)
+          .maybeSingle();
         if (firstImg?.image_url) {
           await supabase.from("auctions").update({ image_url: firstImg.image_url } as any).eq("id", auction.id);
         }
       }
+
       if (successCount > 0) {
         toast({ title: `📸 ${successCount} foto${successCount > 1 ? "s" : ""} agregada${successCount > 1 ? "s" : ""} correctamente` });
+      } else {
+        toast({ title: "No se pudieron agregar las fotos", description: "Revisa tu conexión e inténtalo de nuevo.", variant: "destructive" });
       }
-      fetchMyAuctions();
+
+      // Refresh the auctions data to show new images
+      await fetchMyAuctions();
     } catch (err: any) {
       console.error("Photo upload error:", err);
-      toast({ title: "Error", description: err?.message || "Error al subir fotos", variant: "destructive" });
+      toast({ title: "Error inesperado", description: err?.message || "Error al subir fotos", variant: "destructive" });
     }
     setUploadingPhotos(null);
   };
