@@ -247,9 +247,23 @@ const AdminMassEmailTab = () => {
                 },
             });
 
-            // supabase-js puts the response body in `data` even on non-2xx
             if (error) {
-                const realMsg = data?.error || error.message || "Error desconocido";
+                // Try to extract real error from various possible locations
+                let realMsg = "Error desconocido";
+                const ctx = (error as any).context;
+                if (ctx && typeof ctx === "object") {
+                    // context might be a Response or parsed JSON
+                    if (typeof ctx.json === "function") {
+                        try { const body = await ctx.json(); realMsg = body?.error || JSON.stringify(body); } catch { realMsg = error.message; }
+                    } else if (ctx.error) {
+                        realMsg = ctx.error;
+                    }
+                } else if (data?.error) {
+                    realMsg = data.error;
+                } else {
+                    realMsg = error.message;
+                }
+                console.error("[handleSendTest] error:", error, "context:", ctx, "data:", data);
                 throw new Error(realMsg);
             }
 
@@ -283,9 +297,21 @@ const AdminMassEmailTab = () => {
                 },
             });
 
-            // supabase-js puts the response body in `data` even on non-2xx
             if (error) {
-                const realMsg = data?.error || error.message || "Error desconocido";
+                let realMsg = "Error desconocido";
+                const ctx = (error as any).context;
+                if (ctx && typeof ctx === "object") {
+                    if (typeof ctx.json === "function") {
+                        try { const body = await ctx.json(); realMsg = body?.error || JSON.stringify(body); } catch { realMsg = error.message; }
+                    } else if (ctx.error) {
+                        realMsg = ctx.error;
+                    }
+                } else if (data?.error) {
+                    realMsg = data.error;
+                } else {
+                    realMsg = error.message;
+                }
+                console.error("[handleSend] error:", error, "context:", ctx, "data:", data);
                 throw new Error(realMsg);
             }
 
