@@ -429,6 +429,7 @@ export default function DealerAuctionsTab({
                                     src={img.image_url}
                                     alt={`Foto ${i + 1}`}
                                     className="w-24 h-24 rounded-lg object-cover border border-border/50 group-hover:border-primary/50 hover:shadow-lg transition-all"
+                                    draggable={false}
                                   />
                                   {/* Zoom overlay — always visible on hover */}
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center pointer-events-none">

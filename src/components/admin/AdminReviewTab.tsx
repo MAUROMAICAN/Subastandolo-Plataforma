@@ -190,6 +190,7 @@ const AdminReviewTab = ({ auctions, fetchAllData }: Props) => {
                             src={img.image_url}
                             className="w-24 h-24 rounded-sm object-cover border border-border group-hover:border-primary/50 transition-all"
                             alt=""
+                            draggable={false}
                             onClick={() => { if (dragIdx === null) { setLightboxImages(auction.images.map(i => i.image_url)); setLightboxIndex(idx); } }}
                           />
                           {/* Hover overlay with grip icon */}
