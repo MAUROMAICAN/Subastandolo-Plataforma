@@ -239,7 +239,7 @@ const AdminMassEmailTab = () => {
         setSendingTest(true);
 
         try {
-            const { error } = await supabase.functions.invoke("send-mass-email", {
+            const { data, error } = await supabase.functions.invoke("send-mass-email", {
                 body: {
                     templateKey: selectedTemplate,
                     customMessage: selected?.hasCustomMessage ? customMessage : undefined,
@@ -247,15 +247,20 @@ const AdminMassEmailTab = () => {
                 },
             });
 
-            if (error) throw error;
+            // supabase-js puts the response body in `data` even on non-2xx
+            if (error) {
+                const realMsg = data?.error || error.message || "Error desconocido";
+                throw new Error(realMsg);
+            }
 
             toast({
                 title: "✅ Correo de prueba enviado",
                 description: `Se envió a ${testEmail.trim()}`,
             });
         } catch (e: any) {
+            console.error("[handleSendTest]", e);
             toast({
-                title: "Error",
+                title: "Error al enviar",
                 description: e.message || "No se pudo enviar",
                 variant: "destructive",
             });
@@ -278,7 +283,15 @@ const AdminMassEmailTab = () => {
                 },
             });
 
-            if (error) throw error;
+            // supabase-js puts the response body in `data` even on non-2xx
+            if (error) {
+                const realMsg = data?.error || error.message || "Error desconocido";
+                throw new Error(realMsg);
+            }
+
+            if (data?.error) {
+                throw new Error(data.error);
+            }
 
             setResult(data);
             toast({
@@ -287,6 +300,7 @@ const AdminMassEmailTab = () => {
                 variant: data.failed > 0 ? "destructive" : "default",
             });
         } catch (e: any) {
+            console.error("[handleSend]", e);
             toast({
                 title: "Error al enviar",
                 description: e.message || "No se pudieron enviar los correos",
