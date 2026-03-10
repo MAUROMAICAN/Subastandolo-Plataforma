@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell, AlertTriangle, PackageCheck } from "lucide-react";
+import { Trash2, Trophy, MessageCircle, Mail, Phone, User, Package, Pause, Play, CreditCard, Clock, DollarSign, ChevronLeft, ChevronRight, Loader2, Timer, Zap, CalendarClock, Upload, Eye, Search, Lock, Unlock, Truck, CheckCircle, ReceiptText, ShieldCheck, ChevronDown, ChevronUp, ChevronsUpDown, Bell, AlertTriangle, PackageCheck, Ban } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
 
 interface Props {
@@ -43,7 +43,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [auctionPanel, setAuctionPanel] = useState<"active" | "ended" | "pending_payment" | "in_transit" | "delivered" | "disputed" | "released">("active");
+  const [auctionPanel, setAuctionPanel] = useState<"active" | "ended" | "pending_payment" | "in_transit" | "delivered" | "disputed" | "released" | "no_bids">("active");
 
   // Fetch dispute auction IDs for classification
   const [disputeAuctionIds, setDisputeAuctionIds] = useState<Set<string>>(new Set());
@@ -177,6 +177,9 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const releasedAuctions = useMemo(() => endedAuctions.filter(a =>
     a.payment_status === "released"
   ), [endedAuctions]);
+  const noBidAuctions = useMemo(() => endedAuctions.filter(a =>
+    !a.winner_id && (a.bids_count === 0 || a.bids_count === undefined)
+  ), [endedAuctions]);
 
   const activeListAuctions = useMemo(() => {
     switch (auctionPanel) {
@@ -186,9 +189,10 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
       case "delivered": return deliveredAuctions;
       case "disputed": return disputedAuctions;
       case "released": return releasedAuctions;
+      case "no_bids": return noBidAuctions;
       case "ended": default: return endedAuctions;
     }
-  }, [auctionPanel, activeAuctions, endedAuctions, pendingPaymentAuctions, inTransitAuctions, deliveredAuctions, disputedAuctions, releasedAuctions]);
+  }, [auctionPanel, activeAuctions, endedAuctions, pendingPaymentAuctions, inTransitAuctions, deliveredAuctions, disputedAuctions, releasedAuctions, noBidAuctions]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(activeListAuctions.length / pageSize));
@@ -556,18 +560,19 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
               { key: "delivered" as const, label: "Entregadas", icon: PackageCheck, count: deliveredAuctions.length, color: "emerald" },
               { key: "disputed" as const, label: "En Disputa", icon: AlertTriangle, count: disputedAuctions.length, color: "red" },
               { key: "released" as const, label: "Liberadas", icon: ShieldCheck, count: releasedAuctions.length, color: "violet" },
+              { key: "no_bids" as const, label: "Sin Pujas", icon: Ban, count: noBidAuctions.length, color: "orange" },
             ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => { setAuctionPanel(tab.key); setCurrentPage(1); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${auctionPanel === tab.key
-                    ? `bg-${tab.color}-500/15 text-${tab.color}-600 dark:text-${tab.color}-400 border border-${tab.color}-500/30 shadow-sm`
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  ? `bg-${tab.color}-500/15 text-${tab.color}-600 dark:text-${tab.color}-400 border border-${tab.color}-500/30 shadow-sm`
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                   }`}
                 style={auctionPanel === tab.key ? {
-                  backgroundColor: tab.color === "slate" ? "rgba(100,116,139,0.15)" : tab.color === "amber" ? "rgba(245,158,11,0.15)" : tab.color === "blue" ? "rgba(59,130,246,0.15)" : tab.color === "emerald" ? "rgba(16,185,129,0.15)" : tab.color === "red" ? "rgba(239,68,68,0.15)" : "rgba(139,92,246,0.15)",
-                  color: tab.color === "slate" ? "#94a3b8" : tab.color === "amber" ? "#f59e0b" : tab.color === "blue" ? "#3b82f6" : tab.color === "emerald" ? "#10b981" : tab.color === "red" ? "#ef4444" : "#8b5cf6",
-                  borderColor: tab.color === "slate" ? "rgba(100,116,139,0.3)" : tab.color === "amber" ? "rgba(245,158,11,0.3)" : tab.color === "blue" ? "rgba(59,130,246,0.3)" : tab.color === "emerald" ? "rgba(16,185,129,0.3)" : tab.color === "red" ? "rgba(239,68,68,0.3)" : "rgba(139,92,246,0.3)",
+                  backgroundColor: tab.color === "slate" ? "rgba(100,116,139,0.15)" : tab.color === "amber" ? "rgba(245,158,11,0.15)" : tab.color === "blue" ? "rgba(59,130,246,0.15)" : tab.color === "emerald" ? "rgba(16,185,129,0.15)" : tab.color === "red" ? "rgba(239,68,68,0.15)" : tab.color === "orange" ? "rgba(249,115,22,0.15)" : "rgba(139,92,246,0.15)",
+                  color: tab.color === "slate" ? "#94a3b8" : tab.color === "amber" ? "#f59e0b" : tab.color === "blue" ? "#3b82f6" : tab.color === "emerald" ? "#10b981" : tab.color === "red" ? "#ef4444" : tab.color === "orange" ? "#f97316" : "#8b5cf6",
+                  borderColor: tab.color === "slate" ? "rgba(100,116,139,0.3)" : tab.color === "amber" ? "rgba(245,158,11,0.3)" : tab.color === "blue" ? "rgba(59,130,246,0.3)" : tab.color === "emerald" ? "rgba(16,185,129,0.3)" : tab.color === "red" ? "rgba(239,68,68,0.3)" : tab.color === "orange" ? "rgba(249,115,22,0.3)" : "rgba(139,92,246,0.3)",
                 } : {}}
               >
                 <tab.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
