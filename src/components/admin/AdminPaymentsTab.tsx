@@ -315,9 +315,9 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
             <SelectItem value="rejected">Rechazados</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-1">
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 text-xs rounded-sm w-[130px]" />
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 text-xs rounded-sm w-[130px]" />
+        <div className="flex items-center gap-1 shrink-0">
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 text-xs rounded-sm w-[120px] min-w-0" />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 text-xs rounded-sm w-[120px] min-w-0" />
         </div>
         {hasFilters && (
           <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => { setSearch(""); setStatusFilter("all"); setDateFrom(""); setDateTo(""); }}>
