@@ -60,43 +60,122 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
   const [existingProof, setExistingProof] = useState<PaymentProof | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Load BCV rate: admin manual rate first, then external APIs
+  // Load BCV rate: admin manual → multiple APIs → cached fallback
+  const BCV_CACHE_KEY = "subastandolo_bcv_rate";
+  const BCV_CACHE_TS_KEY = "subastandolo_bcv_ts";
+
+  const cacheRate = (rate: number) => {
+    try {
+      localStorage.setItem(BCV_CACHE_KEY, String(rate));
+      localStorage.setItem(BCV_CACHE_TS_KEY, String(Date.now()));
+    } catch { /* storage full or disabled */ }
+  };
+
+  const getCachedRate = (): number | null => {
+    try {
+      const cached = localStorage.getItem(BCV_CACHE_KEY);
+      const ts = localStorage.getItem(BCV_CACHE_TS_KEY);
+      if (cached && ts) {
+        const age = Date.now() - Number(ts);
+        // Cache valid for 24 hours
+        if (age < 24 * 60 * 60 * 1000) return Number(cached);
+      }
+    } catch { /* */ }
+    return null;
+  };
+
   const loadRate = async () => {
     setRateLoading(true);
     try {
-      // 1. Try admin-configured manual rate from site_settings
-      const manualRate = getSetting("bcv_rate", "");
+      // Commission always loads
       const commissionPct = parseFloat(getSetting("commission_percentage", "0") || "0");
       if (!isNaN(commissionPct)) setCommission(commissionPct);
 
+      // 1. Admin manual rate (highest priority)
+      const manualRate = getSetting("bcv_rate", "");
       if (manualRate) {
         const parsed = parseFloat(manualRate);
         if (!isNaN(parsed) && parsed > 0) {
           setBcvRate(parsed);
+          cacheRate(parsed);
           setRateLoading(false);
           return;
         }
       }
 
-      // 2. Fallback: ve.dolarapi.com (official BCV rate)
+      // 2. ve.dolarapi.com — Dólar Oficial (BCV)
       try {
-        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(5000) });
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial", { signal: AbortSignal.timeout(6000) });
         if (res.ok) {
           const data = await res.json();
-          const value = data?.promedio ?? data?.venta;
-          if (value && !isNaN(Number(value))) { setBcvRate(Number(value)); setRateLoading(false); return; }
+          const value = data?.promedio ?? data?.venta ?? data?.precio;
+          if (value && !isNaN(Number(value)) && Number(value) > 0) {
+            const rate = Number(value);
+            setBcvRate(rate);
+            cacheRate(rate);
+            setRateLoading(false);
+            return;
+          }
         }
       } catch { /* try next */ }
 
-      // 3. Last resort: open.er-api.com (USD→VES)
+      // 3. ve.dolarapi.com — All dólares (find oficial from array)
       try {
-        const res2 = await fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(5000) });
-        if (res2.ok) {
-          const data2 = await res2.json();
-          const value2 = data2?.rates?.VES ?? data2?.rates?.VEF;
-          if (value2 && !isNaN(Number(value2))) { setBcvRate(Number(value2)); setRateLoading(false); return; }
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares", { signal: AbortSignal.timeout(6000) });
+        if (res.ok) {
+          const data = await res.json();
+          const oficial = Array.isArray(data) ? data.find((d: any) => d?.fuente === "oficial" || d?.nombre?.toLowerCase()?.includes("oficial")) : null;
+          const value = oficial?.promedio ?? oficial?.venta ?? oficial?.precio;
+          if (value && !isNaN(Number(value)) && Number(value) > 0) {
+            const rate = Number(value);
+            setBcvRate(rate);
+            cacheRate(rate);
+            setRateLoading(false);
+            return;
+          }
         }
-      } catch { /* no more fallbacks */ }
+      } catch { /* try next */ }
+
+      // 4. pydolarve.org — Venezuelan dollar API
+      try {
+        const res = await fetch("https://pydolarve.org/api/v2/dollar?page=bcv", { signal: AbortSignal.timeout(6000) });
+        if (res.ok) {
+          const data = await res.json();
+          // pydolarve returns {monitors: {usd: {price: X}}} or similar
+          const price = data?.monitors?.usd?.price ?? data?.price ?? data?.usd;
+          if (price && !isNaN(Number(price)) && Number(price) > 0) {
+            const rate = Number(price);
+            setBcvRate(rate);
+            cacheRate(rate);
+            setRateLoading(false);
+            return;
+          }
+        }
+      } catch { /* try next */ }
+
+      // 5. open.er-api.com (international exchange rate)
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/USD", { signal: AbortSignal.timeout(6000) });
+        if (res.ok) {
+          const data = await res.json();
+          const value = data?.rates?.VES ?? data?.rates?.VEF;
+          if (value && !isNaN(Number(value)) && Number(value) > 0) {
+            const rate = Number(value);
+            setBcvRate(rate);
+            cacheRate(rate);
+            setRateLoading(false);
+            return;
+          }
+        }
+      } catch { /* no more APIs */ }
+
+      // 6. Last resort: use cached rate from localStorage
+      const cachedRate = getCachedRate();
+      if (cachedRate && cachedRate > 0) {
+        setBcvRate(cachedRate);
+        setRateLoading(false);
+        return;
+      }
 
     } finally {
       setRateLoading(false);
