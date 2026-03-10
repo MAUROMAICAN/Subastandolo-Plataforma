@@ -56,7 +56,7 @@ const AiChatWidget = () => {
 
     // Show tooltip after 3 seconds if not dismissed and chat not open
     useEffect(() => {
-        if (tooltipDismissed || isOpen) return;
+        if (tooltipDismissed || isOpen) return undefined;
         const timer = setTimeout(() => setShowTooltip(true), 3000);
         return () => clearTimeout(timer);
     }, [tooltipDismissed, isOpen]);
@@ -78,7 +78,7 @@ const AiChatWidget = () => {
     // Detect scroll position for scroll-down button
     useEffect(() => {
         const container = messagesContainerRef.current;
-        if (!container) return;
+        if (!container) return undefined;
         const handleScroll = () => {
             const { scrollTop, scrollHeight, clientHeight } = container;
             setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 100);

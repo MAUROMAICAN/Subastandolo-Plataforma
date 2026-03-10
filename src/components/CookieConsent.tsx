@@ -14,7 +14,7 @@ export default function CookieConsent() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return undefined;
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
     let t: ReturnType<typeof setTimeout>;
     if (!stored) {

@@ -39,7 +39,7 @@ const NotificationBell = () => {
 
   // Close on outside click
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
@@ -55,7 +55,7 @@ const NotificationBell = () => {
 
   // Reposition on scroll/resize
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     const reposition = () => updatePosition();
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);

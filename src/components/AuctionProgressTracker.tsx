@@ -80,7 +80,6 @@ const AuctionProgressTracker = ({ paymentStatus, deliveryStatus, trackingNumber 
           const Icon = step.icon;
           const isComplete = stepNum < activeStep;
           const isCurrent = stepNum === activeStep;
-          const isFuture = stepNum > activeStep;
 
           return (
             <div key={step.key} className="flex items-center gap-3">

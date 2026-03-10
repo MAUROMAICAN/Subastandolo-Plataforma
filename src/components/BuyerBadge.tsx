@@ -4,7 +4,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Award } from "lucide-react";
 
 export type BuyerTier = "nuevo" | "activo" | "destacado" | "premium" | "elite" | "leyenda";
 

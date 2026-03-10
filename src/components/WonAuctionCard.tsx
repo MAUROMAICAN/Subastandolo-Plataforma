@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import ShippingForm from "@/components/ShippingForm";
 import PaymentFlow from "@/components/PaymentFlow";
 import AuctionProgressTracker from "@/components/AuctionProgressTracker";
@@ -18,8 +17,6 @@ interface WonAuctionCardProps {
 
 const WonAuctionCard = ({ auction, userId, onNavigate }: WonAuctionCardProps) => {
   const [expanded, setExpanded] = useState(false);
-  const [shippingComplete, setShippingComplete] = useState(false);
-  const { toast } = useToast();
 
   const a = auction;
 
@@ -66,7 +63,7 @@ const WonAuctionCard = ({ auction, userId, onNavigate }: WonAuctionCardProps) =>
           <ShippingForm
             auctionId={a.id}
             userId={userId}
-            onComplete={() => setShippingComplete(true)}
+            onComplete={() => {}}
           />
 
           {/* Always show PaymentFlow so user can see bank data & submit proof */}

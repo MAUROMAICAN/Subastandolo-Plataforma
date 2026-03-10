@@ -7,7 +7,8 @@ import {
   Loader2, Trash2, Image as ImageIcon, Eye, Clock, CheckCircle,
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
-  Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeftRight, X as XIcon, ChevronLeft, ChevronRight
+  Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeftRight, X as XIcon, ChevronLeft, ChevronRight,
+  Upload
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,70 @@ export default function DealerAuctionsTab({
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [selectedImgKey, setSelectedImgKey] = useState<string | null>(null);
+  const [uploadingPhotos, setUploadingPhotos] = useState<string | null>(null);
+
+  // Handle adding new photos to an existing auction
+  const handleAddPhotos = async (auction: AuctionWithImages, files: FileList) => {
+    const total = auction.images.length + files.length;
+    if (total > 10) {
+      toast({ title: "Máximo 10 fotos", description: `Ya tienes ${auction.images.length} fotos. Solo puedes agregar ${10 - auction.images.length} más.`, variant: "destructive" });
+      return;
+    }
+    setUploadingPhotos(auction.id);
+    try {
+      const { applyWatermark } = await import("@/lib/watermark");
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const watermarked = await applyWatermark(file);
+        const filePath = `${crypto.randomUUID()}.webp`;
+        const { error: uploadError } = await supabase.storage.from("auction-images").upload(filePath, watermarked);
+        if (uploadError) {
+          toast({ title: "Error subiendo imagen", description: uploadError.message, variant: "destructive" });
+          break;
+        }
+        const { data: urlData } = supabase.storage.from("auction-images").getPublicUrl(filePath);
+        await supabase.from("auction_images").insert({
+          auction_id: auction.id,
+          image_url: urlData.publicUrl,
+          display_order: auction.images.length + i,
+        });
+      }
+      // Update main image_url if auction had no images before
+      if (auction.images.length === 0) {
+        const { data: firstImg } = await supabase.from("auction_images").select("image_url").eq("auction_id", auction.id).order("display_order", { ascending: true }).limit(1).maybeSingle();
+        if (firstImg?.image_url) {
+          await supabase.from("auctions").update({ image_url: firstImg.image_url } as any).eq("id", auction.id);
+        }
+      }
+      toast({ title: "📸 Fotos agregadas correctamente" });
+      fetchMyAuctions();
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Error al subir fotos", variant: "destructive" });
+    }
+    setUploadingPhotos(null);
+  };
+
+  // Handle deleting a single image from an existing auction
+  const handleDeleteImage = async (auction: AuctionWithImages, imageId: string, imageUrl: string) => {
+    if (auction.images.length <= 1) {
+      toast({ title: "Mínimo 1 foto", description: "No puedes eliminar la única foto de la subasta.", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("auction_images").delete().eq("id", imageId);
+    if (error) {
+      toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+      return;
+    }
+    // If we deleted the main image, update auction.image_url to the next one
+    if (auction.image_url === imageUrl) {
+      const { data: nextImg } = await supabase.from("auction_images").select("image_url").eq("auction_id", auction.id).order("display_order", { ascending: true }).limit(1).maybeSingle();
+      if (nextImg?.image_url) {
+        await supabase.from("auctions").update({ image_url: nextImg.image_url } as any).eq("id", auction.id);
+      }
+    }
+    toast({ title: "Foto eliminada" });
+    fetchMyAuctions();
+  };
 
   // Move image from one position to another and reassign sequential display_order
   const handleSwapImages = async (auction: AuctionWithImages, fromIdx: number, toIdx: number) => {
@@ -434,6 +499,16 @@ export default function DealerAuctionsTab({
                                         ? <ArrowLeftRight className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                         : <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />}
                                   </div>
+                                  {/* Delete button for pending/in_review */}
+                                  {(auction.status === "pending" || auction.status === "in_review") && (
+                                    <button
+                                      className="absolute top-0.5 right-0.5 w-5 h-5 bg-destructive text-destructive-foreground rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteImage(auction, img.id, img.image_url); }}
+                                      title="Eliminar foto"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  )}
                                   {isSelected && <span className="absolute top-0.5 left-0.5 text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold z-10">1º</span>}
                                   {i === 0 && <span className="absolute bottom-1 left-1 text-[8px] bg-primary/80 text-primary-foreground px-1.5 py-0.5 rounded font-bold z-10">PRINCIPAL</span>}
                                 </div>
@@ -443,6 +518,38 @@ export default function DealerAuctionsTab({
                           {(auction.status === "pending" || auction.status === "in_review") && auction.images.length > 1 && (
                             <p className="text-[10px] text-muted-foreground/60 mt-1.5">💡 {selectedImgKey?.startsWith(auction.id) ? "Ahora haz clic en otra imagen para intercambiar" : "Haz clic en una imagen para moverla de posición"}</p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Add more photos — for pending and in_review */}
+                      {(auction.status === "pending" || auction.status === "in_review") && auction.images.length < 10 && (
+                        <div className="bg-secondary/50 border border-border rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-wider mb-2">➕ Agregar Fotos ({auction.images.length}/10)</p>
+                          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 cursor-pointer hover:bg-primary/5 hover:border-primary/50 transition-all group">
+                            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                              {uploadingPhotos === auction.id
+                                ? <Loader2 className="h-4 w-4 animate-spin text-primary dark:text-[#A6E300]" />
+                                : <Upload className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                              }
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold text-foreground">Subir más fotos</span>
+                              <span className="text-[10px] text-muted-foreground block">Puedes agregar hasta {10 - auction.images.length} foto{10 - auction.images.length !== 1 ? "s" : ""} más</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              disabled={uploadingPhotos === auction.id}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  handleAddPhotos(auction, e.target.files);
+                                  e.target.value = "";
+                                }
+                              }}
+                            />
+                          </label>
                         </div>
                       )}
 
@@ -675,7 +782,7 @@ export default function DealerAuctionsTab({
                         )}
 
                         <div className="flex flex-wrap gap-2">
-                          {auction.status === "pending" && (
+                          {(auction.status === "pending" || auction.status === "in_review") && (
                             <>
                               <Button
                                 variant="outline" size="sm"

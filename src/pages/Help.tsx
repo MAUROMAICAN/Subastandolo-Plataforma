@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import {
-  HelpCircle, Download, BookOpen, ShieldCheck, DollarSign, Truck, Clock,
+  HelpCircle, Download, ShieldCheck, DollarSign, Truck, Clock,
   UserCheck, AlertTriangle, Star, ShoppingCart, CreditCard, PackageCheck, Ban,
   Lock, Search, Headphones, ChevronRight, MessageCircle, Zap, Eye
 } from "lucide-react";

@@ -30,7 +30,7 @@ const WinnerCelebration = ({ auction, userId, productImages }: WinnerCelebration
   const heroImage = productImages[0] || auction.image_url;
 
   useEffect(() => {
-    if (confettiRef.current) return;
+    if (confettiRef.current) return undefined;
     confettiRef.current = true;
 
     // Only fire confetti if payment is still pending (first visit feel)
@@ -46,6 +46,7 @@ const WinnerCelebration = ({ auction, userId, productImages }: WinnerCelebration
       }, 300);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [auction.payment_status]);
 
   const timeSinceEnd = Math.floor((Date.now() - new Date(auction.end_time).getTime()) / (1000 * 60 * 60));

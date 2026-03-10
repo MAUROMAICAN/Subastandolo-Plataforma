@@ -13,7 +13,7 @@ import {
   DollarSign, Truck, CreditCard, Clock, CheckCircle,
   Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   User, MapPin, Phone, FileText, Mail, MessageSquare,
-  ChevronsUpDown, XCircle, Bell, AlertCircle, RotateCcw,
+  ChevronsUpDown, XCircle, Bell, AlertCircle,
   Image as ImageIcon, ExternalLink
 } from "lucide-react";
 import type { AuctionExtended, WinnerInfo } from "./types";
@@ -29,7 +29,7 @@ interface Props {
 type SortField = "end_time" | "current_price" | "title";
 type SortDir = "asc" | "desc";
 
-const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, paymentProofs, globalSearch = "" }: Props) => {
+const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalSearch = "" }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
