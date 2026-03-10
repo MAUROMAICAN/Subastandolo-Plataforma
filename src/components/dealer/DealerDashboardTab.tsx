@@ -68,32 +68,62 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     }
 
     // Fallback: compute from finalized auctions using lifecycle status
+    // Only count auctions that actually have a sale (winner + price > 0)
     const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id);
 
-    // Por Cobrar: buyer hasn't paid yet
-    const pendingPaymentAuctions = finalizedWithSale.filter(a =>
-      !a.payment_status || a.payment_status === "pending"
+    const netOf = (list: typeof finalizedWithSale) =>
+      list.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
+
+    // ─── EXCLUDED: no money is owed for these ───
+    // abandoned = buyer didn't pay in 48h — no money
+    // refunded  = money returned to buyer  — no money
+    const excludedStatuses = ["abandoned", "refunded"];
+
+    // Filter to only auctions where money is actually in play
+    const billableAuctions = finalizedWithSale.filter(a =>
+      !excludedStatuses.includes(a.payment_status || "")
     );
-    const pendingPaymentTotal = pendingPaymentAuctions.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
 
-    // Retenido: payment verified/approved BUT not delivered yet
-    const retainedAuctions = finalizedWithSale.filter(a =>
-      (a.payment_status === "verified" || a.payment_status === "under_review") &&
-      a.delivery_status !== "delivered"
-    );
-    const retainedTotal = retainedAuctions.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
+    // ─── BOX 1: Por Cobrar (buyer hasn't paid yet) ───
+    // payment_status: pending, under_review, null/undefined
+    const pendingPaymentAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "pending";
+      return ps === "pending" || ps === "under_review";
+    });
 
-    // Disponible: delivered OR released (dealer can withdraw)
-    const availableAuctions = finalizedWithSale.filter(a =>
-      a.delivery_status === "delivered" || a.payment_status === "released"
-    );
-    const availableTotal = availableAuctions.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
+    // ─── BOX 2: Retenido (payment confirmed, awaiting delivery) ───
+    // payment_status: verified or escrow, AND delivery NOT completed
+    const retainedAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "";
+      const ds = a.delivery_status || "pending";
+      return (ps === "verified" || ps === "escrow") && ds !== "delivered";
+    });
 
-    const totalSales = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0);
-    const totalCommission = totalSales * COMMISSION_RATE;
-    const totalNet = totalSales - totalCommission;
+    // ─── BOX 3: Disponible (can withdraw) ───
+    // delivery confirmed OR funds explicitly released
+    const availableAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "";
+      const ds = a.delivery_status || "pending";
+      // Released always means available, regardless of delivery
+      if (ps === "released") return true;
+      // Delivered with verified/escrow payment means available
+      if (ds === "delivered" && (ps === "verified" || ps === "escrow")) return true;
+      return false;
+    });
 
-    return { totalNet, retained: retainedTotal, available: availableTotal, pendingPayment: pendingPaymentTotal, paid: 0, totalCommission };
+    // ─── BOX 4: Retirado (already paid out to dealer) ───
+    // This comes from dealer_earnings.is_paid, fallback = 0
+    const paidTotal = 0;
+
+    const pendingPaymentTotal = netOf(pendingPaymentAuctions);
+    const retainedTotal = netOf(retainedAuctions);
+    const availableTotal = netOf(availableAuctions);
+
+    // totalNet = sum of all 4 boxes (must ALWAYS add up)
+    const totalNet = pendingPaymentTotal + retainedTotal + availableTotal + paidTotal;
+    const totalCommission = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0) * COMMISSION_RATE;
+
+    return { totalNet, retained: retainedTotal, available: availableTotal, pendingPayment: pendingPaymentTotal, paid: paidTotal, totalCommission };
   }, [dealerEarnings, auctions]);
 
   return (

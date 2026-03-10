@@ -78,9 +78,11 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
   const COMMISSION_RATE = 0.10;
   const computedEarnings = useMemo(() => {
     if (earnings.length > 0) return earnings;
-    // Build from finalized auctions
+    // Build from finalized auctions — only billable ones
+    const excludedStatuses = ["abandoned", "refunded"];
     return auctions
-      .filter(a => a.status === "finalized" && a.current_price > 0)
+      .filter(a => a.status === "finalized" && a.current_price > 0 && (a as any).winner_id &&
+        !excludedStatuses.includes((a as any).payment_status || ""))
       .map(a => ({
         id: a.id,
         auction_id: a.id,
