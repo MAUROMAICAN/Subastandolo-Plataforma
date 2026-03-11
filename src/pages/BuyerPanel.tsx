@@ -11,6 +11,7 @@ import { useDealerFollows } from "@/hooks/useDealerFollows";
 import BuyerBadge from "@/components/BuyerBadge";
 import AdminBadge from "@/components/AdminBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
+import UnifiedReputationCard from "@/components/UnifiedReputationCard";
 import DisputeChat from "@/components/DisputeChat";
 import DisputeForm from "@/components/DisputeForm";
 import PasswordInput from "@/components/PasswordInput";
@@ -58,7 +59,7 @@ const BuyerPanel = () => {
   const { user, profile, isDealer, isAdmin, loading: authLoading, refreshProfile } = useAuth();
   const { getSetting } = useSiteSettings();
   const { winsCount } = useBuyerWins(user?.id);
-  const { buyerStats } = useUserReviews(user?.id);
+  const { buyerStats, dealerStats, unifiedStats } = useUserReviews(user?.id);
   const { favoriteIds, isFavorite, toggleFavorite } = useFavorites();
   const { followedDealers, loadingList: loadingDealers, toggleFollow } = useDealerFollows();
   const navigate = useNavigate();
@@ -1462,6 +1463,15 @@ const BuyerPanel = () => {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* ─── UNIFIED REPUTATION CARD ─── */}
+        <div className="mb-6">
+          <UnifiedReputationCard
+            unifiedStats={unifiedStats}
+            dealerStats={dealerStats}
+            buyerStats={buyerStats}
+          />
         </div>
 
         {/* ─── PENDING PAYMENT ALERT ─── */}
