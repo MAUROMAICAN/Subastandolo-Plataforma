@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Countdown from "@/components/Countdown";
 import { Trophy, Heart, Zap, Timer, Star } from "lucide-react";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
@@ -166,6 +167,9 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
                 <span className="text-[8px] font-bold text-secondary-foreground dark:text-white">{dealer.name.substring(0, 1)}</span>
               </div>
               <span className="truncate font-medium hover:underline">{dealer.name}</span>
+              {dealer.isVerified && (
+                <VerifiedBadge size="sm" salesCount={dealer.salesCount} showTooltip />
+              )}
             </div>
           )}
 
