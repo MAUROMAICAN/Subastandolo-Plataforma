@@ -368,23 +368,19 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     const hours = parseFloat(bulkDuration);
     if (isNaN(hours) || hours <= 0 || selectedAuctions.size === 0) return;
     setBulkRepublishing(true);
+    const now = new Date();
+    const endTime = new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
     let success = 0;
     let failed = 0;
     for (const auctionId of selectedAuctions) {
-      // Reset auction: clear winner, bids, reset price, set active with new time
       const auction = auctions.find(a => a.id === auctionId);
       if (!auction) { failed++; continue; }
 
       // Delete old bids
       await supabase.from("bids").delete().eq("auction_id", auctionId);
 
-      // Use RPC if available, else fallback
-      const { error: rpcError } = await (supabase.rpc as any)("set_auction_end_time", {
-        p_auction_id: auctionId,
-        p_duration_hours: hours,
-      });
-
-      const updateData: any = {
+      // Reset and activate in a single update
+      const { error } = await supabase.from("auctions").update({
         status: "active",
         current_price: auction.starting_price || 0,
         winner_id: null,
@@ -393,22 +389,16 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         tracking_number: null,
         funds_released_at: null,
         is_extended: false,
-      };
-
-      if (rpcError) {
-        // Fallback: set end_time manually
-        updateData.start_time = new Date().toISOString();
-        updateData.end_time = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-        updateData.requested_duration_hours = hours;
-      }
-
-      const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
+        start_time: now.toISOString(),
+        end_time: endTime,
+        requested_duration_hours: hours,
+      } as any).eq("id", auctionId);
       if (error) { failed++; } else { success++; }
     }
     setBulkRepublishing(false);
     setSelectedAuctions(new Set());
     setBulkDuration("");
-    toast({ title: `🚀 ${success} subastas republicadas${failed > 0 ? `, ${failed} fallaron` : ""}` });
+    toast({ title: `🚀 ${success} subasta${success !== 1 ? "s" : ""} republicada${success !== 1 ? "s" : ""}${failed > 0 ? ` · ${failed} fallaron` : ""}` });
     fetchAllData();
   };
 
