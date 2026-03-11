@@ -1420,7 +1420,6 @@ const BuyerPanel = () => {
                     ¡Hola, {(profile?.full_name || "Usuario").split(" ")[0]}!
                   </h1>
                   {isAdmin && <AdminBadge size="md" showLabel />}
-                  <BuyerBadge size="md" winsCount={winsCount} showLabel isAdmin={isAdmin} manualTier={profile?.manual_buyer_tier} />
                 </div>
                 <p className="text-sm text-white/50 mb-1">Bienvenido a tu panel de control</p>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1429,14 +1428,14 @@ const BuyerPanel = () => {
                       ID: {(profile as any).public_id}
                     </span>
                   )}
-                  <div className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
+                    <span className="w-2 h-2 rounded-full" style={{ background: unifiedStats.totalReviews > 0 ? (unifiedStats.positivePercentage >= 80 ? "#22c55e" : unifiedStats.positivePercentage >= 50 ? "#eab308" : "#ef4444") : "#6b7280" }} />
+                    {unifiedStats.totalReviews > 0 ? `${Math.round(unifiedStats.positivePercentage)}% reputación` : "Sin reseñas"}
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
                     <Star className="h-3 w-3 text-amber-400" />
-                    <ReputationThermometer
-                      percentage={buyerStats.positivePercentage}
-                      totalReviews={buyerStats.totalReviews}
-                      size="sm"
-                    />
-                  </div>
+                    {unifiedStats.totalReviews} calificación{unifiedStats.totalReviews !== 1 ? "es" : ""}
+                  </span>
                 </div>
               </div>
             </div>
