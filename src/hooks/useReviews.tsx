@@ -36,11 +36,30 @@ const emptyStats: ReputationStats = {
   avgPaymentCompliance: 0, avgCommunicationQuality: 0,
 };
 
+/** Compute unified stats from dealer + buyer stats (weighted avg by review count) */
+function computeUnifiedStats(ds: ReputationStats, bs: ReputationStats): ReputationStats {
+  const totalReviews = ds.totalReviews + bs.totalReviews;
+  if (totalReviews === 0) return emptyStats;
+  const dw = ds.totalReviews / totalReviews;
+  const bw = bs.totalReviews / totalReviews;
+  return {
+    totalReviews,
+    avgRating: ds.avgRating * dw + bs.avgRating * bw,
+    positivePercentage: ds.positivePercentage * dw + bs.positivePercentage * bw,
+    avgProductAccuracy: ds.avgProductAccuracy * dw + bs.avgProductAccuracy * bw,
+    avgAttentionQuality: ds.avgAttentionQuality * dw + bs.avgAttentionQuality * bw,
+    avgShippingSpeed: ds.avgShippingSpeed * dw + bs.avgShippingSpeed * bw,
+    avgPaymentCompliance: ds.avgPaymentCompliance * dw + bs.avgPaymentCompliance * bw,
+    avgCommunicationQuality: ds.avgCommunicationQuality * dw + bs.avgCommunicationQuality * bw,
+  };
+}
+
 /** Fetch reputation stats via DB computed function + reviews list */
 export function useUserReviews(userId: string | undefined) {
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [dealerStats, setDealerStats] = useState<ReputationStats>(emptyStats);
   const [buyerStats, setBuyerStats] = useState<ReputationStats>(emptyStats);
+  const [unifiedStats, setUnifiedStats] = useState<ReputationStats>(emptyStats);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,8 +86,11 @@ export function useUserReviews(userId: string | undefined) {
 
       const dsData = Array.isArray(dealerStatsRes.data) ? dealerStatsRes.data[0] : dealerStatsRes.data;
       const bsData = Array.isArray(buyerStatsRes.data) ? buyerStatsRes.data[0] : buyerStatsRes.data;
-      setDealerStats(mapStats(dsData));
-      setBuyerStats(mapStats(bsData));
+      const ds = mapStats(dsData);
+      const bs = mapStats(bsData);
+      setDealerStats(ds);
+      setBuyerStats(bs);
+      setUnifiedStats(computeUnifiedStats(ds, bs));
 
       // Fetch reviewer names
       const data = reviewsRes.data || [];
@@ -85,7 +107,7 @@ export function useUserReviews(userId: string | undefined) {
     fetchAll();
   }, [userId]);
 
-  return { reviews, loading, dealerStats, buyerStats };
+  return { reviews, loading, dealerStats, buyerStats, unifiedStats };
 }
 
 /** Fetch reviews for a specific auction */

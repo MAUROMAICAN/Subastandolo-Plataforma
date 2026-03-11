@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,7 +32,7 @@ import DealerReviewsTab from "@/components/dealer/DealerReviewsTab";
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
   const dealer = useVerifiedDealer(user?.id);
-  const { dealerStats } = useUserReviews(user?.id);
+  const { dealerStats, buyerStats, unifiedStats } = useUserReviews(user?.id);
   const { sections } = useSiteSettings();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -279,6 +279,14 @@ const DealerDashboard = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Pending action counts for sidebar badges
+  const pendingCounts = useMemo(() => {
+    const shipments = auctions.filter(a => a.status === "finalized" && a.payment_status === "verified" && a.delivery_status !== "shipped" && a.delivery_status !== "delivered").length;
+    const payments = auctions.filter(a => a.status === "finalized" && (a.payment_status === "pending" || a.payment_status === "under_review")).length;
+    const inReview = auctions.filter(a => a.status === "pending" || a.status === "in_review").length;
+    return { shipments, payment: payments, auctions: inReview } as Record<string, number>;
+  }, [auctions]);
+
   const handleSidebarNav = (key: string) => {
     if (key === "profile") {
       navigate("/mi-panel");
@@ -360,9 +368,17 @@ const DealerDashboard = () => {
                         }`}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
-                        {sidebarOpen && <span>{item.label}</span>}
+                        {sidebarOpen && <span className="flex-1">{item.label}</span>}
                         {isRestricted && sidebarOpen && (
                           <span className="ml-auto text-[8px] font-black bg-white/10 text-white/40 rounded-full px-1.5 py-0.5">Próx.</span>
+                        )}
+                        {!isRestricted && sidebarOpen && (pendingCounts[item.key] || 0) > 0 && (
+                          <span className="ml-auto h-5 min-w-5 flex items-center justify-center text-[9px] font-black bg-accent text-accent-foreground rounded-full px-1.5 animate-pulse">
+                            {pendingCounts[item.key]}
+                          </span>
+                        )}
+                        {!sidebarOpen && (pendingCounts[item.key] || 0) > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-accent rounded-full" />
                         )}
                       </button>
                     );
@@ -488,12 +504,12 @@ const DealerDashboard = () => {
                           {salesCount} venta{salesCount !== 1 ? "s" : ""}
                         </span>
                         <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
-                          <span className="w-2 h-2 rounded-full" style={{ background: dealerStats.totalReviews > 0 ? (dealerStats.positivePercentage >= 80 ? "#22c55e" : dealerStats.positivePercentage >= 50 ? "#eab308" : "#ef4444") : "#6b7280" }} />
-                          {dealerStats.totalReviews > 0 ? `${dealerStats.positivePercentage}% positivo` : "Sin reseñas"}
+                          <span className="w-2 h-2 rounded-full" style={{ background: unifiedStats.totalReviews > 0 ? (unifiedStats.positivePercentage >= 80 ? "#22c55e" : unifiedStats.positivePercentage >= 50 ? "#eab308" : "#ef4444") : "#6b7280" }} />
+                          {unifiedStats.totalReviews > 0 ? `${Math.round(unifiedStats.positivePercentage)}% reputación` : "Sin reseñas"}
                         </span>
                         <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-3 py-1 text-[11px] font-semibold text-white/80">
                           <BarChart3 className="h-3 w-3" style={{ color: tier.colors.fill }} />
-                          {dealerStats.totalReviews} reseña{dealerStats.totalReviews !== 1 ? "s" : ""}
+                          {unifiedStats.totalReviews} calificación{unifiedStats.totalReviews !== 1 ? "es" : ""}
                         </span>
                       </div>
                       {nextTier && (
