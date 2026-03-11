@@ -8,8 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Loader2, Wallet, DollarSign, TrendingUp, CheckCircle,
-  Clock, ArrowDownToLine, BarChart3, ShoppingBag
+  Clock, ArrowDownToLine, BarChart3, ShoppingBag, ChevronDown, ChevronUp,
+  Banknote, Save
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 interface Earning {
   id: string;
@@ -50,8 +56,23 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
   const [loading, setLoading] = useState(true);
   const [requestingWithdrawal, setRequestingWithdrawal] = useState(false);
 
+  // Bank account state
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankAccount, setBankAccountData] = useState<{
+    id?: string; bank_name: string; account_type: string; account_number: string;
+    identity_document: string; email: string; is_verified: boolean;
+  } | null>(null);
+  const [bankForm, setBankForm] = useState({
+    bank_name: "", account_type: "", account_number: "", identity_document: "", email: "",
+  });
+  const [savingBank, setSavingBank] = useState(false);
+  const [loadingBank, setLoadingBank] = useState(true);
+
   useEffect(() => {
-    if (user) fetchWalletData();
+    if (user) {
+      fetchWalletData();
+      fetchBankAccount();
+    }
   }, [user]);
 
   const fetchWalletData = async () => {
@@ -79,6 +100,66 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
     })));
     setWithdrawals((withdrawalsRes.data || []) as Withdrawal[]);
     setLoading(false);
+  };
+
+  const fetchBankAccount = async () => {
+    if (!user) return;
+    setLoadingBank(true);
+    const { data } = await supabase
+      .from("dealer_bank_accounts")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) {
+      setBankAccountData(data as any);
+      setBankForm({
+        bank_name: data.bank_name, account_type: data.account_type,
+        account_number: data.account_number, identity_document: data.identity_document, email: data.email,
+      });
+    }
+    setLoadingBank(false);
+  };
+
+  const banks = [
+    "Banco de Venezuela", "Banesco", "Banco Mercantil", "BBVA Provincial",
+    "Banco Nacional de Crédito (BNC)", "Banco del Tesoro", "Banco Bicentenario",
+    "Banco Exterior", "Banco Caroní", "Banco Fondo Común (BFC)", "Banco Sofitasa",
+    "Banco Plaza", "Banco Venezolano de Crédito", "Banplus",
+    "Banco del Caribe (Bancaribe)", "Bancrecer", "Mi Banco", "100% Banco",
+    "Bancamiga", "Banco Activo",
+  ];
+
+  const handleSaveBankAccount = async () => {
+    if (!user) return;
+    const { bank_name, account_type, account_number, identity_document, email } = bankForm;
+    if (!bank_name || !account_type || !account_number || !identity_document || !email) {
+      toast({ title: "Completa todos los campos", variant: "destructive" });
+      return;
+    }
+    if (account_number.length < 10 || account_number.length > 20) {
+      toast({ title: "Número de cuenta inválido", description: "Debe tener entre 10 y 20 dígitos.", variant: "destructive" });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({ title: "Correo electrónico inválido", variant: "destructive" });
+      return;
+    }
+    setSavingBank(true);
+    if (bankAccount?.id) {
+      const { error } = await supabase.from("dealer_bank_accounts").update({
+        bank_name, account_type, account_number, identity_document, email, is_verified: false,
+      } as any).eq("id", bankAccount.id);
+      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      else toast({ title: "💰 Datos bancarios actualizados" });
+    } else {
+      const { error } = await supabase.from("dealer_bank_accounts").insert({
+        user_id: user.id, bank_name, account_type, account_number, identity_document, email,
+      } as any);
+      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      else toast({ title: "💰 Datos bancarios registrados" });
+    }
+    setSavingBank(false);
+    fetchBankAccount();
   };
 
   const fmtBs = (v: number) => `Bs. ${v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -299,6 +380,80 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
           <li>Solo puedes tener un retiro pendiente a la vez.</li>
         </ul>
       </div>
+
+      {/* ── Mi Cuenta de Cobros (collapsible) ── */}
+      <Card className="border border-border rounded-sm overflow-hidden">
+        <button
+          onClick={() => setBankOpen(!bankOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/20 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+            <span className="text-sm font-heading font-bold">Mi Cuenta de Cobros</span>
+            {bankAccount?.is_verified && (
+              <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Verificada</Badge>
+            )}
+            {bankAccount && !bankAccount.is_verified && (
+              <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20">Pendiente</Badge>
+            )}
+            {!bankAccount && !loadingBank && (
+              <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/20">Sin configurar</Badge>
+            )}
+          </div>
+          {bankOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </button>
+        {bankOpen && (
+          <CardContent className="p-4 pt-0 border-t border-border space-y-4">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs space-y-1 mt-3">
+              <p className="font-semibold text-foreground">🔒 Regla de Seguridad</p>
+              <p className="text-muted-foreground">Solo se realizarán pagos a cuentas cuya titularidad coincida con la identidad verificada del Dealer.</p>
+            </div>
+
+            {loadingBank ? (
+              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">Banco *</Label>
+                  <Select value={bankForm.bank_name} onValueChange={v => setBankForm(p => ({ ...p, bank_name: v }))}>
+                    <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder="Selecciona tu banco" /></SelectTrigger>
+                    <SelectContent>
+                      {banks.map(b => (<SelectItem key={b} value={b} className="text-xs">{b}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">Tipo de Cuenta *</Label>
+                  <Select value={bankForm.account_type} onValueChange={v => setBankForm(p => ({ ...p, account_type: v }))}>
+                    <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corriente" className="text-xs">Corriente</SelectItem>
+                      <SelectItem value="ahorros" className="text-xs">Ahorros</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">Número de Cuenta *</Label>
+                  <Input value={bankForm.account_number} onChange={e => { const val = e.target.value.replace(/\D/g, "").slice(0, 20); setBankForm(p => ({ ...p, account_number: val })); }} placeholder="Ej: 01340123456789012345" className="rounded-xl text-xs h-9 font-mono" maxLength={20} />
+                  <p className="text-[10px] text-muted-foreground">Entre 10 y 20 dígitos</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">Cédula/RIF *</Label>
+                  <Input value={bankForm.identity_document} onChange={e => setBankForm(p => ({ ...p, identity_document: e.target.value.slice(0, 20) }))} placeholder="Ej: V-12345678" className="rounded-xl text-xs h-9" maxLength={20} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">Correo Asociado *</Label>
+                  <Input type="email" value={bankForm.email} onChange={e => setBankForm(p => ({ ...p, email: e.target.value.slice(0, 100) }))} placeholder="correo@ejemplo.com" className="rounded-xl text-xs h-9" maxLength={100} />
+                </div>
+                <Button onClick={handleSaveBankAccount} disabled={savingBank} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold text-xs h-9">
+                  {savingBank ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  {bankAccount ? "Actualizar Datos Bancarios" : "Guardar Datos Bancarios"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
     </div>
   );
 }

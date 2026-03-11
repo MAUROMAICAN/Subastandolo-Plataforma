@@ -265,7 +265,6 @@ const DealerDashboard = () => {
       label: "Operaciones",
       items: [
         { key: "shipments", label: "Envíos", icon: Truck },
-        { key: "payment", label: "Cobro", icon: Banknote },
         { key: "wallet", label: "Mi Billetera", icon: Wallet },
       ],
     },
