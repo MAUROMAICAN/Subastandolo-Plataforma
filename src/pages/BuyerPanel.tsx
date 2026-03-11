@@ -584,6 +584,7 @@ const BuyerPanel = () => {
       pending: { label: "Pago pendiente", color: "bg-amber-500/10 text-amber-600 border-amber-400/30 dark:text-amber-400", dot: "bg-amber-400" },
       under_review: { label: "En revisión", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400", dot: "bg-blue-400" },
       verified: { label: "Pago verificado", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]", dot: "bg-primary" },
+      escrow: { label: "Pago verificado ✅", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]", dot: "bg-primary" },
       paid: { label: "Pago reportado", color: "bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-400", dot: "bg-blue-400" },
       shipped: { label: "Enviado 🚚", color: "bg-purple-500/10 text-purple-600 border-purple-400/30 dark:text-purple-400", dot: "bg-purple-400" },
       delivered: { label: "Entregado ✓", color: "bg-primary/10 text-primary border-primary/30 dark:text-[#A6E300]", dot: "bg-primary" },
