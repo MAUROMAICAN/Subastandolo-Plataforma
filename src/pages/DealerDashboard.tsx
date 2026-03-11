@@ -371,17 +371,19 @@ const DealerDashboard = () => {
                         }`}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
-                        {sidebarOpen && <span className="flex-1">{item.label}</span>}
+                        {sidebarOpen && <span>{item.label}</span>}
                         {isRestricted && sidebarOpen && (
                           <span className="ml-auto text-[8px] font-black bg-white/10 text-white/40 rounded-full px-1.5 py-0.5">Próx.</span>
                         )}
                         {!isRestricted && sidebarOpen && (pendingCounts[item.key] || 0) > 0 && (
-                          <span className="ml-auto h-5 min-w-5 flex items-center justify-center text-[9px] font-black bg-accent text-accent-foreground rounded-full px-1.5 animate-pulse">
+                          <span className={`ml-auto inline-flex items-center justify-center font-bold tracking-tight min-w-[22px] h-5 px-1.5 text-[10px] rounded-md bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)] ring-1 ring-red-400/30`}>
                             {pendingCounts[item.key]}
                           </span>
                         )}
                         {!sidebarOpen && (pendingCounts[item.key] || 0) > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-accent rounded-full" />
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[8px] rounded-md bg-red-500 text-white shadow-[0_0_6px_rgba(239,68,68,0.6)] inline-flex items-center justify-center font-bold">
+                            {pendingCounts[item.key]}
+                          </span>
                         )}
                       </button>
                     );
