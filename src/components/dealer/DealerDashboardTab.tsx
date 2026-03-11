@@ -325,37 +325,47 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </div>
       )}
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Metric Cards — admin-style KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Subastas", value: metrics.total, icon: Package, color: "text-primary dark:text-[#A6E300]", filter: "all" },
-          { label: "Activas", value: metrics.active, icon: TrendingUp, color: "text-success", filter: "active" },
-          { label: "En Revisión", value: metrics.pending, icon: Clock, color: "text-warning", filter: "pending" },
-          { label: "Finalizadas", value: metrics.finalized, icon: CheckCircle, color: "text-muted-foreground", filter: "finalized" },
+          { label: "Total Subastas", value: String(metrics.total), sub: `${metrics.active} activas`, icon: Package, gradient: "from-primary/20 to-primary/5", iconColor: "text-primary dark:text-[#A6E300]", filter: "all" },
+          { label: "Activas", value: String(metrics.active), sub: `${metrics.total} total`, icon: TrendingUp, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500", filter: "active" },
+          { label: "En Revisión", value: String(metrics.pending), sub: "pendientes de aprobación", icon: Clock, gradient: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500", filter: "pending" },
+          { label: "Finalizadas", value: String(metrics.finalized), sub: `${pendingShipments} envíos pendientes`, icon: CheckCircle, gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500", filter: "finalized" },
         ].map((m, i) => (
-          <Card key={i} className="border border-border rounded-xl cursor-pointer hover:bg-secondary/30 hover:border-primary/30 transition-all group" onClick={() => { setActiveTab("auctions"); setStatusFilter(m.filter); }}>
-            <CardContent className="p-4 text-center">
-              <m.icon className={`h-5 w-5 ${m.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
-              <p className="text-2xl font-heading font-bold">{m.value}</p>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
+          <Card key={i} className="border border-border rounded-sm cursor-pointer hover:border-primary/40 hover:shadow-md transition-all group" onClick={() => { setActiveTab("auctions"); setStatusFilter(m.filter); }}>
+            <CardContent className={`p-4 bg-gradient-to-br ${m.gradient} rounded-sm`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-9 h-9 rounded-lg bg-background/80 flex items-center justify-center shadow-sm">
+                  <m.icon className={`h-4.5 w-4.5 ${m.iconColor}`} />
+                </div>
+              </div>
+              <p className="text-2xl font-heading font-bold tracking-tight">{m.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{m.label}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-0.5">{m.sub}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Revenue stats + Conversion */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Revenue stats + Conversion — admin-style */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Ingresos Totales", value: bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", icon: DollarSign, color: "text-primary dark:text-[#A6E300]" },
-          { label: "Total de Pujas", value: String(metrics.totalBids), icon: Gavel, color: "text-primary dark:text-[#A6E300]" },
-          { label: "Precio Promedio", value: bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", icon: BarChart3, color: "text-primary dark:text-[#A6E300]" },
-          { label: "Tasa Conversión", value: `${metrics.conversionRate}%`, icon: TrendingUp, color: "text-emerald-500" },
+          { label: "Ingresos Totales", value: bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", sub: `${metrics.finalized} ventas`, icon: DollarSign, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500" },
+          { label: "Total de Pujas", value: String(metrics.totalBids), sub: `${(metrics.totalBids / Math.max(metrics.total, 1)).toFixed(1)} por subasta`, icon: Gavel, gradient: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-500" },
+          { label: "Precio Promedio", value: bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", sub: "por subasta finalizada", icon: BarChart3, gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500" },
+          { label: "Tasa Conversión", value: `${metrics.conversionRate}%`, sub: "pujas → ventas", icon: TrendingUp, gradient: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500" },
         ].map((m, i) => (
-          <Card key={i} className="border border-border rounded-xl">
-            <CardContent className="p-4 text-center">
-              <m.icon className={`h-4 w-4 ${m.color} mx-auto mb-1.5`} />
-              <p className="text-xs text-muted-foreground mb-0.5">{m.label}</p>
-              <p className={`text-lg font-heading font-bold ${i === 0 || i === 3 ? m.color : ''}`}>{m.value}</p>
+          <Card key={i} className="border border-border rounded-sm">
+            <CardContent className={`p-4 bg-gradient-to-br ${m.gradient} rounded-sm`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-9 h-9 rounded-lg bg-background/80 flex items-center justify-center shadow-sm">
+                  <m.icon className={`h-4.5 w-4.5 ${m.iconColor}`} />
+                </div>
+              </div>
+              <p className="text-2xl font-heading font-bold tracking-tight">{m.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{m.label}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-0.5">{m.sub}</p>
             </CardContent>
           </Card>
         ))}
