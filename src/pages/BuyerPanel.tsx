@@ -1420,6 +1420,7 @@ const BuyerPanel = () => {
                     ¡Hola, {(profile?.full_name || "Usuario").split(" ")[0]}!
                   </h1>
                   {isAdmin && <AdminBadge size="md" showLabel />}
+                  <BuyerBadge size="md" winsCount={winsCount} showLabel isAdmin={isAdmin} manualTier={profile?.manual_buyer_tier} />
                 </div>
                 <p className="text-sm text-white/50 mb-1">Bienvenido a tu panel de control</p>
                 <div className="flex items-center gap-3 flex-wrap">
