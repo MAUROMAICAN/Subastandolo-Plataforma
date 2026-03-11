@@ -417,22 +417,35 @@ export default function DealerAuctionsTab({
             </div>
             {/* Mini KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div className="bg-primary/5 border border-primary/15 rounded-xl px-3 py-2.5 text-center">
-                <p className="text-lg font-black text-primary dark:text-[#A6E300]">{lifecycleCounts.active}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">Activas</p>
-              </div>
-              <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl px-3 py-2.5 text-center">
-                <p className="text-lg font-black text-amber-500">{lifecycleCounts.pending_payment}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">Por Cobrar</p>
-              </div>
-              <div className="bg-blue-500/5 border border-blue-500/15 rounded-xl px-3 py-2.5 text-center">
-                <p className="text-lg font-black text-blue-500">{lifecycleCounts.in_transit}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">En Tránsito</p>
-              </div>
-              <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-3 py-2.5 text-center">
-                <p className="text-lg font-black text-emerald-500">{lifecycleCounts.delivered}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">Entregadas</p>
-              </div>
+              {[
+                { key: "active" as const, count: lifecycleCounts.active, label: "Activas",
+                  numClass: "text-primary dark:text-[#A6E300]",
+                  base: "bg-primary/5 border-primary/15 hover:bg-primary/10 hover:border-primary/25",
+                  active: "bg-primary/15 border-primary/40 ring-2 ring-primary/30 ring-offset-1 ring-offset-card shadow-sm" },
+                { key: "pending_payment" as const, count: lifecycleCounts.pending_payment, label: "Por Cobrar",
+                  numClass: "text-amber-500",
+                  base: "bg-amber-500/5 border-amber-500/15 hover:bg-amber-500/10 hover:border-amber-500/25",
+                  active: "bg-amber-500/15 border-amber-500/40 ring-2 ring-amber-500/30 ring-offset-1 ring-offset-card shadow-sm" },
+                { key: "in_transit" as const, count: lifecycleCounts.in_transit, label: "En Tránsito",
+                  numClass: "text-blue-500",
+                  base: "bg-blue-500/5 border-blue-500/15 hover:bg-blue-500/10 hover:border-blue-500/25",
+                  active: "bg-blue-500/15 border-blue-500/40 ring-2 ring-blue-500/30 ring-offset-1 ring-offset-card shadow-sm" },
+                { key: "delivered" as const, count: lifecycleCounts.delivered, label: "Entregadas",
+                  numClass: "text-emerald-500",
+                  base: "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10 hover:border-emerald-500/25",
+                  active: "bg-emerald-500/15 border-emerald-500/40 ring-2 ring-emerald-500/30 ring-offset-1 ring-offset-card shadow-sm" },
+              ].map(kpi => (
+                <button
+                  key={kpi.key}
+                  onClick={() => handlePanelChange(salesPanel === kpi.key ? "all" : kpi.key)}
+                  className={`rounded-xl px-3 py-2.5 text-center transition-all cursor-pointer border ${
+                    salesPanel === kpi.key ? kpi.active : kpi.base
+                  }`}
+                >
+                  <p className={`text-lg font-black ${kpi.numClass}`}>{kpi.count}</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold">{kpi.label}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
