@@ -29,17 +29,24 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
   const navigate = useNavigate();
   const bcvRate = useBCVRate();
 
-  // Fetch Bs totals from platform_earnings (single source of truth)
+  // Fetch Bs totals from platform_earnings + payment_proofs (single source of truth)
   const [earningsBs, setEarningsBs] = useState({ revenueBs: 0, commissionBs: 0, dealerNetBs: 0, pendingBs: 0 });
+  const [proofRateMap, setProofRateMap] = useState<Record<string, number>>({});
   useEffect(() => {
-    supabase.from("platform_earnings").select("sale_amount_bs, commission_bs, dealer_net_bs, is_paid").then(({ data }) => {
-      const rows = (data || []) as any[];
+    Promise.all([
+      supabase.from("platform_earnings").select("sale_amount_bs, commission_bs, dealer_net_bs, is_paid"),
+      supabase.from("payment_proofs").select("auction_id, bcv_rate").eq("status", "approved"),
+    ]).then(([earningsRes, proofsRes]) => {
+      const rows = (earningsRes.data || []) as any[];
       setEarningsBs({
         revenueBs: rows.reduce((s, r) => s + (Number(r.sale_amount_bs) || 0), 0),
         commissionBs: rows.reduce((s, r) => s + (Number(r.commission_bs) || 0), 0),
         dealerNetBs: rows.reduce((s, r) => s + (Number(r.dealer_net_bs) || 0), 0),
         pendingBs: rows.filter(r => !r.is_paid).reduce((s, r) => s + (Number(r.dealer_net_bs) || 0), 0),
       });
+      const rateMap: Record<string, number> = {};
+      (proofsRes.data || []).forEach((p: any) => { rateMap[p.auction_id] = Number(p.bcv_rate); });
+      setProofRateMap(rateMap);
     });
   }, []);
 
@@ -52,7 +59,12 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
   const dealers = allUsers.filter(u => u.role === "dealer");
 
   const escrowAuctions = auctions.filter(a => a.payment_status === "escrow" || (a.payment_status === "verified" && !a.funds_released_at));
-  const totalEscrowBs = escrowAuctions.reduce((s, a) => s + a.current_price * (bcvRate || 0), 0);
+  // Use per-auction BCV rate from payment_proofs (same approach as dealer panels)
+  const fallbackRate = bcvRate || 0;
+  const totalEscrowBs = escrowAuctions.reduce((s, a) => {
+    const rate = proofRateMap[a.id] || fallbackRate;
+    return s + a.current_price * rate;
+  }, 0);
   const completedSales = auctions.filter(a => a.winner_id && (a.payment_status === "verified" || a.payment_status === "escrow" || a.funds_released_at));
   const releasedAuctions = auctions.filter(a => a.funds_released_at && a.payment_status !== "refunded");
 
@@ -224,7 +236,7 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate group-hover:text-primary dark:group-hover:text-accent transition-colors">{a.title}</p>
-                  <p className="text-muted-foreground text-[10px]">{a.dealer_name} · {a.bids_count} pujas · {fmtBs(a.current_price * (bcvRate || 0))}</p>
+                  <p className="text-muted-foreground text-[10px]">{a.dealer_name} · {a.bids_count} pujas · {fmtBs(a.current_price * (proofRateMap[a.id] || fallbackRate))}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] shrink-0 ${a.status === "active" ? "text-emerald-500 border-emerald-500/30" :
                   a.status === "finalized" ? "text-blue-500 border-blue-500/30" :
