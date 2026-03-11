@@ -72,49 +72,38 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
 
   const walletStats = useMemo(() => {
     const COMMISSION_RATE = 0.10;
+    const rate = bcvRate || 0;
 
-    if (dealerEarnings.length > 0) {
-      const totalNetBs = dealerEarnings.reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
-      const unpaidBs = dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
-      const paidBs = dealerEarnings.filter((e: any) => e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
-      return { totalNetBs, retainedBs: 0, availableBs: unpaidBs, pendingPaymentBs: 0, paidBs };
-    }
+    // Earnings from platform_earnings (funds already released)
+    const availableBs = dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
+    const paidBs = dealerEarnings.filter((e: any) => e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
 
-    // Fallback: compute from auctions data with per-auction BCV rates
-    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id);
-    const excludedStatuses = ["abandoned", "refunded"];
-    const billableAuctions = finalizedWithSale.filter(a =>
-      !excludedStatuses.includes(a.payment_status || "")
+    // IDs of auctions already in platform_earnings
+    const earningAuctionIds = new Set(dealerEarnings.map((e: any) => e.auction_id));
+
+    // Auctions in intermediate states (NOT yet in platform_earnings)
+    const intermediateAuctions = auctions.filter(a =>
+      a.status === "finalized" && a.current_price > 0 && a.winner_id &&
+      !earningAuctionIds.has(a.id) &&
+      !["abandoned", "refunded"].includes(a.payment_status || "")
     );
 
-    const netOfBs = (list: typeof billableAuctions) =>
-      list.reduce((s, a) => {
-        const rate = bcvRate || 0;
-        return s + a.current_price * (1 - COMMISSION_RATE) * rate;
-      }, 0);
+    // Por Cobrar: buyer hasn't paid yet
+    const pendingPaymentBs = intermediateAuctions
+      .filter(a => { const ps = a.payment_status || "pending"; return ps === "pending" || ps === "under_review"; })
+      .reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE) * rate, 0);
 
-    const pendingPaymentAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "pending";
-      return ps === "pending" || ps === "under_review";
-    });
-    const retainedAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "";
-      const ds = a.delivery_status || "pending";
-      return (ps === "verified" || ps === "escrow") && ds !== "delivered";
-    });
-    const availableAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "";
-      const ds = a.delivery_status || "pending";
-      if (ps === "released") return true;
-      if (ds === "delivered" && (ps === "verified" || ps === "escrow")) return true;
-      return false;
-    });
+    // Retenido: buyer paid (escrow/verified) but not delivered yet
+    const retainedBs = intermediateAuctions
+      .filter(a => {
+        const ps = a.payment_status || "";
+        const ds = a.delivery_status || "pending";
+        return (ps === "verified" || ps === "escrow") && ds !== "delivered";
+      })
+      .reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE) * rate, 0);
 
-    const pendingPaymentBs = netOfBs(pendingPaymentAuctions);
-    const retainedBs = netOfBs(retainedAuctions);
-    const availableBs = netOfBs(availableAuctions);
-    const totalNetBs = pendingPaymentBs + retainedBs + availableBs;
-    return { totalNetBs, retainedBs, availableBs, pendingPaymentBs, paidBs: 0 };
+    const totalNetBs = availableBs + paidBs + pendingPaymentBs + retainedBs;
+    return { totalNetBs, retainedBs, availableBs, pendingPaymentBs, paidBs };
   }, [dealerEarnings, auctions, bcvRate]);
 
   // Sales trend chart data (last 30 days)
