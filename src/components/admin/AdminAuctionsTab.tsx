@@ -45,6 +45,11 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
   const [currentPage, setCurrentPage] = useState(1);
   const [auctionPanel, setAuctionPanel] = useState<"active" | "ended" | "pending_payment" | "in_transit" | "delivered" | "disputed" | "released" | "no_bids">("active");
 
+  // Bulk selection for mass republish
+  const [selectedAuctions, setSelectedAuctions] = useState<Set<string>>(new Set());
+  const [bulkDuration, setBulkDuration] = useState("");
+  const [bulkRepublishing, setBulkRepublishing] = useState(false);
+
   // Fetch dispute auction IDs for classification
   const [disputeAuctionIds, setDisputeAuctionIds] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -359,6 +364,71 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     fetchAllData();
   };
 
+  const handleBulkRepublish = async () => {
+    const hours = parseFloat(bulkDuration);
+    if (isNaN(hours) || hours <= 0 || selectedAuctions.size === 0) return;
+    setBulkRepublishing(true);
+    let success = 0;
+    let failed = 0;
+    for (const auctionId of selectedAuctions) {
+      // Reset auction: clear winner, bids, reset price, set active with new time
+      const auction = auctions.find(a => a.id === auctionId);
+      if (!auction) { failed++; continue; }
+
+      // Delete old bids
+      await supabase.from("bids").delete().eq("auction_id", auctionId);
+
+      // Use RPC if available, else fallback
+      const { error: rpcError } = await (supabase.rpc as any)("set_auction_end_time", {
+        p_auction_id: auctionId,
+        p_duration_hours: hours,
+      });
+
+      const updateData: any = {
+        status: "active",
+        current_price: auction.starting_price || 0,
+        winner_id: null,
+        payment_status: null,
+        delivery_status: null,
+        tracking_number: null,
+        funds_released_at: null,
+        is_extended: false,
+      };
+
+      if (rpcError) {
+        // Fallback: set end_time manually
+        updateData.start_time = new Date().toISOString();
+        updateData.end_time = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+        updateData.requested_duration_hours = hours;
+      }
+
+      const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
+      if (error) { failed++; } else { success++; }
+    }
+    setBulkRepublishing(false);
+    setSelectedAuctions(new Set());
+    setBulkDuration("");
+    toast({ title: `🚀 ${success} subastas republicadas${failed > 0 ? `, ${failed} fallaron` : ""}` });
+    fetchAllData();
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedAuctions(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => {
+    const ids = paginatedAuctions.map(a => a.id);
+    if (ids.every(id => selectedAuctions.has(id))) {
+      setSelectedAuctions(new Set());
+    } else {
+      setSelectedAuctions(new Set(ids));
+    }
+  };
+
   const handleDelete = async (auctionId: string) => {
     await supabase.from("platform_earnings").delete().eq("auction_id", auctionId);
     await supabase.from("payment_proofs").delete().eq("auction_id", auctionId);
@@ -601,6 +671,71 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
         )}
       </div>
 
+      {/* Bulk Action Bar — only on Sin Pujas panel */}
+      {auctionPanel === "no_bids" && noBidAuctions.length > 0 && (
+        <Card className="border-2 border-orange-500/30 rounded-sm bg-orange-500/5 sticky top-0 z-10">
+          <CardContent className="p-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={selectAllVisible}
+                  className="w-5 h-5 rounded border-2 border-orange-500/50 flex items-center justify-center text-[10px] font-bold hover:bg-orange-500/20 transition-colors"
+                  title={paginatedAuctions.every(a => selectedAuctions.has(a.id)) ? "Deseleccionar todo" : "Seleccionar todo"}
+                >
+                  {paginatedAuctions.length > 0 && paginatedAuctions.every(a => selectedAuctions.has(a.id)) ? "✓" : ""}
+                </button>
+                <span className="text-xs font-semibold text-orange-500">
+                  {selectedAuctions.size > 0
+                    ? `${selectedAuctions.size} seleccionada${selectedAuctions.size > 1 ? "s" : ""}`
+                    : "Selecciona subastas para republicar"}
+                </span>
+              </div>
+              {selectedAuctions.size > 0 && (
+                <div className="flex items-center gap-2 flex-1">
+                  <select
+                    value={bulkDuration}
+                    onChange={e => setBulkDuration(e.target.value)}
+                    className="flex h-9 rounded-sm border border-orange-500/30 bg-background px-3 py-1 text-sm font-bold"
+                  >
+                    <option value="">Duración...</option>
+                    <option value="1">1 hora</option>
+                    <option value="2">2 horas</option>
+                    <option value="3">3 horas</option>
+                    <option value="4">4 horas</option>
+                    <option value="5">5 horas</option>
+                    <option value="6">6 horas</option>
+                    <option value="12">12 horas</option>
+                    <option value="24">1 día (24h)</option>
+                    <option value="48">2 días (48h)</option>
+                    <option value="72">3 días (72h)</option>
+                    <option value="96">4 días (96h)</option>
+                    <option value="120">5 días (120h)</option>
+                    <option value="144">6 días (144h)</option>
+                  </select>
+                  <Button
+                    size="sm"
+                    disabled={!bulkDuration || bulkRepublishing}
+                    onClick={handleBulkRepublish}
+                    className="rounded-sm text-xs h-9 bg-orange-500 hover:bg-orange-600 text-white gap-1.5"
+                  >
+                    {bulkRepublishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                    Republicar {selectedAuctions.size}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-9"
+                    onClick={() => setSelectedAuctions(new Set())}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {paginatedAuctions.map(auction => {
         const isEnded = new Date(auction.end_time).getTime() <= Date.now();
         const effectiveStatus = (auction.status === "active" && isEnded) ? "finalized" : auction.status;
@@ -620,10 +755,23 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
           scheduled: "Próximamente", pending: "Pendiente",
         };
         return (
-          <Card key={auction.id} className={`border rounded-sm transition-all overflow-hidden ${isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30 hover:shadow-sm"}`}>
+          <Card key={auction.id} className={`border rounded-sm transition-all overflow-hidden ${
+            selectedAuctions.has(auction.id) ? "border-orange-500 ring-1 ring-orange-500/30 bg-orange-500/5" :
+            isArchived ? "border-muted opacity-60" : "border-border hover:border-primary/30 hover:shadow-sm"
+          }`}>
             <CardContent className="p-0">
               {/* ═══ Card Header (always visible, click to toggle) ═══ */}
               <div className="flex items-stretch gap-0 cursor-pointer" onClick={() => toggleCard(auction.id)}>
+                {/* Checkbox for bulk selection (Sin Pujas panel only) */}
+                {auctionPanel === "no_bids" && (
+                  <div className="flex items-center px-2 shrink-0 border-r border-border" onClick={e => { e.stopPropagation(); toggleSelection(auction.id); }}>
+                    <button className={`w-5 h-5 rounded border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${
+                      selectedAuctions.has(auction.id) ? "bg-orange-500 border-orange-500 text-white" : "border-muted-foreground/30 hover:border-orange-500/50"
+                    }`}>
+                      {selectedAuctions.has(auction.id) ? "✓" : ""}
+                    </button>
+                  </div>
+                )}
                 {mainImage && (
                   <img
                     src={mainImage}
