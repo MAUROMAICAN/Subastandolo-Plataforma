@@ -639,14 +639,48 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                     {/* Bank Account Info */}
                     {dealer.bank_account ? (
                       <div className="bg-card border border-border rounded-sm p-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1 mb-2">
-                          <CreditCard className="h-3 w-3" /> Cuenta Bancaria
-                          {dealer.bank_account.is_verified ? (
-                            <Badge variant="outline" className="text-[9px] ml-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">Verificada</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[9px] ml-1 bg-warning/10 text-warning border-warning/20">Sin verificar</Badge>
-                          )}
-                        </p>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wide flex items-center gap-1">
+                            <CreditCard className="h-3 w-3" /> Cuenta Bancaria
+                            {dealer.bank_account.is_verified ? (
+                              <Badge variant="outline" className="text-[9px] ml-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">Verificada</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[9px] ml-1 bg-warning/10 text-warning border-warning/20">Sin verificar</Badge>
+                            )}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant={dealer.bank_account.is_verified ? "outline" : "default"}
+                            className={`h-7 text-[10px] rounded-sm px-3 ${dealer.bank_account.is_verified
+                              ? "text-muted-foreground border-border hover:text-destructive hover:border-destructive/30"
+                              : "bg-primary text-primary-foreground hover:bg-primary/90"
+                            }`}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const newStatus = !dealer.bank_account!.is_verified;
+                              const { error } = await supabase
+                                .from("dealer_bank_accounts")
+                                .update({ is_verified: newStatus } as any)
+                                .eq("user_id", dealer.dealer_id);
+                              if (error) {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              } else {
+                                toast({ title: newStatus ? "✅ Cuenta bancaria verificada" : "↩️ Verificación retirada" });
+                                setDealers(prev => prev.map(d =>
+                                  d.dealer_id === dealer.dealer_id
+                                    ? { ...d, bank_account: d.bank_account ? { ...d.bank_account, is_verified: newStatus } : null }
+                                    : d
+                                ));
+                              }
+                            }}
+                          >
+                            {dealer.bank_account.is_verified ? (
+                              <><XCircle className="h-3 w-3 mr-1" /> Desverificar</>
+                            ) : (
+                              <><CheckCircle className="h-3 w-3 mr-1" /> Verificar Cuenta</>
+                            )}
+                          </Button>
+                        </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                           <div><span className="text-muted-foreground">Banco:</span> <span className="font-medium">{dealer.bank_account.bank_name}</span></div>
                           <div><span className="text-muted-foreground">Tipo:</span> <span className="font-medium capitalize">{dealer.bank_account.account_type}</span></div>
