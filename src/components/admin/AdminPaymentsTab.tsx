@@ -221,6 +221,21 @@ const AdminPaymentsTab = ({ paymentProofs, fetchAllData, globalSearch = "" }: Pr
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // ── Also update auction payment_status so buyers/dealers see the change ──
+      const auctionUpdate: Record<string, string> = {};
+      if (action === "approved") {
+        auctionUpdate.payment_status = "verified";
+      } else {
+        auctionUpdate.payment_status = "pending";
+      }
+      const { error: auctionError } = await supabase
+        .from("auctions")
+        .update(auctionUpdate)
+        .eq("id", auctionId);
+      if (auctionError) {
+        console.error("Error updating auction payment_status:", auctionError.message);
+      }
+
       if (action === "approved") {
         supabase.functions.invoke("notify-payment-approved", {
           body: { buyerUserId, auctionTitle, auctionId, imageUrl },
