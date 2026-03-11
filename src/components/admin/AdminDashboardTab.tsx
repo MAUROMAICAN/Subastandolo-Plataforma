@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import {
   Eye, ShieldAlert, MessageCircle, ArrowRight, Gavel, AlertTriangle, CheckCircle2, Banknote
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useBCVRate } from "@/hooks/useBCVRate";
 import type { AdminTab, AuctionExtended, DealerUser } from "./types";
 
 interface Props {
@@ -24,21 +27,34 @@ interface Props {
 
 const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSettings, savingSettings, handleSaveSettings, setActiveTab, pendingPayments = 0, openDisputes = 0, unreadMessages = 0 }: Props) => {
   const navigate = useNavigate();
+  const bcvRate = useBCVRate();
+
+  // Fetch Bs totals from platform_earnings (single source of truth)
+  const [earningsBs, setEarningsBs] = useState({ revenueBs: 0, commissionBs: 0, dealerNetBs: 0, pendingBs: 0 });
+  useEffect(() => {
+    supabase.from("platform_earnings").select("sale_amount_bs, commission_bs, dealer_net_bs, is_paid").then(({ data }) => {
+      const rows = (data || []) as any[];
+      setEarningsBs({
+        revenueBs: rows.reduce((s, r) => s + (Number(r.sale_amount_bs) || 0), 0),
+        commissionBs: rows.reduce((s, r) => s + (Number(r.commission_bs) || 0), 0),
+        dealerNetBs: rows.reduce((s, r) => s + (Number(r.dealer_net_bs) || 0), 0),
+        pendingBs: rows.filter(r => !r.is_paid).reduce((s, r) => s + (Number(r.dealer_net_bs) || 0), 0),
+      });
+    });
+  }, []);
+
+  const fmtBs = (v: number) => `Bs. ${v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const pendingAuctions = auctions.filter(a => a.status === "pending" || a.status === "in_review");
   const activeAuctions = auctions.filter(a => ["active", "paused"].includes(a.status) && new Date(a.end_time) > new Date());
   const totalBids = auctions.reduce((s, a) => s + (a.bids_count || 0), 0);
-  const totalRevenue = auctions.filter(a => a.winner_id).reduce((s, a) => s + a.current_price, 0);
   const commissionPct = parseFloat(editingSettings["commission_percentage"] || "0");
   const dealers = allUsers.filter(u => u.role === "dealer");
 
   const escrowAuctions = auctions.filter(a => a.payment_status === "escrow" || (a.payment_status === "verified" && !a.funds_released_at));
-  const totalEscrow = escrowAuctions.reduce((s, a) => s + a.current_price, 0);
+  const totalEscrowBs = escrowAuctions.reduce((s, a) => s + a.current_price * (bcvRate || 0), 0);
   const completedSales = auctions.filter(a => a.winner_id && (a.payment_status === "verified" || a.payment_status === "escrow" || a.funds_released_at));
-  const totalCompletedRevenue = completedSales.reduce((s, a) => s + a.current_price, 0);
-  const totalCommissions = totalCompletedRevenue * commissionPct / 100;
   const releasedAuctions = auctions.filter(a => a.funds_released_at && a.payment_status !== "refunded");
-  const pendingDealerPayout = releasedAuctions.reduce((s, a) => s + (a.current_price * (1 - commissionPct / 100)), 0);
 
   // Quick actions that need attention
   const quickActions = [
@@ -85,7 +101,7 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
       {/* Hero KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Ingresos Totales", value: `$${totalRevenue.toLocaleString("es-MX")}`, sub: `${completedSales.length} ventas`, icon: DollarSign, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500", tab: "won" as AdminTab },
+          { label: "Ingresos Totales", value: fmtBs(earningsBs.revenueBs), sub: `${completedSales.length} ventas`, icon: DollarSign, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500", tab: "won" as AdminTab },
           { label: "Subastas Activas", value: activeAuctions.length.toString(), sub: `${auctions.length} total`, icon: Gavel, gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500", tab: "auctions" as AdminTab },
           { label: "Usuarios", value: allUsers.length.toString(), sub: `${dealers.length} dealers`, icon: Users, gradient: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-500", tab: "users" as AdminTab },
           { label: "Total Pujas", value: totalBids.toLocaleString(), sub: `${(totalBids / Math.max(auctions.length, 1)).toFixed(1)} por subasta`, icon: TrendingUp, gradient: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500", tab: "auctions" as AdminTab },
@@ -119,21 +135,21 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
               <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <Shield className="h-3 w-3" /> Balance en Escrow
               </p>
-              <p className="text-2xl font-heading font-bold text-foreground">${totalEscrow.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-heading font-bold text-foreground">{fmtBs(totalEscrowBs)}</p>
               <p className="text-[10px] text-muted-foreground">{escrowAuctions.length} subastas con fondos retenidos</p>
             </div>
             <div className="bg-card border border-border rounded-sm p-4 space-y-1">
               <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" /> Comisiones Acumuladas
               </p>
-              <p className="text-2xl font-heading font-bold text-primary dark:text-accent">${totalCommissions.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-heading font-bold text-primary dark:text-accent">{fmtBs(earningsBs.commissionBs)}</p>
               <p className="text-[10px] text-muted-foreground">{commissionPct}% sobre {completedSales.length} ventas</p>
             </div>
             <div className="bg-card border border-border rounded-sm p-4 space-y-1">
               <p className="text-[10px] font-semibold text-muted-foreground dark:text-gray-300 uppercase tracking-wider flex items-center gap-1">
                 <CreditCard className="h-3 w-3" /> Pendiente a Dealers
               </p>
-              <p className="text-2xl font-heading font-bold text-foreground">${pendingDealerPayout.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-heading font-bold text-foreground">{fmtBs(earningsBs.pendingBs)}</p>
               <p className="text-[10px] text-muted-foreground">{releasedAuctions.length} ventas con fondos liberados</p>
             </div>
           </div>
@@ -176,10 +192,10 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
                 <Input type="number" step="0.5" min="0" max="50" value={editingSettings["commission_percentage"] || ""} onChange={(e) => setEditingSettings(p => ({ ...p, commission_percentage: e.target.value }))} className="rounded-sm text-lg font-bold max-w-[160px]" placeholder="Ej: 10" />
                 <span className="text-sm text-muted-foreground font-medium">%</span>
               </div>
-              {editingSettings["commission_percentage"] && (
+              {editingSettings["commission_percentage"] && bcvRate && (
                 <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-1">
-                  <span>$100 → Comisión: <strong className="text-primary dark:text-accent">${(100 * parseFloat(editingSettings["commission_percentage"] || "0") / 100).toFixed(2)}</strong></span>
-                  <span>Dealer: <strong className="text-foreground">${(100 - 100 * parseFloat(editingSettings["commission_percentage"] || "0") / 100).toFixed(2)}</strong></span>
+                  <span>Bs. {(100 * bcvRate).toLocaleString("es-VE", { maximumFractionDigits: 0 })} → Comisión: <strong className="text-primary dark:text-accent">{fmtBs(100 * bcvRate * parseFloat(editingSettings["commission_percentage"] || "0") / 100)}</strong></span>
+                  <span>Dealer: <strong className="text-foreground">{fmtBs(100 * bcvRate * (1 - parseFloat(editingSettings["commission_percentage"] || "0") / 100))}</strong></span>
                 </div>
               )}
             </div>
@@ -208,7 +224,7 @@ const AdminDashboardTab = ({ auctions, allUsers, editingSettings, setEditingSett
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate group-hover:text-primary dark:group-hover:text-accent transition-colors">{a.title}</p>
-                  <p className="text-muted-foreground text-[10px]">{a.dealer_name} · {a.bids_count} pujas · ${a.current_price.toLocaleString("es-MX")}</p>
+                  <p className="text-muted-foreground text-[10px]">{a.dealer_name} · {a.bids_count} pujas · {fmtBs(a.current_price * (bcvRate || 0))}</p>
                 </div>
                 <Badge variant="outline" className={`text-[9px] shrink-0 ${a.status === "active" ? "text-emerald-500 border-emerald-500/30" :
                   a.status === "finalized" ? "text-blue-500 border-blue-500/30" :
