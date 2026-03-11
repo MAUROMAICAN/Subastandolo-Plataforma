@@ -182,17 +182,13 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     return activities.sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 6);
   }, [auctions]);
 
-  // Pending actions badges — aligned with wallet logic (handle null, require winner_id)
-  const billable = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id && !["abandoned", "refunded"].includes(a.payment_status || ""));
-  const pendingShipments = billable.filter(a => {
-    const ps = a.payment_status || "";
-    const ds = a.delivery_status || "pending";
-    return (ps === "verified" || ps === "escrow") && ds !== "shipped" && ds !== "delivered";
-  }).length;
-  const pendingPayments = billable.filter(a => {
-    const ps = a.payment_status || "pending";
-    return ps === "pending" || ps === "under_review";
-  }).length;
+  // Pending actions — MUST match DealerShipmentsTab logic exactly
+  const shippable = auctions.filter(a => {
+    const isEnded = new Date(a.end_time).getTime() <= Date.now();
+    return (a.status === "finalized" || (a.status === "active" && isEnded)) && a.winner_id;
+  });
+  const pendingShipments = shippable.filter(a => a.delivery_status === "ready_to_ship" && !a.tracking_number).length;
+  const pendingPayments = shippable.filter(a => ["pending", "under_review"].includes(a.payment_status || "")).length;
 
   return (
     <div className="space-y-5">

@@ -183,31 +183,44 @@ const DealerDashboard = () => {
     const number = trackingNumber[auctionId]?.trim();
     const file = trackingFile[auctionId];
     const company = trackingCompany[auctionId];
-    if (!number || !file || !company || !user) {
-      toast({ title: "Completa todos los campos", description: "Empresa de envío, número de guía y foto son obligatorios.", variant: "destructive" });
+    if (!company || !user) {
+      toast({ title: "Selecciona un método de envío", variant: "destructive" });
+      return;
+    }
+    const isPersonalOrDelivery = ["Entrega Personal", "Delivery"].includes(company);
+    if (!isPersonalOrDelivery && (!number || !file)) {
+      toast({ title: "Completa todos los campos", description: "Número de guía y foto son obligatorios para envíos por encomienda.", variant: "destructive" });
       return;
     }
     setSubmittingTracking(auctionId);
     try {
-      const ext = file.name.split(".").pop();
-      const filePath = `${user.id}/${auctionId}-tracking.${ext}`;
-      const { error: upErr } = await supabase.storage.from("auction-images").upload(filePath, file);
-      if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from("auction-images").getPublicUrl(filePath);
-      const { error } = await supabase.from("auctions").update({
-        tracking_number: number, tracking_photo_url: urlData.publicUrl, delivery_status: "shipped",
-      } as any).eq("id", auctionId);
+      const trackingLabel = isPersonalOrDelivery ? company : number!;
+      let trackingPhotoUrl: string | null = null;
+
+      if (file) {
+        const ext = file.name.split(".").pop();
+        const filePath = `${user.id}/${auctionId}-tracking.${ext}`;
+        const { error: upErr } = await supabase.storage.from("auction-images").upload(filePath, file);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("auction-images").getPublicUrl(filePath);
+        trackingPhotoUrl = urlData.publicUrl;
+      }
+
+      const updateData: any = { tracking_number: trackingLabel, delivery_status: "shipped" };
+      if (trackingPhotoUrl) updateData.tracking_photo_url = trackingPhotoUrl;
+
+      const { error } = await supabase.from("auctions").update(updateData).eq("id", auctionId);
       if (error) throw error;
 
       await supabase.from("shipping_audit_log").insert([
-        { auction_id: auctionId, changed_by: user.id, change_type: "tracking_submitted", field_name: "Número de guía", old_value: null, new_value: number },
-        { auction_id: auctionId, changed_by: user.id, change_type: "tracking_submitted", field_name: "Empresa de envío", old_value: null, new_value: company },
+        { auction_id: auctionId, changed_by: user.id, change_type: "tracking_submitted", field_name: "Método de envío", old_value: null, new_value: company },
+        ...(isPersonalOrDelivery ? [] : [{ auction_id: auctionId, changed_by: user.id, change_type: "tracking_submitted", field_name: "Número de guía", old_value: null, new_value: trackingLabel }]),
       ] as any);
 
       supabase.functions.invoke("notify-shipment", {
-        body: { auction_id: auctionId, tracking_number: number, shipping_company: company },
+        body: { auction_id: auctionId, tracking_number: trackingLabel, shipping_company: company },
       }).catch(err => console.error("Error notifying buyer:", err));
-      toast({ title: "📦 ¡Guía registrada!", description: "El comprador ha sido notificado." });
+      toast({ title: isPersonalOrDelivery ? "✅ ¡Envío confirmado!" : "📦 ¡Guía registrada!", description: "El comprador ha sido notificado." });
       fetchMyAuctions();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -274,18 +287,14 @@ const DealerDashboard = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Pending action counts for sidebar badges — aligned with wallet logic
+  // Pending action counts for sidebar badges — MUST match DealerShipmentsTab logic exactly
   const pendingCounts = useMemo(() => {
-    const billable = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id && !["abandoned", "refunded"].includes(a.payment_status || ""));
-    const shipments = billable.filter(a => {
-      const ps = a.payment_status || "";
-      const ds = a.delivery_status || "pending";
-      return (ps === "verified" || ps === "escrow") && ds !== "shipped" && ds !== "delivered";
-    }).length;
-    const payments = billable.filter(a => {
-      const ps = a.payment_status || "pending";
-      return ps === "pending" || ps === "under_review";
-    }).length;
+    const shippable = auctions.filter(a => {
+      const isEnded = new Date(a.end_time).getTime() <= Date.now();
+      return (a.status === "finalized" || (a.status === "active" && isEnded)) && a.winner_id;
+    });
+    const shipments = shippable.filter(a => a.delivery_status === "ready_to_ship" && !a.tracking_number).length;
+    const payments = shippable.filter(a => ["pending", "under_review"].includes(a.payment_status || "")).length;
     const inReview = auctions.filter(a => a.status === "pending" || a.status === "in_review").length;
     return { shipments, payment: payments, auctions: inReview } as Record<string, number>;
   }, [auctions]);

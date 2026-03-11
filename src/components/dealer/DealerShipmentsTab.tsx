@@ -280,10 +280,12 @@ export default function DealerShipmentsTab({
               </p>
 
               <div className="space-y-1">
-                <Label className="text-xs">Empresa de Envío *</Label>
+                <Label className="text-xs">Método de Envío *</Label>
                 <Select value={trackingCompany[auction.id] || ""} onValueChange={(v) => setTrackingCompany(prev => ({ ...prev, [auction.id]: v }))}>
-                  <SelectTrigger className="rounded-sm text-xs h-9"><SelectValue placeholder="Selecciona la empresa" /></SelectTrigger>
+                  <SelectTrigger className="rounded-sm text-xs h-9"><SelectValue placeholder="Selecciona el método" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Entrega Personal" className="text-xs">🤝 Entrega Personal</SelectItem>
+                    <SelectItem value="Delivery" className="text-xs">🛵 Delivery</SelectItem>
                     {["MRW", "Zoom", "Tealca", "Domesa", "Liberty Express", "Servientrega", "DHL", "FedEx", "Otra"].map(c => (
                       <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
                     ))}
@@ -291,30 +293,48 @@ export default function DealerShipmentsTab({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">Número de Guía *</Label>
-                <Input placeholder="Ej: 123456789" value={trackingNumber[auction.id] || ""} onChange={(e) => setTrackingNumber(prev => ({ ...prev, [auction.id]: e.target.value }))} className="rounded-sm text-xs h-9 font-mono" />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Foto del Comprobante de Envío *</Label>
-                <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-sm p-3 cursor-pointer hover:border-primary/50 hover:bg-secondary/20 transition-colors text-xs">
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setTrackingFile(prev => ({ ...prev, [auction.id]: e.target.files?.[0] || null }))} />
-                  <Camera className="h-4 w-4 text-muted-foreground" />
-                  <span className={trackingFile[auction.id] ? "text-foreground font-medium" : "text-muted-foreground"}>
-                    {trackingFile[auction.id] ? trackingFile[auction.id]!.name : "Tomar o subir foto del comprobante"}
-                  </span>
-                </label>
-                {trackingFile[auction.id] && (
-                  <div className="mt-2">
-                    <img src={URL.createObjectURL(trackingFile[auction.id]!)} alt="Preview" className="h-24 rounded-sm border border-border object-cover" />
+              {!["Entrega Personal", "Delivery"].includes(trackingCompany[auction.id] || "") && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Número de Guía *</Label>
+                    <Input placeholder="Ej: 123456789" value={trackingNumber[auction.id] || ""} onChange={(e) => setTrackingNumber(prev => ({ ...prev, [auction.id]: e.target.value }))} className="rounded-sm text-xs h-9 font-mono" />
                   </div>
-                )}
-              </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs">Foto del Comprobante de Envío *</Label>
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-sm p-3 cursor-pointer hover:border-primary/50 hover:bg-secondary/20 transition-colors text-xs">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setTrackingFile(prev => ({ ...prev, [auction.id]: e.target.files?.[0] || null }))} />
+                      <Camera className="h-4 w-4 text-muted-foreground" />
+                      <span className={trackingFile[auction.id] ? "text-foreground font-medium" : "text-muted-foreground"}>
+                        {trackingFile[auction.id] ? trackingFile[auction.id]!.name : "Tomar o subir foto del comprobante"}
+                      </span>
+                    </label>
+                    {trackingFile[auction.id] && (
+                      <div className="mt-2">
+                        <img src={URL.createObjectURL(trackingFile[auction.id]!)} alt="Preview" className="h-24 rounded-sm border border-border object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {["Entrega Personal", "Delivery"].includes(trackingCompany[auction.id] || "") && (
+                <div className="bg-primary/5 border border-primary/20 rounded-sm p-3 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5">
+                    {trackingCompany[auction.id] === "Entrega Personal"
+                      ? "🤝 Se confirmará la entrega en persona. No se requiere número de guía."
+                      : "🛵 Se enviará por delivery. No se requiere número de guía."}
+                  </p>
+                </div>
+              )}
 
               <Button
                 onClick={() => handleSubmitTracking(auction.id)}
-                disabled={submittingTracking === auction.id || !trackingCompany[auction.id] || !trackingNumber[auction.id]?.trim() || !trackingFile[auction.id]}
+                disabled={submittingTracking === auction.id || !trackingCompany[auction.id] || (
+                  !["Entrega Personal", "Delivery"].includes(trackingCompany[auction.id] || "") && (
+                    !trackingNumber[auction.id]?.trim() || !trackingFile[auction.id]
+                  )
+                )}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-sm"
               >
                 {submittingTracking === auction.id ? (
