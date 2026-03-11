@@ -160,7 +160,11 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             const tier = dealer.isVerified ? getDealerTier(dealer.salesCount) : null;
             return (
               <div
-                className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+                className={`mt-2 flex items-center gap-2 text-xs cursor-pointer group/dealer rounded-lg px-2 py-1.5 -mx-1 transition-colors ${
+                  dealer.isVerified
+                    ? `${tier?.colors.bg || "bg-blue-500/5"} hover:${tier?.colors.bg || "bg-blue-500/10"}`
+                    : "hover:bg-secondary/50"
+                }`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -168,29 +172,31 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
                 }}
               >
                 {/* Avatar */}
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center overflow-hidden shrink-0 ${
-                  dealer.isVerified ? `ring-1 ring-offset-1 ring-offset-card ${tier?.colors.border || "ring-blue-500/30"}` : "bg-secondary dark:bg-white/15"
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden shrink-0 ${
+                  dealer.isVerified ? `ring-2 ring-offset-1 ring-offset-card ${tier?.colors.border || "ring-blue-500/40"}` : "bg-secondary dark:bg-white/15"
                 }`}>
                   {dealer.avatarUrl ? (
                     <img src={dealer.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[8px] font-bold text-secondary-foreground dark:text-white bg-secondary dark:bg-white/15 w-full h-full flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-secondary-foreground dark:text-white bg-secondary dark:bg-white/15 w-full h-full flex items-center justify-center">
                       {dealer.name.substring(0, 1)}
                     </span>
                   )}
                 </div>
-                {/* Name */}
-                <span className="truncate font-medium hover:underline">{dealer.name}</span>
-                {/* Verified badge + tier label */}
-                {dealer.isVerified && (
-                  <>
-                    <VerifiedBadge size="sm" salesCount={dealer.salesCount} showTooltip />
-                    {tier && tier.key !== "nuevo" && (
-                      <span className={`text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${tier.colors.bg} ${tier.colors.text} ${tier.colors.border} border`}>
-                        {tier.label}
-                      </span>
-                    )}
-                  </>
+                {/* Name + Badge inline */}
+                <div className="flex items-center gap-1 min-w-0 flex-1">
+                  <span className="truncate font-semibold text-foreground/80 group-hover/dealer:text-primary dark:group-hover/dealer:text-white transition-colors text-[11px]">
+                    {dealer.name}
+                  </span>
+                  {dealer.isVerified && (
+                    <VerifiedBadge size="md" salesCount={dealer.salesCount} showTooltip />
+                  )}
+                </div>
+                {/* Tier pill — always visible for verified */}
+                {dealer.isVerified && tier && (
+                  <span className={`text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${tier.colors.bg} ${tier.colors.text} ${tier.colors.border}`}>
+                    {tier.label}
+                  </span>
                 )}
               </div>
             );
