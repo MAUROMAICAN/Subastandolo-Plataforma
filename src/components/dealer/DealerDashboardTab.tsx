@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserReviews } from "@/hooks/useReviews";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Package, TrendingUp, Clock, CheckCircle, ChevronDown,
+  Package, TrendingUp, Clock, CheckCircle,
   DollarSign, Gavel, BarChart3, Wallet, ArrowRight,
   Truck, CreditCard, Activity
 } from "lucide-react";
@@ -182,9 +182,17 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     return activities.sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 6);
   }, [auctions]);
 
-  // Pending actions badges
-  const pendingShipments = auctions.filter(a => a.status === "finalized" && a.payment_status === "verified" && a.delivery_status !== "shipped" && a.delivery_status !== "delivered").length;
-  const pendingPayments = auctions.filter(a => a.status === "finalized" && (a.payment_status === "pending" || a.payment_status === "under_review")).length;
+  // Pending actions badges — aligned with wallet logic (handle null, require winner_id)
+  const billable = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id && !["abandoned", "refunded"].includes(a.payment_status || ""));
+  const pendingShipments = billable.filter(a => {
+    const ps = a.payment_status || "";
+    const ds = a.delivery_status || "pending";
+    return (ps === "verified" || ps === "escrow") && ds !== "shipped" && ds !== "delivered";
+  }).length;
+  const pendingPayments = billable.filter(a => {
+    const ps = a.payment_status || "pending";
+    return ps === "pending" || ps === "under_review";
+  }).length;
 
   return (
     <div className="space-y-5">
@@ -317,7 +325,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         </div>
       )}
 
-      {/* Metric Cards + Conversion Rate */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total Subastas", value: metrics.total, icon: Package, color: "text-primary dark:text-[#A6E300]", filter: "all" },
@@ -326,11 +334,8 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           { label: "Finalizadas", value: metrics.finalized, icon: CheckCircle, color: "text-muted-foreground", filter: "finalized" },
         ].map((m, i) => (
           <Card key={i} className="border border-border rounded-xl cursor-pointer hover:bg-secondary/30 hover:border-primary/30 transition-all group" onClick={() => { setActiveTab("auctions"); setStatusFilter(m.filter); }}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <m.icon className={`h-5 w-5 ${m.color} group-hover:scale-110 transition-transform`} />
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50 -rotate-90" />
-              </div>
+            <CardContent className="p-4 text-center">
+              <m.icon className={`h-5 w-5 ${m.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
               <p className="text-2xl font-heading font-bold">{m.value}</p>
               <p className="text-xs text-muted-foreground">{m.label}</p>
             </CardContent>
@@ -339,43 +344,21 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       </div>
 
       {/* Revenue stats + Conversion */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card className="border border-border rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300]" />
-              <p className="text-xs text-muted-foreground">Ingresos Totales</p>
-            </div>
-            <p className="text-xl font-heading font-bold text-primary dark:text-[#A6E300]">{bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "..."}</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-border rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Gavel className="h-4 w-4 text-primary dark:text-[#A6E300]" />
-              <p className="text-xs text-muted-foreground">Total de Pujas</p>
-            </div>
-            <p className="text-xl font-heading font-bold">{metrics.totalBids}</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-border rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
-              <p className="text-xs text-muted-foreground">Precio Promedio</p>
-            </div>
-            <p className="text-xl font-heading font-bold">{bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "..."}</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-border rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-              <p className="text-xs text-muted-foreground">Tasa Conversión</p>
-            </div>
-            <p className="text-xl font-heading font-bold text-emerald-500">{metrics.conversionRate}%</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Ingresos Totales", value: bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", icon: DollarSign, color: "text-primary dark:text-[#A6E300]" },
+          { label: "Total de Pujas", value: String(metrics.totalBids), icon: Gavel, color: "text-primary dark:text-[#A6E300]" },
+          { label: "Precio Promedio", value: bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", icon: BarChart3, color: "text-primary dark:text-[#A6E300]" },
+          { label: "Tasa Conversión", value: `${metrics.conversionRate}%`, icon: TrendingUp, color: "text-emerald-500" },
+        ].map((m, i) => (
+          <Card key={i} className="border border-border rounded-xl">
+            <CardContent className="p-4 text-center">
+              <m.icon className={`h-4 w-4 ${m.color} mx-auto mb-1.5`} />
+              <p className="text-xs text-muted-foreground mb-0.5">{m.label}</p>
+              <p className={`text-lg font-heading font-bold ${i === 0 || i === 3 ? m.color : ''}`}>{m.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Sales Trend Chart + Recent Activity — side by side on desktop */}

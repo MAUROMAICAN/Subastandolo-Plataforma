@@ -279,10 +279,18 @@ const DealerDashboard = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Pending action counts for sidebar badges
+  // Pending action counts for sidebar badges — aligned with wallet logic
   const pendingCounts = useMemo(() => {
-    const shipments = auctions.filter(a => a.status === "finalized" && a.payment_status === "verified" && a.delivery_status !== "shipped" && a.delivery_status !== "delivered").length;
-    const payments = auctions.filter(a => a.status === "finalized" && (a.payment_status === "pending" || a.payment_status === "under_review")).length;
+    const billable = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id && !["abandoned", "refunded"].includes(a.payment_status || ""));
+    const shipments = billable.filter(a => {
+      const ps = a.payment_status || "";
+      const ds = a.delivery_status || "pending";
+      return (ps === "verified" || ps === "escrow") && ds !== "shipped" && ds !== "delivered";
+    }).length;
+    const payments = billable.filter(a => {
+      const ps = a.payment_status || "pending";
+      return ps === "pending" || ps === "under_review";
+    }).length;
     const inReview = auctions.filter(a => a.status === "pending" || a.status === "in_review").length;
     return { shipments, payment: payments, auctions: inReview } as Record<string, number>;
   }, [auctions]);
