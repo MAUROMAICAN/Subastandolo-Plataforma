@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import {
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
   Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeftRight, X as XIcon, ChevronLeft, ChevronRight,
-  Upload
+  Upload, Search, ShoppingBag, CreditCard, PackageCheck, Ban
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,21 +60,80 @@ export default function DealerAuctionsTab({
 }: Props) {
   const { toast } = useToast();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [salesPanel, setSalesPanel] = useState<"all" | "active" | "pending_payment" | "in_transit" | "delivered" | "no_bids" | "other">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 25;
+
+  // Helper: effective status considering time
+  const getEffective = useCallback((a: AuctionWithImages) =>
+    (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()) ? "finalized" : a.status, []);
+
+  // Lifecycle classification
+  const classifyAuction = useCallback((a: AuctionWithImages) => {
+    const eff = getEffective(a);
+    const ds = (a as any).delivery_status || "pending";
+    const ps = (a as any).payment_status || "pending";
+    const hasBids = a.bids.length > 0 || a.winner_id;
+
+    if (eff === "active") return "active";
+    if ((eff === "finalized") && a.winner_id) {
+      if (ds === "delivered") return "delivered";
+      if (ds === "shipped" || ds === "ready_to_ship") return "in_transit";
+      if (ps === "under_review" || ps === "pending" || ps === "verified") return "pending_payment";
+      if (ps === "abandoned") return "no_bids"; // treat abandoned as republishable
+    }
+    if ((eff === "finalized") && !hasBids) return "no_bids";
+    return "other";
+  }, [getEffective]);
+
+  // Count per lifecycle
+  const lifecycleCounts = useMemo(() => {
+    const counts = { all: auctions.length, active: 0, pending_payment: 0, in_transit: 0, delivered: 0, no_bids: 0, other: 0 };
+    auctions.forEach(a => { counts[classifyAuction(a)]++; });
+    return counts;
+  }, [auctions, classifyAuction]);
+
   const filteredAuctions = useMemo(() => {
-    const getEffective = (a: AuctionWithImages) =>
-      (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()) ? "finalized" : a.status;
-    if (statusFilter === "all") return auctions;
-    if (statusFilter === "archived") return auctions.filter(a => (a as any).archived_at);
-    if (statusFilter === "finalized") return auctions.filter(a => getEffective(a) === "finalized" && !(a as any).archived_at);
-    if (statusFilter === "active") return auctions.filter(a => getEffective(a) === "active");
-    return auctions.filter(a => a.status === statusFilter);
-  }, [auctions, statusFilter]);
+    let result = auctions;
+
+    // Lifecycle filter
+    if (salesPanel !== "all") {
+      result = result.filter(a => classifyAuction(a) === salesPanel);
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(a => {
+        if (a.title.toLowerCase().includes(q)) return true;
+        if (a.description?.toLowerCase().includes(q)) return true;
+        const winner = a.winner_id ? winnerProfiles[a.winner_id] : null;
+        if (winner?.full_name?.toLowerCase().includes(q)) return true;
+        if (winner?.phone?.includes(q)) return true;
+        if ((a as any).operation_number?.toString().includes(q)) return true;
+        return false;
+      });
+    }
+
+    return result;
+  }, [auctions, salesPanel, searchQuery, classifyAuction, winnerProfiles]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredAuctions.length / pageSize));
+  const paginatedAuctions = filteredAuctions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const [previewAuction, setPreviewAuction] = useState<AuctionWithImages | null>(null);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [selectedImgKey, setSelectedImgKey] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState<string | null>(null);
+
+  // Reset page when filter changes
+  const handlePanelChange = (panel: typeof salesPanel) => {
+    setSalesPanel(panel);
+    setCurrentPage(1);
+  };
 
   // Handle adding new photos to an existing auction
   const handleAddPhotos = async (auction: AuctionWithImages, files: FileList) => {
@@ -340,44 +399,81 @@ export default function DealerAuctionsTab({
           <AuctionPreviewModal auction={previewAuction} onClose={() => setPreviewAuction(null)} />
         )}
 
-        {/* ── HEADER ── */}
+        {/* ── HEADER WITH KPIS ── */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-heading font-black text-foreground flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mis Subastas
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {auctions.filter(a => a.status === "active" && new Date(a.end_time).getTime() > Date.now()).length} activas · {auctions.filter(a => a.status === "pending").length} pendientes · {auctions.filter(a => a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())).length} finalizadas
-              </p>
+          <div className="px-5 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-heading font-black text-foreground flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mis Ventas
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gestiona tus subastas, envíos y cobros en un solo lugar
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[11px] font-bold">
+                {auctions.length} publicaciones
+              </Badge>
             </div>
-            <Badge variant="outline" className="text-[11px] font-bold">
-              {auctions.length} subastas
-            </Badge>
+            {/* Mini KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="bg-primary/5 border border-primary/15 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-primary dark:text-[#A6E300]">{lifecycleCounts.active}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">Activas</p>
+              </div>
+              <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-amber-500">{lifecycleCounts.pending_payment}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">Por Cobrar</p>
+              </div>
+              <div className="bg-blue-500/5 border border-blue-500/15 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-blue-500">{lifecycleCounts.in_transit}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">En Tránsito</p>
+              </div>
+              <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-lg font-black text-emerald-500">{lifecycleCounts.delivered}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">Entregadas</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── STATUS FILTER PILLS ── */}
+        {/* ── SEARCH BAR ── */}
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título, comprador, teléfono u operación..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            className="pl-10 h-10 rounded-xl text-xs"
+          />
+        </div>
+
+        {/* ── LIFECYCLE SUB-TABS ── */}
         <div className="flex flex-wrap gap-1.5">
           {[
-            { key: "all", label: "Todas", count: auctions.length },
-            { key: "pending", label: "Pendientes", count: auctions.filter(a => a.status === "pending").length },
-            { key: "in_review", label: "En Revisión", count: auctions.filter(a => a.status === "in_review").length },
-            { key: "active", label: "Activas", count: auctions.filter(a => a.status === "active" && new Date(a.end_time).getTime() > Date.now()).length },
-            { key: "paused", label: "Pausadas", count: auctions.filter(a => a.status === "paused").length },
-            { key: "finalized", label: "Finalizadas", count: auctions.filter(a => (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())) && !(a as any).archived_at).length },
-            { key: "archived", label: "Archivadas", count: auctions.filter(a => (a as any).archived_at).length },
-            { key: "rejected", label: "Rechazadas", count: auctions.filter(a => a.status === "rejected").length },
+            { key: "all" as const, label: "Todas", count: lifecycleCounts.all, icon: Package, color: "" },
+            { key: "active" as const, label: "Activas", count: lifecycleCounts.active, icon: TrendingUp, color: "text-primary dark:text-[#A6E300]" },
+            { key: "pending_payment" as const, label: "Pago Pendiente", count: lifecycleCounts.pending_payment, icon: CreditCard, color: "text-amber-500" },
+            { key: "in_transit" as const, label: "En Tránsito", count: lifecycleCounts.in_transit, icon: Truck, color: "text-blue-500" },
+            { key: "delivered" as const, label: "Entregadas", count: lifecycleCounts.delivered, icon: PackageCheck, color: "text-emerald-500" },
+            { key: "no_bids" as const, label: "Sin Pujas", count: lifecycleCounts.no_bids, icon: Ban, color: "text-orange-500" },
+            { key: "other" as const, label: "Otras", count: lifecycleCounts.other, icon: Clock, color: "text-muted-foreground" },
           ].filter(f => f.count > 0 || f.key === "all").map(f => (
             <button
               key={f.key}
-              onClick={() => setStatusFilter(f.key)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${statusFilter === f.key
-                ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
-                : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/20"
-                }`}
+              onClick={() => handlePanelChange(f.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                salesPanel === f.key
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                  : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/20"
+              }`}
             >
-              {f.label} ({f.count})
+              <f.icon className={`h-3 w-3 ${salesPanel === f.key ? "" : f.color}`} />
+              <span className="hidden sm:inline">{f.label}</span>
+              <span className="sm:hidden">{f.label.split(" ")[0]}</span>
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                salesPanel === f.key ? "bg-white/10" : "bg-muted/80 dark:bg-white/10"
+              }`}>{f.count}</span>
             </button>
           ))}
         </div>
@@ -390,11 +486,13 @@ export default function DealerAuctionsTab({
         ) : filteredAuctions.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No hay subastas en esta categoría.</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery ? `Sin resultados para "${searchQuery}"` : "No hay subastas en esta categoría."}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredAuctions.map((auction) => {
+            {paginatedAuctions.map((auction) => {
               const isEnded = new Date(auction.end_time).getTime() <= Date.now();
               const effectiveStatus = (auction.status === "active" && isEnded) ? "finalized" : auction.status;
               const sc = statusConfig[effectiveStatus] || statusConfig.pending;
@@ -894,6 +992,24 @@ export default function DealerAuctionsTab({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── PAGINATION ── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+            <span className="text-xs text-muted-foreground">
+              Mostrando {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredAuctions.length)} de {filteredAuctions.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="h-8 w-8 p-0 rounded-lg">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-bold px-2">{currentPage} / {totalPages}</span>
+              <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="h-8 w-8 p-0 rounded-lg">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
