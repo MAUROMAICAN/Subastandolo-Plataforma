@@ -277,7 +277,7 @@ const DealerDashboard = () => {
     },
   ];
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleSidebarNav = (key: string) => {
     if (key === "profile") {
