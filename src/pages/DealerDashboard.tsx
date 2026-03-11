@@ -256,7 +256,6 @@ const DealerDashboard = () => {
       items: [
         { key: "dashboard", label: "Dashboard", icon: BarChart3 },
         { key: "create", label: "Crear Subasta", icon: Plus },
-        { key: "auctions", label: "Mis Ventas", icon: Package },
         { key: "store", label: "Tienda Directa", icon: Store },
         { key: "store-orders", label: "Ventas Tienda", icon: Package },
       ],
@@ -264,6 +263,7 @@ const DealerDashboard = () => {
     {
       label: "Operaciones",
       items: [
+        { key: "auctions", label: "Mis Ventas", icon: Package },
         { key: "shipments", label: "Envíos", icon: Truck },
         { key: "wallet", label: "Mi Billetera", icon: Wallet },
       ],
