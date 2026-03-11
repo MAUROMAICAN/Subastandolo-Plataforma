@@ -257,7 +257,6 @@ const DealerDashboard = () => {
         { key: "dashboard", label: "Dashboard", icon: BarChart3 },
         { key: "create", label: "Crear Subasta", icon: Plus },
         { key: "store", label: "Tienda Directa", icon: Store },
-        { key: "store-orders", label: "Ventas Tienda", icon: Package },
       ],
     },
     {
@@ -589,6 +588,7 @@ const DealerDashboard = () => {
                 submittingTracking={submittingTracking} handleSubmitTracking={handleSubmitTracking}
                 fetchMyAuctions={fetchMyAuctions}
                 onDuplicate={(data) => { setDuplicateData(data); setActiveTab("create"); }}
+                dealerId={user?.id}
               />
             )}
             {activeTab === "shipments" && (

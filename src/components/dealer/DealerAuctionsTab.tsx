@@ -8,10 +8,11 @@ import {
   XCircle, TrendingUp, DollarSign, Package, Trophy, User, Phone,
   AlertTriangle, ChevronDown, ChevronUp, Pause, Truck, Camera,
   Edit3, Save, RotateCcw, Copy, ZoomIn, ArrowLeftRight, X as XIcon, ChevronLeft, ChevronRight,
-  Upload, Search, ShoppingBag, CreditCard, PackageCheck, Ban
+  Upload, Search, ShoppingBag, CreditCard, PackageCheck, Ban, Store
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DealerStoreOrdersTab from "./DealerStoreOrdersTab";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -49,6 +50,7 @@ interface Props {
   handleSubmitTracking: (auctionId: string) => Promise<void>;
   fetchMyAuctions: () => void;
   onDuplicate: (data: { title: string; description: string; startingPrice: string; durationHours: string }) => void;
+  dealerId?: string;
 }
 
 export default function DealerAuctionsTab({
@@ -56,12 +58,12 @@ export default function DealerAuctionsTab({
   expandedAuction, setExpandedAuction, winnerProfiles, shippingInfoMap,
   trackingNumber, setTrackingNumber, trackingFile, setTrackingFile,
   trackingCompany, setTrackingCompany, submittingTracking, handleSubmitTracking,
-  fetchMyAuctions, onDuplicate,
+  fetchMyAuctions, onDuplicate, dealerId,
 }: Props) {
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [salesPanel, setSalesPanel] = useState<"all" | "active" | "pending_payment" | "in_transit" | "delivered" | "no_bids" | "other">("all");
+  const [salesPanel, setSalesPanel] = useState<"all" | "active" | "pending_payment" | "in_transit" | "delivered" | "no_bids" | "other" | "store">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 25;
 
@@ -470,8 +472,9 @@ export default function DealerAuctionsTab({
             { key: "in_transit" as const, label: "En Tránsito", count: lifecycleCounts.in_transit, icon: Truck, color: "text-blue-500" },
             { key: "delivered" as const, label: "Entregadas", count: lifecycleCounts.delivered, icon: PackageCheck, color: "text-emerald-500" },
             { key: "no_bids" as const, label: "Sin Pujas", count: lifecycleCounts.no_bids, icon: Ban, color: "text-orange-500" },
+            { key: "store" as const, label: "Ventas Directas", count: 0, icon: Store, color: "text-violet-500" },
             { key: "other" as const, label: "Otras", count: lifecycleCounts.other, icon: Clock, color: "text-muted-foreground" },
-          ].filter(f => f.count > 0 || f.key === "all").map(f => (
+          ].filter(f => f.count > 0 || f.key === "all" || f.key === "store").map(f => (
             <button
               key={f.key}
               onClick={() => handlePanelChange(f.key)}
@@ -491,6 +494,16 @@ export default function DealerAuctionsTab({
           ))}
         </div>
 
+        {/* ── STORE ORDERS (when Ventas Directas tab selected) ── */}
+        {salesPanel === "store" && dealerId ? (
+          <DealerStoreOrdersTab dealerId={dealerId} />
+        ) : salesPanel === "store" ? (
+          <div className="text-center py-12">
+            <Store className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Cargando ventas directas...</p>
+          </div>
+        ) : (
+        <>
         {/* ── AUCTION LIST ── */}
         {loading ? (
           <div className="flex justify-center py-12">
@@ -1024,6 +1037,8 @@ export default function DealerAuctionsTab({
               </Button>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
 
