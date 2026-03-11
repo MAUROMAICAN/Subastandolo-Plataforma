@@ -95,16 +95,52 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
   }, [auctions, proofRateMap, bcvRate]);
 
   const walletStats = useMemo(() => {
+    const COMMISSION_RATE = 0.10;
+    const fallback = bcvRate || 0;
+
     if (dealerEarnings.length > 0) {
       const totalNetBs = dealerEarnings.reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
       const unpaidBs = dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
       const paidBs = dealerEarnings.filter((e: any) => e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
-      const pendingPaymentBs = 0;
-      const retainedBs = 0;
-      return { totalNetBs, retainedBs, availableBs: unpaidBs, pendingPaymentBs, paidBs };
+      return { totalNetBs, retainedBs: 0, availableBs: unpaidBs, pendingPaymentBs: 0, paidBs };
     }
-    return { totalNetBs: 0, retainedBs: 0, availableBs: 0, pendingPaymentBs: 0, paidBs: 0 };
-  }, [dealerEarnings]);
+
+    // Fallback: compute from auctions data with per-auction BCV rates
+    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id);
+    const excludedStatuses = ["abandoned", "refunded"];
+    const billableAuctions = finalizedWithSale.filter(a =>
+      !excludedStatuses.includes(a.payment_status || "")
+    );
+
+    const netOfBs = (list: typeof billableAuctions) =>
+      list.reduce((s, a) => {
+        const rate = proofRateMap[a.id] || fallback;
+        return s + a.current_price * (1 - COMMISSION_RATE) * rate;
+      }, 0);
+
+    const pendingPaymentAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "pending";
+      return ps === "pending" || ps === "under_review";
+    });
+    const retainedAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "";
+      const ds = a.delivery_status || "pending";
+      return (ps === "verified" || ps === "escrow") && ds !== "delivered";
+    });
+    const availableAuctions = billableAuctions.filter(a => {
+      const ps = a.payment_status || "";
+      const ds = a.delivery_status || "pending";
+      if (ps === "released") return true;
+      if (ds === "delivered" && (ps === "verified" || ps === "escrow")) return true;
+      return false;
+    });
+
+    const pendingPaymentBs = netOfBs(pendingPaymentAuctions);
+    const retainedBs = netOfBs(retainedAuctions);
+    const availableBs = netOfBs(availableAuctions);
+    const totalNetBs = pendingPaymentBs + retainedBs + availableBs;
+    return { totalNetBs, retainedBs, availableBs, pendingPaymentBs, paidBs: 0 };
+  }, [dealerEarnings, auctions, proofRateMap, bcvRate]);
 
   // Sales trend chart data (last 30 days)
   const trendData = useMemo(() => {
