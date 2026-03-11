@@ -99,8 +99,8 @@ const QuieroVender = () => {
                                 }
                             ].map((benefit, i) => (
                                 <div key={i} className="bg-card border border-border p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
-                                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                                        <benefit.icon className="h-6 w-6 text-primary" />
+                                    <div className="w-12 h-12 bg-accent/15 dark:bg-accent/20 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                                        <benefit.icon className="h-6 w-6 text-accent dark:text-accent" />
                                     </div>
                                     <h3 className="font-heading font-bold text-xl mb-3">{benefit.title}</h3>
                                     <p className="text-muted-foreground text-sm leading-relaxed">{benefit.desc}</p>
@@ -120,7 +120,7 @@ const QuieroVender = () => {
 
                         <div className="flex flex-col lg:flex-row gap-8 relative">
                             {/* Connecting line for desktop */}
-                            <div className="hidden lg:block absolute top-[40px] left-[15%] right-[15%] h-0.5 bg-border z-0" />
+                            <div className="hidden lg:block absolute top-[40px] left-[15%] right-[15%] h-0.5 bg-accent/30 z-0" />
 
                             {[
                                 {
@@ -140,7 +140,7 @@ const QuieroVender = () => {
                                 }
                             ].map((item, i) => (
                                 <div key={i} className="flex-1 relative z-10 flex flex-col items-center text-center">
-                                    <div className="w-20 h-20 bg-card border-4 border-background shadow-lg rounded-full flex items-center justify-center text-xl font-black text-primary mb-6">
+                                    <div className="w-20 h-20 bg-accent text-primary border-4 border-background shadow-lg rounded-full flex items-center justify-center text-xl font-black mb-6">
                                         {item.step}
                                     </div>
                                     <h3 className="font-heading font-bold text-xl mb-3">{item.title}</h3>

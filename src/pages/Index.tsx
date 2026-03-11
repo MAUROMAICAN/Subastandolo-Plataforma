@@ -309,6 +309,29 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Quiero Vender CTA */}
+        <div className="bg-gradient-to-r from-primary via-primary to-primary/90 border-b border-accent/20">
+          <div className="container mx-auto px-4 py-3">
+            <Link
+              to="/quiero-vender"
+              className="flex items-center justify-between gap-3 group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Store className="h-4.5 w-4.5 text-accent" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-bold text-sm leading-tight">¿Tienes productos para vender?</p>
+                  <p className="text-white/60 text-[11px] leading-tight mt-0.5 truncate">Únete como Dealer Verificado y llega a miles de compradores</p>
+                </div>
+              </div>
+              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-xs rounded-full px-4 h-8 shrink-0 shadow-sm shadow-accent/25 group-hover:shadow-accent/40 transition-all">
+                Quiero Vender
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="sticky top-12 sm:top-14 z-30 bg-background/80 backdrop-blur-xl border-b border-border/30">
           <div className="container mx-auto px-3 sm:px-4">
