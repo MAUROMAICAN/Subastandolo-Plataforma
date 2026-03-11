@@ -19,6 +19,9 @@ interface Earning {
   dealer_net: number;
   is_paid: boolean;
   created_at: string;
+  sale_amount_bs: number;
+  commission_bs: number;
+  dealer_net_bs: number;
 }
 
 interface Withdrawal {
@@ -55,77 +58,76 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
     if (!user) return;
     setLoading(true);
 
-    const [earningsRes, withdrawalsRes] = await Promise.all([
+    const [earningsRes, withdrawalsRes, proofsRes] = await Promise.all([
       supabase.from("dealer_earnings").select("*")
         .eq("dealer_id", user.id)
         .order("created_at", { ascending: false }),
       supabase.from("withdrawal_requests").select("*")
         .eq("dealer_id", user.id)
         .order("created_at", { ascending: false }),
+      supabase.from("payment_proofs").select("auction_id, bcv_rate").eq("status", "approved"),
     ]);
 
-    setEarnings(((earningsRes.data || []) as any[]).map((e: any) => ({
-      ...e,
-      sale_amount: Number(e.sale_amount),
-      commission_amount: Number(e.commission_amount),
-      dealer_net: Number(e.dealer_net),
-    })));
+    // Build per-auction BCV rate map
+    const proofRateMap: Record<string, number> = {};
+    (proofsRes.data || []).forEach((p: any) => { proofRateMap[p.auction_id] = Number(p.bcv_rate); });
+    const fallbackRate = bcvRate || 0;
+
+    setEarnings(((earningsRes.data || []) as any[]).map((e: any) => {
+      const saleAmount = Number(e.sale_amount);
+      const commissionAmount = Number(e.commission_amount);
+      const dealerNet = Number(e.dealer_net);
+      const rate = proofRateMap[e.auction_id] || fallbackRate;
+      return {
+        ...e,
+        sale_amount: saleAmount,
+        commission_amount: commissionAmount,
+        dealer_net: dealerNet,
+        sale_amount_bs: saleAmount * rate,
+        commission_bs: commissionAmount * rate,
+        dealer_net_bs: dealerNet * rate,
+      };
+    }));
     setWithdrawals((withdrawalsRes.data || []) as Withdrawal[]);
     setLoading(false);
   };
 
-  // Compute from dealer_earnings if available, otherwise from auctions
-  const COMMISSION_RATE = 0.10;
-  const computedEarnings = useMemo(() => {
-    if (earnings.length > 0) return earnings;
-    // Build from finalized auctions — only billable ones
-    const excludedStatuses = ["abandoned", "refunded"];
-    return auctions
-      .filter(a => a.status === "finalized" && a.current_price > 0 && (a as any).winner_id &&
-        !excludedStatuses.includes((a as any).payment_status || ""))
-      .map(a => ({
-        id: a.id,
-        auction_id: a.id,
-        title: a.title,
-        sale_amount: a.current_price,
-        commission_amount: +(a.current_price * COMMISSION_RATE).toFixed(2),
-        dealer_net: +(a.current_price * (1 - COMMISSION_RATE)).toFixed(2),
-        is_paid: false,
-        created_at: a.end_time,
-      }));
-  }, [earnings, auctions]);
+  const fmtBs = (v: number) => `Bs. ${v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // Use earnings directly (they now have pre-computed Bs amounts)
+  const computedEarnings = earnings;
 
   const stats = useMemo(() => {
-    const totalEarnings = computedEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
+    const totalEarningsBs = computedEarnings.reduce((acc, e) => acc + e.dealer_net_bs, 0);
     const totalSales = computedEarnings.length;
-    const totalRevenue = computedEarnings.reduce((acc, e) => acc + e.sale_amount, 0);
-    const totalCommission = computedEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
-    const paidEarnings = computedEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-    const unpaidEarnings = computedEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
+    const totalRevenueBs = computedEarnings.reduce((acc, e) => acc + e.sale_amount_bs, 0);
+    const totalCommissionBs = computedEarnings.reduce((acc, e) => acc + e.commission_bs, 0);
+    const unpaidEarningsBs = computedEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net_bs, 0);
+    const unpaidEarningsUsd = computedEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
     const approvedWithdrawals = withdrawals.filter(w => w.status === "approved").reduce((acc, w) => acc + Number(w.amount), 0);
     const pendingWithdrawals = withdrawals.filter(w => w.status === "pending");
     const hasPendingWithdrawal = pendingWithdrawals.length > 0;
 
     return {
-      totalEarnings, totalSales, totalRevenue, totalCommission,
-      paidEarnings, unpaidEarnings, approvedWithdrawals,
+      totalEarningsBs, totalSales, totalRevenueBs, totalCommissionBs,
+      unpaidEarningsBs, unpaidEarningsUsd, approvedWithdrawals,
       hasPendingWithdrawal, pendingWithdrawals
     };
   }, [computedEarnings, withdrawals]);
 
   const handleRequestWithdrawal = async () => {
-    if (stats.unpaidEarnings <= 0) {
-      toast({ title: "Sin saldo disponible", description: "Tu balance debe ser mayor a $0.", variant: "destructive" });
+    if (stats.unpaidEarningsUsd <= 0) {
+      toast({ title: "Sin saldo disponible", description: "Tu balance debe ser mayor a Bs. 0.", variant: "destructive" });
       return;
     }
     setRequestingWithdrawal(true);
     try {
       const { error } = await supabase.from("withdrawal_requests").insert({
         dealer_id: user!.id,
-        amount: stats.unpaidEarnings,
+        amount: stats.unpaidEarningsUsd,
       } as any);
       if (error) throw error;
-      toast({ title: "✅ Solicitud Enviada", description: `Retiro de Bs. ${(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} solicitado. El admin lo procesará.` });
+      toast({ title: "✅ Solicitud Enviada", description: `Retiro de ${fmtBs(stats.unpaidEarningsBs)} solicitado. El admin lo procesará.` });
       fetchWalletData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -155,7 +157,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
           <Wallet className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Mi Billetera
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {stats.totalSales} venta{stats.totalSales !== 1 ? "s" : ""} · Bs. {(stats.totalEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ganados · Bs. {(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} disponible
+          {stats.totalSales} venta{stats.totalSales !== 1 ? "s" : ""} · {fmtBs(stats.totalEarningsBs)} ganados · {fmtBs(stats.unpaidEarningsBs)} disponible
         </p>
       </div>
 
@@ -170,7 +172,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
               <div>
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
                 <p className="text-3xl font-heading font-bold text-emerald-500">
-                  Bs. {(stats.unpaidEarnings * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {fmtBs(stats.unpaidEarningsBs)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   Tasa BCV al cierre de cada subasta
@@ -179,7 +181,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
             </div>
             <Button
               onClick={handleRequestWithdrawal}
-              disabled={requestingWithdrawal || stats.unpaidEarnings <= 0 || stats.hasPendingWithdrawal}
+              disabled={requestingWithdrawal || stats.unpaidEarningsUsd <= 0 || stats.hasPendingWithdrawal}
               className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-sm font-bold h-10 px-5"
             >
               {requestingWithdrawal ? (
@@ -198,9 +200,9 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Ventas Totales", value: stats.totalSales.toString(), icon: ShoppingBag, color: "text-primary dark:text-[#A6E300]" },
-          { label: "Ingresos Brutos", value: `Bs. ${(stats.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "text-foreground" },
-          { label: "Comisión (10%)", value: `Bs. ${(stats.totalCommission * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, color: "text-muted-foreground" },
-          { label: "Total Retirado", value: `Bs. ${(stats.approvedWithdrawals * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: CheckCircle, color: "text-emerald-500" },
+          { label: "Ingresos Brutos", value: fmtBs(stats.totalRevenueBs), icon: DollarSign, color: "text-foreground" },
+          { label: "Comisión (10%)", value: fmtBs(stats.totalCommissionBs), icon: TrendingUp, color: "text-muted-foreground" },
+          { label: "Total Retirado", value: fmtBs(stats.approvedWithdrawals * (bcvRate || 0)), icon: CheckCircle, color: "text-emerald-500" },
         ].map((stat, idx) => (
           <Card key={idx} className="border border-border rounded-sm">
             <CardContent className="p-3">
@@ -246,9 +248,9 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         {new Date(e.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-medium">Bs. {(e.sale_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td className="px-4 py-2.5 text-right text-muted-foreground hidden sm:table-cell">-Bs. {(e.commission_amount * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-emerald-500">Bs. {(e.dealer_net * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-2.5 text-right font-medium">{fmtBs(e.sale_amount_bs)}</td>
+                      <td className="px-4 py-2.5 text-right text-muted-foreground hidden sm:table-cell">-{fmtBs(e.commission_bs)}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-emerald-500">{fmtBs(e.dealer_net_bs)}</td>
                       <td className="px-4 py-2.5 text-right">
                         {e.is_paid ? (
                           <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Retirado</Badge>
@@ -284,7 +286,7 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
                 return (
                   <div key={w.id} className="flex items-center justify-between px-4 py-3 hover:bg-secondary/20 transition-colors">
                     <div>
-                      <p className="text-sm font-bold">Bs. {(Number(w.amount) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-sm font-bold">{fmtBs(Number(w.amount) * (bcvRate || 0))}</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(w.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
                     <Badge variant="outline" className={`text-[10px] ${st.color}`}>

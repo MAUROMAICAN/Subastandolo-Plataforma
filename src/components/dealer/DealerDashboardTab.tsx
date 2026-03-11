@@ -28,27 +28,51 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
   const bcvRate = useBCVRate();
   const { dealerStats, buyerStats, unifiedStats } = useUserReviews(user?.id);
 
-  // Earnings data (fetched independently for dashboard overview)
+  // Earnings data with per-auction BCV rates
   const [dealerEarnings, setDealerEarnings] = useState<any[]>([]);
   const [earningsLoaded, setEarningsLoaded] = useState(false);
+  // Per-auction BCV rate map (from payment_proofs)
+  const [proofRateMap, setProofRateMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (user) {
-      supabase.from("dealer_earnings")
-        .select("sale_amount, commission_amount, dealer_net, is_paid, created_at")
-        .eq("dealer_id", user.id)
-        .then(({ data }) => {
-          setDealerEarnings((data || []).map((e: any) => ({
-            sale_amount: Number(e.sale_amount),
-            commission_amount: Number(e.commission_amount),
-            dealer_net: Number(e.dealer_net),
+      Promise.all([
+        supabase.from("dealer_earnings")
+          .select("auction_id, sale_amount, commission_amount, dealer_net, is_paid, created_at")
+          .eq("dealer_id", user.id),
+        supabase.from("payment_proofs")
+          .select("auction_id, bcv_rate")
+          .eq("status", "approved"),
+      ]).then(([earningsRes, proofsRes]) => {
+        // Build BCV rate map from payment proofs
+        const rateMap: Record<string, number> = {};
+        (proofsRes.data || []).forEach((p: any) => { rateMap[p.auction_id] = Number(p.bcv_rate); });
+        setProofRateMap(rateMap);
+
+        const fallback = bcvRate || 0;
+        setDealerEarnings((earningsRes.data || []).map((e: any) => {
+          const saleAmount = Number(e.sale_amount);
+          const commissionAmount = Number(e.commission_amount);
+          const dealerNet = Number(e.dealer_net);
+          const rate = rateMap[e.auction_id] || fallback;
+          return {
+            auction_id: e.auction_id,
+            sale_amount: saleAmount,
+            commission_amount: commissionAmount,
+            dealer_net: dealerNet,
             is_paid: e.is_paid,
             created_at: e.created_at,
-          })));
-          setEarningsLoaded(true);
-        });
+            sale_amount_bs: saleAmount * rate,
+            commission_bs: commissionAmount * rate,
+            dealer_net_bs: dealerNet * rate,
+          };
+        }));
+        setEarningsLoaded(true);
+      });
     }
   }, [user]);
+
+  const fmtBs = (v: number) => `Bs. ${v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const metrics = useMemo(() => {
     const total = auctions.length;
@@ -56,58 +80,31 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     const pending = auctions.filter(a => a.status === "pending" || a.status === "in_review").length;
     const finalized = auctions.filter(a => a.status === "finalized").length;
     const totalBids = auctions.reduce((sum, a) => sum + a.bids.length, 0);
-    const totalRevenue = auctions
+    // Compute totalRevenueBs using per-auction BCV rates
+    const fallback = bcvRate || 0;
+    const totalRevenueBs = auctions
       .filter(a => a.status === "finalized" && a.current_price > 0)
-      .reduce((sum, a) => sum + a.current_price, 0);
-    const avgPrice = finalized > 0 ? totalRevenue / finalized : 0;
-    // Conversion: finalized with a winner / auctions that had bids
+      .reduce((sum, a) => {
+        const rate = proofRateMap[a.id] || fallback;
+        return sum + (a.current_price * rate);
+      }, 0);
+    const avgPriceBs = finalized > 0 ? totalRevenueBs / finalized : 0;
     const auctionsWithBids = auctions.filter(a => a.bids.length > 0).length;
     const conversionRate = auctionsWithBids > 0 ? Math.round((finalized / auctionsWithBids) * 100) : 0;
-    return { total, active, pending, finalized, totalBids, totalRevenue, avgPrice, conversionRate };
-  }, [auctions]);
+    return { total, active, pending, finalized, totalBids, totalRevenueBs, avgPriceBs, conversionRate };
+  }, [auctions, proofRateMap, bcvRate]);
 
   const walletStats = useMemo(() => {
-    const COMMISSION_RATE = 0.10;
-
     if (dealerEarnings.length > 0) {
-      const totalNet = dealerEarnings.reduce((acc, e) => acc + e.dealer_net, 0);
-      const paid = dealerEarnings.filter(e => e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-      const unpaid = dealerEarnings.filter(e => !e.is_paid).reduce((acc, e) => acc + e.dealer_net, 0);
-      const totalCommission = dealerEarnings.reduce((acc, e) => acc + e.commission_amount, 0);
-      return { totalNet, retained: unpaid, available: 0, pendingPayment: 0, paid, totalCommission };
+      const totalNetBs = dealerEarnings.reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
+      const unpaidBs = dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
+      const paidBs = dealerEarnings.filter((e: any) => e.is_paid).reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
+      const pendingPaymentBs = 0;
+      const retainedBs = 0;
+      return { totalNetBs, retainedBs, availableBs: unpaidBs, pendingPaymentBs, paidBs };
     }
-
-    const finalizedWithSale = auctions.filter(a => a.status === "finalized" && a.current_price > 0 && a.winner_id);
-    const netOf = (list: typeof finalizedWithSale) =>
-      list.reduce((s, a) => s + a.current_price * (1 - COMMISSION_RATE), 0);
-    const excludedStatuses = ["abandoned", "refunded"];
-    const billableAuctions = finalizedWithSale.filter(a =>
-      !excludedStatuses.includes(a.payment_status || "")
-    );
-    const pendingPaymentAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "pending";
-      return ps === "pending" || ps === "under_review";
-    });
-    const retainedAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "";
-      const ds = a.delivery_status || "pending";
-      return (ps === "verified" || ps === "escrow") && ds !== "delivered";
-    });
-    const availableAuctions = billableAuctions.filter(a => {
-      const ps = a.payment_status || "";
-      const ds = a.delivery_status || "pending";
-      if (ps === "released") return true;
-      if (ds === "delivered" && (ps === "verified" || ps === "escrow")) return true;
-      return false;
-    });
-    const paidTotal = 0;
-    const pendingPaymentTotal = netOf(pendingPaymentAuctions);
-    const retainedTotal = netOf(retainedAuctions);
-    const availableTotal = netOf(availableAuctions);
-    const totalNet = pendingPaymentTotal + retainedTotal + availableTotal + paidTotal;
-    const totalCommission = finalizedWithSale.reduce((sum, a) => sum + a.current_price, 0) * COMMISSION_RATE;
-    return { totalNet, retained: retainedTotal, available: availableTotal, pendingPayment: pendingPaymentTotal, paid: paidTotal, totalCommission };
-  }, [dealerEarnings, auctions]);
+    return { totalNetBs: 0, retainedBs: 0, availableBs: 0, pendingPaymentBs: 0, paidBs: 0 };
+  }, [dealerEarnings]);
 
   // Sales trend chart data (last 30 days)
   const trendData = useMemo(() => {
@@ -198,7 +195,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
           <h1 className="text-xl font-heading font-bold">Dashboard</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas
-            {bcvRate !== null && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ingresos`}
+            {earningsLoaded && ` · ${fmtBs(metrics.totalRevenueBs)} ingresos`}
           </p>
         </div>
         <span className="text-[10px] px-2 py-1 border border-border rounded-sm text-muted-foreground whitespace-nowrap">
@@ -268,7 +265,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <div>
                   <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo Disponible para Retirar</p>
                   <p className="text-2xl sm:text-3xl font-heading font-bold text-emerald-500">
-                    Bs. {(walletStats.available * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {fmtBs(walletStats.availableBs)}
                   </p>
                 </div>
               </div>
@@ -281,7 +278,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <DollarSign className="h-4 w-4 text-slate-400 mx-auto mb-1" />
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wide">Por Cobrar</p>
                 <p className="text-sm sm:text-base font-bold text-slate-500 dark:text-slate-400">
-                  Bs. {(walletStats.pendingPayment * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {fmtBs(walletStats.pendingPaymentBs)}
                 </p>
                 <p className="text-[10px] text-slate-500/60 dark:text-slate-400/60 mt-0.5">Comprador no ha pagado</p>
               </div>
@@ -289,7 +286,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <Clock className="h-4 w-4 text-amber-500 mx-auto mb-1" />
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wide">Retenido</p>
                 <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
-                  Bs. {(walletStats.retained * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {fmtBs(walletStats.retainedBs)}
                 </p>
                 <p className="text-[10px] text-amber-600/60 dark:text-amber-400/60 mt-0.5">Esperando entrega</p>
               </div>
@@ -297,7 +294,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <CheckCircle className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wide">Disponible</p>
                 <p className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
-                  Bs. {(walletStats.available * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {fmtBs(walletStats.availableBs)}
                 </p>
                 <p className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60 mt-0.5">Listo para retiro</p>
               </div>
@@ -305,7 +302,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
                 <DollarSign className="h-4 w-4 text-primary dark:text-[#A6E300] mx-auto mb-1" />
                 <p className="text-[11px] text-primary dark:text-[#A6E300] font-semibold uppercase tracking-wide">Retirado</p>
                 <p className="text-sm sm:text-base font-bold text-primary dark:text-[#A6E300]">
-                  Bs. {(walletStats.paid * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {fmtBs(walletStats.paidBs)}
                 </p>
                 <p className="text-[10px] text-muted-foreground/60 mt-0.5">Pagado al dealer</p>
               </div>
@@ -350,9 +347,9 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
       {/* Revenue stats + Conversion — admin-style */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Ingresos Totales", value: bcvRate !== null ? `Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", sub: `${metrics.finalized} ventas`, icon: DollarSign, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500" },
+          { label: "Ingresos Totales", value: earningsLoaded ? fmtBs(metrics.totalRevenueBs) : "...", sub: `${metrics.finalized} ventas`, icon: DollarSign, gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500" },
           { label: "Total de Pujas", value: String(metrics.totalBids), sub: `${(metrics.totalBids / Math.max(metrics.total, 1)).toFixed(1)} por subasta`, icon: Gavel, gradient: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-500" },
-          { label: "Precio Promedio", value: bcvRate !== null ? `Bs. ${(metrics.avgPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "...", sub: "por subasta finalizada", icon: BarChart3, gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500" },
+          { label: "Precio Promedio", value: earningsLoaded ? fmtBs(metrics.avgPriceBs) : "...", sub: "por subasta finalizada", icon: BarChart3, gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-500" },
           { label: "Tasa Conversión", value: `${metrics.conversionRate}%`, sub: "pujas → ventas", icon: TrendingUp, gradient: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500" },
         ].map((m, i) => (
           <Card key={i} className="border border-border rounded-sm">
