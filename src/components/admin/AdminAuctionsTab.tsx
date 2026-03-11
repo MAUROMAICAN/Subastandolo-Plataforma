@@ -55,6 +55,19 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     fetchDisputes();
   }, []);
 
+  // Fetch batch-paid auction IDs (multipago)
+  const [batchPaidAuctionIds, setBatchPaidAuctionIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const fetchBatchPaid = async () => {
+      const { data } = await supabase
+        .from("payment_proofs")
+        .select("auction_id")
+        .not("batch_id", "is", null);
+      if (data) setBatchPaidAuctionIds(new Set(data.map((d: any) => d.auction_id).filter(Boolean)));
+    };
+    fetchBatchPaid();
+  }, []);
+
   // Create "Próximamente" auction state
   const [showCreateScheduled, setShowCreateScheduled] = useState(false);
   const [schedTitle, setSchedTitle] = useState("");
@@ -926,6 +939,11 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
                             <Badge variant="outline" className={`text-[10px] font-bold ${currentPayStep?.color || ""}`}>
                               <CurrentPayIcon className="h-3 w-3 mr-1" />{currentPayStep?.label || payStatus}
                             </Badge>
+                            {batchPaidAuctionIds.has(auction.id) && (
+                              <Badge variant="outline" className="text-[10px] font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-400/30">
+                                <CreditCard className="h-2.5 w-2.5 mr-1" /> Multipago
+                              </Badge>
+                            )}
                           </div>
                           <span className="text-[9px] text-muted-foreground">Click para cambiar</span>
                         </div>

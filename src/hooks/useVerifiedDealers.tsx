@@ -35,7 +35,7 @@ export function useVerifiedDealers(userIds: string[]) {
       setLoading(true);
 
       const [profilesRes, verificationsRes, salesRes] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, avatar_url, city, state").in("id", uniqueIds),
+        supabase.from("profiles").select("id, full_name, username, avatar_url, city, state").in("id", uniqueIds) as any,
         supabase
           .from("dealer_verification")
           .select("user_id, status, business_name, manual_tier, account_status")
@@ -77,8 +77,13 @@ export function useVerifiedDealers(userIds: string[]) {
       for (const p of profiles) {
         const isVerified = verifiedMap.has(p.id);
         const dealerData = verifiedMap.get(p.id);
+        // Prefer username (strip @, capitalize) → business_name → full_name
+        const rawUsername = (p as any).username as string | null;
+        const formattedUsername = rawUsername
+          ? rawUsername.replace(/^@/, "").charAt(0).toUpperCase() + rawUsername.replace(/^@/, "").slice(1)
+          : null;
         result[p.id] = {
-          name: isVerified && dealerData ? dealerData.name : p.full_name,
+          name: formattedUsername || (isVerified && dealerData ? dealerData.name : p.full_name),
           isVerified,
           salesCount: salesCountMap.get(p.id) || 0,
           manualTier: dealerData?.manualTier || null,

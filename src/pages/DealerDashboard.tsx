@@ -17,7 +17,7 @@ import ReputationThermometer from "@/components/ReputationThermometer";
 import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert, Store, Headphones } from "lucide-react";
+import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, Pause, ShieldAlert, Store, Headphones, UserCircle } from "lucide-react";
 
 import type { AuctionWithImages, WinnerProfile } from "@/components/dealer/types";
 import DealerDashboardTab from "@/components/dealer/DealerDashboardTab";
@@ -364,13 +364,23 @@ const DealerDashboard = () => {
                 </div>
 
                 {/* CTA */}
-                <Button
-                  onClick={() => setActiveTab("create")}
-                  className="shrink-0 hidden sm:flex rounded-xl gap-1.5 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
-                  size="sm"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Nueva Subasta
-                </Button>
+                <div className="shrink-0 hidden sm:flex gap-2">
+                  <Button
+                    onClick={() => navigate("/mi-panel")}
+                    variant="outline"
+                    className="rounded-xl gap-1.5 font-bold text-xs border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                    size="sm"
+                  >
+                    <UserCircle className="h-3.5 w-3.5" /> Mi Perfil
+                  </Button>
+                  <Button
+                    onClick={() => setActiveTab("create")}
+                    className="rounded-xl gap-1.5 font-bold text-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
+                    size="sm"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Nueva Subasta
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ import AuctionProgressTracker from "@/components/AuctionProgressTracker";
 import SEOHead from "@/components/SEOHead";
 import {
     Loader2, Trophy, ArrowLeft, Package, Truck, CheckCircle,
-    Clock, MapPin, AlertTriangle, Star, Shield, RefreshCw, Copy, ExternalLink
+    Clock, MapPin, AlertTriangle, Star, Shield, RefreshCw, Copy, ExternalLink, CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ const MiCompra = () => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [hoveredStar, setHoveredStar] = useState<number | null>(null);
     const [imgIdx, setImgIdx] = useState(0);
+    const [isBatchPaid, setIsBatchPaid] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) navigate("/auth");
@@ -89,6 +90,17 @@ const MiCompra = () => {
         setImages(imgs?.map(i => i.image_url) || (auc.image_url ? [auc.image_url] : []));
         setShippingInfo(ship as ShippingInfo | null);
         setReview(rev as ReviewData | null);
+
+        // Check if this auction was paid via multipago (batch_id)
+        const { data: proof } = await supabase
+            .from("payment_proofs")
+            .select("batch_id")
+            .eq("auction_id", id)
+            .eq("buyer_id", user.id)
+            .not("batch_id", "is", null)
+            .maybeSingle();
+        setIsBatchPaid(!!proof);
+
         setLoading(false);
     };
 
@@ -409,6 +421,11 @@ const MiCompra = () => {
                         <h2 className="font-heading font-bold text-base text-foreground">Comprobante de Pago</h2>
                         {isVerified && (
                             <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary dark:text-[#A6E300] border-primary/20 dark:border-[#A6E300]/30 ml-auto">Verificado ✓</Badge>
+                        )}
+                        {isBatchPaid && (
+                            <Badge variant="outline" className="text-[10px] bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-400/30 ml-1">
+                                <CreditCard className="h-2.5 w-2.5 mr-1" /> Multipago
+                            </Badge>
                         )}
                     </div>
                     <PaymentFlow

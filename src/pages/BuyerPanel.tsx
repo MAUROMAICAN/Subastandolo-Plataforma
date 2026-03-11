@@ -81,6 +81,9 @@ const BuyerPanel = () => {
   const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
   const [showBatchPayment, setShowBatchPayment] = useState(false);
 
+  // Track which auctions were paid via multipago (batch_id non-null)
+  const [batchPaidAuctionIds, setBatchPaidAuctionIds] = useState<Set<string>>(new Set());
+
   const siteName = getSetting("site_name", "SUBASTANDOLO");
 
   useEffect(() => {
@@ -104,6 +107,20 @@ const BuyerPanel = () => {
       );
       setWonAuctions(filtered);
       setLoadingAuctions(false);
+
+      // Fetch which of these auctions were paid via multipago (batch_id)
+      if (filtered.length > 0) {
+        const auctionIds = filtered.map(a => a.id);
+        const { data: proofs } = await supabase
+          .from("payment_proofs")
+          .select("auction_id, batch_id")
+          .in("auction_id", auctionIds)
+          .eq("buyer_id", user.id)
+          .not("batch_id", "is", null);
+        if (proofs && proofs.length > 0) {
+          setBatchPaidAuctionIds(new Set(proofs.map((p: any) => p.auction_id)));
+        }
+      }
     };
     fetchWon();
   }, [user]);
@@ -751,6 +768,11 @@ const BuyerPanel = () => {
                                 <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                                 {st.label}
                               </span>
+                              {batchPaidAuctionIds.has(a.id) && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-400/30">
+                                  <CreditCard className="h-2.5 w-2.5" /> Multipago
+                                </span>
+                              )}
                             </div>
                           </div>
                           {/* CTA */}
