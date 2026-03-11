@@ -196,15 +196,18 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-heading font-bold flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary dark:text-[#A6E300]" /> Panel del Dealer
-        </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas
-          {bcvRate !== null && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ingresos`}
-        </p>
+      {/* Header — admin style */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-heading font-bold">Dashboard</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {metrics.active} activas · {metrics.pending} en revisión · {metrics.finalized} finalizadas
+            {bcvRate !== null && ` · Bs. ${(metrics.totalRevenue * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ingresos`}
+          </p>
+        </div>
+        <span className="text-[10px] px-2 py-1 border border-border rounded-sm text-muted-foreground whitespace-nowrap">
+          {new Date().toLocaleDateString("es-VE", { weekday: "long", day: "numeric", month: "long" })}
+        </span>
       </div>
 
       {/* Pending Action Alerts */}
