@@ -6,11 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
 import { useBCVRate } from "@/hooks/useBCVRate";
+import { getDealerTier } from "@/components/VerifiedBadge";
 
 interface DealerInfo {
   name: string;
   isVerified: boolean;
   salesCount: number;
+  avatarUrl?: string | null;
 }
 
 interface AuctionCardProps {
@@ -154,24 +156,45 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
           ) : null}
 
           {/* Dealer Link */}
-          {dealer && (
-            <div
-              className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                window.location.href = `/dealer/${auction.created_by}`;
-              }}
-            >
-              <div className="w-4 h-4 rounded-full bg-secondary dark:bg-white/15 flex items-center justify-center overflow-hidden shrink-0">
-                <span className="text-[8px] font-bold text-secondary-foreground dark:text-white">{dealer.name.substring(0, 1)}</span>
+          {dealer && (() => {
+            const tier = dealer.isVerified ? getDealerTier(dealer.salesCount) : null;
+            return (
+              <div
+                className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `/dealer/${auction.created_by}`;
+                }}
+              >
+                {/* Avatar */}
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center overflow-hidden shrink-0 ${
+                  dealer.isVerified ? `ring-1 ring-offset-1 ring-offset-card ${tier?.colors.border || "ring-blue-500/30"}` : "bg-secondary dark:bg-white/15"
+                }`}>
+                  {dealer.avatarUrl ? (
+                    <img src={dealer.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[8px] font-bold text-secondary-foreground dark:text-white bg-secondary dark:bg-white/15 w-full h-full flex items-center justify-center">
+                      {dealer.name.substring(0, 1)}
+                    </span>
+                  )}
+                </div>
+                {/* Name */}
+                <span className="truncate font-medium hover:underline">{dealer.name}</span>
+                {/* Verified badge + tier label */}
+                {dealer.isVerified && (
+                  <>
+                    <VerifiedBadge size="sm" salesCount={dealer.salesCount} showTooltip />
+                    {tier && tier.key !== "nuevo" && (
+                      <span className={`text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${tier.colors.bg} ${tier.colors.text} ${tier.colors.border} border`}>
+                        {tier.label}
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
-              <span className="truncate font-medium hover:underline">{dealer.name}</span>
-              {dealer.isVerified && (
-                <VerifiedBadge size="sm" salesCount={dealer.salesCount} showTooltip />
-              )}
-            </div>
-          )}
+            );
+          })()}
 
           {/* Countdown */}
           {!isEnded && (
