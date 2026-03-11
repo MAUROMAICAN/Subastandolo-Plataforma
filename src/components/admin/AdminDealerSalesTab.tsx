@@ -263,10 +263,11 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
         const saleAmount = Number(e.sale_amount);
         const commissionAmount = Number(e.commission_amount);
         const dealerNet = Number(e.dealer_net);
-        const bcvRate = proof?.bcv_rate || (currentBcvRate > 0 ? currentBcvRate : null);
-        const amountBs = proof?.amount_bs || (bcvRate ? saleAmount * bcvRate : null);
-        const commissionBs = bcvRate ? commissionAmount * bcvRate : null;
-        const dealerNetBs = bcvRate ? dealerNet * bcvRate : null;
+        // Prefer DB-computed Bs columns (single source of truth), fallback to proof or current rate
+        const amountBs = Number(e.sale_amount_bs) || (proof?.amount_bs) || null;
+        const commissionBs = Number(e.commission_bs) || null;
+        const dealerNetBs = Number(e.dealer_net_bs) || null;
+        const bcvRate = Number(e.bcv_rate) || proof?.bcv_rate || null;
         const isPaid = !!e.is_paid;
         return {
           earning_id: e.id,

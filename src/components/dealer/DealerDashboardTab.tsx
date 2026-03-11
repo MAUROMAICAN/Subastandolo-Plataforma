@@ -28,47 +28,29 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
   const bcvRate = useBCVRate();
   const { dealerStats, buyerStats, unifiedStats } = useUserReviews(user?.id);
 
-  // Earnings data with per-auction BCV rates
+  // Earnings data — Bs amounts come directly from DB
   const [dealerEarnings, setDealerEarnings] = useState<any[]>([]);
   const [earningsLoaded, setEarningsLoaded] = useState(false);
-  // Per-auction BCV rate map (from payment_proofs)
-  const [proofRateMap, setProofRateMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (user) {
-      Promise.all([
-        supabase.from("dealer_earnings")
-          .select("auction_id, sale_amount, commission_amount, dealer_net, is_paid, created_at")
-          .eq("dealer_id", user.id),
-        supabase.from("payment_proofs")
-          .select("auction_id, bcv_rate")
-          .eq("status", "approved"),
-      ]).then(([earningsRes, proofsRes]) => {
-        // Build BCV rate map from payment proofs
-        const rateMap: Record<string, number> = {};
-        (proofsRes.data || []).forEach((p: any) => { rateMap[p.auction_id] = Number(p.bcv_rate); });
-        setProofRateMap(rateMap);
-
-        const fallback = bcvRate || 0;
-        setDealerEarnings((earningsRes.data || []).map((e: any) => {
-          const saleAmount = Number(e.sale_amount);
-          const commissionAmount = Number(e.commission_amount);
-          const dealerNet = Number(e.dealer_net);
-          const rate = rateMap[e.auction_id] || fallback;
-          return {
+      supabase.from("dealer_earnings" as any)
+        .select("auction_id, sale_amount, commission_amount, dealer_net, is_paid, created_at, bcv_rate, sale_amount_bs, commission_bs, dealer_net_bs")
+        .eq("dealer_id", user.id)
+        .then(({ data }: any) => {
+          setDealerEarnings((data || []).map((e: any) => ({
             auction_id: e.auction_id,
-            sale_amount: saleAmount,
-            commission_amount: commissionAmount,
-            dealer_net: dealerNet,
+            sale_amount: Number(e.sale_amount),
+            commission_amount: Number(e.commission_amount),
+            dealer_net: Number(e.dealer_net),
             is_paid: e.is_paid,
             created_at: e.created_at,
-            sale_amount_bs: saleAmount * rate,
-            commission_bs: commissionAmount * rate,
-            dealer_net_bs: dealerNet * rate,
-          };
-        }));
-        setEarningsLoaded(true);
-      });
+            sale_amount_bs: Number(e.sale_amount_bs) || 0,
+            commission_bs: Number(e.commission_bs) || 0,
+            dealer_net_bs: Number(e.dealer_net_bs) || 0,
+          })));
+          setEarningsLoaded(true);
+        });
     }
   }, [user]);
 
@@ -80,23 +62,16 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     const pending = auctions.filter(a => a.status === "pending" || a.status === "in_review").length;
     const finalized = auctions.filter(a => a.status === "finalized").length;
     const totalBids = auctions.reduce((sum, a) => sum + a.bids.length, 0);
-    // Compute totalRevenueBs using per-auction BCV rates
-    const fallback = bcvRate || 0;
-    const totalRevenueBs = auctions
-      .filter(a => a.status === "finalized" && a.current_price > 0)
-      .reduce((sum, a) => {
-        const rate = proofRateMap[a.id] || fallback;
-        return sum + (a.current_price * rate);
-      }, 0);
-    const avgPriceBs = finalized > 0 ? totalRevenueBs / finalized : 0;
+    // Use Bs totals from dealerEarnings (DB source of truth)
+    const totalRevenueBs = dealerEarnings.reduce((sum, e) => sum + e.sale_amount_bs, 0);
+    const avgPriceBs = dealerEarnings.length > 0 ? totalRevenueBs / dealerEarnings.length : 0;
     const auctionsWithBids = auctions.filter(a => a.bids.length > 0).length;
     const conversionRate = auctionsWithBids > 0 ? Math.round((finalized / auctionsWithBids) * 100) : 0;
     return { total, active, pending, finalized, totalBids, totalRevenueBs, avgPriceBs, conversionRate };
-  }, [auctions, proofRateMap, bcvRate]);
+  }, [auctions, dealerEarnings]);
 
   const walletStats = useMemo(() => {
     const COMMISSION_RATE = 0.10;
-    const fallback = bcvRate || 0;
 
     if (dealerEarnings.length > 0) {
       const totalNetBs = dealerEarnings.reduce((acc: number, e: any) => acc + e.dealer_net_bs, 0);
@@ -114,7 +89,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
 
     const netOfBs = (list: typeof billableAuctions) =>
       list.reduce((s, a) => {
-        const rate = proofRateMap[a.id] || fallback;
+        const rate = bcvRate || 0;
         return s + a.current_price * (1 - COMMISSION_RATE) * rate;
       }, 0);
 
@@ -140,7 +115,7 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
     const availableBs = netOfBs(availableAuctions);
     const totalNetBs = pendingPaymentBs + retainedBs + availableBs;
     return { totalNetBs, retainedBs, availableBs, pendingPaymentBs, paidBs: 0 };
-  }, [dealerEarnings, auctions, proofRateMap, bcvRate]);
+  }, [dealerEarnings, auctions, bcvRate]);
 
   // Sales trend chart data (last 30 days)
   const trendData = useMemo(() => {

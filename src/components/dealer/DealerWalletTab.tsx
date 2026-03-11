@@ -58,36 +58,25 @@ export default function DealerWalletTab({ auctions = [] }: { auctions?: AuctionL
     if (!user) return;
     setLoading(true);
 
-    const [earningsRes, withdrawalsRes, proofsRes] = await Promise.all([
-      supabase.from("dealer_earnings").select("*")
+    const [earningsRes, withdrawalsRes] = await Promise.all([
+      supabase.from("dealer_earnings" as any).select("*")
         .eq("dealer_id", user.id)
         .order("created_at", { ascending: false }),
       supabase.from("withdrawal_requests").select("*")
         .eq("dealer_id", user.id)
         .order("created_at", { ascending: false }),
-      supabase.from("payment_proofs").select("auction_id, bcv_rate").eq("status", "approved"),
     ]);
 
-    // Build per-auction BCV rate map
-    const proofRateMap: Record<string, number> = {};
-    (proofsRes.data || []).forEach((p: any) => { proofRateMap[p.auction_id] = Number(p.bcv_rate); });
-    const fallbackRate = bcvRate || 0;
-
-    setEarnings(((earningsRes.data || []) as any[]).map((e: any) => {
-      const saleAmount = Number(e.sale_amount);
-      const commissionAmount = Number(e.commission_amount);
-      const dealerNet = Number(e.dealer_net);
-      const rate = proofRateMap[e.auction_id] || fallbackRate;
-      return {
-        ...e,
-        sale_amount: saleAmount,
-        commission_amount: commissionAmount,
-        dealer_net: dealerNet,
-        sale_amount_bs: saleAmount * rate,
-        commission_bs: commissionAmount * rate,
-        dealer_net_bs: dealerNet * rate,
-      };
-    }));
+    // Bs columns come directly from DB — no local computation needed
+    setEarnings(((earningsRes.data || []) as any[]).map((e: any) => ({
+      ...e,
+      sale_amount: Number(e.sale_amount),
+      commission_amount: Number(e.commission_amount),
+      dealer_net: Number(e.dealer_net),
+      sale_amount_bs: Number(e.sale_amount_bs) || 0,
+      commission_bs: Number(e.commission_bs) || 0,
+      dealer_net_bs: Number(e.dealer_net_bs) || 0,
+    })));
     setWithdrawals((withdrawalsRes.data || []) as Withdrawal[]);
     setLoading(false);
   };
