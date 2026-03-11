@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DollarSign, TrendingUp, Users, ShoppingBag, Search, Upload,
+  DollarSign, TrendingUp, Users, ShoppingBag, Search,
   CheckCircle, XCircle, Loader2, Wallet, ArrowDownCircle, ChevronDown, ChevronUp,
   FileText, CreditCard, Download, Receipt, ImageIcon, Hash, Calendar, Banknote
 } from "lucide-react";
@@ -30,6 +30,11 @@ interface DealerSalesData {
   total_dealer_net: number;
   total_paid: number;
   pending_balance: number;
+  total_revenue_bs: number;
+  total_commission_bs: number;
+  total_dealer_net_bs: number;
+  total_paid_bs: number;
+  pending_balance_bs: number;
   sales: {
     earning_id: string;
     auction_id: string;
@@ -42,6 +47,8 @@ interface DealerSalesData {
     created_at: string;
     bcv_rate: number | null;
     amount_bs: number | null;
+    commission_bs: number | null;
+    dealer_net_bs: number | null;
     is_paid: boolean;
     has_proof: boolean;
   }[];
@@ -249,6 +256,43 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       const dealerBalance = verif ? Number(verif.dealer_balance) || 0 : 0;
       const accountStatus = verif?.account_status || "active";
 
+      // Build sales array first so we can compute Bs totals from it
+      const salesData = dealerEarnings.map((e: any) => {
+        const proof = proofMap[e.auction_id];
+        const auctionInfo = auctionMap[e.auction_id];
+        const saleAmount = Number(e.sale_amount);
+        const commissionAmount = Number(e.commission_amount);
+        const dealerNet = Number(e.dealer_net);
+        const bcvRate = proof?.bcv_rate || (currentBcvRate > 0 ? currentBcvRate : null);
+        const amountBs = proof?.amount_bs || (bcvRate ? saleAmount * bcvRate : null);
+        const commissionBs = bcvRate ? commissionAmount * bcvRate : null;
+        const dealerNetBs = bcvRate ? dealerNet * bcvRate : null;
+        const isPaid = !!e.is_paid;
+        return {
+          earning_id: e.id,
+          auction_id: e.auction_id,
+          auction_title: auctionInfo?.title || "Subasta eliminada",
+          operation_number: auctionInfo?.operation_number || null,
+          sale_amount: saleAmount,
+          commission_amount: commissionAmount,
+          dealer_net: dealerNet,
+          commission_percentage: Number(e.commission_percentage),
+          created_at: e.created_at,
+          bcv_rate: bcvRate,
+          amount_bs: amountBs,
+          commission_bs: commissionBs,
+          dealer_net_bs: dealerNetBs,
+          is_paid: isPaid,
+          has_proof: !!proof,
+        };
+      });
+
+      // Compute Bs totals from per-sale Bs amounts
+      const totalRevenueBs = salesData.reduce((acc, s) => acc + (s.amount_bs || 0), 0);
+      const totalCommissionBs = salesData.reduce((acc, s) => acc + (s.commission_bs || 0), 0);
+      const totalDealerNetBs = salesData.reduce((acc, s) => acc + (s.dealer_net_bs || 0), 0);
+      const pendingBalanceBs = salesData.filter(s => !s.is_paid).reduce((acc, s) => acc + (s.dealer_net_bs || 0), 0);
+
       return {
         dealer_id: dealerId,
         dealer_name: dealerName,
@@ -262,29 +306,12 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
         total_dealer_net: dealerEarnings.reduce((acc: number, e: any) => acc + Number(e.dealer_net), 0),
         total_paid: totalPaid,
         pending_balance: dealerEarnings.filter((e: any) => !e.is_paid).reduce((acc: number, e: any) => acc + Number(e.dealer_net), 0),
-        sales: dealerEarnings.map((e: any) => {
-          const proof = proofMap[e.auction_id];
-          const auctionInfo = auctionMap[e.auction_id];
-          const saleAmount = Number(e.sale_amount);
-          const bcvRate = proof?.bcv_rate || (currentBcvRate > 0 ? currentBcvRate : null);
-          const amountBs = proof?.amount_bs || (bcvRate ? saleAmount * bcvRate : null);
-          const isPaid = !!e.is_paid;
-          return {
-            earning_id: e.id,
-            auction_id: e.auction_id,
-            auction_title: auctionInfo?.title || "Subasta eliminada",
-            operation_number: auctionInfo?.operation_number || null,
-            sale_amount: saleAmount,
-            commission_amount: Number(e.commission_amount),
-            dealer_net: Number(e.dealer_net),
-            commission_percentage: Number(e.commission_percentage),
-            created_at: e.created_at,
-            bcv_rate: bcvRate,
-            amount_bs: amountBs,
-            is_paid: isPaid,
-            has_proof: !!proof,
-          };
-        }),
+        total_revenue_bs: totalRevenueBs,
+        total_commission_bs: totalCommissionBs,
+        total_dealer_net_bs: totalDealerNetBs,
+        total_paid_bs: 0, // Payments are tracked in USD, not convertible per-sale
+        pending_balance_bs: pendingBalanceBs,
+        sales: salesData,
         withdrawals: dealerWithdrawals.map((w: any) => ({
           id: w.id,
           amount: Number(w.amount),
@@ -338,7 +365,13 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
     totalPaid: dealers.reduce((acc, d) => acc + d.total_paid, 0),
     totalSales: dealers.reduce((acc, d) => acc + d.total_sales, 0),
     dealersWithBalance: dealers.filter(d => d.pending_balance > 0).length,
+    totalRevenueBs: dealers.reduce((acc, d) => acc + d.total_revenue_bs, 0),
+    totalCommissionBs: dealers.reduce((acc, d) => acc + d.total_commission_bs, 0),
+    totalOwedBs: dealers.reduce((acc, d) => acc + d.pending_balance_bs, 0),
+    totalDealerNetBs: dealers.reduce((acc, d) => acc + d.total_dealer_net_bs, 0),
   }), [dealers]);
+
+  const fmtBs = (v: number) => `Bs ${v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const handleWithdrawalAction = async (withdrawalId: string, dealerId: string, action: "approved" | "rejected", amount: number) => {
     setProcessingWithdrawal(withdrawalId);
@@ -373,8 +406,10 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
     if (!paymentDialog) return 0;
     return paymentDialog.dealer.sales
       .filter(s => selectedEarnings.has(s.earning_id))
-      .reduce((acc, s) => acc + s.dealer_net, 0);
+      .reduce((acc, s) => acc + (s.dealer_net_bs || 0), 0);
   }, [paymentDialog, selectedEarnings]);
+
+
 
   const openPaymentDialog = (dealer: DealerSalesData) => {
     const unpaidEarnings = dealer.sales.filter(s => !s.is_paid);
@@ -450,7 +485,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
         dealer_balance: newBalance,
       } as any).eq("user_id", dealer.dealer_id);
 
-      toast({ title: "✅ Pago registrado", description: `$${totalAmount.toFixed(2)} pagado a ${dealer.dealer_name} (${selectedSales.length} operaciones)` });
+      toast({ title: "✅ Pago registrado", description: `${fmtBs(selectedTotal)} pagado a ${dealer.dealer_name} (${selectedSales.length} operaciones)` });
       setPaymentDialog(null);
       fetchData();
     } catch (err: any) {
@@ -509,7 +544,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
             <TrendingUp className="h-5 w-5 text-primary dark:text-accent" /> Ventas de Dealers
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {totals.totalSales} ventas · ${totals.totalRevenue.toFixed(2)} bruto · {totals.dealersWithBalance} con saldo pendiente
+            {totals.totalSales} ventas · {fmtBs(totals.totalRevenueBs)} bruto · {totals.dealersWithBalance} con saldo pendiente
           </p>
         </div>
         <Badge variant="outline" className="text-xs">{dealers.length} dealers activos</Badge>
@@ -519,10 +554,10 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           { label: "Ventas Totales", value: totals.totalSales, icon: ShoppingBag, color: "text-primary dark:text-accent", format: (v: number) => v.toString(), filter: "with_sales" },
-          { label: "Ingresos Brutos", value: totals.totalRevenue, icon: DollarSign, color: "text-foreground", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
-          { label: "Comisión Plataforma", value: totals.totalCommission, icon: TrendingUp, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_sales" },
-          { label: "Por Pagar al Dealer", value: totals.totalOwed, icon: Wallet, color: "text-warning", format: (v: number) => `$${v.toFixed(2)}`, filter: "with_balance" },
-          { label: "Total Pagado", value: totals.totalPaid, icon: CheckCircle, color: "text-primary dark:text-accent", format: (v: number) => `$${v.toFixed(2)}`, filter: "all" },
+          { label: "Ingresos Brutos", value: totals.totalRevenueBs, icon: DollarSign, color: "text-foreground", format: (v: number) => fmtBs(v), filter: "with_sales" },
+          { label: "Comisión Plataforma", value: totals.totalCommissionBs, icon: TrendingUp, color: "text-primary dark:text-accent", format: (v: number) => fmtBs(v), filter: "with_sales" },
+          { label: "Por Pagar al Dealer", value: totals.totalOwedBs, icon: Wallet, color: "text-warning", format: (v: number) => fmtBs(v), filter: "with_balance" },
+          { label: "Neto Dealer Total", value: totals.totalDealerNetBs, icon: CheckCircle, color: "text-primary dark:text-accent", format: (v: number) => fmtBs(v), filter: "all" },
           { label: "Con Saldo", value: totals.dealersWithBalance, icon: Users, color: "text-destructive", format: (v: number) => v.toString(), filter: "with_balance" },
         ].map((stat, idx) => (
           <Card
@@ -594,12 +629,12 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                     </div>
                     <div className="text-right hidden md:block">
                       <p className="text-[10px] text-muted-foreground">Ingresos</p>
-                      <p className="text-xs font-bold">${dealer.total_revenue.toFixed(2)}</p>
+                      <p className="text-xs font-bold">{fmtBs(dealer.total_revenue_bs)}</p>
                     </div>
                     <div className={`text-right px-3 py-1.5 rounded-sm ${dealer.pending_balance > 0 ? "bg-primary/10 dark:bg-accent/10 border border-primary/20 dark:border-accent/20" : "bg-primary/5 border border-primary/10"}`}>
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo a Favor</p>
                       <p className={`text-sm font-bold ${dealer.pending_balance > 0 ? "text-primary dark:text-accent" : "text-primary dark:text-accent"}`}>
-                        ${dealer.pending_balance.toFixed(2)}
+                        {fmtBs(dealer.pending_balance_bs)}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -624,10 +659,10 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       {[
                         { label: "Ventas", value: dealer.total_sales.toString(), color: "text-foreground" },
-                        { label: "Ingresos Brutos", value: `$${dealer.total_revenue.toFixed(2)}`, color: "text-foreground" },
-                        { label: "Comisión", value: `$${dealer.total_commission.toFixed(2)}`, color: "text-muted-foreground" },
-                        { label: "Neto Dealer", value: `$${dealer.total_dealer_net.toFixed(2)}`, color: "text-primary dark:text-accent" },
-                        { label: "Pagado", value: `$${dealer.total_paid.toFixed(2)}`, color: "text-primary dark:text-accent" },
+                        { label: "Ingresos Brutos", value: fmtBs(dealer.total_revenue_bs), color: "text-foreground" },
+                        { label: "Comisión", value: fmtBs(dealer.total_commission_bs), color: "text-muted-foreground" },
+                        { label: "Neto Dealer", value: fmtBs(dealer.total_dealer_net_bs), color: "text-primary dark:text-accent" },
+                        { label: "Pendiente", value: fmtBs(dealer.pending_balance_bs), color: "text-warning" },
                       ].map((item, i) => (
                         <div key={i} className="bg-card border border-border rounded-sm p-2.5">
                           <p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wide">{item.label}</p>
@@ -710,8 +745,8 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                                 <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Venta USD</th>
                                 <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Tasa BCV</th>
                                 <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Monto Bs</th>
-                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Comisión</th>
-                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Neto</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Comisión Bs</th>
+                                <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Neto Bs</th>
                                 <th className="text-right font-semibold text-muted-foreground dark:text-gray-300 px-3 py-2">Fecha</th>
                               </tr>
                             </thead>
@@ -740,8 +775,8 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                                     {sale.amount_bs ? `Bs ${sale.amount_bs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}` : "—"}
                                     {sale.amount_bs && !sale.has_proof && <span className="text-warning ml-0.5">*</span>}
                                   </td>
-                                  <td className="px-3 py-2 text-right text-muted-foreground">${sale.commission_amount.toFixed(2)} ({sale.commission_percentage}%)</td>
-                                  <td className="px-3 py-2 text-right font-bold text-primary dark:text-accent">${sale.dealer_net.toFixed(2)}</td>
+                                  <td className="px-3 py-2 text-right text-muted-foreground">{sale.commission_bs ? fmtBs(sale.commission_bs) : "—"} ({sale.commission_percentage}%)</td>
+                                  <td className="px-3 py-2 text-right font-bold text-primary dark:text-accent">{sale.dealer_net_bs ? fmtBs(sale.dealer_net_bs) : "—"}</td>
                                   <td className="px-3 py-2 text-right text-muted-foreground">{new Date(sale.created_at).toLocaleDateString("es-MX")}</td>
                                 </tr>
                               ))}
@@ -876,7 +911,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-muted-foreground">Saldo pendiente</p>
-                    <p className="text-lg font-bold text-warning">${paymentDialog.dealer.pending_balance.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-warning">{fmtBs(paymentDialog.dealer.pending_balance_bs)}</p>
                   </div>
                 </div>
                 {paymentDialog.dealer.bank_account && (
@@ -916,7 +951,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                         <th className="w-8 px-2 py-1.5"></th>
                         <th className="text-left px-2 py-1.5 font-semibold text-muted-foreground">Nº Op.</th>
                         <th className="text-left px-2 py-1.5 font-semibold text-muted-foreground">Producto</th>
-                        <th className="text-right px-2 py-1.5 font-semibold text-muted-foreground">Neto</th>
+                        <th className="text-right px-2 py-1.5 font-semibold text-muted-foreground">Neto Bs</th>
                         <th className="text-center px-2 py-1.5 font-semibold text-muted-foreground">Estado</th>
                       </tr>
                     </thead>
@@ -948,7 +983,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                           </td>
                           <td className="px-2 py-1.5 font-mono text-muted-foreground">{sale.operation_number || "—"}</td>
                           <td className="px-2 py-1.5 truncate max-w-[140px]">{sale.auction_title}</td>
-                          <td className="px-2 py-1.5 text-right font-bold">${sale.dealer_net.toFixed(2)}</td>
+                          <td className="px-2 py-1.5 text-right font-bold">{sale.dealer_net_bs ? fmtBs(sale.dealer_net_bs) : "—"}</td>
                           <td className="px-2 py-1.5 text-center">
                             {sale.is_paid
                               ? <Badge variant="outline" className="text-[9px] bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent border-primary/20">Pagado</Badge>
@@ -961,7 +996,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                 </div>
                 <div className="flex items-center justify-between mt-2 px-1">
                   <p className="text-[10px] text-muted-foreground">{selectedEarnings.size} operaciones seleccionadas</p>
-                  <p className="text-sm font-bold text-primary dark:text-accent">Total: ${selectedTotal.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-primary dark:text-accent">Total: {fmtBs(selectedTotal)}</p>
                 </div>
               </div>
 
@@ -1008,7 +1043,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] text-muted-foreground dark:text-gray-300 uppercase tracking-wide">Total a Pagar</p>
-                    <p className="text-xl font-heading font-bold text-primary dark:text-accent">${selectedTotal.toFixed(2)}</p>
+                    <p className="text-xl font-heading font-bold text-primary dark:text-accent">{fmtBs(selectedTotal)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-muted-foreground">{selectedEarnings.size} operaciones</p>
@@ -1023,7 +1058,7 @@ const AdminDealerSalesTab = ({ globalSearch = "" }: { globalSearch?: string }) =
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-sm h-11"
               >
                 {submittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                Confirmar Pago de ${selectedTotal.toFixed(2)}
+                Confirmar Pago de {fmtBs(selectedTotal)}
               </Button>
             </div>
           )}
