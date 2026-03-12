@@ -73,9 +73,8 @@ export default function MarketplaceHome() {
       let query = supabase
         .from("marketplace_products")
         .select(`
-          id, title, price, stock, condition, image_url, created_at, category_id,
+          id, title, price, stock, condition, image_url, created_at, category_id, seller_id,
           images:marketplace_product_images(image_url, display_order),
-          seller:profiles!seller_id(id, name),
           category:marketplace_categories(id, name, slug)
         `)
         .eq("status", "active")
@@ -99,10 +98,22 @@ export default function MarketplaceHome() {
       const { data, error } = await (query as any);
       if (error) throw error;
 
+      // Fetch seller names separately (seller_id references auth.users, not profiles directly)
+      const sellerIds = [...new Set((data || []).map((p: any) => p.seller_id).filter(Boolean))];
+      let sellerMap: Record<string, string> = {};
+      if (sellerIds.length > 0) {
+        const { data: sellers } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", sellerIds);
+        sellerMap = (sellers || []).reduce((acc: any, s: any) => ({ ...acc, [s.id]: s.full_name }), {});
+      }
+
       const enriched = (data || []).map((p: any) => ({
         ...p,
         images: p.images?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0)) || [],
         mainImage: p.image_url || p.images?.[0]?.image_url || null,
+        sellerName: sellerMap[p.seller_id] || "Vendedor",
       }));
       setProducts(enriched);
     } catch (err: any) {

@@ -56,7 +56,6 @@ export default function ProductDetail() {
                 .select(`
           *,
           images:marketplace_product_images(*),
-          seller:profiles!seller_id(id, name),
           category:marketplace_categories(id, name)
         `)
                 .eq("id", productId)
@@ -68,11 +67,22 @@ export default function ProductDetail() {
                 return;
             }
 
+            // Fetch seller profile separately (seller_id FK goes to auth.users, not profiles)
+            let sellerInfo = { id: data.seller_id || "", name: "Vendedor" };
+            if (data.seller_id) {
+                const { data: sellerProfile } = await supabase
+                    .from("profiles")
+                    .select("id, full_name")
+                    .eq("id", data.seller_id)
+                    .single();
+                if (sellerProfile) sellerInfo = { id: sellerProfile.id, name: (sellerProfile as any).full_name || "Vendedor" };
+            }
+
             const p: ProductDetails = {
                 ...data,
                 images: (data.images || []).sort((a: any, b: any) => a.display_order - b.display_order),
                 attributes: data.attributes || {},
-                seller: { id: (data.seller as any)?.id || "", name: (data.seller as any)?.name || "" },
+                seller: sellerInfo,
                 category: { id: (data.category as any)?.id || "", name: (data.category as any)?.name || "" }
             };
             setProduct(p);
