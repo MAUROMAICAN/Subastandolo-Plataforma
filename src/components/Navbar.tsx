@@ -56,7 +56,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
                   placeholder="Buscar productos, marcas y más..."
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="bg-white text-foreground border-0 h-10 pr-12 rounded-full shadow-sm placeholder:text-muted-foreground/60 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="bg-white text-gray-900 border-0 h-10 pr-12 rounded-full shadow-sm placeholder:text-gray-400 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <button className="absolute right-0 top-0 h-10 w-14 bg-[#244299] hover:bg-[#1e367d] flex items-center justify-center rounded-r-full transition-colors border-none">
                   <Search className="h-5 w-5 text-white" />
