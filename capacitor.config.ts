@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.subastandolo.app',
   appName: 'subastandolo',
   webDir: 'dist',
+  server: {
+    url: 'https://www.subastandolo.com',
+    cleartext: false,
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 20000,
