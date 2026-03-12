@@ -165,11 +165,11 @@ export default function MarketplaceHome() {
             </div>
           </div>
 
-          {/* Category Navigation */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          {/* Category Navigation — wrapping grid, no scroll */}
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => selectCategory(null)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${!activeCatId
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${!activeCatId
                 ? "bg-foreground text-background border-foreground"
                 : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
                 }`}
@@ -180,28 +180,28 @@ export default function MarketplaceHome() {
               <button
                 key={cat.id}
                 onClick={() => selectCategory(cat.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${activeCatId === cat.id
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${activeCatId === cat.id
                   ? "bg-foreground text-background border-foreground"
                   : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
                   }`}
               >
                 {getCatIcon(cat.slug)}
-                <span className="truncate max-w-[120px]">{cat.name}</span>
+                <span>{cat.name}</span>
               </button>
             ))}
           </div>
 
           {/* Subcategory chips */}
           {subcategories.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
-              <span className="text-[10px] text-muted-foreground shrink-0 mr-1">
-                {activeCategory?.name}:
+            <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2.5 border-t border-border/50">
+              <span className="text-[10px] text-muted-foreground mr-1 uppercase tracking-wider font-semibold">
+                {activeCategory?.name}
               </span>
               {subcategories.map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => selectSubCategory(sub.id)}
-                  className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${activeSubCatId === sub.id
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${activeSubCatId === sub.id
                     ? "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/30 dark:border-[#A6E300]/30"
                     : "bg-transparent text-muted-foreground border-border/50 hover:border-primary/20 hover:text-foreground"
                     }`}
