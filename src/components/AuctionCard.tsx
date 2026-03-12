@@ -156,6 +156,9 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
             </span>
           ) : null}
 
+          {/* Spacer to push dealer + countdown + CTA to bottom */}
+          <div className="flex-1" />
+
           {/* Dealer Link */}
           {dealer && (() => {
             const autoTier = getDealerTier(dealer.salesCount);
@@ -207,9 +210,6 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
               </div>
             );
           })()}
-
-          {/* Spacer to push countdown + CTA to bottom */}
-          <div className="flex-1" />
 
           {/* Countdown */}
           {!isEnded && (
