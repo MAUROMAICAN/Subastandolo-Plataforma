@@ -66,6 +66,7 @@ const AiChatWidget = () => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
+
     // ─── Drag state ───
     const btnRef = useRef<HTMLButtonElement>(null);
     const [pos, setPos] = useState<{ x: number; y: number }>(() => {
@@ -313,6 +314,9 @@ const AiChatWidget = () => {
             ));
         });
     };
+
+    // Only show for logged-in users
+    if (!user) return null;
 
     // If hidden, show a tiny re-activate pill at bottom-right
     if (isHidden) {
