@@ -396,7 +396,6 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
           funds_released_at: null,
           delivered_at: null,
           is_extended: false,
-          bids_count: 0,
           start_time: now.toISOString(),
           end_time: endTime,
           requested_duration_hours: hours,
