@@ -260,12 +260,12 @@ export default function ProductDetail() {
                             </div>
                         </div>
 
-                        {/* Q&A Section */}
-                        <div className="mt-6 bg-card border border-border p-5 rounded-xl">
-                            <ProductQA productId={product.id} sellerId={product.seller.id} />
-                        </div>
-
                     </div>
+                </div>
+
+                {/* Q&A Section — Full Width Below Layout */}
+                <div className="mt-10 bg-card border border-border p-6 md:p-8 rounded-xl">
+                    <ProductQA productId={product.id} sellerId={product.seller.id} />
                 </div>
             </main>
 
