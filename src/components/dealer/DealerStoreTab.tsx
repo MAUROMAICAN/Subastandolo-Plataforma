@@ -5,11 +5,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Store, Package, Loader2, Edit, Pause, Play, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables } from "@/integrations/supabase/types";
 
-// Extends product with images
-interface ProductWithImages extends Tables<"marketplace_products"> {
-    images: Tables<"marketplace_product_images">[];
+// Product with images
+interface ProductWithImages {
+    id: string;
+    seller_id: string;
+    category_id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    currency: string;
+    stock: number;
+    condition: string;
+    status: string;
+    image_url: string | null;
+    created_at: string;
+    images: { id: string; image_url: string; display_order: number }[];
+    category?: { name: string; icon: string } | null;
 }
 
 interface Props {
@@ -28,22 +40,24 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
 
     const fetchProducts = async () => {
         setLoading(true);
-        const { data: prods, error } = await supabase
+        const { data: prods, error } = await (supabase
             .from("marketplace_products")
             .select(`
         *,
-        images:marketplace_product_images(*)
+        images:marketplace_product_images(*),
+        category:marketplace_categories(name, icon)
       `)
-            .eq("dealer_id", dealerId)
-            .order("created_at", { ascending: false });
+            .eq("seller_id", dealerId)
+            .order("created_at", { ascending: false }) as any);
 
         if (error) {
             toast({ title: "Error", description: "No se pudieron cargar los productos", variant: "destructive" });
         } else {
             // Sort images by display_order inside each product
-            const enriched = (prods || []).map((p: any) => ({
+            const enriched = ((prods || []) as any[]).map((p: any) => ({
                 ...p,
-                images: p.images?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+                images: p.images?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
+                category: p.category || null,
             }));
             setProducts(enriched);
         }
@@ -136,7 +150,7 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
                                     <div className="flex items-end justify-between mt-auto pt-3 border-t border-border">
                                         <div>
                                             <p className="text-xs text-muted-foreground mb-0.5">Precio Fijo</p>
-                                            <p className="text-lg font-black text-foreground">${product.price_usd.toLocaleString("es-MX")}</p>
+                                            <p className="text-lg font-black text-foreground">${Number(product.price).toLocaleString("es-MX")}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs text-muted-foreground mb-0.5">Stock</p>

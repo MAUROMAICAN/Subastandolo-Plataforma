@@ -357,7 +357,7 @@ const DealerDashboard = () => {
                 <div className="space-y-0.5">
                   {group.items.map(item => {
                     const isActive = activeTab === item.key;
-                    const isRestricted = !isAdmin && ["store", "store-orders"].includes(item.key);
+                    const isRestricted = false; // Marketplace now available to all dealers
                     return (
                       <button
                         key={item.key}
