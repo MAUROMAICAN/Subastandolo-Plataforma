@@ -41,6 +41,17 @@ const SubaAvatar = ({ size = 28, radius = 10 }: { size?: number; radius?: number
     );
 };
 
+const STORAGE_KEY = "suba-btn-pos";
+const HIDDEN_KEY = "suba-hidden";
+
+const getStoredPos = () => {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw) as { x: number; y: number };
+    } catch { /* ignore */ }
+    return null;
+};
+
 const AiChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -49,17 +60,106 @@ const AiChatWidget = () => {
     const [showScrollBtn, setShowScrollBtn] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
     const [tooltipDismissed, setTooltipDismissed] = useState(false);
+    const [isHidden, setIsHidden] = useState(() => localStorage.getItem(HIDDEN_KEY) === "1");
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
+    // ─── Drag state ───
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const [pos, setPos] = useState<{ x: number; y: number }>(() => {
+        const stored = getStoredPos();
+        return stored || { x: window.innerWidth - 70, y: window.innerHeight - 130 };
+    });
+    const dragState = useRef({
+        dragging: false,
+        wasDragged: false,
+        startX: 0,
+        startY: 0,
+        startPosX: 0,
+        startPosY: 0,
+    });
+
+    // Clamp position to viewport
+    const clamp = useCallback((x: number, y: number) => {
+        const btnSize = window.innerWidth < 640 ? 56 : 80;
+        return {
+            x: Math.max(0, Math.min(window.innerWidth - btnSize, x)),
+            y: Math.max(0, Math.min(window.innerHeight - btnSize, y)),
+        };
+    }, []);
+
+    // ─── Mouse drag handlers ───
+    const onPointerDown = useCallback((e: React.PointerEvent) => {
+        if (isOpen) return;
+        dragState.current = {
+            dragging: true,
+            wasDragged: false,
+            startX: e.clientX,
+            startY: e.clientY,
+            startPosX: pos.x,
+            startPosY: pos.y,
+        };
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    }, [isOpen, pos]);
+
+    const onPointerMove = useCallback((e: React.PointerEvent) => {
+        if (!dragState.current.dragging) return;
+        const dx = e.clientX - dragState.current.startX;
+        const dy = e.clientY - dragState.current.startY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            dragState.current.wasDragged = true;
+        }
+        const newPos = clamp(dragState.current.startPosX + dx, dragState.current.startPosY + dy);
+        setPos(newPos);
+    }, [clamp]);
+
+    const onPointerUp = useCallback((e: React.PointerEvent) => {
+        if (!dragState.current.dragging) return;
+        dragState.current.dragging = false;
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+        // Snap to nearest edge
+        const btnSize = window.innerWidth < 640 ? 56 : 80;
+        const midX = window.innerWidth / 2;
+        const snappedX = pos.x + btnSize / 2 < midX ? 4 : window.innerWidth - btnSize - 4;
+        const finalPos = clamp(snappedX, pos.y);
+        setPos(finalPos);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPos));
+        if (!dragState.current.wasDragged) {
+            setIsOpen(true);
+            setShowTooltip(false);
+            setTooltipDismissed(true);
+        }
+    }, [pos, clamp]);
+
+    // Reset position on window resize
+    useEffect(() => {
+        const handleResize = () => {
+            setPos(prev => clamp(prev.x, prev.y));
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [clamp]);
+
+    // Show/hide the widget
+    const hideWidget = useCallback(() => {
+        setIsHidden(true);
+        setIsOpen(false);
+        localStorage.setItem(HIDDEN_KEY, "1");
+    }, []);
+
+    const showWidget = useCallback(() => {
+        setIsHidden(false);
+        localStorage.removeItem(HIDDEN_KEY);
+    }, []);
+
     // Show tooltip after 3 seconds if not dismissed and chat not open
     useEffect(() => {
-        if (tooltipDismissed || isOpen) return undefined;
+        if (tooltipDismissed || isOpen || isHidden) return undefined;
         const timer = setTimeout(() => setShowTooltip(true), 3000);
         return () => clearTimeout(timer);
-    }, [tooltipDismissed, isOpen]);
+    }, [tooltipDismissed, isOpen, isHidden]);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -214,13 +314,39 @@ const AiChatWidget = () => {
         });
     };
 
+    // If hidden, show a tiny re-activate pill at bottom-right
+    if (isHidden) {
+        return (
+            <button
+                onClick={showWidget}
+                className="fixed z-40 bottom-2 right-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all hover:scale-105"
+                style={{
+                    background: "rgba(0,0,0,0.5)",
+                    color: "rgba(255,255,255,0.5)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(8px)",
+                }}
+            >
+                💬 Suba
+            </button>
+        );
+    }
+
+    // Compute chat panel position based on button
+    const btnSize = typeof window !== "undefined" && window.innerWidth < 640 ? 56 : 80;
+    const isOnLeft = pos.x < (typeof window !== "undefined" ? window.innerWidth / 2 : 500);
+
     return (
         <>
             {/* ── Floating tooltip bubble ── */}
             {showTooltip && !isOpen && (
                 <div
-                    className="fixed z-50 bottom-[120px] sm:bottom-[148px] right-3 sm:right-5"
-                    style={{ animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
+                    className="fixed z-50"
+                    style={{
+                        left: pos.x - 60,
+                        top: pos.y - 40,
+                        animation: "subaTooltipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
                     onClick={() => { setTooltipDismissed(true); setShowTooltip(false); setIsOpen(true); }}
                 >
                     <span className="suba-typewriter"
@@ -239,17 +365,15 @@ const AiChatWidget = () => {
                 </div>
             )}
 
-            {/* ── Floating trigger button ── */}
-            {/* Floating close button */}
+            {/* ── Floating close button (when chat is open) ── */}
             {isOpen && (
                 <button
-                    id="suba-chat-trigger"
                     onClick={() => { setIsOpen(false); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Cerrar chat"
                     className="fixed z-[60] flex items-center justify-center"
                     style={{
-                        bottom: "80px",
-                        right: "12px",
+                        left: pos.x + btnSize / 2 - 20,
+                        top: pos.y + btnSize / 2 - 20,
                         width: "40px",
                         height: "40px",
                         borderRadius: "50%",
@@ -263,30 +387,58 @@ const AiChatWidget = () => {
                     <X size={18} color="#fff" strokeWidth={2.5} />
                 </button>
             )}
-            {/* Avatar trigger — smaller on mobile */}
+
+            {/* ── Draggable Avatar trigger ── */}
             {!isOpen && (
                 <button
+                    ref={btnRef}
                     id="suba-chat-trigger"
-                    onClick={() => { setIsOpen(true); setShowTooltip(false); setTooltipDismissed(true); }}
                     aria-label="Hablar con Suba"
-                    className="fixed z-50 w-[56px] h-[56px] sm:w-[80px] sm:h-[80px] bottom-[58px] sm:bottom-[68px] right-1 sm:right-1.5"
+                    className="fixed z-50 touch-none select-none"
                     style={{
+                        left: pos.x,
+                        top: pos.y,
+                        width: btnSize,
+                        height: btnSize,
                         borderRadius: "0",
                         border: "none",
-                        cursor: "pointer",
+                        cursor: "grab",
                         background: "transparent",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         padding: 0,
                         filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))",
+                        transition: dragState.current.dragging ? "none" : "left 0.3s ease, top 0.05s ease",
                     }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onContextMenu={(e) => { e.preventDefault(); hideWidget(); }}
                 >
                     <img
                         src={SUBA_AVATAR}
                         alt="Suba"
-                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
                     />
+                    {/* Dismiss hint pill */}
+                    <span
+                        className="absolute -top-1 -right-1 flex items-center justify-center"
+                        style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            background: "rgba(0,0,0,0.7)",
+                            border: "1px solid rgba(255,255,255,0.15)",
+                            cursor: "pointer",
+                            fontSize: 10,
+                            color: "rgba(255,255,255,0.6)",
+                            lineHeight: 1,
+                        }}
+                        onClick={(e) => { e.stopPropagation(); hideWidget(); }}
+                    >
+                        ✕
+                    </span>
                 </button>
             )}
 
@@ -294,8 +446,12 @@ const AiChatWidget = () => {
             {isOpen && (
                 <div
                     id="suba-chat-panel"
-                    className="fixed z-50 flex flex-col bottom-[130px] right-3 w-[calc(100vw-24px)] max-w-[340px] h-[min(440px,calc(100vh-180px))] sm:bottom-[140px] sm:right-4 sm:w-[340px] sm:h-[min(500px,calc(100vh-200px))] rounded-2xl border border-[rgba(181,251,5,0.12)]"
+                    className="fixed z-50 flex flex-col w-[calc(100vw-24px)] max-w-[340px] h-[min(440px,calc(100vh-180px))] sm:w-[340px] sm:h-[min(500px,calc(100vh-200px))] rounded-2xl border border-[rgba(181,251,5,0.12)]"
                     style={{
+                        ...(isOnLeft
+                            ? { left: Math.max(8, pos.x) }
+                            : { right: Math.max(8, (typeof window !== "undefined" ? window.innerWidth : 1024) - pos.x - btnSize) }),
+                        bottom: Math.max(8, (typeof window !== "undefined" ? window.innerHeight : 800) - pos.y + 10),
                         overflow: "hidden",
                         background: "#0a0a14",
                         boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
