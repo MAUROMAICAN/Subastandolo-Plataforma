@@ -562,7 +562,7 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
             <p className="text-[10px] text-muted-foreground">Esta subasta será visible al público pero nadie podrá pujar. Luego podrás activarla asignándole duración.</p>
             <div className="space-y-1.5">
               <Label className="text-xs">Título *</Label>
-              <Input value={schedTitle} onChange={(e) => setSchedTitle(e.target.value)} placeholder="Ej: iPhone 15 Pro Max" className="rounded-sm" maxLength={200} />
+              <Input value={schedTitle} onChange={(e) => setSchedTitle(e.target.value)} placeholder="Ej: iPhone 15 Pro Max" className="rounded-sm" maxLength={55} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Descripción</Label>

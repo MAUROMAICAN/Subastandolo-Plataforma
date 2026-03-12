@@ -892,7 +892,7 @@ export default function DealerAuctionsTab({
                               <Input
                                 value={editFields.title}
                                 onChange={(e) => setEditFields(f => ({ ...f, title: e.target.value }))}
-                                maxLength={200}
+                                maxLength={55}
                                 className="rounded-xl text-xs h-9"
                               />
                             </div>

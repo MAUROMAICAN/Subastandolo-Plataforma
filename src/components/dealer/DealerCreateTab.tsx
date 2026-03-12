@@ -287,7 +287,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
           <div className="p-5 space-y-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold">Título del Producto <span className="text-destructive">*</span></Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ej: Refrigerador Samsung 2024" className="rounded-xl h-11" maxLength={200} />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ej: Refrigerador Samsung 2024" className="rounded-xl h-11" maxLength={55} />
+              <p className={`text-[10px] text-right ${title.length >= 50 ? "text-amber-500 font-bold" : "text-muted-foreground"}`}>{title.length}/55</p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold">Descripción del Producto <span className="text-destructive">*</span></Label>
