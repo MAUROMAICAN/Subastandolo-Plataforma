@@ -51,6 +51,7 @@ const MarketplaceHome = lazy(() => import("./pages/MarketplaceHome"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const CheckoutTienda = lazy(() => import("./pages/CheckoutTienda"));
 const MiCompra = lazy(() => import("./pages/MiCompra"));
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -257,6 +258,7 @@ const App = () => {
                         <Route path="/menu" element={<ProtectedRoute authOnly><Menu /></ProtectedRoute>} />
                         <Route path="/notificaciones" element={<ProtectedRoute authOnly><NotificationsPage /></ProtectedRoute>} />
                         <Route path="/quiero-vender" element={<QuieroVender />} />
+                        <Route path="/eliminar-cuenta" element={<DeleteAccount />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
