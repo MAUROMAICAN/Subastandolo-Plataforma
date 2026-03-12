@@ -178,10 +178,21 @@ export default function ProductQA({ productId, sellerId }: Props) {
         </div>
       )}
 
-      {!user && (
+      {user && user.id === sellerId && (
         <p className="text-sm text-muted-foreground bg-secondary/20 p-3 rounded-lg border border-border/30 text-center">
-          <a href="/auth" className="text-primary dark:text-[#A6E300] font-semibold hover:underline">Inicia sesión</a> para hacer una pregunta
+          📋 Este es tu producto. Las preguntas de los compradores aparecerán aquí. Puedes responderlas desde tu <a href="/dealer?tab=questions" className="text-primary dark:text-[#A6E300] font-semibold hover:underline">Panel de Dealer</a>.
         </p>
+      )}
+
+      {!user && (
+        <div className="bg-secondary/20 p-4 rounded-lg border border-border/30">
+          <p className="text-sm text-muted-foreground text-center mb-2">
+            ¿Tienes una pregunta sobre este producto?
+          </p>
+          <a href="/auth" className="block text-center text-primary dark:text-[#A6E300] font-bold text-sm hover:underline">
+            Inicia sesión para preguntar
+          </a>
+        </div>
       )}
 
       {/* Questions list */}
