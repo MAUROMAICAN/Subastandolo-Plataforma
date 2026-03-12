@@ -198,15 +198,18 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
                     <VerifiedBadge size="md" salesCount={dealer.salesCount} showTooltip />
                   )}
                 </div>
-                {/* Tier pill — always visible for verified */}
-                {dealer.isVerified && tier && (
-                  <span className={`text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${tier.colors.bg} ${tier.colors.text} ${tier.colors.border}`}>
-                    {tier.label}
+                {/* Verified label */}
+                {dealer.isVerified && (
+                  <span className="text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25">
+                    Verificado
                   </span>
                 )}
               </div>
             );
           })()}
+
+          {/* Spacer to push countdown + CTA to bottom */}
+          <div className="flex-1" />
 
           {/* Countdown */}
           {!isEnded && (
@@ -232,8 +235,8 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
           {/* CTA */}
           {isLive && (
-            <div className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-accent text-accent-foreground font-bold text-[10px] sm:text-xs uppercase tracking-widest shadow-sm shadow-accent/30 group-hover:shadow-accent/50 group-hover:brightness-110 transition-all cursor-pointer">
-              Ofertar →
+            <div className="mt-2 w-full flex items-center justify-center py-2 rounded-xl bg-accent text-accent-foreground font-bold text-[10px] sm:text-xs uppercase tracking-widest shadow-sm shadow-accent/30 group-hover:shadow-accent/50 group-hover:brightness-110 transition-all cursor-pointer">
+              Ofertar
             </div>
           )}
         </div>
