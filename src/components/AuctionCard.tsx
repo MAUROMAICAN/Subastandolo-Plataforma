@@ -6,12 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { maskName } from "@/lib/utils";
 import { useBCVRate } from "@/hooks/useBCVRate";
-import { getDealerTier } from "@/components/VerifiedBadge";
+import { getDealerTier, DEALER_TIERS } from "@/components/VerifiedBadge";
 
 interface DealerInfo {
   name: string;
   isVerified: boolean;
   salesCount: number;
+  manualTier?: string | null;
   avatarUrl?: string | null;
 }
 
@@ -157,7 +158,12 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
 
           {/* Dealer Link */}
           {dealer && (() => {
-            const tier = dealer.isVerified ? getDealerTier(dealer.salesCount) : null;
+            const autoTier = getDealerTier(dealer.salesCount);
+            const tier = dealer.isVerified
+              ? (dealer.manualTier
+                  ? DEALER_TIERS.find(t => t.key === dealer.manualTier) || autoTier
+                  : autoTier)
+              : null;
             return (
               <div
                 className={`mt-2 flex items-center gap-2 text-xs cursor-pointer group/dealer rounded-lg px-2 py-1.5 -mx-1 transition-colors ${
