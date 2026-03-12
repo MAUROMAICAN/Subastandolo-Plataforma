@@ -136,7 +136,7 @@ const BuyerPanel = () => {
           .from("marketplace_orders")
           .select(`
             *,
-            dealer:profiles!dealer_id(name),
+            dealer:profiles(name),
             product:marketplace_products(title, images:marketplace_product_images(image_url, display_order))
           `)
           .eq("buyer_id", user.id)

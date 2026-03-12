@@ -53,7 +53,7 @@ export default function CheckoutTienda() {
                 .select(`
           *,
           images:marketplace_product_images(*),
-          dealer:profiles!dealer_id(id, name)
+          dealer:profiles(id, name)
         `)
                 .eq("id", productId)
                 .single();

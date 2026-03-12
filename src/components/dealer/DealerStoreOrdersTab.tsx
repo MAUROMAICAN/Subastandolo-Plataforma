@@ -38,7 +38,7 @@ export default function DealerStoreOrdersTab({ dealerId }: Props) {
                 .select(`
           *,
           product:marketplace_products(title, images:marketplace_product_images(image_url)),
-          buyer:profiles!buyer_id(full_name)
+          buyer:profiles(full_name)
         `)
                 .eq("dealer_id", dealerId)
                 .order("created_at", { ascending: false });
