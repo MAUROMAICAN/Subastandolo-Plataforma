@@ -372,33 +372,56 @@ const AdminAuctionsTab = ({ auctions, winnerProfiles, commissionPct, fetchAllDat
     const endTime = new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
     let success = 0;
     let failed = 0;
+    const errors: string[] = [];
     for (const auctionId of selectedAuctions) {
       const auction = auctions.find(a => a.id === auctionId);
-      if (!auction) { failed++; continue; }
+      if (!auction) { failed++; errors.push(`Subasta no encontrada: ${auctionId.slice(0, 8)}`); continue; }
 
-      // Delete old bids
-      await supabase.from("bids").delete().eq("auction_id", auctionId);
+      try {
+        // Delete old bids
+        await supabase.from("bids").delete().eq("auction_id", auctionId);
 
-      // Reset and activate in a single update
-      const { error } = await supabase.from("auctions").update({
-        status: "active",
-        current_price: auction.starting_price || 0,
-        winner_id: null,
-        payment_status: null,
-        delivery_status: null,
-        tracking_number: null,
-        funds_released_at: null,
-        is_extended: false,
-        start_time: now.toISOString(),
-        end_time: endTime,
-        requested_duration_hours: hours,
-      } as any).eq("id", auctionId);
-      if (error) { failed++; } else { success++; }
+        // Delete old payment proofs
+        await supabase.from("payment_proofs").delete().eq("auction_id", auctionId);
+
+        // Reset and activate in a single update
+        const { error } = await supabase.from("auctions").update({
+          status: "active",
+          current_price: auction.starting_price || 0,
+          winner_id: null,
+          payment_status: "pending",
+          delivery_status: "pending",
+          tracking_number: null,
+          shipping_company: null,
+          funds_released_at: null,
+          delivered_at: null,
+          is_extended: false,
+          bids_count: 0,
+          start_time: now.toISOString(),
+          end_time: endTime,
+          requested_duration_hours: hours,
+        } as any).eq("id", auctionId);
+        if (error) {
+          failed++;
+          errors.push(`${auction.title.slice(0, 30)}: ${error.message}`);
+          console.error("Republish error:", auction.title, error);
+        } else {
+          success++;
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`${auction.title.slice(0, 30)}: ${err.message}`);
+        console.error("Republish exception:", auction.title, err);
+      }
     }
     setBulkRepublishing(false);
     setSelectedAuctions(new Set());
     setBulkDuration("");
-    toast({ title: `🚀 ${success} subasta${success !== 1 ? "s" : ""} republicada${success !== 1 ? "s" : ""}${failed > 0 ? ` · ${failed} fallaron` : ""}` });
+    if (failed > 0 && errors.length > 0) {
+      toast({ title: `🚀 ${success} republicadas · ${failed} fallaron`, description: errors.join("\n"), variant: "destructive" });
+    } else {
+      toast({ title: `🚀 ${success} subasta${success !== 1 ? "s" : ""} republicada${success !== 1 ? "s" : ""}` });
+    }
     fetchAllData();
   };
 
