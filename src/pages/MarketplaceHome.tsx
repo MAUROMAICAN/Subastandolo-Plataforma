@@ -1,185 +1,317 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Store, ArrowRight, Tag } from "lucide-react";
+import { Loader2, Search, Store, ChevronRight, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { useCategories } from "@/hooks/useCategories";
+import {
+  Smartphone, Laptop, Tv, Refrigerator,
+  Shirt, Footprints, Watch, Sparkles,
+  Car, Dumbbell, Gamepad2, Sofa,
+  Wrench, Baby, Briefcase, Package, ShoppingBag,
+} from "lucide-react";
 
-interface StoreProduct {
-    id: string;
-    title: string;
-    price_usd: number;
-    stock: number;
-    condition: string;
-    images: { image_url: string }[];
-    dealer: { id: string, name: string };
-    category: { id: string, name: string };
+// Icon mapping (same as CategorySelector)
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "celulares": <Smartphone className="h-4 w-4" />,
+  "computacion": <Laptop className="h-4 w-4" />,
+  "electronica": <Tv className="h-4 w-4" />,
+  "electrodomesticos": <Refrigerator className="h-4 w-4" />,
+  "ropa": <Shirt className="h-4 w-4" />,
+  "calzado": <Footprints className="h-4 w-4" />,
+  "relojes": <Watch className="h-4 w-4" />,
+  "perfumes": <Sparkles className="h-4 w-4" />,
+  "vehiculos": <Car className="h-4 w-4" />,
+  "deportes": <Dumbbell className="h-4 w-4" />,
+  "gaming": <Gamepad2 className="h-4 w-4" />,
+  "hogar": <Sofa className="h-4 w-4" />,
+  "herramientas": <Wrench className="h-4 w-4" />,
+  "bebes": <Baby className="h-4 w-4" />,
+  "bolsos": <Briefcase className="h-4 w-4" />,
+  "otros": <Package className="h-4 w-4" />,
+};
+
+function getCatIcon(slug: string) {
+  const prefix = Object.keys(CATEGORY_ICONS).find(key => slug.startsWith(key));
+  return prefix ? CATEGORY_ICONS[prefix] : <ShoppingBag className="h-4 w-4" />;
 }
 
+const CONDITION_MAP: Record<string, string> = {
+  nuevo: "Nuevo",
+  usado_buen_estado: "Usado",
+  usado_regular: "Regular",
+  para_reparar: "Para reparar",
+  new: "Nuevo",
+  used: "Usado",
+};
+
 export default function MarketplaceHome() {
-    const [products, setProducts] = useState<StoreProduct[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
-    const { toast } = useToast();
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { getRootCategories, getChildren } = useCategories();
+  const rootCategories = getRootCategories();
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
+  const activeCatId = searchParams.get("cat") || null;
+  const activeSubCatId = searchParams.get("sub") || null;
 
-    const fetchProducts = async () => {
-        setLoading(true);
-        try {
-            // Query fixed-price products that are active and have stock
-            const { data, error } = await supabase
-                .from("marketplace_products")
-                .select(`
-          *,
-          images:marketplace_product_images(image_url),
-          dealer:profiles!dealer_id(id, name),
-          category:marketplace_categories(id, name)
+  // Get subcategories for active parent
+  const subcategories = activeCatId ? getChildren(activeCatId) : [];
+  const activeCategory = rootCategories.find(c => c.id === activeCatId);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [activeCatId, activeSubCatId]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("marketplace_products")
+        .select(`
+          id, title, price, stock, condition, image_url, created_at, category_id,
+          images:marketplace_product_images(image_url, display_order),
+          seller:profiles!seller_id(id, name),
+          category:marketplace_categories(id, name, slug)
         `)
-                .eq("status", "active")
-                .gt("stock", 0)
-                .order("created_at", { ascending: false });
+        .eq("status", "active")
+        .gt("stock", 0)
+        .order("created_at", { ascending: false })
+        .limit(60);
 
-            if (error) throw error;
-
-            // Ensure proper sorting of images on DB side, or just take the first one
-            const enriched = (data || []).map((p: any) => ({
-                ...p,
-                images: p.images?.sort((a: any, b: any) => a.display_order - b.display_order) || []
-            }));
-            setProducts(enriched);
-
-        } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
-        } finally {
-            setLoading(false);
+      // Filter by subcategory (specific) or parent category (all children)
+      if (activeSubCatId) {
+        query = query.eq("category_id", activeSubCatId);
+      } else if (activeCatId) {
+        // Get all child category IDs
+        const childIds = getChildren(activeCatId).map(c => c.id);
+        if (childIds.length > 0) {
+          query = query.in("category_id", [activeCatId, ...childIds]);
+        } else {
+          query = query.eq("category_id", activeCatId);
         }
-    };
+      }
 
-    const filteredProducts = products.filter(p =>
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.dealer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      const { data, error } = await (query as any);
+      if (error) throw error;
 
-    return (
-        <div className="min-h-screen bg-background flex flex-col">
-            <Navbar />
+      const enriched = (data || []).map((p: any) => ({
+        ...p,
+        images: p.images?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0)) || [],
+        mainImage: p.image_url || p.images?.[0]?.image_url || null,
+      }));
+      setProducts(enriched);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-accent/20 to-primary/10 py-12 px-4 border-b border-border">
-                <div className="container mx-auto max-w-6xl text-center">
-                    <Badge variant="outline" className="mb-4 bg-background px-3 py-1 border-accent/30 text-accent font-bold"><Store className="h-3 w-3 mr-1" /> Venta Directa</Badge>
-                    <h1 className="text-3xl md:text-5xl font-heading font-black tracking-tight mb-4 text-foreground">
-                        Encuentra lo que buscas,<br className="hidden md:block" /> sin esperar una subasta.
-                    </h1>
-                    <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto mb-8 font-medium">
-                        Compra directamente a nuestros Dealers Verificados. Precio fijo, envío rápido y protección al comprador.
-                    </p>
+  const filteredProducts = searchTerm.trim()
+    ? products.filter(p =>
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.category?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.seller?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    : products;
 
-                    <div className="max-w-xl mx-auto relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-                        <Input
-                            placeholder="Buscar zapatos, teléfonos, ropa..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 h-14 rounded-full border-2 border-primary/20 bg-background shadow-lg shadow-primary/5 focus-visible:ring-primary text-base font-medium"
-                        />
-                        <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-6 bg-primary hover:bg-primary/90 font-bold h-10 transition-all active:scale-95">Buscar</Button>
-                    </div>
-                </div>
-            </section>
+  const selectCategory = (catId: string | null) => {
+    const params = new URLSearchParams();
+    if (catId) params.set("cat", catId);
+    setSearchParams(params);
+  };
 
-            {/* Main Content */}
-            <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                        <p className="text-muted-foreground font-medium">Cargando catálogo...</p>
-                    </div>
-                ) : filteredProducts.length === 0 ? (
-                    <div className="text-center py-20">
-                        <div className="h-20 w-20 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-border">
-                            <Search className="h-10 w-10 text-muted-foreground/50" />
-                        </div>
-                        <h2 className="text-xl font-heading font-bold mb-2">No se encontraron productos</h2>
-                        <p className="text-muted-foreground max-w-md mx-auto">No hay artículos de venta directa que coincidan con tu búsqueda en este momento.</p>
-                        {searchTerm && <Button variant="link" onClick={() => setSearchTerm("")} className="mt-4 text-accent font-bold">Ver todo el catálogo</Button>}
-                    </div>
-                ) : (
-                    <div>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-heading font-bold flex items-center gap-2"><Tag className="h-5 w-5 text-accent" /> Descubre Artículos</h2>
-                            <span className="text-xs font-medium text-muted-foreground bg-secondary px-3 py-1 flex items-center rounded-full border border-border/50 shadow-sm">{filteredProducts.length} resultados</span>
-                        </div>
+  const selectSubCategory = (subId: string) => {
+    const params = new URLSearchParams();
+    if (activeCatId) params.set("cat", activeCatId);
+    params.set("sub", subId);
+    setSearchParams(params);
+  };
 
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-                            {filteredProducts.map((product) => {
-                                const mainImg = product.images[0]?.image_url;
-                                return (
-                                    <Link to={`/producto/${product.id}`} key={product.id} className="group flex h-full">
-                                        <Card className="w-full flex flex-col border border-border group-hover:border-primary/50 group-hover:shadow-lg group-hover:shadow-primary/5 transition-all duration-300 rounded-sm overflow-hidden bg-card relative">
-                                            {/* Image */}
-                                            <div className="relative aspect-square w-full bg-secondary/20 overflow-hidden border-b border-border/50">
-                                                {mainImg ? (
-                                                    <img
-                                                        src={mainImg}
-                                                        alt={product.title}
-                                                        loading="lazy"
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Store className="h-10 w-10 text-muted-foreground/30" />
-                                                    </div>
-                                                )}
-                                                {/* Quick View Overlay */}
-                                                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
-                                                    <span className="text-white text-[10px] font-bold bg-primary/90 px-2 py-0.5 rounded-sm">COMPRAR AHORA</span>
-                                                </div>
-                                            </div>
+  const clearFilters = () => {
+    setSearchParams({});
+    setSearchTerm("");
+  };
 
-                                            {/* Content */}
-                                            <CardContent className="p-3 md:p-4 flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                                                        <span className="truncate mr-2">{product.category?.name || "General"}</span>
-                                                        {product.condition !== 'new' && <span className="bg-secondary px-1.5 py-0.5 rounded-sm text-[9px] font-bold border border-bordershrink-0">{product.condition === 'used' ? 'USADO' : 'REACOND.'}</span>}
-                                                    </p>
-                                                    <h3 className="font-heading font-bold text-sm md:text-base leading-tight mb-2 line-clamp-2 text-foreground group-hover:text-accent transition-colors">
-                                                        {product.title}
-                                                    </h3>
-                                                </div>
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
 
-                                                <div className="mt-auto">
-                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-                                                        <Store className="h-3 w-3 shrink-0" /> <span className="truncate">{product.dealer?.name}</span>
-                                                    </div>
-                                                    <div className="flex items-end justify-between">
-                                                        <p className="text-lg md:text-xl font-black text-foreground">${product.price_usd.toLocaleString("es-MX")}</p>
-                                                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-secondary/50 group-hover:bg-primary group-hover:text-primary-foreground group-active:scale-95 transition-all">
-                                                            <ArrowRight className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-            </main>
+      {/* Search Header */}
+      <section className="bg-card border-b border-border">
+        <div className="container mx-auto max-w-7xl px-4 py-6">
+          <div className="flex items-center gap-4 mb-4">
+            <Link to="/tienda" className="shrink-0" onClick={() => clearFilters()}>
+              <h1 className="text-xl font-heading font-bold text-foreground">Tienda</h1>
+            </Link>
+            <div className="flex-1 relative max-w-2xl">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar productos, marcas y más..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-lg border-border bg-background text-sm"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
 
-            <Footer />
+          {/* Category Navigation */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+            <button
+              onClick={() => selectCategory(null)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${!activeCatId
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                }`}
+            >
+              Todas
+            </button>
+            {rootCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => selectCategory(cat.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${activeCatId === cat.id
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                  }`}
+              >
+                {getCatIcon(cat.slug)}
+                <span className="truncate max-w-[120px]">{cat.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Subcategory chips */}
+          {subcategories.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
+              <span className="text-[10px] text-muted-foreground shrink-0 mr-1">
+                {activeCategory?.name}:
+              </span>
+              {subcategories.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => selectSubCategory(sub.id)}
+                  className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${activeSubCatId === sub.id
+                    ? "bg-primary/10 text-primary dark:text-[#A6E300] border-primary/30 dark:border-[#A6E300]/30"
+                    : "bg-transparent text-muted-foreground border-border/50 hover:border-primary/20 hover:text-foreground"
+                    }`}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-    );
+      </section>
+
+      {/* Breadcrumb + Results count */}
+      <div className="container mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Link to="/tienda" className="hover:text-foreground" onClick={() => clearFilters()}>Tienda</Link>
+          {activeCategory && (
+            <>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground font-medium">{activeCategory.name}</span>
+            </>
+          )}
+          {activeSubCatId && subcategories.find(s => s.id === activeSubCatId) && (
+            <>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground font-medium">{subcategories.find(s => s.id === activeSubCatId)?.name}</span>
+            </>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {filteredProducts.length} resultado{filteredProducts.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Products Grid */}
+      <main className="flex-1 container mx-auto px-4 pb-12 max-w-7xl">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+            <p className="text-sm text-muted-foreground">Cargando productos...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="h-16 w-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-border">
+              <Search className="h-7 w-7 text-muted-foreground/40" />
+            </div>
+            <h2 className="text-lg font-heading font-bold mb-2">No se encontraron productos</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+              {searchTerm ? `No hay resultados para "${searchTerm}"` : "No hay productos disponibles en esta categoría."}
+            </p>
+            {(searchTerm || activeCatId) && (
+              <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-lg">
+                <X className="h-3.5 w-3.5 mr-1.5" /> Limpiar filtros
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {filteredProducts.map((product) => {
+              const mainImg = product.mainImage || product.images?.[0]?.image_url;
+              return (
+                <Link to={`/producto/${product.id}`} key={product.id} className="group flex">
+                  <div className="w-full flex flex-col bg-card border border-border rounded-lg overflow-hidden hover:shadow-md hover:border-border/80 transition-all duration-200">
+                    {/* Image */}
+                    <div className="relative aspect-square w-full bg-secondary/10 overflow-hidden">
+                      {mainImg ? (
+                        <img
+                          src={mainImg}
+                          alt={product.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Store className="h-8 w-8 text-muted-foreground/20" />
+                        </div>
+                      )}
+                      {/* Condition badge */}
+                      {product.condition && product.condition !== "nuevo" && product.condition !== "new" && (
+                        <span className="absolute top-2 left-2 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                          {CONDITION_MAP[product.condition] || product.condition}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-3 flex-1 flex flex-col">
+                      <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">
+                        {product.title}
+                      </p>
+                      <div className="mt-auto">
+                        <p className="text-lg font-black text-foreground">
+                          ${Number(product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                        </p>
+                        {product.stock > 1 && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {product.stock} disponibles
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      <Footer />
+    </div>
+  );
 }

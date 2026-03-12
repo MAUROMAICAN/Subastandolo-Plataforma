@@ -12,13 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import VendorStoreCard from "@/components/dealer/VendorStoreCard";
 
-interface ProductAttribute {
-    id: string;
-    attr_name: string;
-    attr_value: string;
-    additional_price_usd: number;
-}
-
 interface ProductImage {
     id: string;
     image_url: string;
@@ -29,14 +22,14 @@ interface ProductDetails {
     id: string;
     title: string;
     description: string;
-    price_usd: number;
+    price: number;
     stock: number;
     condition: string;
     status: string;
     created_at: string;
+    attributes: Record<string, string>;
     images: ProductImage[];
-    attributes: ProductAttribute[];
-    dealer: { id: string, name: string };
+    seller: { id: string, name: string };
     category: { id: string, name: string };
 }
 
@@ -50,8 +43,6 @@ export default function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string>("");
 
-    // Selected variation
-    const [selectedAttrId, setSelectedAttrId] = useState<string | null>(null);
 
     useEffect(() => {
         if (id) fetchProduct(id);
@@ -60,17 +51,16 @@ export default function ProductDetail() {
     const fetchProduct = async (productId: string) => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase
                 .from("marketplace_products")
                 .select(`
           *,
           images:marketplace_product_images(*),
-          attributes:marketplace_product_attributes(*),
-          dealer:profiles!dealer_id(id, name),
+          seller:profiles!seller_id(id, name),
           category:marketplace_categories(id, name)
         `)
                 .eq("id", productId)
-                .single();
+                .single() as any);
 
             if (error) throw error;
             if (!data) {
@@ -81,7 +71,8 @@ export default function ProductDetail() {
             const p: ProductDetails = {
                 ...data,
                 images: (data.images || []).sort((a: any, b: any) => a.display_order - b.display_order),
-                dealer: { id: (data.dealer as any)?.id || "", name: (data.dealer as any)?.name || "" },
+                attributes: data.attributes || {},
+                seller: { id: (data.seller as any)?.id || "", name: (data.seller as any)?.name || "" },
                 category: { id: (data.category as any)?.id || "", name: (data.category as any)?.name || "" }
             };
             setProduct(p);
@@ -104,7 +95,7 @@ export default function ProductDetail() {
 
         // In Fase 3, this will navigate to a special CheckoutFlow for Marketplace
         // Passing the product ID and selected attribute ID.
-        navigate(`/checkout-tienda/${product?.id}${selectedAttrId ? `?attr=${selectedAttrId}` : ''}`);
+        navigate(`/checkout-tienda/${product?.id}`);
     };
 
     if (loading) {
@@ -118,16 +109,11 @@ export default function ProductDetail() {
 
     if (!product) return null;
 
-    const selectedAttr = product.attributes.find(a => a.id === selectedAttrId);
-    const finalPrice = product.price_usd + (selectedAttr?.additional_price_usd || 0);
+    const finalPrice = product.price;
     const isAvailable = product.status === 'active' && product.stock > 0;
 
-    // Group attributes by name for UI
-    const groupedAttrs = product.attributes.reduce((acc, attr) => {
-        if (!acc[attr.attr_name]) acc[attr.attr_name] = [];
-        acc[attr.attr_name].push(attr);
-        return acc;
-    }, {} as Record<string, ProductAttribute[]>);
+    // Attributes from JSONB
+    const attrEntries = Object.entries(product.attributes || {}).filter(([, v]) => v);
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
@@ -175,8 +161,8 @@ export default function ProductDetail() {
                     <div className="w-full lg:w-2/5 flex flex-col space-y-6">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <Link to={`/dealer/${product.dealer.id}`} className="text-xs font-bold text-accent hover:underline flex items-center">
-                                    <Store className="h-3.5 w-3.5 mr-1" /> Vendedor: {product.dealer.name}
+                                <Link to={`/dealer/${product.seller.id}`} className="text-xs font-bold text-accent hover:underline flex items-center">
+                                    <Store className="h-3.5 w-3.5 mr-1" /> Vendedor: {product.seller.name}
                                 </Link>
                             </div>
 
@@ -187,7 +173,7 @@ export default function ProductDetail() {
                             <div className="flex flex-col gap-1 mb-6">
                                 <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
                                 <div className="flex items-end gap-3">
-                                    <p className="text-4xl font-black text-foreground">${finalPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-4xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
                                     <Badge variant="outline" className="mb-1.5 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold">Precio Fijo</Badge>
                                 </div>
                             </div>
@@ -199,7 +185,9 @@ export default function ProductDetail() {
                                 {/* Product Status / Condition */}
                                 <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
                                     <span className="text-muted-foreground">Condición:</span>
-                                    <span className="font-bold capitalize">{product.condition === 'new' ? 'Nuevo' : product.condition === 'used' ? 'Usado' : 'Reacondicionado'}</span>
+                                    <span className="font-bold capitalize">
+                                        {product.condition === 'nuevo' || product.condition === 'new' ? 'Nuevo' : product.condition === 'usado_buen_estado' ? 'Usado - Buen Estado' : product.condition === 'usado_regular' ? 'Usado - Regular' : product.condition === 'para_reparar' ? 'Para Reparar' : product.condition}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
                                     <span className="text-muted-foreground">Disponibilidad:</span>
@@ -209,30 +197,17 @@ export default function ProductDetail() {
                                 </div>
 
                                 {/* Variations */}
-                                {Object.keys(groupedAttrs).length > 0 && (
-                                    <div className="space-y-4 py-2">
-                                        <p className="font-bold text-sm">Selecciona tus opciones:</p>
-                                        {Object.entries(groupedAttrs).map(([attrName, attrs]) => (
-                                            <div key={attrName} className="space-y-2">
-                                                <p className="text-xs text-muted-foreground">{attrName}</p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {attrs.map(attr => (
-                                                        <button
-                                                            key={attr.id}
-                                                            onClick={() => setSelectedAttrId(attr.id === selectedAttrId ? null : attr.id)}
-                                                            className={`px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors
-                                ${selectedAttrId === attr.id
-                                                                    ? 'bg-primary text-primary-foreground border-primary'
-                                                                    : 'bg-background hover:bg-secondary border-border text-foreground hover:border-primary/50'
-                                                                }`}
-                                                        >
-                                                            {attr.attr_value}
-                                                            {attr.additional_price_usd > 0 && <span className="text-[10px] ml-1 opacity-80">(+${attr.additional_price_usd})</span>}
-                                                        </button>
-                                                    ))}
+                                {attrEntries.length > 0 && (
+                                    <div className="space-y-3 py-2 border-t border-border/50">
+                                        <p className="font-bold text-sm">Características:</p>
+                                        <div className="space-y-2">
+                                            {attrEntries.map(([key, value]) => (
+                                                <div key={key} className="flex items-center justify-between text-sm py-1">
+                                                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
+                                                    <span className="font-medium text-foreground capitalize">{value}</span>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
@@ -246,6 +221,7 @@ export default function ProductDetail() {
                                         <ShoppingBag className="h-5 w-5 mr-2" />
                                         {isAvailable ? 'Comprar Ahora' : 'Producto Agotado'}
                                     </Button>
+                                    <p className="text-[10px] text-center text-muted-foreground mt-2">Compra protegida · Pago seguro</p>
                                 </div>
 
                                 {/* Trust Badges */}
@@ -263,7 +239,7 @@ export default function ProductDetail() {
                         </Card>
 
                         {/* Store Vendor Card */}
-                        <VendorStoreCard dealerId={product.dealer.id} dealerName={product.dealer.name} />
+                        <VendorStoreCard dealerId={product.seller.id} dealerName={product.seller.name} />
 
                         {/* Description Mobile */}
                         <div className="lg:hidden mt-4 bg-card border border-border p-5 rounded-xl">
