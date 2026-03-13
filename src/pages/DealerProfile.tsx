@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useVerifiedDealer } from "@/hooks/useVerifiedDealers";
 import { useUserReviews } from "@/hooks/useReviews";
@@ -10,10 +10,11 @@ import VerifiedBadge, { getDealerTier } from "@/components/VerifiedBadge";
 import ReputationThermometer from "@/components/ReputationThermometer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, MapPin, Star, User, Calendar, ShieldCheck, MessageCircle, Heart } from "lucide-react";
+import { Loader2, MapPin, Star, User, Calendar, ShieldCheck, MessageCircle, Heart, Store, ImagePlus } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useDealerFollows } from "@/hooks/useDealerFollows";
+import { useBCVRate } from "@/hooks/useBCVRate";
 
 export default function DealerProfile() {
     const { id } = useParams<{ id: string }>();
@@ -26,6 +27,9 @@ export default function DealerProfile() {
     const dealer = useVerifiedDealer(id);
     const { reviews, dealerStats, loading: reviewsLoading } = useUserReviews(id);
     const { isFollowing, loadingFollow, toggleFollow } = useDealerFollows(id);
+    const bcvRate = useBCVRate();
+    const [products, setProducts] = useState<any[]>([]);
+    const [uploadingBanner, setUploadingBanner] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -64,7 +68,41 @@ export default function DealerProfile() {
         };
 
         fetchProfile();
+        fetchProducts();
     }, [id]);
+
+    const fetchProducts = async () => {
+        if (!id) return;
+        const { data } = await (supabase
+            .from("marketplace_products")
+            .select("id, title, price_usd, condition, images:marketplace_product_images(image_url, display_order)")
+            .eq("dealer_id", id)
+            .eq("status", "active")
+            .gt("stock", 0)
+            .order("created_at", { ascending: false }) as any);
+        setProducts(data || []);
+    };
+
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        setUploadingBanner(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/store-banner-${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage.from('auction-images').upload(fileName, file);
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage.from('auction-images').getPublicUrl(fileName);
+            await supabase.from('profiles').update({ store_banner_url: publicUrl } as any).eq('id', user.id);
+            // Refresh profile
+            const { data: updated } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if (updated) setProfile(updated);
+        } catch (err: any) {
+            console.error('Banner upload error:', err);
+        } finally {
+            setUploadingBanner(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -106,9 +144,22 @@ export default function DealerProfile() {
 
                 {/* Profile Header */}
                 <Card className="border border-border rounded-2xl overflow-hidden shadow-md mt-4 sm:mt-8">
-                    {/* Cover background */}
-                    <div className="h-32 sm:h-48 bg-gradient-to-r from-slate-800 to-slate-900 w-full relative">
+                    {/* Cover background / Banner */}
+                    <div className="h-32 sm:h-48 w-full relative overflow-hidden">
+                        {(profile as any)?.store_banner_url ? (
+                            <img src={(profile as any).store_banner_url} alt="Store banner" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="h-full w-full bg-gradient-to-r from-slate-800 to-slate-900" />
+                        )}
                         <div className="absolute inset-0 bg-black/20" />
+                        {/* Banner upload button — only for the dealer themselves */}
+                        {user && user.id === id && (
+                            <label className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors">
+                                {uploadingBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                                {uploadingBanner ? 'Subiendo...' : 'Cambiar banner'}
+                                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleBannerUpload} disabled={uploadingBanner} />
+                            </label>
+                        )}
                     </div>
 
                     <CardContent className="px-6 sm:px-10 pb-8 relative bg-card">
@@ -275,6 +326,39 @@ export default function DealerProfile() {
                         </div>
                     )}
                 </div>
+
+                {/* Products Section */}
+                {products.length > 0 && (
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-heading font-bold flex items-center gap-2">
+                            <Store className="h-5 w-5 text-primary dark:text-[#A6E300]" />
+                            Productos en venta ({products.length})
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {products.map((p) => {
+                                const mainImg = p.images?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))?.[0]?.image_url;
+                                return (
+                                    <Link key={p.id} to={`/producto/${p.id}`} className="group bg-card border border-border rounded-lg overflow-hidden hover:shadow-md hover:border-border/80 transition-all">
+                                        <div className="aspect-square w-full bg-secondary/10 overflow-hidden">
+                                            {mainImg ? (
+                                                <img src={mainImg} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center"><Store className="h-6 w-6 text-muted-foreground/20" /></div>
+                                            )}
+                                        </div>
+                                        <div className="p-3">
+                                            <p className="text-xs font-medium text-foreground leading-snug line-clamp-2 mb-1.5 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{p.title}</p>
+                                            <p className="text-sm font-black text-foreground">${Number(p.price_usd).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                            {bcvRate && bcvRate > 0 && (
+                                                <p className="text-[10px] text-muted-foreground">Bs. {(Number(p.price_usd) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </main>
 
             <Footer />

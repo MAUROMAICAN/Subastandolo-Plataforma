@@ -133,7 +133,7 @@ export default function VendorStoreCard({ dealerId, dealerName }: VendorStoreCar
                 to={`/dealer/${dealerId}`}
                 className="block w-full text-center py-2.5 bg-secondary/30 hover:bg-secondary/60 text-primary dark:text-[#A6E300] font-bold text-sm rounded-lg transition-colors"
             >
-                Ir a la página del vendedor
+                Ir a la tienda del vendedor
             </Link>
         </div>
     );
