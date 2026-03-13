@@ -239,7 +239,7 @@ export default function ProductDetail() {
                                     <CreditCard className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-foreground">Medios de pago</p>
-                                        <p className="text-xs text-muted-foreground">Pago Móvil · Transferencia Bancaria · Zelle</p>
+                                        <p className="text-xs text-muted-foreground">Pago Móvil · Transferencia Bancaria</p>
                                     </div>
                                 </div>
 
