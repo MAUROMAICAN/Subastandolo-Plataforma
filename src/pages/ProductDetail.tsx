@@ -13,6 +13,7 @@ import { useBCVRate } from "@/hooks/useBCVRate";
 import { Badge } from "@/components/ui/badge";
 import VendorStoreCard from "@/components/dealer/VendorStoreCard";
 import ProductQA from "@/components/ProductQA";
+import RelatedProducts from "@/components/RelatedProducts";
 
 interface ProductImage {
     id: string;
@@ -347,6 +348,18 @@ export default function ProductDetail() {
 
 
             </main>
+
+            {/* Related Products */}
+            {product && (
+                <section className="container mx-auto px-4 pb-10 max-w-6xl">
+                    <RelatedProducts
+                        productId={product.id}
+                        sellerId={product.seller.id}
+                        categoryId={product.category?.id || ""}
+                        sellerName={product.seller.name}
+                    />
+                </section>
+            )}
 
             <Footer />
         </div>
