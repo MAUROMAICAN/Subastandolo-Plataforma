@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, Store, ChevronRight, X } from "lucide-react";
+import { Loader2, Search, Store, ChevronRight, X, Gavel, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCategories } from "@/hooks/useCategories";
 import { useBCVRate } from "@/hooks/useBCVRate";
@@ -76,6 +76,7 @@ export default function MarketplaceHome() {
         .from("marketplace_products")
         .select(`
           id, title, price, stock, condition, image_url, created_at, category_id, seller_id,
+          listing_type, current_price, starting_price, end_time,
           images:marketplace_product_images(image_url, display_order),
           category:marketplace_categories(id, name, slug)
         `)
@@ -332,6 +333,17 @@ export default function MarketplaceHome() {
                           {CONDITION_MAP[product.condition] || product.condition}
                         </span>
                       )}
+                      {/* Listing type badge */}
+                      {product.listing_type === 'auction' && (
+                        <span className="absolute top-2 right-2 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <Gavel className="h-2.5 w-2.5" /> Subasta
+                        </span>
+                      )}
+                      {product.listing_type === 'accepts_offers' && (
+                        <span className="absolute top-2 right-2 bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <MessageSquare className="h-2.5 w-2.5" /> Ofertas
+                        </span>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -341,8 +353,13 @@ export default function MarketplaceHome() {
                       </p>
                       <div className="mt-auto">
                         <p className="text-lg font-black text-foreground">
-                          ${Number(product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                          ${Number(product.listing_type === 'auction' && product.current_price > 0 ? product.current_price : product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                         </p>
+                        {product.listing_type === 'auction' && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                            {product.current_price > 0 ? 'Puja actual' : 'Precio inicial'}
+                          </p>
+                        )}
                         {bcvRate && bcvRate > 0 && (
                           <p className="text-[11px] text-muted-foreground font-medium">
                             Bs. {(Number(product.price) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
