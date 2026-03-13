@@ -31,7 +31,7 @@ interface ProductDetails {
     created_at: string;
     attributes: Record<string, string>;
     images: ProductImage[];
-    seller: { id: string, name: string };
+    seller: { id: string, name: string, city?: string, state?: string };
     category: { id: string, name: string };
 }
 
@@ -72,14 +72,19 @@ export default function ProductDetail() {
             }
 
             // Fetch seller profile separately (seller_id FK goes to auth.users, not profiles)
-            let sellerInfo = { id: data.seller_id || "", name: "Vendedor" };
+            let sellerInfo: { id: string; name: string; city?: string; state?: string } = { id: data.seller_id || "", name: "Vendedor" };
             if (data.seller_id) {
                 const { data: sellerProfile } = await supabase
                     .from("profiles")
-                    .select("id, full_name")
+                    .select("id, full_name, city, state")
                     .eq("id", data.seller_id)
                     .single();
-                if (sellerProfile) sellerInfo = { id: sellerProfile.id, name: (sellerProfile as any).full_name || "Vendedor" };
+                if (sellerProfile) sellerInfo = {
+                    id: sellerProfile.id,
+                    name: (sellerProfile as any).full_name || "Vendedor",
+                    city: (sellerProfile as any).city || undefined,
+                    state: (sellerProfile as any).state || undefined,
+                };
             }
 
             const p: ProductDetails = {
@@ -229,8 +234,10 @@ export default function ProductDetail() {
                                 <div className="flex items-start gap-3 mb-3">
                                     <MapPin className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-sm text-foreground">Venezuela</p>
-                                        <p className="text-xs text-muted-foreground">Consulta disponibilidad en tu zona.</p>
+                                        <p className="text-sm text-foreground">
+                                            {[product.seller.city, product.seller.state].filter(Boolean).join(", ") || "Venezuela"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">Ubicación del vendedor</p>
                                     </div>
                                 </div>
 
