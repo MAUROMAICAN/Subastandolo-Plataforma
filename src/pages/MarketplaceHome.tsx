@@ -178,8 +178,42 @@ export default function MarketplaceHome() {
             </div>
           </div>
 
-          {/* Category Navigation — wrapping grid, no scroll */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* Category Navigation — dropdown on mobile, pills on desktop */}
+
+          {/* Mobile: clean dropdown */}
+          <div className="md:hidden space-y-2">
+            <select
+              value={activeCatId || ""}
+              onChange={(e) => selectCategory(e.target.value || null)}
+              className="w-full h-10 rounded-lg border border-border bg-background text-foreground text-sm font-medium px-3 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            >
+              <option value="">Todas las categorías</option>
+              {rootCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+
+            {subcategories.length > 0 && (
+              <select
+                value={activeSubCatId || ""}
+                onChange={(e) => {
+                  if (e.target.value) selectSubCategory(e.target.value);
+                  else if (activeCatId) selectCategory(activeCatId);
+                }}
+                className="w-full h-10 rounded-lg border border-border bg-background text-foreground text-sm font-medium px-3 appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              >
+                <option value="">Todas en {activeCategory?.name}</option>
+                {subcategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>{sub.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Desktop: pills */}
+          <div className="hidden md:flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => selectCategory(null)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${!activeCatId
@@ -204,9 +238,9 @@ export default function MarketplaceHome() {
             ))}
           </div>
 
-          {/* Subcategory chips */}
+          {/* Subcategory chips — desktop only */}
           {subcategories.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2.5 border-t border-border/50">
+            <div className="hidden md:flex flex-wrap items-center gap-1.5 mt-2.5 pt-2.5 border-t border-border/50">
               <span className="text-[10px] text-muted-foreground mr-1 uppercase tracking-wider font-semibold">
                 {activeCategory?.name}
               </span>
