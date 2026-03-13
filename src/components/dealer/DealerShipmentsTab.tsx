@@ -447,7 +447,7 @@ export default function DealerShipmentsTab({
             <div className="bg-card border border-border rounded-sm p-3 space-y-1.5">
               <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">✅ Obligatorio</p>
               <ul className="space-y-1 list-disc list-inside">
-                <li>Envolver el producto con plástico burbuja o espuma</li>
+                <li>Envolver bien el producto para que llegue seguro y sin daños</li>
                 <li>Usar caja rígida de tamaño adecuado</li>
                 <li>Rellenar espacios vacíos con papel o relleno</li>
                 <li>Sellar la caja con cinta de embalaje resistente</li>
