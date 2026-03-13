@@ -100,28 +100,30 @@ export default function DealerStorePage() {
             <Navbar />
 
             {/* ── BANNER ── */}
-            <div className="relative w-full h-40 sm:h-56 md:h-64 overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
+            <div className="relative w-full h-44 sm:h-60 md:h-72 overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
                 {bannerUrl ? (
                     <img src={bannerUrl} alt="Store banner" className="w-full h-full object-cover" />
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-primary/20" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+                {/* Strong multi-layer gradient for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+                <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/80 to-transparent" />
 
-                {/* Banner upload — only for the dealer */}
+                {/* Banner upload — only for the dealer themselves */}
                 {user && user.id === id && (
-                    <label className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors z-10">
+                    <label className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors z-10 backdrop-blur-sm border border-white/10">
                         {uploadingBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-                        {uploadingBanner ? 'Subiendo...' : 'Cambiar banner'}
+                        {uploadingBanner ? 'Subiendo...' : 'Personalizar banner'}
                         <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleBannerUpload} disabled={uploadingBanner} />
                     </label>
                 )}
 
                 {/* Store identity overlay */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-4">
+                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-5">
                     <div className="container mx-auto max-w-6xl flex items-end gap-4">
                         {/* Avatar */}
-                        <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl border-2 border-background shadow-xl overflow-hidden bg-card shrink-0 -mb-2">
+                        <div className="h-18 w-18 sm:h-22 sm:w-22 rounded-xl border-3 border-white/20 shadow-2xl overflow-hidden bg-card shrink-0" style={{ height: '4.5rem', width: '4.5rem' }}>
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt={dealerName} className="w-full h-full object-cover" />
                             ) : (
@@ -132,12 +134,12 @@ export default function DealerStorePage() {
                         </div>
                         <div className="flex-1 min-w-0 pb-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h1 className="text-xl sm:text-2xl font-heading font-black text-white drop-shadow-lg truncate">{dealerName}</h1>
+                                <h1 className="text-xl sm:text-2xl md:text-3xl font-heading font-black text-white truncate" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)' }}>{dealerName}</h1>
                                 {isVerified && <VerifiedBadge size="md" salesCount={salesCount} />}
                             </div>
                             {profile?.city && (
-                                <p className="text-white/70 text-xs flex items-center gap-1 mt-0.5">
-                                    <MapPin className="h-3 w-3" /> {profile.city}{profile.state ? `, ${profile.state}` : ""}
+                                <p className="text-white/80 text-xs sm:text-sm flex items-center gap-1 mt-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                                    <MapPin className="h-3.5 w-3.5" /> {profile.city}{profile.state ? `, ${profile.state}` : ""}
                                 </p>
                             )}
                         </div>
@@ -204,9 +206,21 @@ export default function DealerStorePage() {
             {/* ── PRODUCTS GRID ── */}
             <main className="flex-1 container mx-auto max-w-6xl px-4 sm:px-8 py-6">
                 {filteredProducts.length === 0 ? (
-                    <div className="text-center py-20 text-muted-foreground">
-                        <Store className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                        <p className="text-lg font-bold">Esta tienda aún no tiene productos publicados</p>
+                    <div className="text-center py-20">
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 dark:bg-primary/10 mb-4">
+                            <Store className="h-10 w-10 text-primary/30 dark:text-[#A6E300]/30" />
+                        </div>
+                        <p className="text-lg font-bold text-foreground mb-2">Esta tienda aún no tiene productos publicados</p>
+                        <p className="text-sm text-muted-foreground mb-4">Los productos aparecerán aquí cuando el vendedor los publique</p>
+                        {user && user.id === id && (
+                            <Link
+                                to="/dealer"
+                                className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-sm px-6 py-3 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-accent/20"
+                            >
+                                <Package className="h-4 w-4" />
+                                Publicar mi primer producto
+                            </Link>
+                        )}
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
