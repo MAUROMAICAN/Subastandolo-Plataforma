@@ -73,12 +73,12 @@ export default function ProductDetail() {
             }
 
             // Fetch seller profile separately (seller_id FK goes to auth.users, not profiles)
-            let sellerInfo: { id: string; name: string; city?: string; state?: string } = { id: data.seller_id || "", name: "Vendedor" };
-            if (data.seller_id) {
+            let sellerInfo: { id: string; name: string; city?: string; state?: string } = { id: data.dealer_id || "", name: "Vendedor" };
+            if (data.dealer_id) {
                 const { data: sellerProfile } = await supabase
                     .from("profiles")
                     .select("id, full_name, city, state")
-                    .eq("id", data.seller_id)
+                    .eq("id", data.dealer_id)
                     .single();
                 if (sellerProfile) sellerInfo = {
                     id: sellerProfile.id,
