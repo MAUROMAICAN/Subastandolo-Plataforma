@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, ShoppingBag, ShieldCheck, Truck } from "lucide-react";
+import { Loader2, Store, ShoppingBag, ShieldCheck, Truck, MapPin, CreditCard, Minus, Plus, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBCVRate } from "@/hooks/useBCVRate";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,7 @@ export default function ProductDetail() {
     const [product, setProduct] = useState<ProductDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string>("");
+    const [quantity, setQuantity] = useState(1);
 
 
     useEffect(() => {
@@ -176,58 +177,106 @@ export default function ProductDetail() {
                     </div>
 
                     {/* Right: Details & Action */}
-                    <div className="w-full lg:w-2/5 flex flex-col space-y-6">
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Link to={`/dealer/${product.seller.id}`} className="text-xs font-bold text-accent hover:underline flex items-center">
-                                    <Store className="h-3.5 w-3.5 mr-1" /> Vendedor: {product.seller.name}
-                                </Link>
-                            </div>
+                    <div className="w-full lg:w-2/5 flex flex-col gap-5">
 
-                            <h1 className="text-2xl md:text-3xl font-heading font-black leading-tight text-foreground mb-4">
-                                {product.title}
-                            </h1>
+                        {/* Main Info Card */}
+                        <Card className="border border-border rounded-xl shadow-sm overflow-hidden">
+                            <CardContent className="p-5 flex flex-col gap-0">
 
-                            <div className="flex flex-col gap-1 mb-6">
-                                <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
-                                <div className="flex items-end gap-3">
-                                    <p className="text-4xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                                    <Badge variant="outline" className="mb-1.5 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold">Precio Fijo</Badge>
-                                </div>
-                                {bcvRate && bcvRate > 0 && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Bs. {(finalPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        <span className="text-[10px] ml-1.5 opacity-60">tasa BCV</span>
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <Card className="border border-border rounded-xl shadow-sm">
-                            <CardContent className="p-5 flex flex-col gap-4">
-
-                                {/* Product Status / Condition */}
-                                <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
-                                    <span className="text-muted-foreground">Condición:</span>
-                                    <span className="font-bold capitalize">
+                                {/* Condition + Category */}
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                                    <span className="capitalize">
                                         {product.condition === 'nuevo' || product.condition === 'new' ? 'Nuevo' : product.condition === 'usado_buen_estado' ? 'Usado - Buen Estado' : product.condition === 'usado_regular' ? 'Usado - Regular' : product.condition === 'para_reparar' ? 'Para Reparar' : product.condition}
                                     </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
-                                    <span className="text-muted-foreground">Disponibilidad:</span>
-                                    <span className={`font-bold ${product.stock > 0 ? 'text-success dark:text-[#A6E300]' : 'text-destructive dark:text-red-400'}`}>
-                                        {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
-                                    </span>
+                                    <span className="text-border">|</span>
+                                    <Link to={`/tienda?cat=${product.category?.id || ''}`} className="hover:text-primary dark:hover:text-[#A6E300] transition-colors">
+                                        {product.category?.name || 'Sin categoría'}
+                                    </Link>
                                 </div>
 
-                                {/* Variations */}
+                                {/* Title */}
+                                <h1 className="text-xl md:text-2xl font-heading font-black leading-tight text-foreground mb-4">
+                                    {product.title}
+                                </h1>
+
+                                {/* Price section */}
+                                <div className="mb-5">
+                                    <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
+                                    <div className="flex items-end gap-3">
+                                        <p className="text-3xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                        <Badge variant="outline" className="mb-1 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold text-[10px]">Precio Fijo</Badge>
+                                    </div>
+                                    {bcvRate && bcvRate > 0 && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Bs. {(finalPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Separator */}
+                                <div className="border-t border-border/50 mb-4" />
+
+                                {/* Shipping */}
+                                <div className="flex items-start gap-3 mb-3">
+                                    <Truck className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-foreground">Envío a todo el país</p>
+                                        <p className="text-xs text-muted-foreground">Acuerda con el vendedor el método y costo de envío.</p>
+                                    </div>
+                                </div>
+
+                                {/* Location */}
+                                <div className="flex items-start gap-3 mb-3">
+                                    <MapPin className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm text-foreground">Venezuela</p>
+                                        <p className="text-xs text-muted-foreground">Consulta disponibilidad en tu zona.</p>
+                                    </div>
+                                </div>
+
+                                {/* Payment */}
+                                <div className="flex items-start gap-3 mb-5">
+                                    <CreditCard className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-foreground">Medios de pago</p>
+                                        <p className="text-xs text-muted-foreground">Pago Móvil · Transferencia Bancaria · Zelle</p>
+                                    </div>
+                                </div>
+
+                                {/* Separator */}
+                                <div className="border-t border-border/50 mb-4" />
+
+                                {/* Quantity */}
+                                <div className="flex items-center justify-between mb-5">
+                                    <span className="text-sm font-semibold text-foreground">Cantidad:</span>
+                                    <div className="flex items-center gap-0">
+                                        <button
+                                            onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                            disabled={quantity <= 1}
+                                            className="h-8 w-8 rounded-l-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
+                                        >
+                                            <Minus className="h-3.5 w-3.5" />
+                                        </button>
+                                        <span className="h-8 w-10 border-t border-b border-border flex items-center justify-center text-sm font-bold text-foreground">{quantity}</span>
+                                        <button
+                                            onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                                            disabled={quantity >= product.stock}
+                                            className="h-8 w-8 rounded-r-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                        </button>
+                                        <span className="text-xs text-muted-foreground ml-3">({product.stock} disponible{product.stock !== 1 ? 's' : ''})</span>
+                                    </div>
+                                </div>
+
+                                {/* Characteristics */}
                                 {attrEntries.length > 0 && (
-                                    <div className="space-y-3 py-2 border-t border-border/50">
-                                        <p className="font-bold text-sm">Características:</p>
-                                        <div className="space-y-2">
+                                    <div className="mb-5 border border-border/50 rounded-lg overflow-hidden">
+                                        <p className="font-bold text-xs px-3 py-2 bg-secondary/30 border-b border-border/50 uppercase tracking-wide text-muted-foreground">Características</p>
+                                        <div className="divide-y divide-border/30">
                                             {attrEntries.map(([key, value]) => (
-                                                <div key={key} className="flex items-center justify-between text-sm py-1">
-                                                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
+                                                <div key={key} className="flex items-center justify-between text-sm px-3 py-2">
+                                                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
                                                     <span className="font-medium text-foreground capitalize">{value}</span>
                                                 </div>
                                             ))}
@@ -235,32 +284,40 @@ export default function ProductDetail() {
                                     </div>
                                 )}
 
-                                {/* CTA */}
-                                <div className="pt-4">
-                                    <Button
-                                        className="w-full h-14 rounded-xl text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5"
-                                        disabled={!isAvailable}
-                                        onClick={handleBuyNow}
-                                    >
-                                        <ShoppingBag className="h-5 w-5 mr-2" />
-                                        {isAvailable ? 'Comprar Ahora' : 'Producto Agotado'}
-                                    </Button>
-                                    <p className="text-[10px] text-center text-muted-foreground mt-2">Compra protegida · Pago seguro</p>
-                                </div>
+                                {/* CTA Button */}
+                                <Button
+                                    className="w-full h-14 rounded-xl text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5"
+                                    disabled={!isAvailable}
+                                    onClick={handleBuyNow}
+                                >
+                                    <ShoppingBag className="h-5 w-5 mr-2" />
+                                    {isAvailable ? 'Comprar Ahora' : 'Producto Agotado'}
+                                </Button>
+                                <p className="text-[10px] text-center text-muted-foreground mt-2">Compra protegida · Pago seguro</p>
 
-                                {/* Trust Badges */}
-                                <div className="mt-4 space-y-3">
-                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                        <ShieldCheck className="h-5 w-5 text-success dark:text-[#A6E300] shrink-0" />
-                                        <p className="leading-tight"><strong className="text-foreground">Compra Protegida</strong><br />Recibes el producto que esperabas o te devolvemos tu dinero.</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                        <Truck className="h-5 w-5 text-primary dark:text-[#A6E300] shrink-0" />
-                                        <p className="leading-tight"><strong className="text-foreground">Envío a todo el país</strong><br />Acuerda con el vendedor el método de envío más conveniente.</p>
-                                    </div>
-                                </div>
                             </CardContent>
                         </Card>
+
+                        {/* Seller mini-info */}
+                        <div className="flex items-center gap-3 px-1">
+                            <div className="h-10 w-10 rounded-full bg-secondary/50 border border-border flex items-center justify-center shrink-0">
+                                <Store className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs text-muted-foreground">Vendido por</p>
+                                <Link to={`/dealer/${product.seller.id}`} className="text-sm font-bold text-foreground hover:text-primary dark:hover:text-[#A6E300] transition-colors">
+                                    {product.seller.name}
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Trust Badges */}
+                        <div className="bg-card/50 border border-border/50 rounded-xl p-4 space-y-3">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                <ShieldCheck className="h-4 w-4 text-success dark:text-[#A6E300] shrink-0" />
+                                <p className="text-xs leading-tight"><strong className="text-foreground">Compra Protegida</strong> — Recibes el producto o te devolvemos tu dinero.</p>
+                            </div>
+                        </div>
 
                         {/* Store Vendor Card */}
                         <VendorStoreCard dealerId={product.seller.id} dealerName={product.seller.name} />
