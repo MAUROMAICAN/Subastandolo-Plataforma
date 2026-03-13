@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +40,7 @@ export default function CheckoutTienda() {
 
     useEffect(() => {
         if (!user) {
-            toast({ title: "Inicia Sesión", description: "Debes iniciar sesión para finalizar la compra." });
+            toast({ title: "Inicia SesiÃ³n", description: "Debes iniciar sesiÃ³n para finalizar la compra." });
             navigate("/auth");
             return;
         }
@@ -64,7 +64,7 @@ export default function CheckoutTienda() {
             if (prodErr || !prodData) throw new Error("Producto no encontrado o no disponible.");
 
             if (prodData.status !== 'active' || prodData.stock <= 0) {
-                throw new Error("Este producto ya no está disponible.");
+                throw new Error("Este producto ya no estÃ¡ disponible.");
             }
             setProduct(prodData);
 
@@ -92,7 +92,7 @@ export default function CheckoutTienda() {
                 setPhone((profile as any).phone || (profile as any).phone_number || "");
             }
         } catch (err: any) {
-            toast({ title: "Atención", description: err.message, variant: "destructive" });
+            toast({ title: "AtenciÃ³n", description: err.message, variant: "destructive" });
             navigate("/tienda");
         } finally {
             setLoading(false);
@@ -105,11 +105,11 @@ export default function CheckoutTienda() {
         const missing = [];
         if (!state) missing.push("Estado/Provincia");
         if (!city) missing.push("Ciudad");
-        if (!address) missing.push("Dirección Completa");
-        if (!phone) missing.push("Teléfono");
+        if (!address) missing.push("DirecciÃ³n Completa");
+        if (!phone) missing.push("TelÃ©fono");
 
         if (missing.length > 0) {
-            toast({ title: "Información Incompleta", description: `Por favor, completa los siguientes campos de envío: ${missing.join(", ")}`, variant: "destructive" });
+            toast({ title: "InformaciÃ³n Incompleta", description: `Por favor, completa los siguientes campos de envÃ­o: ${missing.join(", ")}`, variant: "destructive" });
             return;
         }
 
@@ -159,12 +159,23 @@ export default function CheckoutTienda() {
 
             if (orderErr) throw orderErr;
 
+            // Notify dealer about the new order
+            if (product.dealer_id) {
+                await supabase.from("notifications").insert({
+                    user_id: product.dealer_id,
+                    title: "🛍️ ¡Nueva venta en tu tienda!",
+                    message: `Compraron "${product.title}" por $${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}. Revisa tu panel de ventas.`,
+                    type: "marketplace_sale",
+                    link: "/panel-dealer"
+                } as any);
+            }
+
             // Update user profile location if missing
             if (!profile?.city || !profile?.state) {
                 await supabase.from("profiles").update({ city, state, address, phone_number: phone }).eq("id", user?.id);
             }
 
-            toast({ title: "¡Compra Exitosa!", description: "Tu pedido ha sido registrado. El vendedor verificará el pago pronto." });
+            toast({ title: "Â¡Compra Exitosa!", description: "Tu pedido ha sido registrado. El vendedor verificarÃ¡ el pago pronto." });
             navigate("/mi-panel"); // Redirect to buyer's panel where they will see "Mis Compras"
 
         } catch (error: any) {
@@ -199,10 +210,10 @@ export default function CheckoutTienda() {
                     <div className="w-full lg:w-3/5 space-y-6">
                         <form id="checkout-form" onSubmit={handleCreateOrder} className="space-y-6">
 
-                            {/* Sección 1: Envío */}
+                            {/* SecciÃ³n 1: EnvÃ­o */}
                             <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
                                 <div className="bg-secondary/40 px-6 py-4 border-b border-border">
-                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">1</div> Datos de Envío</h2>
+                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">1</div> Datos de EnvÃ­o</h2>
                                 </div>
                                 <CardContent className="p-6 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,20 +227,20 @@ export default function CheckoutTienda() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold">Dirección Completa <span className="text-destructive dark:text-red-400">*</span></Label>
-                                        <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle, Avenida, Edificio, Piso, Número" required className="bg-secondary/20" />
+                                        <Label className="font-bold">DirecciÃ³n Completa <span className="text-destructive dark:text-red-400">*</span></Label>
+                                        <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle, Avenida, Edificio, Piso, NÃºmero" required className="bg-secondary/20" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold">Teléfono de Contacto <span className="text-destructive dark:text-red-400">*</span></Label>
+                                        <Label className="font-bold">TelÃ©fono de Contacto <span className="text-destructive dark:text-red-400">*</span></Label>
                                         <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" placeholder="0414..." required className="bg-secondary/20" />
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            {/* Sección 2: Pago */}
+                            {/* SecciÃ³n 2: Pago */}
                             <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
                                 <div className="bg-secondary/40 px-6 py-4 border-b border-border">
-                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">2</div> Información de Pago</h2>
+                                    <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">2</div> InformaciÃ³n de Pago</h2>
                                 </div>
                                 <CardContent className="p-6 space-y-5">
 
@@ -243,11 +254,11 @@ export default function CheckoutTienda() {
                                     <div className="border border-border rounded-lg overflow-hidden">
                                         <div className="bg-secondary/30 px-4 py-2.5 border-b border-border flex items-center gap-2">
                                             <Smartphone className="h-4 w-4 text-primary dark:text-[#A6E300]" />
-                                            <span className="text-sm font-bold">Pago Móvil</span>
+                                            <span className="text-sm font-bold">Pago MÃ³vil</span>
                                         </div>
                                         <div className="p-4 space-y-1.5 text-sm">
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Teléfono:</span><span className="font-semibold font-mono">0412-0000000</span></div>
-                                            <div className="flex justify-between"><span className="text-muted-foreground">Cédula:</span><span className="font-semibold font-mono">V-00000000</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">TelÃ©fono:</span><span className="font-semibold font-mono">0412-0000000</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">CÃ©dula:</span><span className="font-semibold font-mono">V-00000000</span></div>
                                             <div className="flex justify-between"><span className="text-muted-foreground">Banco:</span><span className="font-semibold">Banesco</span></div>
                                         </div>
                                     </div>
@@ -268,16 +279,16 @@ export default function CheckoutTienda() {
 
                                     {bcvRate && bcvRate > 0 && (
                                         <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg text-center">
-                                            <p className="text-xs text-muted-foreground">Monto equivalente en Bolívares</p>
+                                            <p className="text-xs text-muted-foreground">Monto equivalente en BolÃ­vares</p>
                                             <p className="text-xl font-black text-foreground">Bs. {(total * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                            <p className="text-[10px] text-muted-foreground">Tasa BCV del día: {bcvRate.toFixed(2)} Bs/$</p>
+                                            <p className="text-[10px] text-muted-foreground">Tasa BCV del dÃ­a: {bcvRate.toFixed(2)} Bs/$</p>
                                         </div>
                                     )}
 
                                     {/* Payment Proof */}
                                     <div className="space-y-4 pt-2 border-t border-border/50">
                                         <div className="space-y-2">
-                                            <Label className="font-bold">Número de Referencia</Label>
+                                            <Label className="font-bold">NÃºmero de Referencia</Label>
                                             <Input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Ej. 09483321" className="bg-secondary/20" />
                                         </div>
 
@@ -348,7 +359,7 @@ export default function CheckoutTienda() {
                                             {submitting ? 'Procesando...' : 'Confirmar y Pagar'}
                                         </Button>
                                         <p className="text-[10px] text-center text-muted-foreground mt-3 leading-tight">
-                                            Al confirmar, aceptas nuestras Políticas de Privacidad y Términos de Compra Directa. Tu dinero está protegido.
+                                            Al confirmar, aceptas nuestras PolÃ­ticas de Privacidad y TÃ©rminos de Compra Directa. Tu dinero estÃ¡ protegido.
                                         </p>
                                     </div>
                                 </CardContent>
