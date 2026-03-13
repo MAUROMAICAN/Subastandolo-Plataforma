@@ -52,6 +52,7 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const CheckoutTienda = lazy(() => import("./pages/CheckoutTienda"));
 const MiCompra = lazy(() => import("./pages/MiCompra"));
 const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
+const DealerStorePage = lazy(() => import("./pages/DealerStorePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -237,6 +238,7 @@ const App = () => {
                         <Route path="/dealer/apply" element={<ProtectedRoute authOnly><DealerApply /></ProtectedRoute>} />
                         <Route path="/dealer" element={<ProtectedRoute requiredRole="dealer"><DealerDashboard /></ProtectedRoute>} />
                         <Route path="/dealer/:id" element={<DealerProfile />} />
+                        <Route path="/tienda-vendedor/:id" element={<DealerStorePage />} />
                         <Route path="/tienda" element={<MarketplaceHome />} />
                         <Route path="/producto/:id" element={<ProductDetail />} />
                         <Route path="/checkout-tienda/:productId" element={<ProtectedRoute authOnly><CheckoutTienda /></ProtectedRoute>} />

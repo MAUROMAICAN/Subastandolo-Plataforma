@@ -130,7 +130,7 @@ export default function VendorStoreCard({ dealerId, dealerName }: VendorStoreCar
 
             {/* Action Link */}
             <Link
-                to={`/dealer/${dealerId}`}
+                to={`/tienda-vendedor/${dealerId}`}
                 className="block w-full text-center py-2.5 bg-secondary/30 hover:bg-secondary/60 text-primary dark:text-[#A6E300] font-bold text-sm rounded-lg transition-colors"
             >
                 Ir a la tienda del vendedor
