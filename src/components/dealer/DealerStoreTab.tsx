@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Store, Package, Loader2, Edit, Pause, Play, Tag } from "lucide-react";
+import { Plus, Store, Package, Loader2, Edit, Pause, Play, Tag, Copy, Trash2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Product with images
@@ -76,6 +76,70 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
         } else {
             toast({ title: "Estado actualizado", description: `Producto marcado como ${newStatus === "active" ? "Activo" : "Pausado"}.` });
             setProducts(products.map(p => p.id === productId ? { ...p, status: newStatus as any } : p));
+        }
+    };
+
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+    const deleteProduct = async (productId: string) => {
+        setDeletingId(productId);
+        try {
+            const { error } = await supabase
+                .from("marketplace_products")
+                .update({ status: "deleted" as any })
+                .eq("id", productId);
+            if (error) throw error;
+            setProducts(products.filter(p => p.id !== productId));
+            toast({ title: "✅ Producto eliminado" });
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setDeletingId(null);
+            setConfirmDeleteId(null);
+        }
+    };
+
+    const duplicateProduct = async (product: ProductWithImages) => {
+        setDuplicatingId(product.id);
+        try {
+            // Create the new product with same data
+            const { data: newProduct, error: createError } = await (supabase
+                .from("marketplace_products")
+                .insert({
+                    seller_id: dealerId,
+                    dealer_id: dealerId,
+                    category_id: product.category_id,
+                    title: product.title + " (copia)",
+                    description: product.description,
+                    price: product.price,
+                    currency: product.currency,
+                    stock: product.stock,
+                    condition: product.condition,
+                    status: "paused",
+                    image_url: product.image_url,
+                } as any)
+                .select("id")
+                .single() as any);
+            if (createError) throw createError;
+
+            // Copy image references (not the actual files — reuse same URLs)
+            if (product.images.length > 0) {
+                const imageInserts = product.images.map((img, i) => ({
+                    product_id: newProduct.id,
+                    image_url: img.image_url,
+                    display_order: i,
+                }));
+                await supabase.from("marketplace_product_images").insert(imageInserts as any);
+            }
+
+            toast({ title: "✅ Producto duplicado", description: "Se creó una copia en estado Pausado. Edítala antes de activarla." });
+            fetchProducts(); // Refresh list
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setDuplicatingId(null);
         }
     };
 
@@ -180,6 +244,43 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
                                                 <><Play className="h-3 w-3 mr-1.5" /> Activar</>
                                             )}
                                         </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="rounded-sm h-8 text-xs border-border hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-400/30"
+                                            onClick={() => duplicateProduct(product)}
+                                            disabled={duplicatingId === product.id}
+                                        >
+                                            {duplicatingId === product.id ? (
+                                                <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> Copiando...</>
+                                            ) : (
+                                                <><Copy className="h-3 w-3 mr-1.5" /> Duplicar</>
+                                            )}
+                                        </Button>
+                                        {confirmDeleteId === product.id ? (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="rounded-sm h-8 text-xs font-bold"
+                                                onClick={() => deleteProduct(product.id)}
+                                                disabled={deletingId === product.id}
+                                            >
+                                                {deletingId === product.id ? (
+                                                    <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> Eliminando...</>
+                                                ) : (
+                                                    <><AlertTriangle className="h-3 w-3 mr-1.5" /> Confirmar</>
+                                                )}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="rounded-sm h-8 text-xs border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                                                onClick={() => setConfirmDeleteId(product.id)}
+                                            >
+                                                <Trash2 className="h-3 w-3 mr-1.5" /> Eliminar
+                                            </Button>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

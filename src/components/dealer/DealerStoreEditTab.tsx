@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { compressImage } from "@/utils/compressImage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,12 +180,13 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
             if (images.length > 0) {
                 let currentMaxOrder = existingImages.length;
                 const uploadPromises = images.map(async (file, index) => {
-                    const fileExt = file.name.split('.').pop();
+                    const compressed = await compressImage(file);
+                    const fileExt = compressed.name.split('.').pop();
                     const fileName = `${dealerId}/${productId}/new-${index}-${Date.now()}.${fileExt}`;
 
                     const { error: uploadError } = await supabase.storage
                         .from('auction-images')
-                        .upload(fileName, file);
+                        .upload(fileName, compressed);
 
                     if (uploadError) throw uploadError;
 

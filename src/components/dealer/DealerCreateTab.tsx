@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/utils/compressImage";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -125,7 +126,8 @@ export default function DealerCreateTab({ isGoldPlus, dealerAccountStatus, onCre
     const { applyWatermark } = await import("@/lib/watermark");
     const uploadedUrls: string[] = [];
     for (const file of imageFiles) {
-      const watermarked = await applyWatermark(file);
+      const compressed = await compressImage(file);
+      const watermarked = await applyWatermark(compressed);
       const filePath = `${crypto.randomUUID()}.webp`;
       const { error: uploadError } = await supabase.storage.from("auction-images").upload(filePath, watermarked);
       if (uploadError) {
