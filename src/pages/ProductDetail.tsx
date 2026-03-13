@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, ShoppingBag, ShieldCheck, Truck, MapPin, CreditCard, Minus, Plus, Heart } from "lucide-react";
+import { Loader2, Store, ShoppingBag, ShieldCheck, Truck, MapPin, CreditCard, Minus, Plus, Heart, Gavel, MessageSquare, Clock, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBCVRate } from "@/hooks/useBCVRate";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,12 @@ interface ProductDetails {
     images: ProductImage[];
     seller: { id: string, name: string, city?: string, state?: string };
     category: { id: string, name: string };
+    listing_type?: 'fixed_price' | 'auction' | 'accepts_offers';
+    starting_price?: number;
+    current_price?: number;
+    end_time?: string;
+    winner_id?: string;
+    accepts_offers?: boolean;
 }
 
 export default function ProductDetail() {
@@ -47,6 +53,18 @@ export default function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string>("");
     const [quantity, setQuantity] = useState(1);
+
+    // Auction state
+    const [timeLeft, setTimeLeft] = useState("");
+    const [bidAmount, setBidAmount] = useState("");
+    const [bidding, setBidding] = useState(false);
+    const [auctionEnded, setAuctionEnded] = useState(false);
+
+    // Offer state
+    const [showOfferModal, setShowOfferModal] = useState(false);
+    const [offerAmount, setOfferAmount] = useState("");
+    const [offerMessage, setOfferMessage] = useState("");
+    const [sendingOffer, setSendingOffer] = useState(false);
 
 
     useEffect(() => {
@@ -107,16 +125,82 @@ export default function ProductDetail() {
         }
     };
 
+    // Auction countdown timer
+    useEffect(() => {
+        if (!product || product.listing_type !== 'auction' || !product.end_time) return;
+        const updateTimer = () => {
+            const diff = new Date(product.end_time!).getTime() - Date.now();
+            if (diff <= 0) { setTimeLeft("Finalizada"); setAuctionEnded(true); return; }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setTimeLeft(`${h}h ${m}m ${s}s`);
+        };
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [product]);
+
     const handleBuyNow = () => {
         if (!user) {
             toast({ title: "Inicia Sesión", description: "Debes iniciar sesión para comprar." });
             navigate("/auth");
             return;
         }
-
-        // In Fase 3, this will navigate to a special CheckoutFlow for Marketplace
-        // Passing the product ID and selected attribute ID.
         navigate(`/checkout-tienda/${product?.id}`);
+    };
+
+    const handleBid = async () => {
+        if (!user) { navigate("/auth"); return; }
+        if (!product) return;
+        const amount = parseFloat(bidAmount);
+        const minBid = (product.current_price && product.current_price > 0) ? product.current_price + 1 : (product.starting_price || product.price);
+        if (isNaN(amount) || amount < minBid) {
+            toast({ title: "Monto inválido", description: `La puja mínima es $${minBid}`, variant: "destructive" });
+            return;
+        }
+        setBidding(true);
+        try {
+            const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+            const { error } = await supabase.from("product_bids" as any).insert({
+                product_id: product.id,
+                user_id: user.id,
+                bidder_name: (profile as any)?.full_name || "Anónimo",
+                amount,
+            });
+            if (error) throw error;
+            toast({ title: "🎉 ¡Puja realizada!", description: `Has pujado $${amount}` });
+            setProduct(prev => prev ? { ...prev, current_price: amount } : prev);
+            setBidAmount("");
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally { setBidding(false); }
+    };
+
+    const handleOffer = async () => {
+        if (!user) { navigate("/auth"); return; }
+        if (!product) return;
+        const amount = parseFloat(offerAmount);
+        if (isNaN(amount) || amount <= 0) {
+            toast({ title: "Monto inválido", variant: "destructive" });
+            return;
+        }
+        setSendingOffer(true);
+        try {
+            const { error } = await supabase.from("product_offers" as any).insert({
+                product_id: product.id,
+                buyer_id: user.id,
+                amount,
+                message: offerMessage || null,
+            });
+            if (error) throw error;
+            toast({ title: "📩 Oferta enviada", description: "El vendedor recibirá tu oferta y podrá aceptarla o rechazarla." });
+            setShowOfferModal(false);
+            setOfferAmount("");
+            setOfferMessage("");
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally { setSendingOffer(false); }
     };
 
     if (loading) {
@@ -208,11 +292,50 @@ export default function ProductDetail() {
 
                                 {/* Price section */}
                                 <div className="mb-5">
-                                    <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
-                                    <div className="flex items-end gap-3">
-                                        <p className="text-3xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                                        <Badge variant="outline" className="mb-1 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold text-[10px]">Precio Fijo</Badge>
-                                    </div>
+                                    {product.listing_type === 'auction' ? (
+                                        /* AUCTION PRICE */
+                                        <>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold text-xs">
+                                                    <Gavel className="h-3 w-3 mr-1" /> Subasta
+                                                </Badge>
+                                                <div className="flex items-center gap-1.5 text-xs">
+                                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                                    <span className={`font-bold ${auctionEnded ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'}`}>{timeLeft || 'Cargando...'}</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Precio inicial: ${Number(product.starting_price || product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                            <div className="flex items-end gap-3">
+                                                <p className="text-3xl font-black text-foreground">
+                                                    ${Number(product.current_price && product.current_price > 0 ? product.current_price : product.starting_price || product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                                                </p>
+                                                <span className="text-xs text-muted-foreground mb-1">{product.current_price && product.current_price > 0 ? 'Puja actual' : 'Sin pujas'}</span>
+                                            </div>
+                                        </>
+                                    ) : product.listing_type === 'accepts_offers' ? (
+                                        /* ACCEPTS OFFERS PRICE */
+                                        <>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold text-xs">
+                                                    <MessageSquare className="h-3 w-3 mr-1" /> Acepta Ofertas
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-end gap-3">
+                                                <p className="text-3xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                                <span className="text-xs text-muted-foreground mb-1">Precio publicado</span>
+                                            </div>
+                                            <p className="text-xs text-blue-500 mt-1">💬 El vendedor acepta ofertas sobre este producto</p>
+                                        </>
+                                    ) : (
+                                        /* FIXED PRICE (default) */
+                                        <>
+                                            <p className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">${(finalPrice * 1.2).toFixed(2)}</p>
+                                            <div className="flex items-end gap-3">
+                                                <p className="text-3xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                                <Badge variant="outline" className="mb-1 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold text-[10px]">Cómpralo Ahora</Badge>
+                                            </div>
+                                        </>
+                                    )}
                                     {bcvRate && bcvRate > 0 && (
                                         <p className="text-sm text-muted-foreground mt-1">
                                             Bs. {(finalPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -255,28 +378,30 @@ export default function ProductDetail() {
                                 {/* Separator */}
                                 <div className="border-t border-border/50 mb-4" />
 
-                                {/* Quantity */}
-                                <div className="flex items-center justify-between mb-5">
-                                    <span className="text-sm font-semibold text-foreground">Cantidad:</span>
-                                    <div className="flex items-center gap-0">
-                                        <button
-                                            onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                            disabled={quantity <= 1}
-                                            className="h-8 w-8 rounded-l-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
-                                        >
-                                            <Minus className="h-3.5 w-3.5" />
-                                        </button>
-                                        <span className="h-8 w-10 border-t border-b border-border flex items-center justify-center text-sm font-bold text-foreground">{quantity}</span>
-                                        <button
-                                            onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                                            disabled={quantity >= product.stock}
-                                            className="h-8 w-8 rounded-r-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
-                                        >
-                                            <Plus className="h-3.5 w-3.5" />
-                                        </button>
-                                        <span className="text-xs text-muted-foreground ml-3">({product.stock} disponible{product.stock !== 1 ? 's' : ''})</span>
+                                {/* Quantity — only for fixed_price and accepts_offers */}
+                                {product.listing_type !== 'auction' && (
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-sm font-semibold text-foreground">Cantidad:</span>
+                                        <div className="flex items-center gap-0">
+                                            <button
+                                                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                                disabled={quantity <= 1}
+                                                className="h-8 w-8 rounded-l-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </button>
+                                            <span className="h-8 w-10 border-t border-b border-border flex items-center justify-center text-sm font-bold text-foreground">{quantity}</span>
+                                            <button
+                                                onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                                                disabled={quantity >= product.stock}
+                                                className="h-8 w-8 rounded-r-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary/50 disabled:opacity-30 transition-colors"
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </button>
+                                            <span className="text-xs text-muted-foreground ml-3">({product.stock} disponible{product.stock !== 1 ? 's' : ''})</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Characteristics */}
                                 {attrEntries.length > 0 && (
@@ -293,16 +418,74 @@ export default function ProductDetail() {
                                     </div>
                                 )}
 
-                                {/* CTA Button */}
-                                <Button
-                                    className="w-full h-14 rounded-xl text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5"
-                                    disabled={!isAvailable}
-                                    onClick={handleBuyNow}
-                                >
-                                    <ShoppingBag className="h-5 w-5 mr-2" />
-                                    {isAvailable ? 'Comprar Ahora' : 'Producto Agotado'}
-                                </Button>
-                                <p className="text-[10px] text-center text-muted-foreground mt-2">Compra protegida · Pago seguro</p>
+                                {/* CTA Buttons — contextual per listing type */}
+                                {product.listing_type === 'auction' ? (
+                                    /* AUCTION BIDDING */
+                                    <div className="space-y-3">
+                                        {!auctionEnded ? (
+                                            <>
+                                                <div className="flex gap-2">
+                                                    <div className="relative flex-1">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
+                                                        <input
+                                                            type="number"
+                                                            placeholder={`Mín. $${((product.current_price && product.current_price > 0) ? product.current_price + 1 : product.starting_price || product.price)}`}
+                                                            value={bidAmount}
+                                                            onChange={(e) => setBidAmount(e.target.value)}
+                                                            className="w-full h-14 pl-8 pr-4 rounded-xl border border-input bg-background text-lg font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        className="h-14 px-6 rounded-xl text-lg font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20"
+                                                        onClick={handleBid}
+                                                        disabled={bidding}
+                                                    >
+                                                        {bidding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Gavel className="h-5 w-5 mr-2" /> Pujar</>}
+                                                    </Button>
+                                                </div>
+                                                <p className="text-[10px] text-center text-muted-foreground">Tu puja es un compromiso de compra</p>
+                                            </>
+                                        ) : (
+                                            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 text-center">
+                                                <p className="font-bold text-destructive">Subasta Finalizada</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : product.listing_type === 'accepts_offers' ? (
+                                    /* ACCEPTS OFFERS */
+                                    <div className="space-y-2">
+                                        <Button
+                                            className="w-full h-14 rounded-xl text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5"
+                                            disabled={!isAvailable}
+                                            onClick={handleBuyNow}
+                                        >
+                                            <ShoppingBag className="h-5 w-5 mr-2" />
+                                            {isAvailable ? `Comprar a $${Number(finalPrice).toLocaleString("es-MX")}` : 'Producto Agotado'}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full h-12 rounded-xl text-base font-bold border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-all"
+                                            disabled={!isAvailable}
+                                            onClick={() => { setOfferAmount(""); setOfferMessage(""); setShowOfferModal(true); }}
+                                        >
+                                            <MessageSquare className="h-5 w-5 mr-2" /> Hacer una Oferta
+                                        </Button>
+                                        <p className="text-[10px] text-center text-muted-foreground">Compra protegida · Pago seguro</p>
+                                    </div>
+                                ) : (
+                                    /* FIXED PRICE (default) */
+                                    <>
+                                        <Button
+                                            className="w-full h-14 rounded-xl text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5"
+                                            disabled={!isAvailable}
+                                            onClick={handleBuyNow}
+                                        >
+                                            <ShoppingBag className="h-5 w-5 mr-2" />
+                                            {isAvailable ? 'Comprar Ahora' : 'Producto Agotado'}
+                                        </Button>
+                                        <p className="text-[10px] text-center text-muted-foreground mt-2">Compra protegida · Pago seguro</p>
+                                    </>
+                                )}
 
                             </CardContent>
                         </Card>
@@ -360,6 +543,52 @@ export default function ProductDetail() {
                         sellerName={product.seller.name}
                     />
                 </section>
+            )}
+
+            {/* Offer Modal */}
+            {showOfferModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowOfferModal(false)}>
+                    <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-heading font-bold mb-1">💬 Hacer una Oferta</h3>
+                        <p className="text-xs text-muted-foreground mb-4">Precio publicado: <strong>${Number(product?.price || 0).toLocaleString("es-MX")}</strong></p>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs font-bold text-foreground block mb-1">Tu oferta ($) *</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
+                                    <input
+                                        type="number"
+                                        value={offerAmount}
+                                        onChange={(e) => setOfferAmount(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full h-12 pl-8 pr-4 rounded-xl border border-input bg-background text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-foreground block mb-1">Mensaje (opcional)</label>
+                                <textarea
+                                    value={offerMessage}
+                                    onChange={(e) => setOfferMessage(e.target.value)}
+                                    placeholder="Ej: Me interesa mucho, ¿aceptarías esta oferta?"
+                                    rows={3}
+                                    maxLength={500}
+                                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                />
+                            </div>
+                            <Button
+                                className="w-full h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                                onClick={handleOffer}
+                                disabled={sendingOffer || !offerAmount}
+                            >
+                                {sendingOffer ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Send className="h-4 w-4 mr-2" /> Enviar Oferta</>}
+                            </Button>
+                            <p className="text-[10px] text-muted-foreground text-center">La oferta expira en 48 horas si el vendedor no responde.</p>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <Footer />

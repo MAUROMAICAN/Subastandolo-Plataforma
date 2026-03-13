@@ -30,6 +30,7 @@ import DealerSupportInbox from "@/components/dealer/DealerSupportInbox";
 import DealerReviewsTab from "@/components/dealer/DealerReviewsTab";
 import DealerQuestionsTab from "@/components/dealer/DealerQuestionsTab";
 import DealerProfileTab from "@/components/dealer/DealerProfileTab";
+import DealerOffersTab from "@/components/dealer/DealerOffersTab";
 
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -268,6 +269,7 @@ const DealerDashboard = () => {
         { key: "shipments", label: "Envíos", icon: Truck },
         { key: "wallet", label: "Mi Billetera", icon: Wallet },
         { key: "questions", label: "Preguntas", icon: MessageSquare },
+        { key: "offers", label: "Ofertas", icon: MessageSquare },
       ],
     },
     {
@@ -602,6 +604,7 @@ const DealerDashboard = () => {
             )}
             {activeTab === "reviews" && <DealerReviewsTab />}
             {activeTab === "questions" && user?.id && <DealerQuestionsTab dealerId={user.id} />}
+            {activeTab === "offers" && user?.id && <DealerOffersTab dealerId={user.id} />}
             {activeTab === "levels" && <DealerLevelsTab dealer={dealer} />}
             {activeTab === "payment" && <DealerPaymentTab />}
             {activeTab === "wallet" && <DealerWalletTab auctions={auctions} />}

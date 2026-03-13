@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, ImagePlus, X } from "lucide-react";
+import { Loader2, ArrowLeft, ImagePlus, X, ShoppingCart, Gavel, MessageSquare } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 import DynamicAttributeForm from "@/components/DynamicAttributeForm";
 import { useCategoryAttributes, type Category } from "@/hooks/useCategories";
@@ -28,6 +28,10 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+
+    // Listing type
+    const [listingType, setListingType] = useState<'fixed_price' | 'auction' | 'accepts_offers'>('fixed_price');
+    const [auctionDuration, setAuctionDuration] = useState("24");
 
     // Category + dynamic attributes
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -84,17 +88,33 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
 
         try {
             // 1. Create Product
-            const { data: product, error: prodErr } = await supabase.from("marketplace_products").insert({
+            const insertData: any = {
                 seller_id: dealerId,
                 category_id: selectedCategory.id,
                 title,
                 description: description || null,
                 price: parseFloat(price),
-                stock: parseInt(stock) || 1,
+                stock: listingType === 'auction' ? 1 : (parseInt(stock) || 1),
                 condition,
                 attributes: attributeValues,
                 status: "active",
-            } as any).select("id").single();
+                listing_type: listingType,
+            };
+
+            if (listingType === 'auction') {
+                insertData.starting_price = parseFloat(price);
+                insertData.current_price = 0;
+                insertData.auction_duration_hours = parseInt(auctionDuration) || 24;
+                const durationMs = (parseInt(auctionDuration) || 24) * 60 * 60 * 1000;
+                insertData.end_time = new Date(Date.now() + durationMs).toISOString();
+                insertData.allow_auto_extend = true;
+            }
+
+            if (listingType === 'accepts_offers') {
+                insertData.accepts_offers = true;
+            }
+
+            const { data: product, error: prodErr } = await supabase.from("marketplace_products").insert(insertData).select("id").single();
 
             if (prodErr) throw prodErr;
 
@@ -160,9 +180,41 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                 <Card className="border border-border rounded-2xl overflow-hidden">
                     <div className="p-5 sm:p-6">
                         <h2 className="text-xl font-heading font-bold mb-1">Publicar Nuevo Producto</h2>
-                        <p className="text-sm text-muted-foreground">Artículos de venta directa con precio fijo.</p>
+                        <p className="text-sm text-muted-foreground">Elige cómo quieres vender tu producto.</p>
                     </div>
                 </Card>
+
+                {/* LISTING TYPE SELECTOR */}
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+                        <span className="w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-xs font-black shrink-0">⚡</span>
+                        <span className="text-sm font-heading font-bold">Modo de Venta</span>
+                    </div>
+                    <div className="p-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {([
+                                { value: 'fixed_price' as const, icon: ShoppingCart, label: 'Cómpralo Ahora', desc: 'Precio fijo. El comprador lo compra inmediatamente.', color: 'emerald' },
+                                { value: 'auction' as const, icon: Gavel, label: 'Subasta', desc: 'Los compradores pujan. Gana la oferta más alta.', color: 'amber' },
+                                { value: 'accepts_offers' as const, icon: MessageSquare, label: 'Acepto Ofertas', desc: 'Publicas un precio y los compradores negocian.', color: 'blue' },
+                            ]).map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setListingType(opt.value)}
+                                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all hover:-translate-y-0.5 ${
+                                        listingType === opt.value
+                                            ? `border-${opt.color}-500 bg-${opt.color}-500/10 shadow-md`
+                                            : 'border-border hover:border-foreground/20 hover:bg-secondary/30'
+                                    }`}
+                                >
+                                    <opt.icon className={`h-6 w-6 ${listingType === opt.value ? `text-${opt.color}-500` : 'text-muted-foreground'}`} />
+                                    <span className={`text-sm font-bold ${listingType === opt.value ? 'text-foreground' : 'text-muted-foreground'}`}>{opt.label}</span>
+                                    <span className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
                 {/* STEP 1: Categoría */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -231,20 +283,49 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                         <span className="text-sm font-heading font-bold">Precio y Stock</span>
                     </div>
                     <div className="p-5 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-bold">Precio Fijo ($) <span className="text-destructive">*</span></Label>
+                                <Label className="text-xs font-bold">
+                                    {listingType === 'auction' ? 'Precio Inicial ($)' : 'Precio ($)'} <span className="text-destructive">*</span>
+                                </Label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
                                     <Input type="number" min="0.1" step="0.01" value={price} onChange={e => setPrice(e.target.value)} className="pl-8 rounded-xl h-11" placeholder="0.00" required />
                                 </div>
+                                {listingType === 'accepts_offers' && (
+                                    <p className="text-[10px] text-blue-500">Los compradores podrán hacer ofertas sobre este precio.</p>
+                                )}
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label className="text-xs font-bold">Cantidad disponible <span className="text-destructive">*</span></Label>
-                                <Input type="number" min="1" value={stock} onChange={e => setStock(e.target.value)} className="rounded-xl h-11" placeholder="1" required />
-                            </div>
+                            {listingType !== 'auction' && (
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold">Cantidad disponible <span className="text-destructive">*</span></Label>
+                                    <Input type="number" min="1" value={stock} onChange={e => setStock(e.target.value)} className="rounded-xl h-11" placeholder="1" required />
+                                </div>
+                            )}
                         </div>
+
+                        {/* Auction-specific: Duration */}
+                        {listingType === 'auction' && (
+                            <div className="space-y-1.5 border-t border-border pt-4">
+                                <Label className="text-xs font-bold">Duración de la Subasta <span className="text-destructive">*</span></Label>
+                                <select
+                                    value={auctionDuration}
+                                    onChange={(e) => setAuctionDuration(e.target.value)}
+                                    className="flex h-11 w-full max-w-xs rounded-xl border border-input bg-background px-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    <option value="1">1 hora</option>
+                                    <option value="2">2 horas</option>
+                                    <option value="3">3 horas</option>
+                                    <option value="6">6 horas</option>
+                                    <option value="12">12 horas</option>
+                                    <option value="24">1 día (24 horas)</option>
+                                    <option value="48">2 días (48 horas)</option>
+                                    <option value="72">3 días (72 horas)</option>
+                                </select>
+                                <p className="text-[10px] text-muted-foreground">La subasta finalizará automáticamente al pasar este tiempo.</p>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <Label className="text-xs font-bold">Estado del Producto <span className="text-destructive">*</span></Label>
