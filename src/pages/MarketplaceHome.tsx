@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Search, Store, ChevronRight, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCategories } from "@/hooks/useCategories";
+import { useBCVRate } from "@/hooks/useBCVRate";
 import {
   Smartphone, Laptop, Tv, Refrigerator,
   Shirt, Footprints, Watch, Sparkles,
@@ -52,6 +53,7 @@ export default function MarketplaceHome() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const bcvRate = useBCVRate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getRootCategories, getChildren } = useCategories();
   const rootCategories = getRootCategories();
@@ -307,6 +309,11 @@ export default function MarketplaceHome() {
                         <p className="text-lg font-black text-foreground">
                           ${Number(product.price).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                         </p>
+                        {bcvRate && bcvRate > 0 && (
+                          <p className="text-[11px] text-muted-foreground font-medium">
+                            Bs. {(Number(product.price) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        )}
                         {product.stock > 1 && (
                           <p className="text-[10px] text-muted-foreground mt-0.5">
                             {product.stock} disponibles

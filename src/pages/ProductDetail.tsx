@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Store, ShoppingBag, ShieldCheck, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useBCVRate } from "@/hooks/useBCVRate";
 import { Badge } from "@/components/ui/badge";
 import VendorStoreCard from "@/components/dealer/VendorStoreCard";
 import ProductQA from "@/components/ProductQA";
@@ -39,6 +40,7 @@ export default function ProductDetail() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { toast } = useToast();
+    const bcvRate = useBCVRate();
 
     const [product, setProduct] = useState<ProductDetails | null>(null);
     const [loading, setLoading] = useState(true);
@@ -192,6 +194,12 @@ export default function ProductDetail() {
                                     <p className="text-4xl font-black text-foreground">${Number(finalPrice).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
                                     <Badge variant="outline" className="mb-1.5 bg-success/10 text-success dark:text-[#A6E300] border-success/30 font-bold">Precio Fijo</Badge>
                                 </div>
+                                {bcvRate && bcvRate > 0 && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Bs. {(finalPrice * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <span className="text-[10px] ml-1.5 opacity-60">tasa BCV</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
 
