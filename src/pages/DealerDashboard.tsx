@@ -29,6 +29,7 @@ import DealerWalletTab from "@/components/dealer/DealerWalletTab";
 import DealerSupportInbox from "@/components/dealer/DealerSupportInbox";
 import DealerReviewsTab from "@/components/dealer/DealerReviewsTab";
 import DealerQuestionsTab from "@/components/dealer/DealerQuestionsTab";
+import DealerProfileTab from "@/components/dealer/DealerProfileTab";
 
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -300,10 +301,6 @@ const DealerDashboard = () => {
   }, [auctions]);
 
   const handleSidebarNav = (key: string) => {
-    if (key === "profile") {
-      navigate("/mi-panel");
-      return;
-    }
     setActiveTab(key);
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
@@ -609,6 +606,7 @@ const DealerDashboard = () => {
             {activeTab === "payment" && <DealerPaymentTab />}
             {activeTab === "wallet" && <DealerWalletTab auctions={auctions} />}
             {activeTab === "support" && <DealerSupportInbox />}
+            {activeTab === "profile" && <DealerProfileTab />}
           </div>
         </main>
       </div>

@@ -91,7 +91,7 @@ export default function DealerStorePage() {
         );
     }
 
-    const dealerName = profile?.full_name || "Tienda";
+    const dealerName = profile?.store_name || profile?.username || profile?.full_name || "Tienda";
     const bannerUrl = profile?.store_banner_url;
     const avatarUrl = profile?.avatar_url;
 
