@@ -9,6 +9,7 @@ import { Loader2, ArrowLeft, ImagePlus, X } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 import DynamicAttributeForm from "@/components/DynamicAttributeForm";
 import { useCategoryAttributes, type Category } from "@/hooks/useCategories";
+import { moderateText } from "@/utils/textModeration";
 
 interface Props {
     dealerId: string;
@@ -68,6 +69,13 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
             .map(a => a.label);
         if (missingRequired.length > 0) {
             toast({ title: "Faltan características", description: `Completa: ${missingRequired.join(", ")}`, variant: "destructive" });
+            return;
+        }
+
+        // Anti-fraud: check for contact info and prohibited content
+        const modResult = moderateText(title, description);
+        if (!modResult.isClean) {
+            toast({ title: "Contenido no permitido", description: modResult.violations[0], variant: "destructive" });
             return;
         }
 

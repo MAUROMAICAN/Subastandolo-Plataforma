@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, ImagePlus, X, PlusCircle, Trash2 } from "lucide-react";
+import { moderateText } from "@/utils/textModeration";
 
 interface Props {
     dealerId: string;
@@ -150,6 +151,13 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
         e.preventDefault();
         if (!title || !price || !stock || (existingImages.length === 0 && images.length === 0)) {
             toast({ title: "Faltan datos", description: "El título, precio, stock y al menos 1 imagen son obligatorios.", variant: "destructive" });
+            return;
+        }
+
+        // Anti-fraud: check for contact info and prohibited content
+        const modResult = moderateText(title, description);
+        if (!modResult.isClean) {
+            toast({ title: "Contenido no permitido", description: modResult.violations[0], variant: "destructive" });
             return;
         }
 
