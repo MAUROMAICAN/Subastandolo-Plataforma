@@ -9,8 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ShieldCheck, Receipt, Store, AlertCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Receipt, Store, AlertCircle, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useBCVRate } from "@/hooks/useBCVRate";
 
 export default function CheckoutTienda() {
     const { productId } = useParams();
@@ -24,6 +25,8 @@ export default function CheckoutTienda() {
     const [submitting, setSubmitting] = useState(false);
     const [product, setProduct] = useState<any>(null);
     const [selectedAttr, setSelectedAttr] = useState<any>(null);
+    const [sellerName, setSellerName] = useState("Vendedor");
+    const bcvRate = useBCVRate();
 
     // User details for shipping
     const [address, setAddress] = useState("");
@@ -64,6 +67,12 @@ export default function CheckoutTienda() {
                 throw new Error("Este producto ya no está disponible.");
             }
             setProduct(prodData);
+
+            // Fetch seller name
+            if (prodData.seller_id) {
+                const { data: sp } = await supabase.from("profiles").select("full_name").eq("id", prodData.seller_id).single();
+                if (sp) setSellerName((sp as any).full_name || "Vendedor");
+            }
 
             // 2. Fetch Selected Attribute (if any)
             if (attrId) {
@@ -222,13 +231,51 @@ export default function CheckoutTienda() {
                                 <div className="bg-secondary/40 px-6 py-4 border-b border-border">
                                     <h2 className="font-heading font-bold text-lg flex items-center gap-2"><div className="bg-primary/20 text-primary dark:text-[#A6E300] h-6 w-6 rounded-full flex items-center justify-center text-xs">2</div> Información de Pago</h2>
                                 </div>
-                                <CardContent className="p-6 space-y-4">
-                                    <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg flex gap-3 text-sm text-accent-foreground mb-4">
-                                        <AlertCircle className="h-5 w-5 text-accent shrink-0" />
-                                        <p>Realiza la transferencia por <strong>${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</strong> a las cuentas de Subastandolo Inc. y adjunta el comprobante.</p>
+                                <CardContent className="p-6 space-y-5">
+
+                                    {/* Payment Info Banner */}
+                                    <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg text-sm text-accent-foreground">
+                                        <p className="font-bold mb-1 flex items-center gap-2"><AlertCircle className="h-4 w-4 text-accent" /> Realiza el pago al siguiente destino:</p>
+                                        <p className="text-muted-foreground text-xs">Una vez realizado, adjunta el comprobante o referencia para confirmar tu compra.</p>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    {/* Platform Payment Methods */}
+                                    <div className="border border-border rounded-lg overflow-hidden">
+                                        <div className="bg-secondary/30 px-4 py-2.5 border-b border-border flex items-center gap-2">
+                                            <Smartphone className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                                            <span className="text-sm font-bold">Pago Móvil</span>
+                                        </div>
+                                        <div className="p-4 space-y-1.5 text-sm">
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Teléfono:</span><span className="font-semibold font-mono">0412-0000000</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Cédula:</span><span className="font-semibold font-mono">V-00000000</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Banco:</span><span className="font-semibold">Banesco</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border border-border rounded-lg overflow-hidden">
+                                        <div className="bg-secondary/30 px-4 py-2.5 border-b border-border flex items-center gap-2">
+                                            <Building2 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+                                            <span className="text-sm font-bold">Transferencia Bancaria</span>
+                                        </div>
+                                        <div className="p-4 space-y-1.5 text-sm">
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Banco:</span><span className="font-semibold">Banesco</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Cuenta:</span><span className="font-semibold font-mono">0134-0000-00-0000000000</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Tipo:</span><span className="font-semibold">Corriente</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">Titular:</span><span className="font-semibold">Subastandolo Inc.</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground">RIF:</span><span className="font-semibold font-mono">J-00000000-0</span></div>
+                                        </div>
+                                    </div>
+
+                                    {bcvRate && bcvRate > 0 && (
+                                        <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg text-center">
+                                            <p className="text-xs text-muted-foreground">Monto equivalente en Bolívares</p>
+                                            <p className="text-xl font-black text-foreground">Bs. {(total * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                            <p className="text-[10px] text-muted-foreground">Tasa BCV del día: {bcvRate.toFixed(2)} Bs/$</p>
+                                        </div>
+                                    )}
+
+                                    {/* Payment Proof */}
+                                    <div className="space-y-4 pt-2 border-t border-border/50">
                                         <div className="space-y-2">
                                             <Label className="font-bold">Número de Referencia</Label>
                                             <Input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Ej. 09483321" className="bg-secondary/20" />
@@ -259,7 +306,7 @@ export default function CheckoutTienda() {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-base leading-tight line-clamp-2 mb-1">{product.title}</h3>
-                                            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2"><Store className="h-3 w-3" /> {product.dealer?.name}</p>
+                                            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2"><Store className="h-3 w-3" /> {sellerName}</p>
                                             {selectedAttr && (
                                                 <span className="bg-secondary text-xs px-2 py-0.5 rounded-sm font-medium border border-border">
                                                     {selectedAttr.attr_name}: {selectedAttr.attr_value}
@@ -281,7 +328,12 @@ export default function CheckoutTienda() {
                                         )}
                                         <div className="flex justify-between border-t border-border/50 pt-3 mt-3">
                                             <span className="font-bold text-base">Total a Pagar</span>
-                                            <span className="font-black text-xl text-accent">${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                                            <div className="text-right">
+                                                <span className="font-black text-xl text-accent">${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                                                {bcvRate && bcvRate > 0 && (
+                                                    <p className="text-[11px] text-muted-foreground font-medium">Bs. {(total * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
