@@ -166,6 +166,11 @@ export default function ProductDetail() {
                                 {product.description || "Sin descripción proporcionada."}
                             </div>
                         </div>
+
+                        {/* Q&A Desktop — right below description */}
+                        <div className="hidden lg:block mt-6 bg-card border border-border p-6 rounded-xl">
+                            <ProductQA productId={product.id} sellerId={product.seller.id} />
+                        </div>
                     </div>
 
                     {/* Right: Details & Action */}
@@ -260,13 +265,15 @@ export default function ProductDetail() {
                             </div>
                         </div>
 
+                        {/* Q&A Mobile — right below description */}
+                        <div className="lg:hidden mt-4 bg-card border border-border p-5 rounded-xl">
+                            <ProductQA productId={product.id} sellerId={product.seller.id} />
+                        </div>
+
                     </div>
                 </div>
 
-                {/* Q&A Section — Full Width Below Layout */}
-                <div className="mt-10 bg-card border border-border p-6 md:p-8 rounded-xl">
-                    <ProductQA productId={product.id} sellerId={product.seller.id} />
-                </div>
+
             </main>
 
             <Footer />
