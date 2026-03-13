@@ -31,7 +31,7 @@ const AuctionCard = ({ auction, dealer, isFavorite, onToggleFavorite }: AuctionC
   const startTime = (auction as any).start_time;
   const isScheduled = auction.status === "scheduled" || (startTime && new Date(startTime).getTime() > Date.now());
   const displayPrice = auction.current_price > 0 ? auction.current_price : auction.starting_price;
-  const hasBids = auction.current_price > 0;
+  const hasBids = auction.current_price > auction.starting_price;
   const isLive = !isScheduled && !isEnded;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
