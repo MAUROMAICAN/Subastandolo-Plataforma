@@ -258,7 +258,7 @@ const DealerDashboard = () => {
       items: [
         { key: "dashboard", label: "Dashboard", icon: BarChart3 },
         { key: "create", label: "Crear Subasta", icon: Plus },
-        { key: "store", label: "Tienda Directa", icon: Store },
+        { key: "store", label: "Marketplace", icon: Store },
       ],
     },
     {
