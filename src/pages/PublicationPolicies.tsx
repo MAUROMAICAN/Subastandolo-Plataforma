@@ -1,6 +1,6 @@
 import PolicyPageLayout, { type PolicyPageConfig } from "@/components/PolicyPageLayout";
 import SEOHead from "@/components/SEOHead";
-import { Camera, FileText, MessageSquareOff, Ban, ShieldCheck, AlertTriangle, Scale } from "lucide-react";
+import { Camera, FileText, MessageSquareOff, Ban, ShieldCheck, Scale } from "lucide-react";
 
 const config: PolicyPageConfig = {
     badge: { icon: FileText, label: "Publicaciones" },
@@ -78,7 +78,7 @@ const config: PolicyPageConfig = {
     crossLinks: [
         { icon: Scale, label: "Artículos Prohibidos", desc: "Lista completa de artículos no permitidos", href: "/articulos-prohibidos" },
         { icon: FileText, label: "Términos y Condiciones", desc: "Reglas generales de la plataforma", href: "/terminos" },
-        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Protección al comprador", href: "/garantia" },
+        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Protección al comprador", href: "/garantia-subastandolo" },
     ],
 };
 

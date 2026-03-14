@@ -67,7 +67,7 @@ const config: PolicyPageConfig = {
     crossLinks: [
         { icon: FileText, label: "Políticas de Publicación", desc: "Reglas para publicar productos", href: "/politicas-publicacion" },
         { icon: FileText, label: "Términos y Condiciones", desc: "Reglas generales de la plataforma", href: "/terminos" },
-        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Protección al comprador", href: "/garantia" },
+        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Protección al comprador", href: "/garantia-subastandolo" },
     ],
 };
 

@@ -79,7 +79,7 @@ const config: PolicyPageConfig = {
 
     crossLinks: [
         { icon: FileText, label: "Términos y Condiciones", desc: "Conoce las reglas de la plataforma", href: "/terminos" },
-        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Tu compra está protegida", href: "/garantia" },
+        { icon: ShieldCheck, label: "Garantía Subastandolo", desc: "Tu compra está protegida", href: "/garantia-subastandolo" },
         { icon: Scale, label: "Artículos Prohibidos", desc: "Qué se puede y qué no publicar", href: "/articulos-prohibidos" },
     ],
 };

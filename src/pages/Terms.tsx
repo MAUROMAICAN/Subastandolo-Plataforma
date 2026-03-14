@@ -1,5 +1,5 @@
 import PolicyPageLayout, { type PolicyPageConfig } from "@/components/PolicyPageLayout";
-import { FileText, Clock, ShoppingCart, UserCheck, CreditCard, Shield, Truck, Scale, Store, ShieldCheck } from "lucide-react";
+import { FileText, Clock, ShoppingCart, CreditCard, Shield, Truck, Scale, ShieldCheck } from "lucide-react";
 
 const config: PolicyPageConfig = {
     badge: { icon: FileText, label: "Legal" },
@@ -82,7 +82,7 @@ const config: PolicyPageConfig = {
 
     crossLinks: [
         { icon: ShieldCheck, label: "Política de Privacidad", desc: "Cómo protegemos tus datos", href: "/privacidad" },
-        { icon: Shield, label: "Garantía Subastandolo", desc: "Tu compra está protegida", href: "/garantia" },
+        { icon: Shield, label: "Garantía Subastandolo", desc: "Tu compra está protegida", href: "/garantia-subastandolo" },
         { icon: CreditCard, label: "Políticas de Publicación", desc: "Reglas para publicar productos", href: "/politicas-publicacion" },
     ],
 };

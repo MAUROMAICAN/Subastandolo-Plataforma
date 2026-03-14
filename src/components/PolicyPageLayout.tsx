@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import { ChevronDown, ChevronRight, Clock, ArrowRight } from "lucide-react";
+import { ChevronDown, Clock, ArrowRight } from "lucide-react";
 
 /* ─── Types ─── */
 export interface QuickNavItem {
@@ -55,8 +55,6 @@ export interface PolicyPageConfig {
     };
     faqs?: FAQ[];
     crossLinks: CrossLink[];
-    /** extra JSX to render between sections and dark (e.g. ProhibitedItems grid) */
-    children?: React.ReactNode;
 }
 
 /* ─── FAQ Accordion Item ─── */
@@ -84,8 +82,8 @@ function scrollToId(id: string) {
 }
 
 /* ─── Main Layout ─── */
-export default function PolicyPageLayout({ config }: { config: PolicyPageConfig }) {
-    const { badge, titleLines, accentLine = 1, subtitle, highlights, lastUpdated, quickNav, sections, darkSection, faqs, crossLinks, children } = config;
+export default function PolicyPageLayout({ config, children }: { config: PolicyPageConfig; children?: React.ReactNode }) {
+    const { badge, titleLines, accentLine = 1, subtitle, highlights, lastUpdated, quickNav, sections, darkSection, faqs, crossLinks } = config;
     const BadgeIcon = badge.icon;
 
     return (
