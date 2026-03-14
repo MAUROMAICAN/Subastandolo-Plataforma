@@ -262,6 +262,24 @@ export default function DealerLivePanel({ dealer }: Props) {
         if (selectedEvent) loadProducts(selectedEvent.id);
     };
 
+    // Delete entire event
+    const deleteEvent = async (eventId: string) => {
+        if (!window.confirm("¿Eliminar este evento? Esta acción no se puede deshacer.")) return;
+        // Delete products first
+        await supabase.from("live_event_products").delete().eq("event_id", eventId);
+        // Delete chat
+        await supabase.from("live_chat").delete().eq("event_id", eventId);
+        // Delete event
+        const { error } = await supabase.from("live_events").delete().eq("id", eventId);
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: "Evento eliminado" });
+            setSelectedEvent(null);
+            loadEvents();
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -357,6 +375,12 @@ export default function DealerLivePanel({ dealer }: Props) {
                                 <Square className="h-4 w-4" /> Finalizar
                             </button>
                         )}
+                        <button
+                            onClick={() => deleteEvent(selectedEvent.id)}
+                            className="flex items-center gap-2 bg-red-500/10 text-red-400 font-bold text-sm px-4 py-2 rounded-xl hover:bg-red-500/20 transition-colors"
+                        >
+                            <Trash2 className="h-4 w-4" /> Eliminar
+                        </button>
                     </div>
                 </div>
 
