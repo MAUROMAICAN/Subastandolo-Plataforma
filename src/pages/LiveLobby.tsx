@@ -6,7 +6,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import SEOHead from "@/components/SEOHead";
-import { Radio, Users, Clock, Calendar, Store, Loader2 } from "lucide-react";
+import CountdownTimer from "@/components/live/CountdownTimer";
+import { Radio, Users, Clock, Calendar, Store, Loader2, Bell } from "lucide-react";
 
 interface LiveEvent {
     id: string;
@@ -72,13 +73,17 @@ export default function LiveLobby() {
         return () => { supabase.removeChannel(channel); };
     }, []);
 
+    const liveEvents = events.filter((e) => e.status === "live");
+    const scheduledEvents = events.filter((e) => e.status === "scheduled");
+
     const filtered = events.filter((e) => {
         if (filter === "live") return e.status === "live";
         if (filter === "scheduled") return e.status === "scheduled";
         return true;
     });
 
-    const liveCount = events.filter((e) => e.status === "live").length;
+    const liveCount = liveEvents.length;
+    const scheduledCount = scheduledEvents.length;
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
@@ -119,6 +124,23 @@ export default function LiveLobby() {
                 </div>
             </section>
 
+            {/* Upcoming Events Carousel (scheduled events with countdown) */}
+            {scheduledCount > 0 && (
+                <section className="bg-card border-b border-border py-6">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-sm font-heading font-bold text-foreground mb-4 flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-accent" />
+                            Próximas Subastas
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {scheduledEvents.slice(0, 6).map((event) => (
+                                <ScheduledEventBanner key={event.id} event={event} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Filter tabs */}
             <div className="border-b border-border bg-card">
                 <div className="container mx-auto px-4">
@@ -131,7 +153,7 @@ export default function LiveLobby() {
                                     filter === f ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary/50"
                                 }`}
                             >
-                                {f === "all" ? "Todas" : f === "live" ? `🔴 En Vivo (${liveCount})` : "📅 Programadas"}
+                                {f === "all" ? "Todas" : f === "live" ? `🔴 En Vivo (${liveCount})` : `📅 Programadas (${scheduledCount})`}
                             </button>
                         ))}
                     </div>
@@ -166,7 +188,78 @@ export default function LiveLobby() {
     );
 }
 
-/* ── Event Card ── */
+/* ── Scheduled Event Banner (promotional card with countdown) ── */
+function ScheduledEventBanner({ event }: { event: LiveEvent }) {
+    const scheduledDate = new Date(event.scheduled_at);
+    const dayName = scheduledDate.toLocaleDateString("es-VE", { weekday: "long" });
+    const dayCapitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    const time = scheduledDate.toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" });
+
+    return (
+        <Link
+            to={`/live/${event.id}`}
+            className="group relative bg-gradient-to-br from-nav via-nav to-nav-solid border border-white/10 rounded-2xl overflow-hidden hover:border-accent/40 transition-all duration-300"
+        >
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+            <div className="relative p-4 space-y-3">
+                {/* Top: Dealer info + category */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {event.dealer_avatar ? (
+                            <img src={event.dealer_avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-accent/30" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                                <Store className="h-4 w-4 text-accent" />
+                            </div>
+                        )}
+                        <span className="text-xs font-bold text-white truncate max-w-[120px]">
+                            {event.dealer_name}
+                        </span>
+                    </div>
+                    {event.category && (
+                        <span className="text-[10px] bg-accent/10 text-accent font-semibold px-2 py-0.5 rounded-full">
+                            {event.category}
+                        </span>
+                    )}
+                </div>
+
+                {/* Title */}
+                <h3 className="text-sm font-heading font-bold text-white line-clamp-2 group-hover:text-accent transition-colors">
+                    {event.title}
+                </h3>
+
+                {/* Schedule banner */}
+                <div className="bg-white/5 rounded-xl p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-accent" />
+                            <span className="text-xs text-white/80 font-semibold">
+                                {dayCapitalized} {time}
+                            </span>
+                        </div>
+                        <span className="text-[10px] text-white/40 font-medium">⏳ Faltan</span>
+                    </div>
+                    <CountdownTimer targetDate={event.scheduled_at} />
+                </div>
+
+                {/* "No te lo pierdas" banner */}
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/40 italic">
+                        ¡No te lo pierdas!
+                    </span>
+                    <div className="flex items-center gap-1 text-accent text-[10px] font-bold">
+                        <Bell className="h-3 w-3" />
+                        Recordar
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+}
+
+/* ── Live/All Event Card ── */
 function LiveEventCard({ event }: { event: LiveEvent }) {
     const isLive = event.status === "live";
     const scheduledDate = new Date(event.scheduled_at);
@@ -209,6 +302,13 @@ function LiveEventCard({ event }: { event: LiveEvent }) {
                             <Users className="h-3 w-3" />
                             {event.viewer_count}
                         </span>
+                    </div>
+                )}
+
+                {/* Countdown overlay for scheduled */}
+                {!isLive && (
+                    <div className="absolute bottom-2 left-2">
+                        <CountdownTimer targetDate={event.scheduled_at} className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1" />
                     </div>
                 )}
             </div>
