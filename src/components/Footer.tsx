@@ -103,8 +103,9 @@ const Footer = () => {
               {[
                 { label: "Términos y condiciones", to: "/terminos" },
                 { label: "Política de privacidad", to: "/privacidad" },
-                { label: "Política de cookies", to: "/privacidad" },
-                { label: "Acuerdo de usuario", to: "/terminos" },
+                { label: "Artículos prohibidos", to: "/articulos-prohibidos" },
+                { label: "Garantía Subastandolo", to: "/garantia-subastandolo" },
+                { label: "Políticas de publicación", to: "/politicas-publicacion" },
               ].map(({ label, to }) => (
                 <li key={label}>
                   <Link

@@ -67,6 +67,23 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
             toast({ title: "Faltan datos", description: "El título, precio y al menos 1 imagen son obligatorios.", variant: "destructive" });
             return;
         }
+        if (title.length > 80) {
+            toast({ title: "Título muy largo", description: "El título no puede exceder 80 caracteres.", variant: "destructive" });
+            return;
+        }
+        const numPrice = parseFloat(price);
+        if (isNaN(numPrice) || numPrice < 1) {
+            toast({ title: "Precio inválido", description: "El precio mínimo es $1.00 USD.", variant: "destructive" });
+            return;
+        }
+        if (numPrice > 50000) {
+            toast({ title: "Precio excesivo", description: "El precio máximo es $50,000.00 USD.", variant: "destructive" });
+            return;
+        }
+        if (description.length > 3000) {
+            toast({ title: "Descripción muy larga", description: "La descripción no puede exceder 3000 caracteres.", variant: "destructive" });
+            return;
+        }
 
         // Validate required attributes
         const missingRequired = categoryAttributes

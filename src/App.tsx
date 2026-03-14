@@ -53,6 +53,8 @@ const CheckoutTienda = lazy(() => import("./pages/CheckoutTienda"));
 const MiCompra = lazy(() => import("./pages/MiCompra"));
 const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 const DealerStorePage = lazy(() => import("./pages/DealerStorePage"));
+const ProhibitedItems = lazy(() => import("./pages/ProhibitedItems"));
+const BuyerGuarantee = lazy(() => import("./pages/BuyerGuarantee"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -248,6 +250,8 @@ const App = () => {
                         <Route path="/mi-panel" element={<ProtectedRoute authOnly><BuyerPanel /></ProtectedRoute>} />
                         <Route path="/ayuda" element={<Help />} />
                         <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
+                        <Route path="/articulos-prohibidos" element={<ProhibitedItems />} />
+                        <Route path="/garantia-subastandolo" element={<BuyerGuarantee />} />
                         <Route path="/compradores" element={<BuyerFAQ />} />
                         <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
 
