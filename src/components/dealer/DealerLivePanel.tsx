@@ -262,19 +262,17 @@ export default function DealerLivePanel({ dealer }: Props) {
         if (selectedEvent) loadProducts(selectedEvent.id);
     };
 
-    // Delete entire event
-    const deleteEvent = async (eventId: string) => {
+    // Delete entire event (server-side to bypass RLS)
+    const deleteEvent = async (eventId: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         if (!window.confirm("¿Eliminar este evento? Esta acción no se puede deshacer.")) return;
-        // Delete products first
-        await supabase.from("live_event_products").delete().eq("event_id", eventId);
-        // Delete chat
-        await supabase.from("live_chat").delete().eq("event_id", eventId);
-        // Delete event
-        const { error } = await supabase.from("live_events").delete().eq("id", eventId);
-        if (error) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+        const { data, error } = await supabase.functions.invoke("delete-live-event", {
+            body: { event_id: eventId },
+        });
+        if (error || data?.error) {
+            toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
         } else {
-            toast({ title: "Evento eliminado" });
+            toast({ title: "✅ Evento eliminado" });
             setSelectedEvent(null);
             loadEvents();
         }
@@ -684,38 +682,49 @@ export default function DealerLivePanel({ dealer }: Props) {
                         </div>
                     )}
                     {events.map((event) => (
-                        <button
+                        <div
                             key={event.id}
-                            onClick={() => { setSelectedEvent(event); loadProducts(event.id); }}
                             className="w-full text-left bg-card border border-border rounded-2xl p-4 hover:shadow-md transition-all flex items-center gap-4"
                         >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                                event.status === "live" ? "bg-red-600/20" :
-                                event.status === "ended" ? "bg-secondary/30" :
-                                "bg-accent/10"
-                            }`}>
-                                <Radio className={`h-5 w-5 ${
-                                    event.status === "live" ? "text-red-500 animate-pulse" :
-                                    event.status === "ended" ? "text-muted-foreground" :
-                                    "text-accent"
-                                }`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-heading font-bold text-sm text-foreground truncate">{event.title}</p>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {new Date(event.scheduled_at).toLocaleDateString("es-VE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                    </span>
-                                    {event.category && (
-                                        <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-full font-semibold">
-                                            {event.category}
-                                        </span>
-                                    )}
+                            <button
+                                onClick={() => { setSelectedEvent(event); loadProducts(event.id); }}
+                                className="flex items-center gap-4 flex-1 min-w-0 text-left"
+                            >
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                                    event.status === "live" ? "bg-red-600/20" :
+                                    event.status === "ended" ? "bg-secondary/30" :
+                                    "bg-accent/10"
+                                }`}>
+                                    <Radio className={`h-5 w-5 ${
+                                        event.status === "live" ? "text-red-500 animate-pulse" :
+                                        event.status === "ended" ? "text-muted-foreground" :
+                                        "text-accent"
+                                    }`} />
                                 </div>
-                            </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-heading font-bold text-sm text-foreground truncate">{event.title}</p>
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {new Date(event.scheduled_at).toLocaleDateString("es-VE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                        </span>
+                                        {event.category && (
+                                            <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-full font-semibold">
+                                                {event.category}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </button>
                             <StatusBadge status={event.status} />
-                        </button>
+                            <button
+                                onClick={(e) => deleteEvent(event.id, e)}
+                                className="text-muted-foreground hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-500/10 shrink-0"
+                                title="Eliminar evento"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        </div>
                     ))}
                 </div>
             )}
