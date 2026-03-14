@@ -87,3 +87,55 @@ export function moderateText(title: string, description: string): ModerationResu
     violations,
   };
 }
+
+// Extra evasion patterns for Q&A (common in marketplace fraud)
+const EVASION_PATTERNS = [
+  /\b(?:escr[ií]beme|ll[aá]mame|cont[aá]ctame|manda\s?me|env[ií]ame)\b/i,
+  /\b(?:mi\s+n[uú]mero|mi\s+tel[eé]fono|mi\s+celular|mi\s+cel)\b/i,
+  /\b(?:agr[eé]game|s[ií]gueme|b[uú]scame)\s+(?:en|por)\b/i,
+  /\b(?:por\s+fuera|por\s+privado|por\s+interno|fuera\s+de\s+(?:la\s+)?plataforma)\b/i,
+  /\b(?:hablemos\s+por|escribeme\s+al|pasame\s+tu)\b/i,
+  /\b(?:cero\s*cuatro|cuatro\s*uno\s*(?:dos|cuatro))\b/i, // "cero cuatro uno dos" = phone number spoken
+];
+
+/**
+ * Check question/answer text for contact info attempts.
+ * Lighter than moderateText — only checks contact patterns, not prohibited items.
+ */
+export function moderateQuestion(text: string): ModerationResult {
+  const violations: string[] = [];
+
+  // Check phone numbers
+  for (const pattern of PHONE_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push("No se permiten números de teléfono en las preguntas. Usa el sistema de preguntas para comunicarte.");
+      break;
+    }
+  }
+
+  // Check emails
+  if (EMAIL_PATTERN.test(text)) {
+    violations.push("No se permiten correos electrónicos en las preguntas.");
+  }
+
+  // Check URLs and social media
+  for (const pattern of URL_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push("No se permiten enlaces ni redes sociales en las preguntas.");
+      break;
+    }
+  }
+
+  // Check evasion patterns
+  for (const pattern of EVASION_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push("No se permite solicitar contacto fuera de la plataforma. Usa el sistema de preguntas.");
+      break;
+    }
+  }
+
+  return {
+    isClean: violations.length === 0,
+    violations,
+  };
+}

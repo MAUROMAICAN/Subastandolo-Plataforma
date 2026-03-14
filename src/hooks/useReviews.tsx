@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export interface ReviewData {
   id: string;
@@ -17,6 +19,8 @@ export interface ReviewData {
   tags: string[];
   created_at: string;
   reviewer_name?: string;
+  reply_text?: string | null;
+  replied_at?: string | null;
 }
 
 export interface ReputationStats {
@@ -108,6 +112,35 @@ export function useUserReviews(userId: string | undefined) {
   }, [userId]);
 
   return { reviews, loading, dealerStats, buyerStats, unifiedStats };
+}
+
+/** Reply to a review as a dealer */
+export function useReviewReply() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const replyToReview = async (reviewId: string, reply: string) => {
+    if (!user || !reply.trim()) return false;
+
+    const { error } = await supabase
+      .from("reviews")
+      .update({
+        reply_text: reply.trim(),
+        replied_at: new Date().toISOString(),
+      } as any)
+      .eq("id", reviewId)
+      .eq("reviewed_id", user.id); // RLS + extra safety
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return false;
+    }
+
+    toast({ title: "✅ Respuesta publicada", description: "Tu respuesta es visible para todos los compradores." });
+    return true;
+  };
+
+  return { replyToReview };
 }
 
 /** Fetch reviews for a specific auction */

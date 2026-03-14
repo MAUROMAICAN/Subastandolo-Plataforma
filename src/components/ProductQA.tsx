@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { moderateQuestion } from "@/utils/textModeration";
 import { Button } from "@/components/ui/button";
 import { Loader2, MessageSquare, Send, Store, Clock, ChevronDown } from "lucide-react";
 
@@ -88,6 +89,14 @@ export default function ProductQA({ productId, sellerId }: Props) {
 
     setSubmitting(true);
     try {
+      // Anti-fraud: check for contact info
+      const modResult = moderateQuestion(newQuestion);
+      if (!modResult.isClean) {
+        toast({ title: "Contenido no permitido", description: modResult.violations[0], variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
       const { error } = await (supabase
         .from("product_questions")
         .insert({

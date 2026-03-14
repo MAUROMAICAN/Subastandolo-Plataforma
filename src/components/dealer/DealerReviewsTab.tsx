@@ -1,44 +1,62 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserReviews } from "@/hooks/useReviews";
+import { useUserReviews, useReviewReply } from "@/hooks/useReviews";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, ThumbsUp, ThumbsDown, MessageSquare, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Star, ThumbsUp, ThumbsDown, MessageSquare, TrendingUp, Reply, Send, Loader2, Store } from "lucide-react";
 
 const DealerReviewsTab = () => {
   const { user } = useAuth();
   const { dealerStats } = useUserReviews(user?.id);
+  const { replyToReview } = useReviewReply();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchReviews = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data: auctions } = await supabase
+      .from("auctions")
+      .select("id")
+      .eq("created_by", user.id)
+      .eq("status", "finalized");
+
+    if (!auctions || auctions.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    const auctionIds = auctions.map(a => a.id);
+    const { data: reviewsData } = await supabase
+      .from("reviews")
+      .select("*, profiles:reviewer_id(full_name, avatar_url)")
+      .in("auction_id", auctionIds)
+      .order("created_at", { ascending: false });
+
+    setReviews(reviewsData || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!user) return;
-    const fetchReviews = async () => {
-      setLoading(true);
-      // Fetch all reviews where this user is the dealer (auction creator)
-      const { data: auctions } = await supabase
-        .from("auctions")
-        .select("id")
-        .eq("created_by", user.id)
-        .eq("status", "finalized");
-
-      if (!auctions || auctions.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const auctionIds = auctions.map(a => a.id);
-      const { data: reviewsData } = await supabase
-        .from("reviews")
-        .select("*, profiles:reviewer_id(full_name, avatar_url)")
-        .in("auction_id", auctionIds)
-        .order("created_at", { ascending: false });
-
-      setReviews(reviewsData || []);
-      setLoading(false);
-    };
     fetchReviews();
   }, [user]);
+
+  const handleReply = async (reviewId: string) => {
+    if (!replyText.trim()) return;
+    setSubmitting(true);
+    const success = await replyToReview(reviewId, replyText);
+    if (success) {
+      setReplyingTo(null);
+      setReplyText("");
+      fetchReviews(); // Refresh to show the reply
+    }
+    setSubmitting(false);
+  };
 
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
@@ -99,11 +117,13 @@ const DealerReviewsTab = () => {
             {reviews.map((review) => {
               const isPositive = (review.rating || 0) >= 4;
               const reviewer = (review as any).profiles;
+              const hasReply = !!(review as any).reply_text;
+              const isReplying = replyingTo === review.id;
               return (
                 <Card key={review.id} className="border rounded-xl hover:border-primary/20 transition-colors">
                   <CardContent className="p-4">
+                    {/* Buyer review */}
                     <div className="flex items-start gap-3">
-                      {/* Rating Icon */}
                       <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
                         {isPositive ? <ThumbsUp className="h-4 w-4" /> : <ThumbsDown className="h-4 w-4" />}
                       </div>
@@ -124,6 +144,69 @@ const DealerReviewsTab = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Seller reply (if exists) */}
+                    {hasReply && (
+                      <div className="mt-3 ml-12 pl-3 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Store className="h-3 w-3 text-primary" />
+                          <span className="text-[10px] font-bold text-primary">Tu respuesta</span>
+                          {(review as any).replied_at && (
+                            <span className="text-[9px] text-muted-foreground ml-auto">
+                              {new Date((review as any).replied_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-foreground leading-relaxed">{(review as any).reply_text}</p>
+                      </div>
+                    )}
+
+                    {/* Reply actions */}
+                    {!hasReply && !isReplying && (
+                      <button
+                        onClick={() => { setReplyingTo(review.id); setReplyText(""); }}
+                        className="mt-2 ml-12 flex items-center gap-1 text-[11px] text-primary hover:underline transition-colors"
+                      >
+                        <Reply className="h-3 w-3" /> Responder
+                      </button>
+                    )}
+
+                    {/* Reply form */}
+                    {isReplying && (
+                      <div className="mt-3 ml-12 space-y-2 animate-fade-in">
+                        <Textarea
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder="Escribe tu respuesta a esta reseña... (visible para todos)"
+                          rows={2}
+                          className="rounded-lg text-xs"
+                          maxLength={1000}
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] text-muted-foreground">{replyText.length}/1000</span>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => { setReplyingTo(null); setReplyText(""); }}
+                              className="h-7 text-xs"
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleReply(review.id)}
+                              disabled={!replyText.trim() || submitting}
+                              className="h-7 text-xs rounded-lg"
+                            >
+                              {submitting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Send className="h-3 w-3 mr-1" />}
+                              Publicar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -136,3 +219,4 @@ const DealerReviewsTab = () => {
 };
 
 export default DealerReviewsTab;
+

@@ -310,6 +310,19 @@ export default function DealerProfile() {
                                             ))}
                                         </div>
                                         <p className="text-sm text-foreground/90">{review.comment || "Sin comentario."}</p>
+                                        {/* Seller reply */}
+                                        {(review as any).reply_text && (
+                                            <div className="mt-2 border-l-2 border-primary/20 pl-3 py-1.5 bg-primary/5 rounded-r-lg">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <Store className="h-3 w-3 text-primary" />
+                                                    <span className="text-[10px] font-bold text-primary">Respuesta del vendedor</span>
+                                                    {(review as any).replied_at && (
+                                                        <span className="text-[9px] text-muted-foreground">· {new Date((review as any).replied_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-foreground leading-relaxed">{(review as any).reply_text}</p>
+                                            </div>
+                                        )}
                                         {review.review_type === "buyer_to_dealer" && (
                                             <span className="inline-block mt-2 text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-sm">
                                                 Como Comprador

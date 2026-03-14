@@ -24,6 +24,7 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
     const [price, setPrice] = useState("");
     const [stock, setStock] = useState("1");
     const [condition, setCondition] = useState("nuevo");
+    const [returnPolicy, setReturnPolicy] = useState("none");
     const [images, setImages] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -116,6 +117,7 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                 attributes: attributeValues,
                 status: "active",
                 listing_type: listingType,
+                return_policy: returnPolicy,
             };
 
             if (listingType === 'auction') {
@@ -368,6 +370,36 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                                     </button>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Return Policy */}
+                        <div className="space-y-2">
+                            <Label className="text-xs font-bold">Política de Devolución</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                {([
+                                    { value: "none", label: "Sin devolución", emoji: "🚫", desc: "No acepta" },
+                                    { value: "7_days", label: "7 días", emoji: "📦", desc: "Comprador paga envío" },
+                                    { value: "15_days", label: "15 días", emoji: "📦", desc: "Comprador paga envío" },
+                                    { value: "30_days_free", label: "30 días gratis", emoji: "✨", desc: "Envío gratis" },
+                                ] as const).map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setReturnPolicy(opt.value)}
+                                        className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all hover:-translate-y-0.5 ${returnPolicy === opt.value
+                                            ? "border-primary bg-primary/10 text-primary dark:border-[#A6E300] dark:bg-[#A6E300]/10 dark:text-[#A6E300] shadow-md shadow-primary/10"
+                                            : "border-border hover:border-primary/30 hover:bg-secondary/30"
+                                            }`}
+                                    >
+                                        <span className="text-xl leading-none">{opt.emoji}</span>
+                                        <span className="text-[11px] font-bold leading-tight">{opt.label}</span>
+                                        <span className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            {returnPolicy === "30_days_free" && (
+                                <p className="text-[10px] text-emerald-500 font-medium">✨ Tu publicación mostrará el badge "Devolución Gratis" — esto aumenta la confianza del comprador.</p>
+                            )}
                         </div>
                     </div>
                 </div>

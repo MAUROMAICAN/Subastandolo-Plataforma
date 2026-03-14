@@ -367,13 +367,35 @@ export default function ProductDetail() {
                                 </div>
 
                                 {/* Payment */}
-                                <div className="flex items-start gap-3 mb-5">
+                                <div className="flex items-start gap-3 mb-3">
                                     <CreditCard className="h-4.5 w-4.5 text-primary dark:text-[#A6E300] shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-foreground">Medios de pago</p>
                                         <p className="text-xs text-muted-foreground">Pago Móvil · Transferencia Bancaria</p>
                                     </div>
                                 </div>
+
+                                {/* Return Policy Badge */}
+                                {(() => {
+                                    const policy = (product as any).return_policy || "none";
+                                    if (policy === "none") return null;
+                                    const labels: Record<string, { text: string; color: string; desc: string }> = {
+                                        "7_days": { text: "📦 Devolución 7 días", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", desc: "El comprador paga el envío de devolución" },
+                                        "15_days": { text: "📦 Devolución 15 días", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", desc: "El comprador paga el envío de devolución" },
+                                        "30_days_free": { text: "✨ Devolución gratis 30 días", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", desc: "Envío de devolución gratis" },
+                                    };
+                                    const info = labels[policy];
+                                    if (!info) return null;
+                                    return (
+                                        <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border ${info.color}`}>
+                                            <ShieldCheck className="h-4 w-4 shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-semibold">{info.text}</p>
+                                                <p className="text-[10px] opacity-70">{info.desc}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* Separator */}
                                 <div className="border-t border-border/50 mb-4" />

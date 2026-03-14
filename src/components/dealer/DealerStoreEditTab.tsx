@@ -25,6 +25,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
     const [price, setPrice] = useState("");
     const [stock, setStock] = useState("");
     const [condition, setCondition] = useState("new");
+    const [returnPolicy, setReturnPolicy] = useState("none");
 
     // Existing Images mapping { id, url }
     const [existingImages, setExistingImages] = useState<{ id: string, url: string }[]>([]);
@@ -64,6 +65,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
             setPrice((prod.price_usd || 0).toString());
             setStock((prod.stock || 0).toString());
             setCondition(prod.condition || "new");
+            setReturnPolicy((prod as any).return_policy || "none");
 
             const sortedImgs = (prod.images || []).sort((a: any, b: any) => a.display_order - b.display_order);
             setExistingImages(sortedImgs.map((img: any) => ({ id: img.id, url: img.image_url })));
@@ -171,8 +173,9 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                 description,
                 price_usd: parseFloat(price),
                 stock: parseInt(stock),
-                condition
-            }).eq("id", productId);
+                condition,
+                return_policy: returnPolicy,
+            } as any).eq("id", productId);
 
             if (prodErr) throw prodErr;
 
@@ -318,6 +321,19 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                                         <SelectItem value="new">Nuevo</SelectItem>
                                         <SelectItem value="used">Usado (Como Nuevo)</SelectItem>
                                         <SelectItem value="refurbished">Reacondicionado</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="font-bold">Política de Devolución</Label>
+                                <Select value={returnPolicy} onValueChange={setReturnPolicy}>
+                                    <SelectTrigger className="rounded-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">🚫 Sin devolución</SelectItem>
+                                        <SelectItem value="7_days">📦 7 días (comprador paga envío)</SelectItem>
+                                        <SelectItem value="15_days">📦 15 días (comprador paga envío)</SelectItem>
+                                        <SelectItem value="30_days_free">✨ 30 días (envío gratis)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
