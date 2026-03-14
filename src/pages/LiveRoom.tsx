@@ -249,7 +249,7 @@ export default function LiveRoom() {
 
                     {/* Right: Chat */}
                     <div className="lg:col-span-4" style={{ height: "70vh" }}>
-                        <LiveChat eventId={event.id} />
+                        <LiveChat eventId={event.id} dealerId={event.dealer_id} />
                     </div>
                 </div>
             </div>

@@ -3,9 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { getDealerTier } from "@/components/VerifiedBadge";
+import type { DealerInfo } from "@/hooks/useVerifiedDealers";
 import {
     Radio, Plus, Trash2, Play, Square, GripVertical,
     Loader2, Copy, ExternalLink, ImageIcon, Calendar,
+    Lock, Shield, AlertTriangle,
 } from "lucide-react";
 
 interface LiveEvent {
@@ -35,12 +38,37 @@ interface LiveProduct {
     countdown_seconds: number;
 }
 
-export default function DealerLivePanel() {
+interface Props {
+    dealer: DealerInfo | null;
+}
+
+const ALLOWED_TIERS = ["bronce", "plata", "oro", "platinum", "ruby_estelar"];
+
+export default function DealerLivePanel({ dealer }: Props) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [events, setEvents] = useState<LiveEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<"events" | "create">("events");
+    const [liveAuthorized, setLiveAuthorized] = useState(false);
+
+    // Check if dealer has admin-granted live authorization
+    useEffect(() => {
+        if (!user) return;
+        supabase
+            .from("profiles")
+            .select("live_authorized")
+            .eq("id", user.id)
+            .single()
+            .then(({ data }) => {
+                if ((data as any)?.live_authorized) setLiveAuthorized(true);
+            });
+    }, [user]);
+
+    // Determine access
+    const dealerTier = dealer?.isVerified ? getDealerTier(dealer.salesCount) : null;
+    const hasLevelAccess = dealerTier ? ALLOWED_TIERS.includes(dealerTier.key) : false;
+    const hasAccess = hasLevelAccess || liveAuthorized;
 
     // Create event form
     const [title, setTitle] = useState("");
@@ -213,6 +241,64 @@ export default function DealerLivePanel() {
         return (
             <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+        );
+    }
+
+    // Access control gate
+    if (!hasAccess) {
+        const salesNeeded = dealer?.salesCount != null ? Math.max(0, 10 - dealer.salesCount) : 10;
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center max-w-lg mx-auto space-y-6">
+                <div className="w-20 h-20 rounded-full bg-orange-500/10 flex items-center justify-center">
+                    <Lock className="h-10 w-10 text-orange-400" />
+                </div>
+                <div>
+                    <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+                        Subastas en Vivo Bloqueadas
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                        Para transmitir en vivo necesitas ser <strong className="text-orange-400">Vendedor Verificado Bronce</strong> o superior
+                        (mínimo 10 ventas completadas) o tener autorización especial del administrador.
+                    </p>
+                </div>
+
+                <div className="bg-card border border-border rounded-2xl p-4 w-full space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Tu nivel actual:</span>
+                        <span className="font-bold text-foreground">{dealerTier?.label || "Sin verificar"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Ventas completadas:</span>
+                        <span className="font-bold text-foreground">{dealer?.salesCount || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Ventas necesarias:</span>
+                        <span className="font-bold text-orange-400">{salesNeeded} más</span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                        <div
+                            className="bg-gradient-to-r from-orange-500 to-accent h-full rounded-full transition-all"
+                            style={{ width: `${Math.min(100, ((dealer?.salesCount || 0) / 10) * 100)}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 w-full">
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-300 text-left">
+                            Las subastas en vivo requieren un nivel mínimo para garantizar la calidad y seguridad
+                            de las transmisiones. Sigue vendiendo para desbloquear esta función.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>¿Necesitas acceso especial? Contacta al administrador</span>
+                </div>
             </div>
         );
     }
