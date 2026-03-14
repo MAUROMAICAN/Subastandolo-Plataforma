@@ -259,7 +259,7 @@ const DealerDashboard = () => {
       items: [
         { key: "dashboard", label: "Dashboard", icon: BarChart3 },
         { key: "create", label: "Crear Subasta", icon: Plus },
-        { key: "store", label: "Marketplace", icon: Store },
+        ...(isAdmin ? [{ key: "store", label: "Marketplace", icon: Store }] : []),
       ],
     },
     {
@@ -269,7 +269,7 @@ const DealerDashboard = () => {
         { key: "shipments", label: "Envíos", icon: Truck },
         { key: "wallet", label: "Mi Billetera", icon: Wallet },
         { key: "questions", label: "Preguntas", icon: MessageSquare },
-        { key: "offers", label: "Ofertas", icon: MessageSquare },
+        ...(isAdmin ? [{ key: "offers", label: "Ofertas", icon: MessageSquare }] : []),
       ],
     },
     {
