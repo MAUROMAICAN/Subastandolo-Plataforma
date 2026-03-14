@@ -33,7 +33,7 @@ export default function DealerStorePage() {
             // Fetch products
             const { data: prods } = await (supabase
                 .from("marketplace_products")
-                .select("id, title, price, price_usd, condition, stock, category_id, listing_type, images:marketplace_product_images(image_url, display_order), category:marketplace_categories(id, name)")
+                .select("id, title, price, condition, stock, category_id, listing_type, images:marketplace_product_images(image_url, display_order), category:marketplace_categories(id, name)")
                 .eq("seller_id", id)
                 .eq("status", "active")
                 .gt("stock", 0)
@@ -237,9 +237,9 @@ export default function DealerStorePage() {
                                     </div>
                                     <div className="p-3">
                                         <p className="text-xs sm:text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{p.title}</p>
-                                        <p className="text-base sm:text-lg font-black text-foreground">${Number(p.price || p.price_usd || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                        <p className="text-base sm:text-lg font-black text-foreground">${Number(p.price || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
                                         {bcvRate && bcvRate > 0 && (
-                                            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Bs. {(Number(p.price || p.price_usd || 0) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Bs. {(Number(p.price || 0) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                         )}
                                         {p.condition && (
                                             <span className={`mt-1.5 inline-flex text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
