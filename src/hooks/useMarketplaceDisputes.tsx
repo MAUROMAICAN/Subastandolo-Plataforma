@@ -108,6 +108,27 @@ export function useMarketplaceDisputes(role?: "buyer" | "seller" | "admin") {
 
     setDisputes(enriched);
     setLoading(false);
+
+    // Client-side auto-resolve: resolve expired disputes that the server hasn't caught yet
+    const now = Date.now();
+    const expired = enriched.filter(d =>
+      d.status === "open" &&
+      d.auto_resolve_at &&
+      new Date(d.auto_resolve_at).getTime() < now
+    );
+    
+    if (expired.length > 0 && (role === "admin" || role === "buyer")) {
+      for (const d of expired) {
+        await supabase.from("marketplace_disputes" as any).update({
+          status: "resolved_buyer",
+          resolution: "Resolución automática: el vendedor no respondió dentro del plazo de 3 días.",
+          resolution_type: "auto_refund",
+          updated_at: new Date().toISOString(),
+        } as any).eq("id", d.id).eq("status", "open"); // eq status to prevent race conditions
+      }
+      // Re-fetch to show updated state
+      fetchDisputes();
+    }
   };
 
   useEffect(() => {

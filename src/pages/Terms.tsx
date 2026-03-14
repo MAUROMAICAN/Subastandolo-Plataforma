@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import { FileText, Clock, ShoppingCart, UserCheck, CreditCard, AlertTriangle, Shield, Truck, Ban } from "lucide-react";
+import { FileText, Clock, ShoppingCart, UserCheck, CreditCard, Shield, Truck, Ban, Scale, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -34,12 +34,22 @@ const sections = [
   {
     Icon: Ban,
     title: "6. Restricciones de Categorías",
-    content: "Por los momentos, Subastandolo.com no gestiona subastas de bienes inmuebles ni vehículos automotores.",
+    content: "Subastandolo.com no gestiona subastas de bienes inmuebles ni vehículos automotores. Consulta la lista completa de artículos prohibidos y restringidos en nuestra página de Artículos Prohibidos.",
   },
   {
     Icon: CreditCard,
     title: "7. Pagos y Comisiones",
     content: "Subastándolo actúa como plataforma de conexión. Los métodos de pago aceptados son transferencia bancaria en bancos nacionales, no se acepta dinero en efectivo. La plataforma no se hace responsable por comisiones bancarias externas.",
+  },
+  {
+    Icon: Scale,
+    title: "8. Sistema de Disputas y Resolución de Conflictos",
+    content: "Si el comprador tiene un problema con su pedido (producto no recibido, no coincide con la descripción, dañado o incompleto), puede abrir una disputa desde su panel.\n\nPlazo de Respuesta: El vendedor tiene un plazo máximo de tres (3) días calendario para responder a la disputa presentando su versión y evidencia.\n\nResolución Automática: Si el vendedor no responde dentro del plazo, la disputa se resolverá automáticamente a favor del comprador.\n\nMediación Administrativa: Si ambas partes no llegan a un acuerdo, un administrador de Subastandolo mediará el caso y emitirá una resolución final vinculante.\n\nAbuso del Sistema: Las disputas falsas o reiteradas sin fundamento pueden resultar en la suspensión de la cuenta del comprador.",
+  },
+  {
+    Icon: Store,
+    title: "9. Marketplace (Tienda de Precio Fijo)",
+    content: "Los dealers verificados pueden listar productos a precio fijo en la Tienda. Las publicaciones deben cumplir con las Políticas de Publicación: título máximo de 80 caracteres, precio mínimo de $1.00 USD y máximo de $50,000 USD, y descripción máxima de 3,000 caracteres.\n\nLos artículos prohibidos aplican igualmente para el marketplace. El vendedor es responsable de la veracidad de la descripción y las fotos publicadas.\n\nLa Garantía Subastandolo aplica a todas las compras realizadas en la tienda.",
   },
 ];
 
@@ -77,7 +87,7 @@ const TermsPage = () => {
       <div className="bg-nav-solid border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-center gap-2 text-white/50 text-xs">
           <Clock className="h-3.5 w-3.5" />
-          <span>Última actualización: Febrero 2026</span>
+          <span>Última actualización: Marzo 2026</span>
         </div>
       </div>
 
