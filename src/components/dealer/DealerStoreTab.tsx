@@ -48,6 +48,7 @@ export default function DealerStoreTab({ dealerId, setActiveTab }: Props) {
         category:marketplace_categories(name, icon)
       `)
             .eq("seller_id", dealerId)
+            .neq("status", "deleted")
             .order("created_at", { ascending: false }) as any);
 
         if (error) {
