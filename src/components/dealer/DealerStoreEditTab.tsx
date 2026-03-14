@@ -347,8 +347,8 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                                     <SelectTrigger className="rounded-sm"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="free">Gratuita (0% comisión)</SelectItem>
-                                        <SelectItem value="standard">Estándar (8% comisión)</SelectItem>
-                                        <SelectItem value="premium">✨ Premium (12% comisión + destacado)</SelectItem>
+                                        <SelectItem value="standard">Estándar (7% comisión)</SelectItem>
+                                        <SelectItem value="premium">✨ Premium (10% comisión + destacado)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

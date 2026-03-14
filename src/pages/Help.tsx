@@ -149,25 +149,25 @@ const Help = () => {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
 
           <div className="relative z-10 p-6 sm:p-10 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center mx-auto mb-5 backdrop-blur-sm">
-              <HelpCircle className="h-8 w-8 text-primary dark:text-[#A6E300]" />
+            <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mx-auto mb-5 backdrop-blur-sm">
+              <HelpCircle className="h-8 w-8 text-[#A6E300]" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight mb-2">
               Centro de Ayuda
             </h1>
-            <p className="text-sm text-white/50 max-w-md mx-auto mb-6">
+            <p className="text-sm text-white/60 max-w-md mx-auto mb-6">
               Encuentra respuestas rápidas sobre {siteName}. Compras, ventas, envíos y más.
             </p>
 
             {/* Search bar */}
             <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Buscar pregunta..."
-                className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all backdrop-blur-sm"
+                className="w-full h-11 pl-11 pr-4 rounded-xl bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all backdrop-blur-sm"
               />
             </div>
           </div>
@@ -187,7 +187,7 @@ const Help = () => {
               className="bg-card border border-border rounded-xl p-3 sm:p-4 text-center hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all group"
             >
               <item.icon className={`h-5 w-5 ${item.color} mx-auto mb-1.5 group-hover:scale-110 transition-transform`} />
-              <span className="text-xs font-heading font-bold text-muted-foreground">{item.label}</span>
+              <span className="text-xs font-heading font-bold text-foreground">{item.label}</span>
             </button>
           ))}
         </div>

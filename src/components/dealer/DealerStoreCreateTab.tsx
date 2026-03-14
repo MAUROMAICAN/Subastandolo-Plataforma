@@ -266,8 +266,8 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {([
                                 { value: 'free' as const, label: 'Gratuita', commission: '0%', desc: 'Sin comisión. Máx 5 activas.', badge: null, color: 'border-border', limit: `${freeCount}/5 usadas` },
-                                { value: 'standard' as const, label: 'Estándar', commission: '8%', desc: 'Mayor exposición. Sin límite.', badge: null, color: 'border-sky-500' },
-                                { value: 'premium' as const, label: 'Premium', commission: '12%', desc: 'Máxima exposición + destacado.', badge: '✨', color: 'border-amber-500' },
+                                { value: 'standard' as const, label: 'Estándar', commission: '7%', desc: 'Mayor exposición. Sin límite.', badge: null, color: 'border-sky-500' },
+                                { value: 'premium' as const, label: 'Premium', commission: '10%', desc: 'Máxima exposición + destacado.', badge: '✨', color: 'border-amber-500' },
                             ]).map((opt) => (
                                 <button
                                     key={opt.value}
