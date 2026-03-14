@@ -16,7 +16,7 @@ BEGIN
   SET
     status = 'resolved_buyer',
     resolution = 'Resolución automática: el vendedor no respondió dentro del plazo de 3 días.',
-    resolution_type = 'auto_refund',
+    resolution_type = 'full_refund',
     updated_at = now()
   WHERE
     status = 'open'
