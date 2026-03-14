@@ -12,7 +12,7 @@ import VerifiedBadge, { getDealerTier, DEALER_TIERS } from "@/components/Verifie
 import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, ShieldAlert, Store, Headphones, UserCircle, Star, Globe, ChevronLeft, Menu, MessageSquare, ShieldCheck } from "lucide-react";
+import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, ShieldAlert, Store, Headphones, UserCircle, Star, Globe, ChevronLeft, Menu, MessageSquare, ShieldCheck, Radio } from "lucide-react";
 
 import type { AuctionWithImages, WinnerProfile } from "@/components/dealer/types";
 import DealerDashboardTab from "@/components/dealer/DealerDashboardTab";
@@ -32,6 +32,7 @@ import DealerQuestionsTab from "@/components/dealer/DealerQuestionsTab";
 import DealerProfileTab from "@/components/dealer/DealerProfileTab";
 import DealerOffersTab from "@/components/dealer/DealerOffersTab";
 import DealerStoreDisputesTab from "@/components/dealer/DealerStoreDisputesTab";
+import DealerLivePanel from "@/components/dealer/DealerLivePanel";
 
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -272,6 +273,7 @@ const DealerDashboard = () => {
         { key: "questions", label: "Preguntas", icon: MessageSquare },
         ...(isAdmin ? [{ key: "offers", label: "Ofertas", icon: MessageSquare }] : []),
         ...(isAdmin ? [{ key: "store-disputes", label: "Disputas", icon: ShieldCheck }] : []),
+        { key: "live", label: "En Vivo", icon: Radio },
       ],
     },
     {
@@ -615,6 +617,7 @@ const DealerDashboard = () => {
             {activeTab === "wallet" && <DealerWalletTab auctions={auctions} />}
             {activeTab === "support" && <DealerSupportInbox />}
             {activeTab === "profile" && <DealerProfileTab />}
+            {activeTab === "live" && <DealerLivePanel />}
           </div>
         </main>
       </div>

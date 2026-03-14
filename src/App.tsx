@@ -55,6 +55,8 @@ const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 const DealerStorePage = lazy(() => import("./pages/DealerStorePage"));
 const ProhibitedItems = lazy(() => import("./pages/ProhibitedItems"));
 const BuyerGuarantee = lazy(() => import("./pages/BuyerGuarantee"));
+const LiveLobby = lazy(() => import("./pages/LiveLobby"));
+const LiveRoom = lazy(() => import("./pages/LiveRoom"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -252,6 +254,8 @@ const App = () => {
                         <Route path="/politicas-publicacion" element={<PublicationPolicies />} />
                         <Route path="/articulos-prohibidos" element={<ProhibitedItems />} />
                         <Route path="/garantia-subastandolo" element={<BuyerGuarantee />} />
+                        <Route path="/live" element={<LiveLobby />} />
+                        <Route path="/live/:eventId" element={<LiveRoom />} />
                         <Route path="/compradores" element={<BuyerFAQ />} />
                         <Route path="/admin/dealer-payments" element={<ProtectedRoute requiredRole="admin"><DealerPayments /></ProtectedRoute>} />
 

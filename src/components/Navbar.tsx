@@ -131,6 +131,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
               </Link>
             )}
             <a href="/#subastas" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Subastas</a>
+            <Link to="/live" className="px-3 py-1.5 text-red-400 hover:text-white hover:bg-white/10 transition-colors font-bold rounded-sm flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />Live</Link>
             <Link to="/como-funciona" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Cómo Funciona</Link>
             <Link to="/nosotros" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Nosotros</Link>
             <Link to="/compradores" className="px-3 py-1.5 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium rounded-sm">Compradores</Link>
@@ -209,6 +210,7 @@ const Navbar = ({ searchQuery, onSearchChange }: NavbarProps) => {
               </Link>
             )}
             <a href="/#subastas" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Subastas</a>
+            <Link to="/live" className="px-3 py-2 rounded-lg text-red-400 font-bold hover:bg-secondary flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}><span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />Subastas Live</Link>
             <Link to="/como-funciona" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Cómo Funciona</Link>
             <Link to="/nosotros" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
             <Link to="/compradores" className="px-3 py-2 rounded-lg text-foreground hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>Compradores</Link>
