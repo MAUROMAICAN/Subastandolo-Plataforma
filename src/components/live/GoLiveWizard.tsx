@@ -3,10 +3,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import LiveKitBroadcaster from "@/components/live/LiveKitBroadcaster";
 import {
     Radio, X, Camera, CameraOff, ChevronRight, ChevronLeft,
-    Copy, ExternalLink, Check, AlertTriangle, Smartphone, Monitor,
-    RefreshCw, Loader2,
+    ExternalLink, RefreshCw, Loader2,
 } from "lucide-react";
 
 interface GoLiveWizardProps {
@@ -43,18 +43,16 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     const [rulesAccepted, setRulesAccepted] = useState<boolean[]>(RULES.map(() => false));
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Step 3: Live!
+    // Step 3: Live with LiveKit!
     const [creating, setCreating] = useState(false);
-    const [streamKey, setStreamKey] = useState<string | null>(null);
-    const [playbackId, setPlaybackId] = useState<string | null>(null);
     const [eventId, setEventId] = useState<string | null>(null);
-    const [copied, setCopied] = useState<"rtmp" | "key" | null>(null);
+    const [livekitToken, setLivekitToken] = useState<string | null>(null);
+    const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
 
     // Start camera
     const startCamera = useCallback(async () => {
         try {
             setCameraError(null);
-            // Stop existing stream
             if (cameraStream) {
                 cameraStream.getTracks().forEach((t) => t.stop());
             }
@@ -71,14 +69,12 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
         }
     }, [facingMode]);
 
-    // Attach stream to video element when it changes
     useEffect(() => {
         if (videoRef.current && cameraStream) {
             videoRef.current.srcObject = cameraStream;
         }
     }, [cameraStream]);
 
-    // Start camera on step 2
     useEffect(() => {
         if (step === 2) startCamera();
         return () => {
@@ -88,7 +84,6 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
         };
     }, [step, facingMode]);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
             if (cameraStream) {
@@ -97,20 +92,24 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
         };
     }, []);
 
-    // Toggle camera direction (mobile)
     const toggleCamera = () => {
         setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
     };
 
-    // All rules accepted?
     const allRulesAccepted = rulesAccepted.every(Boolean);
 
-    // Go live! (creates event + updates to live status)
+    // Go live! Creates event + gets LiveKit token
     const goLive = async () => {
         if (!user || !title.trim()) return;
         setCreating(true);
 
         try {
+            // Stop the preview camera (LiveKit will use its own)
+            if (cameraStream) {
+                cameraStream.getTracks().forEach((t) => t.stop());
+                setCameraStream(null);
+            }
+
             // 1. Create event in database with status "live"
             const { data: newEvent, error: createError } = await supabase
                 .from("live_events")
@@ -129,30 +128,26 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
             if (createError || !newEvent) throw new Error(createError?.message || "Error creando evento");
 
             setEventId(newEvent.id);
-            toast({ title: "🔴 ¡Estás EN VIVO!", description: "Redirigiendo a tu sala..." });
+
+            // 2. Get LiveKit token as publisher
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke("livekit-token", {
+                body: { event_id: newEvent.id, role: "publisher" },
+            });
+
+            if (tokenError) throw new Error(tokenError.message || "Error obteniendo token");
+            if (tokenData?.error) throw new Error(tokenData.error);
+
+            setLivekitToken(tokenData.token);
+            setLivekitUrl(tokenData.url);
+            setStep(3);
+
+            toast({ title: "🔴 ¡Estás EN VIVO!" });
             onLiveStarted();
-
-            // 2. Try creating Mux stream in background (fire-and-forget)
-            supabase.functions.invoke("create-live-stream", {
-                body: { event_id: newEvent.id },
-            }).catch(() => {});
-
-            // 3. Redirect to live room
-            window.location.href = `/live/${newEvent.id}`;
         } catch (err: any) {
             toast({ title: "Error", description: err.message, variant: "destructive" });
             setCreating(false);
         }
     };
-
-    const copyToClipboard = (text: string, type: "rtmp" | "key") => {
-        navigator.clipboard.writeText(text);
-        setCopied(type);
-        setTimeout(() => setCopied(null), 2000);
-    };
-
-    const rtmpUrl = "rtmps://global-live.mux.com:443/app";
-    const fullStreamUrl = streamKey ? `${rtmpUrl}/${streamKey}` : "";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -167,9 +162,11 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                             {step === 3 && "🔴 ¡EN VIVO!"}
                         </h2>
                     </div>
-                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-                        <X className="h-5 w-5" />
-                    </button>
+                    {step !== 3 && (
+                        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <X className="h-5 w-5" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Step indicator */}
@@ -323,7 +320,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                                     {creating ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
-                                            Creando stream...
+                                            Conectando...
                                         </>
                                     ) : (
                                         <>
@@ -336,95 +333,17 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                         </div>
                     )}
 
-                    {/* ─── STEP 3: Live! ─── */}
-                    {step === 3 && streamKey && (
+                    {/* ─── STEP 3: LIVE with LiveKit Broadcaster ─── */}
+                    {step === 3 && livekitToken && livekitUrl && (
                         <div className="space-y-4 animate-fade-in">
-                            {/* Camera still rolling */}
-                            <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
-                                <video
-                                    ref={videoRef}
-                                    autoPlay
-                                    playsInline
-                                    muted
-                                    className="w-full h-full object-cover"
-                                    style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
-                                />
-                                <div className="absolute top-2 left-2">
-                                    <span className="text-[10px] bg-red-600 text-white px-2 py-1 rounded-full font-bold flex items-center gap-1 animate-pulse">
-                                        🔴 EN VIVO
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Connection instructions */}
-                            <div className="bg-nav border border-white/10 rounded-xl p-4 space-y-3">
-                                <p className="text-xs text-white/50 font-bold uppercase tracking-wider">
-                                    Conecta tu cámara
-                                </p>
-
-                                {/* Mobile: Larix Broadcaster */}
-                                <div className="bg-accent/5 border border-accent/20 rounded-xl p-3">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Smartphone className="h-4 w-4 text-accent" />
-                                        <span className="text-xs font-bold text-accent">Desde el Teléfono (Recomendado)</span>
-                                    </div>
-                                    <ol className="text-[11px] text-muted-foreground space-y-1 list-decimal list-inside">
-                                        <li>Descarga <strong className="text-foreground">Larix Broadcaster</strong> (gratis)</li>
-                                        <li>Copia la URL completa de abajo</li>
-                                        <li>En Larix: Settings → Connections → + → pega la URL</li>
-                                        <li>¡Dale play y estarás en vivo!</li>
-                                    </ol>
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <code className="text-[10px] text-accent bg-black/30 px-2 py-1.5 rounded-lg flex-1 truncate">
-                                            {fullStreamUrl}
-                                        </code>
-                                        <button
-                                            onClick={() => copyToClipboard(fullStreamUrl, "key")}
-                                            className="text-white/50 hover:text-accent shrink-0"
-                                        >
-                                            {copied === "key" ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Desktop: OBS */}
-                                <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Monitor className="h-4 w-4 text-blue-400" />
-                                        <span className="text-xs font-bold text-blue-400">Desde la PC (OBS)</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="text-[10px] text-white/40 block">Servidor</label>
-                                            <div className="flex items-center gap-1">
-                                                <code className="text-[10px] text-blue-300 bg-black/30 px-2 py-1 rounded flex-1 truncate">
-                                                    {rtmpUrl}
-                                                </code>
-                                                <button
-                                                    onClick={() => copyToClipboard(rtmpUrl, "rtmp")}
-                                                    className="text-white/50 hover:text-blue-400"
-                                                >
-                                                    {copied === "rtmp" ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] text-white/40 block">Stream Key</label>
-                                            <div className="flex items-center gap-1">
-                                                <code className="text-[10px] text-blue-300 bg-black/30 px-2 py-1 rounded flex-1 truncate">
-                                                    {streamKey}
-                                                </code>
-                                                <button
-                                                    onClick={() => copyToClipboard(streamKey, "key")}
-                                                    className="text-white/50 hover:text-blue-400"
-                                                >
-                                                    {copied === "key" ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* LiveKit camera broadcasting */}
+                            <LiveKitBroadcaster
+                                token={livekitToken}
+                                serverUrl={livekitUrl}
+                                onDisconnect={() => {
+                                    toast({ title: "Transmisión desconectada" });
+                                }}
+                            />
 
                             {/* View live room link */}
                             {eventId && (

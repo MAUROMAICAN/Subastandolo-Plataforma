@@ -2,13 +2,15 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import MuxLivePlayer from "@/components/live/MuxLivePlayer";
+import LiveKitViewer from "@/components/live/LiveKitViewer";
 import LiveChat from "@/components/live/LiveChat";
 import LiveBidPanel from "@/components/live/LiveBidPanel";
-import { Loader2, ShieldCheck, Star, Store } from "lucide-react";
+import { Loader2, ShieldCheck, Star, Store, Radio, Users } from "lucide-react";
 
 interface LiveEvent {
     id: string;
@@ -17,6 +19,7 @@ interface LiveEvent {
     description: string | null;
     status: string;
     mux_playback_id: string | null;
+    livekit_room_name: string | null;
     viewer_count: number;
     started_at: string | null;
 }
@@ -43,10 +46,16 @@ interface DealerProfile {
 
 export default function LiveRoom() {
     const { eventId } = useParams<{ eventId: string }>();
+    const { user } = useAuth();
     const [event, setEvent] = useState<LiveEvent | null>(null);
     const [products, setProducts] = useState<LiveProduct[]>([]);
     const [dealer, setDealer] = useState<DealerProfile | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // LiveKit viewer state
+    const [livekitToken, setLivekitToken] = useState<string | null>(null);
+    const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
+    const [livekitError, setLivekitError] = useState<string | null>(null);
 
     const activeProduct = products.find((p) => p.status === "active") || null;
     const soldCount = products.filter((p) => p.status === "sold").length;
@@ -57,17 +66,15 @@ export default function LiveRoom() {
         if (!eventId) return;
 
         const load = async () => {
-            // Load event
             const { data: ev } = await (supabase
                 .from("live_events" as any)
-                .select("id, dealer_id, title, description, status, mux_playback_id, viewer_count, started_at")
+                .select("id, dealer_id, title, description, status, mux_playback_id, livekit_room_name, viewer_count, started_at")
                 .eq("id", eventId)
                 .single() as any);
 
             if (ev) {
                 setEvent(ev as LiveEvent);
 
-                // Load dealer profile
                 const { data: profile } = await (supabase
                     .from("profiles")
                     .select("full_name, avatar_url, dealer_level")
@@ -76,7 +83,6 @@ export default function LiveRoom() {
                 if (profile) setDealer({ display_name: profile.full_name || 'Dealer', avatar_url: profile.avatar_url, dealer_level: profile.dealer_level } as DealerProfile);
             }
 
-            // Load products
             const { data: prods } = await (supabase
                 .from("live_event_products" as any)
                 .select("*")
@@ -122,6 +128,29 @@ export default function LiveRoom() {
         };
     }, [eventId]);
 
+    // Get LiveKit viewing token when event loads and is live
+    useEffect(() => {
+        if (!event || event.status !== "live" || !eventId) return;
+        // Don't get viewer token if we're the dealer (they use the wizard broadcaster)
+        if (user && event.dealer_id === user.id) return;
+
+        const getToken = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke("livekit-token", {
+                    body: { event_id: eventId, role: "subscriber" },
+                });
+                if (error) throw new Error(error.message);
+                if (data?.error) throw new Error(data.error);
+                setLivekitToken(data.token);
+                setLivekitUrl(data.url);
+            } catch (err: any) {
+                console.error("[LiveRoom] LiveKit token error:", err);
+                setLivekitError(err.message);
+            }
+        };
+        getToken();
+    }, [event?.status, eventId, user?.id]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
@@ -146,6 +175,11 @@ export default function LiveRoom() {
 
     const isLive = event.status === "live";
     const isEnded = event.status === "ended";
+    const isDealer = user && event.dealer_id === user.id;
+
+    // Determine which player to show
+    const showLiveKit = isLive && livekitToken && livekitUrl && !isDealer;
+    const showMux = event.mux_playback_id && !showLiveKit;
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
@@ -183,7 +217,6 @@ export default function LiveRoom() {
 
                     {/* Left: Dealer info */}
                     <div className="lg:col-span-3 space-y-4">
-                        {/* Dealer card */}
                         <div className="bg-card border border-border rounded-2xl p-5">
                             <div className="flex items-center gap-3 mb-4">
                                 {dealer?.avatar_url ? (
@@ -209,7 +242,6 @@ export default function LiveRoom() {
                             </div>
                         </div>
 
-                        {/* Product queue */}
                         <div className="bg-card border border-border rounded-2xl p-4">
                             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Cola de Productos</h3>
                             <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -238,12 +270,41 @@ export default function LiveRoom() {
 
                     {/* Center: Video + bid panel */}
                     <div className="lg:col-span-5 space-y-4">
-                        <MuxLivePlayer
-                            playbackId={event.mux_playback_id}
-                            title={event.title}
-                            viewerCount={event.viewer_count}
-                            isLive={isLive}
-                        />
+                        {showLiveKit ? (
+                            <LiveKitViewer
+                                token={livekitToken}
+                                serverUrl={livekitUrl}
+                                isLive={isLive}
+                                viewerCount={event.viewer_count}
+                            />
+                        ) : showMux ? (
+                            <MuxLivePlayer
+                                playbackId={event.mux_playback_id}
+                                title={event.title}
+                                viewerCount={event.viewer_count}
+                                isLive={isLive}
+                            />
+                        ) : (
+                            <div className="aspect-video bg-nav rounded-2xl flex flex-col items-center justify-center gap-3 relative">
+                                {isLive && (
+                                    <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+                                        <span className="w-2 h-2 rounded-full bg-white" />
+                                        EN VIVO
+                                    </div>
+                                )}
+                                <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                    <Users className="h-3.5 w-3.5" />
+                                    {event.viewer_count}
+                                </div>
+                                <Radio className="h-12 w-12 text-red-500 animate-pulse" />
+                                <p className="text-foreground font-bold text-sm">
+                                    {isDealer ? "Estás transmitiendo desde el wizard" : isLive ? "🔴 Transmisión en vivo" : isEnded ? "Transmisión finalizada" : "Esperando transmisión..."}
+                                </p>
+                                <p className="text-muted-foreground text-xs text-center px-8">
+                                    {isDealer ? "Vuelve al wizard para ver tu cámara" : livekitError ? `Error: ${livekitError}` : "Conectando..."}
+                                </p>
+                            </div>
+                        )}
                         <LiveBidPanel eventId={event.id} activeProduct={activeProduct} />
                     </div>
 
