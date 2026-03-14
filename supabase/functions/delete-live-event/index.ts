@@ -8,18 +8,35 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const { getCallerUser, unauthorized } = await import("../_shared/auth.ts");
-  const user = await getCallerUser(req);
-  if (!user) return unauthorized(corsHeaders);
-
   try {
+    // Get user from JWT - robust auth that always works
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Verify the user's JWT using service role client
+    const authClient = createClient(supabaseUrl, serviceRoleKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      console.error("[delete-live-event] Auth error:", authError);
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { event_id } = await req.json();
     if (!event_id) throw new Error("event_id es requerido");
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // Admin client for all operations
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify event belongs to this dealer
     const { data: event, error: evError } = await supabaseAdmin
@@ -32,7 +49,6 @@ Deno.serve(async (req) => {
     if (event.dealer_id !== user.id) throw new Error("No tienes permiso");
 
     // Delete ALL related data (order matters for FK constraints)
-    // 1. Bids on products
     const { data: products } = await supabaseAdmin
       .from("live_event_products")
       .select("id")
@@ -43,29 +59,26 @@ Deno.serve(async (req) => {
       await supabaseAdmin.from("live_bids").delete().in("product_id", productIds);
     }
 
-    // 2. Chat bans
     await supabaseAdmin.from("live_chat_bans").delete().eq("event_id", event_id);
-    // 3. Reports
     await supabaseAdmin.from("live_reports").delete().eq("event_id", event_id);
-    // 4. Moderation log
     await supabaseAdmin.from("live_moderation_log").delete().eq("event_id", event_id);
-    // 5. Chat messages
     await supabaseAdmin.from("live_chat").delete().eq("event_id", event_id);
-    // 6. Products
     await supabaseAdmin.from("live_event_products").delete().eq("event_id", event_id);
-    // 7. The event itself
+
     const { error: delError } = await supabaseAdmin
       .from("live_events")
       .delete()
       .eq("id", event_id);
 
-    if (delError) throw new Error(`Error eliminando evento: ${delError.message}`);
+    if (delError) throw new Error(`Error eliminando: ${delError.message}`);
 
+    console.log("[delete-live-event] Success, deleted event:", event_id);
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[delete-live-event] Error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
