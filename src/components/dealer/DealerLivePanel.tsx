@@ -172,40 +172,25 @@ export default function DealerLivePanel({ dealer }: Props) {
     };
 
     const endLive = async (event: LiveEvent) => {
-        if (!window.confirm("¿Seguro que quieres finalizar este live?")) return;
         try {
-            const { data, error } = await supabase.functions.invoke("end-live-stream", {
-                body: { event_id: event.id },
-            });
+            // Direct DB update (RLS policy allows dealer to update own events)
+            const { error } = await supabase
+                .from("live_events")
+                .update({ status: "ended", ended_at: new Date().toISOString() })
+                .eq("id", event.id);
             if (error) {
-                console.error("[endLive] Edge Function error:", error);
-                // Fallback: update directly in DB
-                const { error: dbError } = await supabase
-                    .from("live_events")
-                    .update({ status: "ended", ended_at: new Date().toISOString() })
-                    .eq("id", event.id);
-                if (dbError) {
-                    toast({ title: "Error", description: dbError.message, variant: "destructive" });
-                    return;
-                }
-            }
-            if (data?.error) {
-                toast({ title: "Error", description: data.error, variant: "destructive" });
+                toast({ title: "Error", description: error.message, variant: "destructive" });
                 return;
             }
             toast({ title: "✅ Live finalizado" });
             loadEvents();
             setSelectedEvent(null);
+            // Try Edge Function for Mux cleanup (fire-and-forget)
+            supabase.functions.invoke("end-live-stream", {
+                body: { event_id: event.id },
+            }).catch(() => {});
         } catch (err: any) {
-            console.error("[endLive] catch:", err);
-            // Ultimate fallback
-            await supabase
-                .from("live_events")
-                .update({ status: "ended", ended_at: new Date().toISOString() })
-                .eq("id", event.id);
-            toast({ title: "Live finalizado (fallback)" });
-            loadEvents();
-            setSelectedEvent(null);
+            toast({ title: "Error", description: String(err?.message || err), variant: "destructive" });
         }
     };
 
@@ -262,32 +247,35 @@ export default function DealerLivePanel({ dealer }: Props) {
         if (selectedEvent) loadProducts(selectedEvent.id);
     };
 
-    // Delete entire event (server-side to bypass RLS)
+    // Delete entire event - direct client-side (no Edge Function)
     const [deleting, setDeleting] = useState<string | null>(null);
     const deleteEvent = async (eventId: string, e?: React.MouseEvent) => {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        if (deleting) return; // prevent double-click
+        if (deleting) return;
         setDeleting(eventId);
         try {
-            console.log("[deleteEvent] calling delete-live-event for", eventId);
-            const { data, error } = await supabase.functions.invoke("delete-live-event", {
-                body: { event_id: eventId },
-            });
-            console.log("[deleteEvent] response:", { data, error });
+            // 1. Delete products related to this event
+            await supabase.from("live_event_products").delete().eq("event_id", eventId);
+            // 2. Delete chat related to this event
+            await supabase.from("live_chat").delete().eq("event_id", eventId);
+            // 3. Delete the event itself
+            const { error } = await supabase.from("live_events").delete().eq("id", eventId);
             if (error) {
-                console.error("[deleteEvent] invoke error:", error);
-                toast({ title: "Error al eliminar", description: String(error.message || error), variant: "destructive" });
-            } else if (data?.error) {
-                console.error("[deleteEvent] data error:", data.error);
-                toast({ title: "Error al eliminar", description: data.error, variant: "destructive" });
-            } else {
-                toast({ title: "✅ Evento eliminado" });
-                setSelectedEvent(null);
-                loadEvents();
+                // If RLS blocks, try the Edge Function as fallback
+                const { data, error: fnErr } = await supabase.functions.invoke("delete-live-event", {
+                    body: { event_id: eventId },
+                });
+                if (fnErr || data?.error) {
+                    toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+                    return;
+                }
             }
+            toast({ title: "✅ Evento eliminado" });
+            setSelectedEvent(null);
+            loadEvents();
         } catch (err: any) {
-            console.error("[deleteEvent] catch:", err);
-            toast({ title: "Error inesperado", description: String(err), variant: "destructive" });
+            console.error("[deleteEvent]", err);
+            toast({ title: "Error", description: String(err?.message || err), variant: "destructive" });
         } finally {
             setDeleting(null);
         }
