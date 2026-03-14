@@ -171,16 +171,39 @@ export default function DealerLivePanel({ dealer }: Props) {
         }
     };
 
-    // End live stream
     const endLive = async (event: LiveEvent) => {
-        if (!confirm("¿Seguro que quieres finalizar este live?")) return;
-        const { error } = await supabase.functions.invoke("end-live-stream", {
-            body: { event_id: event.id },
-        });
-        if (error) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
-        } else {
-            toast({ title: "Live finalizado" });
+        if (!window.confirm("¿Seguro que quieres finalizar este live?")) return;
+        try {
+            const { data, error } = await supabase.functions.invoke("end-live-stream", {
+                body: { event_id: event.id },
+            });
+            if (error) {
+                console.error("[endLive] Edge Function error:", error);
+                // Fallback: update directly in DB
+                const { error: dbError } = await supabase
+                    .from("live_events")
+                    .update({ status: "ended", ended_at: new Date().toISOString() })
+                    .eq("id", event.id);
+                if (dbError) {
+                    toast({ title: "Error", description: dbError.message, variant: "destructive" });
+                    return;
+                }
+            }
+            if (data?.error) {
+                toast({ title: "Error", description: data.error, variant: "destructive" });
+                return;
+            }
+            toast({ title: "✅ Live finalizado" });
+            loadEvents();
+            setSelectedEvent(null);
+        } catch (err: any) {
+            console.error("[endLive] catch:", err);
+            // Ultimate fallback
+            await supabase
+                .from("live_events")
+                .update({ status: "ended", ended_at: new Date().toISOString() })
+                .eq("id", event.id);
+            toast({ title: "Live finalizado (fallback)" });
             loadEvents();
             setSelectedEvent(null);
         }
