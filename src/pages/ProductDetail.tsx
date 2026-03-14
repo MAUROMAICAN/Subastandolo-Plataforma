@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, ShoppingBag, ShieldCheck, Truck, MapPin, CreditCard, Minus, Plus, Heart, Gavel, MessageSquare, Clock, Send } from "lucide-react";
+import { Loader2, Store, ShoppingBag, ShieldCheck, Truck, MapPin, CreditCard, Minus, Plus, Heart, Gavel, MessageSquare, Clock, Send, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBCVRate } from "@/hooks/useBCVRate";
 import { Badge } from "@/components/ui/badge";
@@ -378,7 +378,17 @@ export default function ProductDetail() {
                                 {/* Return Policy Badge */}
                                 {(() => {
                                     const policy = (product as any).return_policy || "none";
-                                    if (policy === "none") return null;
+                                    if (policy === "none") {
+                                        return (
+                                            <div className="flex items-start gap-2 mb-3 px-3 py-2 rounded-lg border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                                                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm font-semibold">⚠️ Sin devolución</p>
+                                                    <p className="text-[10px] opacity-80">Al comprar este producto, aceptas recibirlo tal cual sin derecho a reclamo ni devolución.</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
                                     const labels: Record<string, { text: string; color: string; desc: string }> = {
                                         "7_days": { text: "📦 Devolución 7 días", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", desc: "El comprador paga el envío de devolución" },
                                         "15_days": { text: "📦 Devolución 15 días", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", desc: "El comprador paga el envío de devolución" },
@@ -393,6 +403,35 @@ export default function ProductDetail() {
                                                 <p className="text-sm font-semibold">{info.text}</p>
                                                 <p className="text-[10px] opacity-70">{info.desc}</p>
                                             </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Warranty Badge */}
+                                {(() => {
+                                    const hasWarranty = (product as any).has_warranty;
+                                    const warrantyDuration = (product as any).warranty_duration;
+                                    const durationLabels: Record<string, string> = {
+                                        '30_days': '30 días',
+                                        '90_days': '90 días',
+                                        '6_months': '6 meses',
+                                        '1_year': '1 año',
+                                    };
+                                    if (hasWarranty && warrantyDuration) {
+                                        return (
+                                            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                                                <ShieldCheck className="h-4 w-4 shrink-0" />
+                                                <div>
+                                                    <p className="text-sm font-semibold">🛡️ Garantía {durationLabels[warrantyDuration] || warrantyDuration}</p>
+                                                    <p className="text-[10px] opacity-70">La responsabilidad de la garantía recae sobre el vendedor</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border bg-secondary/30 text-muted-foreground border-border/50">
+                                            <ShieldCheck className="h-4 w-4 shrink-0 opacity-50" />
+                                            <p className="text-xs">Sin garantía del vendedor</p>
                                         </div>
                                     );
                                 })()}

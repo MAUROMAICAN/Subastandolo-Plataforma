@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, ImagePlus, X, ShoppingCart, Gavel, MessageSquare } from "lucide-react";
+import { Loader2, ArrowLeft, ImagePlus, X, ShoppingCart, Gavel, MessageSquare, ShieldCheck, AlertTriangle } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 import DynamicAttributeForm from "@/components/DynamicAttributeForm";
 import { useCategoryAttributes, type Category } from "@/hooks/useCategories";
@@ -25,6 +25,8 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
     const [stock, setStock] = useState("1");
     const [condition, setCondition] = useState("nuevo");
     const [returnPolicy, setReturnPolicy] = useState("none");
+    const [hasWarranty, setHasWarranty] = useState(false);
+    const [warrantyDuration, setWarrantyDuration] = useState("90_days");
     const [images, setImages] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -139,6 +141,8 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                 listing_type: listingType,
                 return_policy: returnPolicy,
                 listing_tier: listingTier,
+                has_warranty: hasWarranty,
+                warranty_duration: hasWarranty ? warrantyDuration : null,
             };
 
             if (listingType === 'auction') {
@@ -457,8 +461,70 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                                     </button>
                                 ))}
                             </div>
+                            {returnPolicy === "none" && (
+                                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mt-1">
+                                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
+                                        <strong>Importante:</strong> Al seleccionar "Sin devolución", el comprador deberá aceptar que recibe el producto tal cual, sin derecho a reclamo ni devolución. Esta condición se mostrará claramente en tu publicación.
+                                    </p>
+                                </div>
+                            )}
                             {returnPolicy === "30_days_free" && (
                                 <p className="text-[10px] text-emerald-500 font-medium">✨ Tu publicación mostrará el badge "Devolución Gratis" — esto aumenta la confianza del comprador.</p>
+                            )}
+                        </div>
+
+                        {/* Warranty */}
+                        <div className="space-y-2 border-t border-border pt-4">
+                            <Label className="text-xs font-bold">Garantía del Producto</Label>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setHasWarranty(false)}
+                                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all hover:-translate-y-0.5 ${!hasWarranty
+                                        ? "border-primary bg-primary/10 text-primary dark:border-[#A6E300] dark:bg-[#A6E300]/10 dark:text-[#A6E300] shadow-md shadow-primary/10"
+                                        : "border-border hover:border-primary/30 hover:bg-secondary/30"
+                                    }`}
+                                >
+                                    <span className="text-xl leading-none">🚫</span>
+                                    <span className="text-[11px] font-bold leading-tight">Sin garantía</span>
+                                    <span className="text-[9px] text-muted-foreground leading-tight">El vendedor no ofrece garantía</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setHasWarranty(true)}
+                                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all hover:-translate-y-0.5 ${hasWarranty
+                                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10"
+                                        : "border-border hover:border-primary/30 hover:bg-secondary/30"
+                                    }`}
+                                >
+                                    <span className="text-xl leading-none">🛡️</span>
+                                    <span className="text-[11px] font-bold leading-tight">Con garantía</span>
+                                    <span className="text-[9px] text-muted-foreground leading-tight">El vendedor ofrece garantía</span>
+                                </button>
+                            </div>
+                            {hasWarranty && (
+                                <>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold">Duración de la Garantía</Label>
+                                        <select
+                                            value={warrantyDuration}
+                                            onChange={(e) => setWarrantyDuration(e.target.value)}
+                                            className="flex h-11 w-full max-w-xs rounded-xl border border-input bg-background px-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <option value="30_days">30 días</option>
+                                            <option value="90_days">90 días</option>
+                                            <option value="6_months">6 meses</option>
+                                            <option value="1_year">1 año</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+                                        <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-snug">
+                                            <strong>Nota:</strong> La responsabilidad de la garantía recae exclusivamente sobre ti como vendedor. Deberás atender cualquier reclamo válido dentro del período establecido.
+                                        </p>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

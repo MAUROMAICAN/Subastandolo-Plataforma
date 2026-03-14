@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, ImagePlus, X, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, ArrowLeft, ImagePlus, X, PlusCircle, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
 import { moderateText } from "@/utils/textModeration";
 
 interface Props {
@@ -27,6 +27,8 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
     const [condition, setCondition] = useState("new");
     const [returnPolicy, setReturnPolicy] = useState("none");
     const [listingTier, setListingTier] = useState("free");
+    const [hasWarranty, setHasWarranty] = useState(false);
+    const [warrantyDuration, setWarrantyDuration] = useState("90_days");
 
     // Existing Images mapping { id, url }
     const [existingImages, setExistingImages] = useState<{ id: string, url: string }[]>([]);
@@ -68,6 +70,8 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
             setCondition(prod.condition || "new");
             setReturnPolicy((prod as any).return_policy || "none");
             setListingTier((prod as any).listing_tier || "free");
+            setHasWarranty((prod as any).has_warranty || false);
+            setWarrantyDuration((prod as any).warranty_duration || "90_days");
 
             const sortedImgs = (prod.images || []).sort((a: any, b: any) => a.display_order - b.display_order);
             setExistingImages(sortedImgs.map((img: any) => ({ id: img.id, url: img.image_url })));
@@ -178,6 +182,8 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                 condition,
                 return_policy: returnPolicy,
                 listing_tier: listingTier,
+                has_warranty: hasWarranty,
+                warranty_duration: hasWarranty ? warrantyDuration : null,
             } as any).eq("id", productId);
 
             if (prodErr) throw prodErr;
@@ -339,6 +345,44 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                                         <SelectItem value="30_days_free">✨ 30 días (envío gratis)</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {returnPolicy === "none" && (
+                                    <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                                        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
+                                            <strong>Importante:</strong> El comprador deberá aceptar que recibe el producto tal cual, sin derecho a reclamo ni devolución.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="font-bold">Garantía del Producto</Label>
+                                <Select value={hasWarranty ? "yes" : "no"} onValueChange={(v) => setHasWarranty(v === "yes")}>
+                                    <SelectTrigger className="rounded-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="no">🚫 Sin garantía</SelectItem>
+                                        <SelectItem value="yes">🛡️ Con garantía</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {hasWarranty && (
+                                    <>
+                                        <Select value={warrantyDuration} onValueChange={setWarrantyDuration}>
+                                            <SelectTrigger className="rounded-sm"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="30_days">30 días</SelectItem>
+                                                <SelectItem value="90_days">90 días</SelectItem>
+                                                <SelectItem value="6_months">6 meses</SelectItem>
+                                                <SelectItem value="1_year">1 año</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <div className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+                                            <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-snug">
+                                                <strong>Nota:</strong> La responsabilidad de la garantía recae exclusivamente sobre ti como vendedor.
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="space-y-2">
