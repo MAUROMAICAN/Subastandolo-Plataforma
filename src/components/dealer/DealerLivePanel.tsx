@@ -153,21 +153,25 @@ export default function DealerLivePanel({ dealer }: Props) {
 
     // Start live stream
     const startLive = async (event: LiveEvent) => {
-        toast({ title: "Creando stream...", description: "Conectando con Mux..." });
-        const { data, error } = await supabase.functions.invoke("create-live-stream", {
-            body: { event_id: event.id },
-        });
-        if (error) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
-        } else {
-            toast({
-                title: "¡Stream listo!",
-                description: "Copia tu stream key y pégala en OBS",
-            });
-            loadEvents();
-            if (data?.stream_key) {
-                setSelectedEvent({ ...event, mux_stream_key: data.stream_key, mux_playback_id: data.playback_id, status: "live" });
+        try {
+            // 1. Update DB directly to "live" status
+            const { error: dbErr } = await supabase
+                .from("live_events")
+                .update({ status: "live", started_at: new Date().toISOString() })
+                .eq("id", event.id);
+            if (dbErr) {
+                toast({ title: "Error", description: dbErr.message, variant: "destructive" });
+                return;
             }
+            toast({ title: "🔴 ¡Estás en vivo!" });
+            loadEvents();
+            setSelectedEvent({ ...event, status: "live" });
+            // 2. Try creating Mux stream in background (fire-and-forget)
+            supabase.functions.invoke("create-live-stream", {
+                body: { event_id: event.id },
+            }).catch(() => {});
+        } catch (err: any) {
+            toast({ title: "Error", description: String(err?.message || err), variant: "destructive" });
         }
     };
 
@@ -385,48 +389,17 @@ export default function DealerLivePanel({ dealer }: Props) {
                     </div>
                 </div>
 
-                {/* Stream key (only when live) */}
-                {selectedEvent.mux_stream_key && (
-                    <div className="bg-nav border border-white/10 rounded-2xl p-4 space-y-3">
-                        <p className="text-xs text-white/50 font-bold uppercase tracking-wider">Configuración OBS</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-xs text-white/50 mb-1 block">Servidor RTMP</label>
-                                <div className="flex items-center gap-2">
-                                    <code className="text-xs text-accent bg-black/30 px-3 py-1.5 rounded-lg flex-1 truncate">
-                                        rtmps://global-live.mux.com:443/app
-                                    </code>
-                                    <button
-                                        onClick={() => { navigator.clipboard.writeText("rtmps://global-live.mux.com:443/app"); toast({ title: "Copiado" }); }}
-                                        className="text-white/50 hover:text-accent"
-                                    >
-                                        <Copy className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs text-white/50 mb-1 block">Stream Key</label>
-                                <div className="flex items-center gap-2">
-                                    <code className="text-xs text-accent bg-black/30 px-3 py-1.5 rounded-lg flex-1 truncate">
-                                        {selectedEvent.mux_stream_key}
-                                    </code>
-                                    <button
-                                        onClick={() => { navigator.clipboard.writeText(selectedEvent.mux_stream_key!); toast({ title: "Copiado" }); }}
-                                        className="text-white/50 hover:text-accent"
-                                    >
-                                        <Copy className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                {/* Link to live room */}
+                {(selectedEvent.status === "live" || selectedEvent.mux_playback_id) && (
+                    <div className="bg-nav border border-white/10 rounded-2xl p-4">
                         <a
                             href={`/live/${selectedEvent.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-2 text-xs text-accent font-bold"
+                            className="inline-flex items-center gap-2 text-sm text-accent font-bold hover:underline"
                         >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            Ver sala en vivo
+                            <ExternalLink className="h-4 w-4" />
+                            🔴 Ver sala en vivo
                         </a>
                     </div>
                 )}
