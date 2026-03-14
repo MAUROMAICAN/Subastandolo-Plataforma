@@ -263,18 +263,33 @@ export default function DealerLivePanel({ dealer }: Props) {
     };
 
     // Delete entire event (server-side to bypass RLS)
+    const [deleting, setDeleting] = useState<string | null>(null);
     const deleteEvent = async (eventId: string, e?: React.MouseEvent) => {
-        if (e) e.stopPropagation();
-        if (!window.confirm("¿Eliminar este evento? Esta acción no se puede deshacer.")) return;
-        const { data, error } = await supabase.functions.invoke("delete-live-event", {
-            body: { event_id: eventId },
-        });
-        if (error || data?.error) {
-            toast({ title: "Error", description: error?.message || data?.error, variant: "destructive" });
-        } else {
-            toast({ title: "✅ Evento eliminado" });
-            setSelectedEvent(null);
-            loadEvents();
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (deleting) return; // prevent double-click
+        setDeleting(eventId);
+        try {
+            console.log("[deleteEvent] calling delete-live-event for", eventId);
+            const { data, error } = await supabase.functions.invoke("delete-live-event", {
+                body: { event_id: eventId },
+            });
+            console.log("[deleteEvent] response:", { data, error });
+            if (error) {
+                console.error("[deleteEvent] invoke error:", error);
+                toast({ title: "Error al eliminar", description: String(error.message || error), variant: "destructive" });
+            } else if (data?.error) {
+                console.error("[deleteEvent] data error:", data.error);
+                toast({ title: "Error al eliminar", description: data.error, variant: "destructive" });
+            } else {
+                toast({ title: "✅ Evento eliminado" });
+                setSelectedEvent(null);
+                loadEvents();
+            }
+        } catch (err: any) {
+            console.error("[deleteEvent] catch:", err);
+            toast({ title: "Error inesperado", description: String(err), variant: "destructive" });
+        } finally {
+            setDeleting(null);
         }
     };
 
@@ -719,10 +734,11 @@ export default function DealerLivePanel({ dealer }: Props) {
                             <StatusBadge status={event.status} />
                             <button
                                 onClick={(e) => deleteEvent(event.id, e)}
-                                className="text-muted-foreground hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-500/10 shrink-0"
+                                disabled={deleting === event.id}
+                                className={`transition-colors p-2 rounded-lg shrink-0 ${deleting === event.id ? "text-red-400 animate-spin" : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10"}`}
                                 title="Eliminar evento"
                             >
-                                <Trash2 className="h-4 w-4" />
+                                {deleting === event.id ? <Loader2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                             </button>
                         </div>
                     ))}
