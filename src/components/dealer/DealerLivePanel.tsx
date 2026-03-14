@@ -546,7 +546,7 @@ export default function DealerLivePanel({ dealer }: Props) {
             {showGoLive && (
                 <GoLiveWizard
                     onClose={() => setShowGoLive(false)}
-                    onLiveStarted={() => { setShowGoLive(false); loadEvents(); }}
+                    onLiveStarted={() => { loadEvents(); }}
                 />
             )}
 
