@@ -34,7 +34,7 @@ export default function DealerStorePage() {
             const { data: prods } = await (supabase
                 .from("marketplace_products")
                 .select("id, title, price, price_usd, condition, stock, category_id, listing_type, images:marketplace_product_images(image_url, display_order), category:marketplace_categories(id, name)")
-                .or(`seller_id.eq.${id},dealer_id.eq.${id}`)
+                .eq("seller_id", id)
                 .eq("status", "active")
                 .gt("stock", 0)
                 .order("created_at", { ascending: false }) as any);
