@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { AccessToken } from "https://esm.sh/livekit-server-sdk@2.6.1";
+import { SignJWT } from "https://esm.sh/jose@5.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,17 +10,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth: verify user JWT
+    // Auth: verify user JWT using service role
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No autorizado");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const authClient = createClient(supabaseUrl, serviceRoleKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    // Validate user token
+    const token = authHeader.replace("Bearer ", "");
+    const admin = createClient(supabaseUrl, serviceRoleKey);
+    const { data: { user }, error: authError } = await admin.auth.getUser(token);
     if (authError || !user) throw new Error("No autorizado");
 
     const { event_id, role } = await req.json();
@@ -32,11 +32,10 @@ Deno.serve(async (req) => {
     const LIVEKIT_URL = Deno.env.get("LIVEKIT_URL");
 
     if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_URL) {
-      throw new Error("LiveKit no está configurado");
+      throw new Error("LiveKit no configurado. Faltan LIVEKIT_API_KEY, LIVEKIT_API_SECRET o LIVEKIT_URL");
     }
 
     // Verify event exists
-    const admin = createClient(supabaseUrl, serviceRoleKey);
     const { data: event } = await admin
       .from("live_events")
       .select("id, dealer_id, status")
@@ -47,27 +46,32 @@ Deno.serve(async (req) => {
 
     const roomName = `live-${event_id}`;
     const isDealer = event.dealer_id === user.id;
-    const participantRole = role === "publisher" && isDealer ? "publisher" : "subscriber";
+    const canPublish = role === "publisher" && isDealer;
 
-    // Generate LiveKit access token
-    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: user.id,
+    // Build LiveKit JWT token manually using jose
+    const secret = new TextEncoder().encode(LIVEKIT_API_SECRET);
+    const now = Math.floor(Date.now() / 1000);
+
+    const jwt = await new SignJWT({
+      sub: user.id,
+      iss: LIVEKIT_API_KEY,
+      nbf: now,
+      exp: now + 14400, // 4 hours
       name: user.email || "Usuario",
-      ttl: "4h",
-    });
-
-    at.addGrant({
-      room: roomName,
-      roomJoin: true,
-      canPublish: participantRole === "publisher",
-      canSubscribe: true,
-      canPublishData: true,
-    });
-
-    const token = await at.toJwt();
+      video: {
+        room: roomName,
+        roomJoin: true,
+        canPublish: canPublish,
+        canSubscribe: true,
+        canPublishData: true,
+      },
+    })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuedAt()
+      .sign(secret);
 
     // If dealer is going live, update room name in DB
-    if (participantRole === "publisher") {
+    if (canPublish) {
       await admin
         .from("live_events")
         .update({ livekit_room_name: roomName })
@@ -75,10 +79,10 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      token,
+      token: jwt,
       url: LIVEKIT_URL,
       room: roomName,
-      role: participantRole,
+      role: canPublish ? "publisher" : "subscriber",
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

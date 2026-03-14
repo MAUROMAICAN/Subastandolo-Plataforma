@@ -102,6 +102,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     const goLive = async () => {
         if (!user || !title.trim()) return;
         setCreating(true);
+        let createdEventId: string | null = null;
 
         try {
             // Stop the preview camera (LiveKit will use its own)
@@ -126,7 +127,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 .single();
 
             if (createError || !newEvent) throw new Error(createError?.message || "Error creando evento");
-
+            createdEventId = newEvent.id;
             setEventId(newEvent.id);
 
             // 2. Get LiveKit token as publisher
@@ -134,8 +135,9 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 body: { event_id: newEvent.id, role: "publisher" },
             });
 
-            if (tokenError) throw new Error(tokenError.message || "Error obteniendo token");
+            if (tokenError) throw new Error("Error de conexión: " + (tokenError.message || "intenta de nuevo"));
             if (tokenData?.error) throw new Error(tokenData.error);
+            if (!tokenData?.token || !tokenData?.url) throw new Error("No se recibió token de LiveKit");
 
             setLivekitToken(tokenData.token);
             setLivekitUrl(tokenData.url);
@@ -144,7 +146,12 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
             toast({ title: "🔴 ¡Estás EN VIVO!" });
             onLiveStarted();
         } catch (err: any) {
-            toast({ title: "Error", description: err.message, variant: "destructive" });
+            console.error("[goLive] error:", err);
+            toast({ title: "Error al iniciar live", description: err.message, variant: "destructive" });
+            // Clean up: delete orphan event if token failed
+            if (createdEventId) {
+                await supabase.from("live_events").delete().eq("id", createdEventId);
+            }
             setCreating(false);
         }
     };
