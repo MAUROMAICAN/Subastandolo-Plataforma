@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { getDealerTier } from "@/components/VerifiedBadge";
 import type { DealerInfo } from "@/hooks/useVerifiedDealers";
+import GoLiveWizard from "@/components/live/GoLiveWizard";
 import {
     Radio, Plus, Trash2, Play, Square, GripVertical,
     Loader2, Copy, ExternalLink, ImageIcon, Calendar,
@@ -51,6 +52,7 @@ export default function DealerLivePanel({ dealer }: Props) {
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<"events" | "create">("events");
     const [liveAuthorized, setLiveAuthorized] = useState(false);
+    const [showGoLive, setShowGoLive] = useState(false);
 
     // Check if dealer has admin-granted live authorization
     useEffect(() => {
@@ -519,18 +521,43 @@ export default function DealerLivePanel({ dealer }: Props) {
     // Main view: event list or create
     return (
         <div className="space-y-6">
+            {/* Go Live Wizard */}
+            {showGoLive && (
+                <GoLiveWizard
+                    onClose={() => setShowGoLive(false)}
+                    onLiveStarted={() => { setShowGoLive(false); loadEvents(); }}
+                />
+            )}
+
+            {/* Hero: Go Live Button */}
+            <div className="bg-gradient-to-r from-red-600/20 via-red-500/10 to-transparent border border-red-500/20 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1">
+                    <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+                        <Radio className="h-5 w-5 text-red-500 animate-pulse" />
+                        Subastas en Vivo
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Transmite desde tu cámara y subasta tus productos en tiempo real
+                    </p>
+                </div>
+                <button
+                    onClick={() => setShowGoLive(true)}
+                    className="flex items-center gap-2 bg-red-600 text-white font-heading font-bold text-sm px-6 py-3 rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20 whitespace-nowrap"
+                >
+                    <Radio className="h-4 w-4" />
+                    🔴 Ir en Vivo
+                </button>
+            </div>
+
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
-                    <Radio className="h-5 w-5 text-red-500" />
-                    Subastas en Vivo
-                </h2>
+                <h3 className="text-sm font-heading font-bold text-foreground">Mis Eventos</h3>
                 <button
                     onClick={() => setTab(tab === "create" ? "events" : "create")}
-                    className="flex items-center gap-2 bg-accent text-accent-foreground font-bold text-sm px-4 py-2 rounded-xl hover:bg-accent/90 transition-colors"
+                    className="flex items-center gap-2 bg-accent text-accent-foreground font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-accent/90 transition-colors"
                 >
-                    <Plus className="h-4 w-4" />
-                    {tab === "create" ? "Ver Eventos" : "Nuevo Evento"}
+                    <Plus className="h-3.5 w-3.5" />
+                    {tab === "create" ? "Ver Eventos" : "Programar Evento"}
                 </button>
             </div>
 
