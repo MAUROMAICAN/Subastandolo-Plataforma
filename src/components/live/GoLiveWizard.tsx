@@ -3,10 +3,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import LiveKitBroadcaster from "@/components/live/LiveKitBroadcaster";
 import {
     Radio, X, Camera, CameraOff, ChevronRight, ChevronLeft,
-    ExternalLink, RefreshCw, Loader2,
+    ExternalLink, RefreshCw, Loader2, Mic, MicOff, Square, Users,
 } from "lucide-react";
 
 interface GoLiveWizardProps {
@@ -36,18 +35,19 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
 
-    // Step 2: Camera preview + rules
+    // Step 2 & 3: Camera
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
     const [rulesAccepted, setRulesAccepted] = useState<boolean[]>(RULES.map(() => false));
+    const [isMuted, setIsMuted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Step 3: Live with LiveKit!
+    // Step 3: Live state
     const [creating, setCreating] = useState(false);
     const [eventId, setEventId] = useState<string | null>(null);
-    const [livekitToken, setLivekitToken] = useState<string | null>(null);
-    const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
+    const [livekitStatus, setLivekitStatus] = useState<"connecting" | "connected" | "error" | "idle">("idle");
+    const [ending, setEnding] = useState(false);
 
     // Start camera
     const startCamera = useCallback(async () => {
@@ -65,7 +65,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 videoRef.current.srcObject = stream;
             }
         } catch (err) {
-            setCameraError("No se puede acceder a la cámara. Verifica los permisos del navegador.");
+            setCameraError("No se puede acceder a la cámara. Verifica los permisos.");
         }
     }, [facingMode]);
 
@@ -76,14 +76,10 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     }, [cameraStream]);
 
     useEffect(() => {
-        if (step === 2) startCamera();
-        return () => {
-            if (step !== 2 && step !== 3 && cameraStream) {
-                cameraStream.getTracks().forEach((t) => t.stop());
-            }
-        };
+        if (step === 2 || step === 3) startCamera();
     }, [step, facingMode]);
 
+    // Cleanup camera on unmount
     useEffect(() => {
         return () => {
             if (cameraStream) {
@@ -96,21 +92,24 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
         setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
     };
 
+    const toggleMic = () => {
+        if (cameraStream) {
+            cameraStream.getAudioTracks().forEach((t) => {
+                t.enabled = isMuted; // toggle
+            });
+            setIsMuted(!isMuted);
+        }
+    };
+
     const allRulesAccepted = rulesAccepted.every(Boolean);
 
-    // Go live! Creates event + gets LiveKit token
+    // Go live! Creates event + connects LiveKit in background
     const goLive = async () => {
         if (!user || !title.trim()) return;
         setCreating(true);
         let createdEventId: string | null = null;
 
         try {
-            // Stop the preview camera (LiveKit will use its own)
-            if (cameraStream) {
-                cameraStream.getTracks().forEach((t) => t.stop());
-                setCameraStream(null);
-            }
-
             // 1. Create event in database with status "live"
             const { data: newEvent, error: createError } = await supabase
                 .from("live_events")
@@ -129,31 +128,96 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
             if (createError || !newEvent) throw new Error(createError?.message || "Error creando evento");
             createdEventId = newEvent.id;
             setEventId(newEvent.id);
-
-            // 2. Get LiveKit token as publisher
-            const { data: tokenData, error: tokenError } = await supabase.functions.invoke("livekit-token", {
-                body: { event_id: newEvent.id, role: "publisher" },
-            });
-
-            if (tokenError) throw new Error("Error de conexión: " + (tokenError.message || "intenta de nuevo"));
-            if (tokenData?.error) throw new Error(tokenData.error);
-            if (!tokenData?.token || !tokenData?.url) throw new Error("No se recibió token de LiveKit");
-
-            setLivekitToken(tokenData.token);
-            setLivekitUrl(tokenData.url);
             setStep(3);
-
             toast({ title: "🔴 ¡Estás EN VIVO!" });
             onLiveStarted();
+
+            // 2. Try to connect LiveKit in background (fire-and-forget for now)
+            setLivekitStatus("connecting");
+            try {
+                const { data: tokenData, error: tokenError } = await supabase.functions.invoke("livekit-token", {
+                    body: { event_id: newEvent.id, role: "publisher" },
+                });
+
+                if (tokenError || tokenData?.error || !tokenData?.token) {
+                    console.warn("[LiveKit] Token error:", tokenError || tokenData?.error);
+                    setLivekitStatus("error");
+                } else {
+                    // Connect LiveKit with the camera stream
+                    try {
+                        const { Room, RoomEvent } = await import("livekit-client");
+                        const room = new Room();
+                        await room.connect(tokenData.url, tokenData.token);
+
+                        // Publish the existing camera stream tracks
+                        if (cameraStream) {
+                            const videoTrack = cameraStream.getVideoTracks()[0];
+                            const audioTrack = cameraStream.getAudioTracks()[0];
+
+                            if (videoTrack) {
+                                const { LocalVideoTrack } = await import("livekit-client");
+                                const lvTrack = new LocalVideoTrack(videoTrack);
+                                await room.localParticipant.publishTrack(lvTrack);
+                            }
+                            if (audioTrack) {
+                                const { LocalAudioTrack } = await import("livekit-client");
+                                const laTrack = new LocalAudioTrack(audioTrack);
+                                await room.localParticipant.publishTrack(laTrack);
+                            }
+                        }
+
+                        setLivekitStatus("connected");
+                        console.log("[LiveKit] Connected and publishing!");
+
+                        // Store room reference for cleanup
+                        (window as any).__livekitRoom = room;
+                    } catch (connErr) {
+                        console.warn("[LiveKit] Connection error:", connErr);
+                        setLivekitStatus("error");
+                    }
+                }
+            } catch (e) {
+                console.warn("[LiveKit] Background error:", e);
+                setLivekitStatus("error");
+            }
         } catch (err: any) {
             console.error("[goLive] error:", err);
             toast({ title: "Error al iniciar live", description: err.message, variant: "destructive" });
-            // Clean up: delete orphan event if token failed
             if (createdEventId) {
                 await supabase.from("live_events").delete().eq("id", createdEventId);
             }
             setCreating(false);
         }
+    };
+
+    // End live stream
+    const endLive = async () => {
+        setEnding(true);
+        try {
+            // Disconnect LiveKit
+            const room = (window as any).__livekitRoom;
+            if (room) {
+                room.disconnect();
+                delete (window as any).__livekitRoom;
+            }
+
+            // Stop camera
+            if (cameraStream) {
+                cameraStream.getTracks().forEach((t) => t.stop());
+                setCameraStream(null);
+            }
+
+            // Update event status
+            if (eventId) {
+                await supabase.from("live_events").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", eventId);
+            }
+
+            toast({ title: "Transmisión finalizada" });
+            onClose();
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        }
+        setEnding(false);
     };
 
     return (
@@ -264,7 +328,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                                             autoPlay
                                             playsInline
                                             muted
-                                            className="w-full h-full object-cover mirror"
+                                            className="w-full h-full object-cover"
                                             style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
                                         />
                                         <div className="absolute top-2 right-2 flex gap-2">
@@ -340,19 +404,74 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                         </div>
                     )}
 
-                    {/* ─── STEP 3: LIVE with LiveKit Broadcaster ─── */}
-                    {step === 3 && livekitToken && livekitUrl && (
+                    {/* ─── STEP 3: LIVE! Raw camera + LiveKit in background ─── */}
+                    {step === 3 && (
                         <div className="space-y-4 animate-fade-in">
-                            {/* LiveKit camera broadcasting */}
-                            <LiveKitBroadcaster
-                                token={livekitToken}
-                                serverUrl={livekitUrl}
-                                onDisconnect={() => {
-                                    toast({ title: "Transmisión desconectada" });
-                                }}
-                            />
+                            {/* Camera preview (raw, always works) */}
+                            <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
+                                {cameraError ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                                        <CameraOff className="h-10 w-10 text-red-400 mb-2" />
+                                        <p className="text-xs text-red-400">{cameraError}</p>
+                                        <button onClick={startCamera} className="text-xs text-accent font-bold mt-2 underline">Reintentar</button>
+                                    </div>
+                                ) : (
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        playsInline
+                                        muted
+                                        className="w-full h-full object-cover"
+                                        style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
+                                    />
+                                )}
 
-                            {/* View live room link */}
+                                {/* EN VIVO badge */}
+                                <div className="absolute top-2 left-2">
+                                    <span className="flex items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        EN VIVO
+                                    </span>
+                                </div>
+
+                                {/* LiveKit status indicator */}
+                                <div className="absolute top-2 right-2">
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                                        livekitStatus === "connected" ? "bg-green-600 text-white" :
+                                        livekitStatus === "connecting" ? "bg-yellow-600 text-white" :
+                                        livekitStatus === "error" ? "bg-red-800 text-white" :
+                                        "bg-black/50 text-white"
+                                    }`}>
+                                        {livekitStatus === "connected" ? "📡 Transmitiendo" :
+                                         livekitStatus === "connecting" ? "⏳ Conectando..." :
+                                         livekitStatus === "error" ? "⚠️ Sin stream" :
+                                         "..."}
+                                    </span>
+                                </div>
+
+                                {/* Controls overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            onClick={toggleMic}
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                                                isMuted ? "bg-red-500 text-white" : "bg-white/20 text-white hover:bg-white/30"
+                                            }`}
+                                        >
+                                            {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                                        </button>
+
+                                        <button
+                                            onClick={toggleCamera}
+                                            className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
+                                        >
+                                            <RefreshCw className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* View live room */}
                             {eventId && (
                                 <a
                                     href={`/live/${eventId}`}
@@ -364,6 +483,19 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                                     Ver mi sala en vivo
                                 </a>
                             )}
+
+                            {/* End live button */}
+                            <button
+                                onClick={endLive}
+                                disabled={ending}
+                                className="w-full flex items-center justify-center gap-2 bg-red-600/20 text-red-400 border border-red-500/30 font-bold py-3 rounded-xl hover:bg-red-600/30 transition-colors"
+                            >
+                                {ending ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando...</>
+                                ) : (
+                                    <><Square className="h-4 w-4" /> Finalizar transmisión</>
+                                )}
+                            </button>
                         </div>
                     )}
                 </div>
