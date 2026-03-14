@@ -105,13 +105,13 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     // All rules accepted?
     const allRulesAccepted = rulesAccepted.every(Boolean);
 
-    // Go live! (creates event + mux stream in one step)
+    // Go live! (creates event + updates to live status)
     const goLive = async () => {
         if (!user || !title.trim()) return;
         setCreating(true);
 
         try {
-            // 1. Create event in database
+            // 1. Create event in database with status "live"
             const { data: newEvent, error: createError } = await supabase
                 .from("live_events")
                 .insert({
@@ -120,6 +120,8 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                     description: null,
                     category: category || null,
                     scheduled_at: new Date().toISOString(),
+                    status: "live",
+                    started_at: new Date().toISOString(),
                 })
                 .select("id")
                 .single();
@@ -127,25 +129,20 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
             if (createError || !newEvent) throw new Error(createError?.message || "Error creando evento");
 
             setEventId(newEvent.id);
-
-            // 2. Create Mux stream via Edge Function
-            const { data, error } = await supabase.functions.invoke("create-live-stream", {
-                body: { event_id: newEvent.id },
-            });
-
-            if (error) throw new Error(error.message || "Error creando stream");
-
-            setStreamKey(data.stream_key);
-            setPlaybackId(data.playback_id);
-            setStep(3);
-
-            toast({ title: "🔴 ¡Estás EN VIVO!", description: "Tu transmisión está lista" });
+            toast({ title: "🔴 ¡Estás EN VIVO!", description: "Redirigiendo a tu sala..." });
             onLiveStarted();
+
+            // 2. Try creating Mux stream in background (fire-and-forget)
+            supabase.functions.invoke("create-live-stream", {
+                body: { event_id: newEvent.id },
+            }).catch(() => {});
+
+            // 3. Redirect to live room
+            window.location.href = `/live/${newEvent.id}`;
         } catch (err: any) {
             toast({ title: "Error", description: err.message, variant: "destructive" });
+            setCreating(false);
         }
-
-        setCreating(false);
     };
 
     const copyToClipboard = (text: string, type: "rtmp" | "key") => {
@@ -313,10 +310,10 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
 
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => setStep(1)}
-                                    className="flex items-center gap-1 text-xs text-muted-foreground font-bold px-4 py-3 rounded-xl hover:bg-secondary/30"
+                                    onClick={() => { if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); } setStep(1); }}
+                                    className="flex items-center gap-1 text-sm text-muted-foreground font-bold px-4 py-3 rounded-xl hover:bg-secondary/30 active:bg-secondary/50 min-w-[80px]"
                                 >
-                                    <ChevronLeft className="h-4 w-4" /> Atrás
+                                    <ChevronLeft className="h-5 w-5" /> Atrás
                                 </button>
                                 <button
                                     onClick={goLive}
