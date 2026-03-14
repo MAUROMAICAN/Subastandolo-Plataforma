@@ -26,6 +26,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
     const [stock, setStock] = useState("");
     const [condition, setCondition] = useState("new");
     const [returnPolicy, setReturnPolicy] = useState("none");
+    const [listingTier, setListingTier] = useState("free");
 
     // Existing Images mapping { id, url }
     const [existingImages, setExistingImages] = useState<{ id: string, url: string }[]>([]);
@@ -66,6 +67,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
             setStock((prod.stock || 0).toString());
             setCondition(prod.condition || "new");
             setReturnPolicy((prod as any).return_policy || "none");
+            setListingTier((prod as any).listing_tier || "free");
 
             const sortedImgs = (prod.images || []).sort((a: any, b: any) => a.display_order - b.display_order);
             setExistingImages(sortedImgs.map((img: any) => ({ id: img.id, url: img.image_url })));
@@ -175,6 +177,7 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                 stock: parseInt(stock),
                 condition,
                 return_policy: returnPolicy,
+                listing_tier: listingTier,
             } as any).eq("id", productId);
 
             if (prodErr) throw prodErr;
@@ -334,6 +337,18 @@ export default function DealerStoreEditTab({ dealerId, productId, setActiveTab, 
                                         <SelectItem value="7_days">📦 7 días (comprador paga envío)</SelectItem>
                                         <SelectItem value="15_days">📦 15 días (comprador paga envío)</SelectItem>
                                         <SelectItem value="30_days_free">✨ 30 días (envío gratis)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="font-bold">Nivel de Publicación</Label>
+                                <Select value={listingTier} onValueChange={setListingTier}>
+                                    <SelectTrigger className="rounded-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="free">Gratuita (0% comisión)</SelectItem>
+                                        <SelectItem value="standard">Estándar (8% comisión)</SelectItem>
+                                        <SelectItem value="premium">✨ Premium (12% comisión + destacado)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

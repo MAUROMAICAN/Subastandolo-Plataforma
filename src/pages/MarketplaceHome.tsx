@@ -76,7 +76,7 @@ export default function MarketplaceHome() {
         .from("marketplace_products")
         .select(`
           id, title, price, stock, condition, image_url, created_at, category_id, seller_id,
-          listing_type, current_price, starting_price, end_time,
+          listing_type, current_price, starting_price, end_time, listing_tier,
           images:marketplace_product_images(image_url, display_order),
           category:marketplace_categories(id, name, slug)
         `)
@@ -118,6 +118,14 @@ export default function MarketplaceHome() {
         mainImage: p.image_url || p.images?.[0]?.image_url || null,
         sellerName: sellerMap[p.seller_id] || "Vendedor",
       }));
+      // Sort: premium first, then standard, then free
+      const tierOrder: Record<string, number> = { premium: 0, standard: 1, free: 2 };
+      enriched.sort((a: any, b: any) => {
+        const tA = tierOrder[(a as any).listing_tier || 'free'] ?? 2;
+        const tB = tierOrder[(b as any).listing_tier || 'free'] ?? 2;
+        if (tA !== tB) return tA - tB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
       setProducts(enriched);
     } catch (err: any) {
       console.error(err);
@@ -342,6 +350,12 @@ export default function MarketplaceHome() {
                       {product.listing_type === 'accepts_offers' && (
                         <span className="absolute top-2 right-2 bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
                           <MessageSquare className="h-2.5 w-2.5" /> Ofertas
+                        </span>
+                      )}
+                      {/* Premium tier badge */}
+                      {(product as any).listing_tier === 'premium' && (
+                        <span className="absolute bottom-2 left-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                          ✨ Premium
                         </span>
                       )}
                     </div>

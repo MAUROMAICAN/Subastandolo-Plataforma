@@ -15,6 +15,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useDealerFollows } from "@/hooks/useDealerFollows";
 import { useBCVRate } from "@/hooks/useBCVRate";
+import ReportUserButton from "@/components/ReportUserButton";
 
 export default function DealerProfile() {
     const { id } = useParams<{ id: string }>();
@@ -179,6 +180,12 @@ export default function DealerProfile() {
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 justify-center sm:justify-start">
                                     <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight text-foreground">{displayName}</h1>
                                     {isDealer && <VerifiedBadge size="lg" salesCount={dealer.salesCount} />}
+                                    {/* Vendedor Líder badge */}
+                                    {isDealer && dealer.salesCount >= 20 && dealerStats && dealerStats.avgRating >= 4.5 && (
+                                        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">
+                                            🏆 Vendedor Líder
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Follow button — only for logged-in users who are not the dealer themselves */}
@@ -198,6 +205,11 @@ export default function DealerProfile() {
                                         )}
                                         {isFollowing ? "Siguiendo" : "Seguir dealer"}
                                     </button>
+                                )}
+
+                                {/* Report user button */}
+                                {user && user.id !== id && (
+                                    <ReportUserButton userId={id!} userName={displayName} />
                                 )}
 
                                 {dealerInfo?.business_name && dealerInfo.business_name !== profile.full_name && (

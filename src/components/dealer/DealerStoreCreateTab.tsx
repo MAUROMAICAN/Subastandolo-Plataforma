@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { compressImage } from "@/utils/compressImage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,20 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
     // Listing type
     const [listingType, setListingType] = useState<'fixed_price' | 'auction' | 'accepts_offers'>('fixed_price');
     const [auctionDuration, setAuctionDuration] = useState("24");
+
+    // Listing tier
+    const [listingTier, setListingTier] = useState<'free' | 'standard' | 'premium'>('free');
+    const [freeCount, setFreeCount] = useState(0);
+
+    // Fetch free listing count on mount
+    useEffect(() => {
+        supabase.from("marketplace_products")
+            .select("id", { count: "exact", head: true })
+            .eq("seller_id", dealerId)
+            .eq("status", "active")
+            .eq("listing_tier" as any, "free")
+            .then(({ count }) => setFreeCount(count || 0));
+    }, [dealerId]);
 
     // Category + dynamic attributes
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -102,6 +116,12 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
             return;
         }
 
+        // Validate free listing limit
+        if (listingTier === 'free' && freeCount >= 5) {
+            toast({ title: "Límite alcanzado", description: "Solo puedes tener 5 publicaciones gratuitas activas. Elige Estándar o Premium.", variant: "destructive" });
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -118,6 +138,7 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                 status: "active",
                 listing_type: listingType,
                 return_policy: returnPolicy,
+                listing_tier: listingTier,
             };
 
             if (listingType === 'auction') {
@@ -232,6 +253,45 @@ export default function DealerStoreCreateTab({ dealerId, setActiveTab, onCreated
                                 </button>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* LISTING TIER SELECTOR */}
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-secondary/20">
+                        <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xs font-black shrink-0">⭐</span>
+                        <span className="text-sm font-heading font-bold">Nivel de Publicación</span>
+                    </div>
+                    <div className="p-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {([
+                                { value: 'free' as const, label: 'Gratuita', commission: '0%', desc: 'Sin comisión. Máx 5 activas.', badge: null, color: 'border-border', limit: `${freeCount}/5 usadas` },
+                                { value: 'standard' as const, label: 'Estándar', commission: '8%', desc: 'Mayor exposición. Sin límite.', badge: null, color: 'border-sky-500' },
+                                { value: 'premium' as const, label: 'Premium', commission: '12%', desc: 'Máxima exposición + destacado.', badge: '✨', color: 'border-amber-500' },
+                            ]).map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setListingTier(opt.value)}
+                                    disabled={opt.value === 'free' && freeCount >= 5}
+                                    className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 text-center transition-all hover:-translate-y-0.5 ${listingTier === opt.value
+                                        ? `${opt.color} bg-primary/5 shadow-md`
+                                        : 'border-border/50 hover:border-foreground/20 hover:bg-secondary/30'
+                                    } ${opt.value === 'free' && freeCount >= 5 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                >
+                                    {opt.badge && <span className="absolute -top-2 -right-2 text-lg">{opt.badge}</span>}
+                                    <span className="text-2xl font-black text-foreground">{opt.commission}</span>
+                                    <span className="text-sm font-bold text-foreground">{opt.label}</span>
+                                    <span className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</span>
+                                    {opt.value === 'free' && (
+                                        <span className={`text-[9px] font-bold mt-1 ${freeCount >= 5 ? 'text-destructive' : 'text-muted-foreground'}`}>{opt.limit}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        {listingTier === 'premium' && (
+                            <p className="text-[10px] text-amber-500 font-medium mt-3 text-center">⭐ Tu producto aparecerá destacado con badge Premium en los listados.</p>
+                        )}
                     </div>
                 </div>
 

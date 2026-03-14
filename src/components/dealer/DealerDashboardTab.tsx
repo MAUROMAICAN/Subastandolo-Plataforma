@@ -473,6 +473,76 @@ export default function DealerDashboardTab({ auctions, setActiveTab, setStatusFi
         buyerStats={buyerStats}
       />
 
+      {/* Seller Performance Metrics */}
+      {metrics.finalized > 0 && (
+        <Card className="border border-border rounded-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-heading">
+              <BarChart3 className="h-4 w-4 text-primary dark:text-[#A6E300]" />
+              Rendimiento del Vendedor
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pb-5">
+            <p className="text-xs text-muted-foreground mb-4">Estas métricas reflejan tu desempeño y afectan tu reputación en la plataforma.</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {(() => {
+                const shipped = auctions.filter(a => a.delivery_status === "shipped" || a.delivery_status === "delivered").length;
+                const shippableCount = auctions.filter(a => a.status === "finalized" && a.winner_id).length;
+                const shippingRate = shippableCount > 0 ? Math.round((shipped / shippableCount) * 100) : 100;
+
+                const cancelled = auctions.filter(a => a.payment_status === "abandoned" || a.payment_status === "refunded").length;
+                const cancelRate = metrics.finalized > 0 ? Math.round((cancelled / metrics.finalized) * 100) : 0;
+
+                const rating = dealerStats?.avgRating || 0;
+                const positiveRate = dealerStats?.positivePercentage || 100;
+
+                return [
+                  {
+                    label: "Envíos a Tiempo",
+                    value: `${shippingRate}%`,
+                    color: shippingRate >= 90 ? "text-emerald-500" : shippingRate >= 70 ? "text-amber-500" : "text-destructive",
+                    bg: shippingRate >= 90 ? "bg-emerald-500/10 border-emerald-500/20" : shippingRate >= 70 ? "bg-amber-500/10 border-amber-500/20" : "bg-destructive/10 border-destructive/20",
+                    icon: "🚚",
+                    sub: `${shipped}/${shippableCount} enviados`,
+                  },
+                  {
+                    label: "Cancelaciones",
+                    value: `${cancelRate}%`,
+                    color: cancelRate <= 5 ? "text-emerald-500" : cancelRate <= 15 ? "text-amber-500" : "text-destructive",
+                    bg: cancelRate <= 5 ? "bg-emerald-500/10 border-emerald-500/20" : cancelRate <= 15 ? "bg-amber-500/10 border-amber-500/20" : "bg-destructive/10 border-destructive/20",
+                    icon: "📉",
+                    sub: `${cancelled} canceladas`,
+                  },
+                  {
+                    label: "Rating Promedio",
+                    value: rating > 0 ? rating.toFixed(1) : "—",
+                    color: rating >= 4.5 ? "text-emerald-500" : rating >= 3.5 ? "text-amber-500" : "text-destructive",
+                    bg: rating >= 4.5 ? "bg-emerald-500/10 border-emerald-500/20" : rating >= 3.5 ? "bg-amber-500/10 border-amber-500/20" : "bg-destructive/10 border-destructive/20",
+                    icon: "⭐",
+                    sub: `${positiveRate}% positivas`,
+                  },
+                  {
+                    label: "Tasa Conversión",
+                    value: `${metrics.conversionRate}%`,
+                    color: metrics.conversionRate >= 70 ? "text-emerald-500" : metrics.conversionRate >= 40 ? "text-amber-500" : "text-destructive",
+                    bg: metrics.conversionRate >= 70 ? "bg-emerald-500/10 border-emerald-500/20" : metrics.conversionRate >= 40 ? "bg-amber-500/10 border-amber-500/20" : "bg-destructive/10 border-destructive/20",
+                    icon: "📊",
+                    sub: "pujas → ventas",
+                  },
+                ].map((m, i) => (
+                  <div key={i} className={`rounded-xl p-4 text-center border ${m.bg}`}>
+                    <div className="text-xl mb-1">{m.icon}</div>
+                    <p className={`text-2xl font-heading font-bold ${m.color}`}>{m.value}</p>
+                    <p className="text-[11px] font-bold text-foreground mt-1">{m.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{m.sub}</p>
+                  </div>
+                ));
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Commission info */}
       <Card className="border border-border rounded-xl">
         <CardHeader className="pb-3">
