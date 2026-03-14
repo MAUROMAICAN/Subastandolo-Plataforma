@@ -33,8 +33,8 @@ export default function DealerStorePage() {
             // Fetch products
             const { data: prods } = await (supabase
                 .from("marketplace_products")
-                .select("id, title, price_usd, condition, stock, category_id, images:marketplace_product_images(image_url, display_order), category:marketplace_categories(id, name)")
-                .eq("dealer_id", id)
+                .select("id, title, price, price_usd, condition, stock, category_id, listing_type, images:marketplace_product_images(image_url, display_order), category:marketplace_categories(id, name)")
+                .or(`seller_id.eq.${id},dealer_id.eq.${id}`)
                 .eq("status", "active")
                 .gt("stock", 0)
                 .order("created_at", { ascending: false }) as any);
@@ -237,17 +237,17 @@ export default function DealerStorePage() {
                                     </div>
                                     <div className="p-3">
                                         <p className="text-xs sm:text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary dark:group-hover:text-[#A6E300] transition-colors">{p.title}</p>
-                                        <p className="text-base sm:text-lg font-black text-foreground">${Number(p.price_usd).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                                        <p className="text-base sm:text-lg font-black text-foreground">${Number(p.price || p.price_usd || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
                                         {bcvRate && bcvRate > 0 && (
-                                            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Bs. {(Number(p.price_usd) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Bs. {(Number(p.price || p.price_usd || 0) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                         )}
                                         {p.condition && (
                                             <span className={`mt-1.5 inline-flex text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
-                                                p.condition === 'new' ? 'bg-green-500/10 text-green-600 border-green-400/30' :
-                                                p.condition === 'used' ? 'bg-blue-500/10 text-blue-600 border-blue-400/30' :
+                                                ['new', 'nuevo'].includes(p.condition) ? 'bg-green-500/10 text-green-600 border-green-400/30' :
+                                                ['used', 'usado_buen_estado'].includes(p.condition) ? 'bg-blue-500/10 text-blue-600 border-blue-400/30' :
                                                 'bg-orange-500/10 text-orange-600 border-orange-400/30'
                                             }`}>
-                                                {p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : 'Reacondicionado'}
+                                                {p.condition === 'new' || p.condition === 'nuevo' ? 'Nuevo' : p.condition === 'used' || p.condition === 'usado_buen_estado' ? 'Usado' : p.condition === 'usado_regular' ? 'Regular' : p.condition === 'para_reparar' ? 'Para reparar' : 'Usado'}
                                             </span>
                                         )}
                                     </div>
