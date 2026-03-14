@@ -36,6 +36,7 @@ import ProfileCompletionBar from "@/components/ProfileCompletionBar";
 import { useToast } from "@/hooks/use-toast";
 import ProfileView from "@/components/buyer/ProfileView";
 import PaymentFlow from "@/components/PaymentFlow";
+import MarketplaceDisputeForm from "@/components/marketplace/MarketplaceDisputeForm";
 import type { Tables } from "@/integrations/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -45,7 +46,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   refunded: { label: "Reembolsada", color: "bg-destructive/10 text-destructive dark:text-white border-destructive/20 dark:border-white/20", icon: Shield },
 };
 
-type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses" | "support";
+type PanelView = "overview" | "disputes" | "dispute-detail" | "new-dispute" | "security" | "profile" | "dealers" | "favoritos" | "purchases" | "addresses" | "support" | "marketplace-dispute";
 
 export interface StoreOrder extends Tables<"marketplace_orders"> {
   dealer: { name: string } | null;
@@ -81,6 +82,9 @@ const BuyerPanel = () => {
   // Batch payment state
   const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
   const [showBatchPayment, setShowBatchPayment] = useState(false);
+
+  // Marketplace dispute state
+  const [disputeOrder, setDisputeOrder] = useState<StoreOrder | null>(null);
 
   // Track which auctions were paid via multipago (batch_id non-null)
   const [batchPaidAuctionIds, setBatchPaidAuctionIds] = useState<Set<string>>(new Set());
@@ -923,6 +927,17 @@ const BuyerPanel = () => {
                           Ver →
                         </button>
                       </div>
+                      {/* Dispute button for shipped/delivered orders */}
+                      {(order.shipping_status === "shipped" || order.shipping_status === "delivered" || order.payment_status === "verified") && (
+                        <div className="px-4 pb-3 pt-0 border-t border-border">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDisputeOrder(order); setView("marketplace-dispute"); }}
+                            className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 hover:underline transition-colors"
+                          >
+                            <Shield className="h-3 w-3" /> ¿Problema con este pedido? Abrir disputa
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -930,6 +945,26 @@ const BuyerPanel = () => {
             )
           )}
         </main>
+      </div>
+    );
+  }
+
+  // Marketplace dispute form view
+  if (view === "marketplace-dispute" && disputeOrder) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-4 max-w-2xl pb-24">
+          <MarketplaceDisputeForm
+            orderId={disputeOrder.id}
+            productId={disputeOrder.product_id}
+            sellerId={disputeOrder.dealer_id}
+            productTitle={disputeOrder.product?.title || "Producto"}
+            onBack={() => { setView("purchases"); setDisputeOrder(null); }}
+            onCreated={() => { setView("purchases"); setDisputeOrder(null); }}
+          />
+        </main>
+        <BottomNav />
       </div>
     );
   }

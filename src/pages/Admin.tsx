@@ -30,6 +30,7 @@ import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminNotificationsTab from "@/components/admin/AdminNotificationsTab";
 import AdminEmailsTab from "@/components/admin/AdminEmailsTab";
 import AdminMassEmailTab from "@/components/admin/AdminMassEmailTab";
+import AdminMarketplaceDisputesTab from "@/components/admin/AdminMarketplaceDisputesTab";
 import type { AdminTab, AuctionExtended, WinnerInfo, BannerImage, DealerUser, Message, SiteSetting, SiteSection } from "@/components/admin/types";
 
 const Admin = () => {
@@ -355,6 +356,7 @@ const Admin = () => {
       label: "Sistema",
       items: [
         { key: "disputes", label: "Disputas", icon: ShieldAlert, badge: newDisputes || undefined, urgent: newDisputes > 0 },
+        { key: "marketplace_disputes", label: "Disputas Tienda", icon: Shield },
         { key: "reports", label: "Reportes", icon: Flag, badge: newReports || undefined, urgent: newReports > 0 },
         { key: "cms", label: "Config. Central", icon: Settings },
       ],
@@ -493,6 +495,7 @@ const Admin = () => {
             {activeTab === "dealer_sales" && <AdminDealerSalesTab globalSearch={globalSearch} />}
             {activeTab === "dealers" && <AdminDealersTab dealerApps={dealerApps} fetchAllData={fetchAllData} />}
             {activeTab === "disputes" && <AdminDisputesTab adminDisputes={adminDisputes} fetchAllData={fetchAllData} />}
+            {activeTab === "marketplace_disputes" && <AdminMarketplaceDisputesTab />}
             {activeTab === "reports" && <AdminReportsTab auctionReports={auctionReports} fetchAllData={fetchAllData} />}
             {activeTab === "campaigns" && <AdminCampaignsTab />}
             {activeTab === "notifications" && <AdminNotificationsTab />}
