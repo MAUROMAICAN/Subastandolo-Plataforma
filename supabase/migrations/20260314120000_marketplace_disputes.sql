@@ -83,7 +83,7 @@ CREATE POLICY "disputes_seller_read" ON marketplace_disputes
 DROP POLICY IF EXISTS "disputes_admin_read" ON marketplace_disputes;
 CREATE POLICY "disputes_admin_read" ON marketplace_disputes
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
   );
 
 -- Buyers can create disputes
@@ -100,7 +100,7 @@ CREATE POLICY "disputes_seller_update" ON marketplace_disputes
 DROP POLICY IF EXISTS "disputes_admin_update" ON marketplace_disputes;
 CREATE POLICY "disputes_admin_update" ON marketplace_disputes
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
   );
 
 -- 4. Auto-update updated_at trigger

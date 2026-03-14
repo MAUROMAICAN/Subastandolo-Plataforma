@@ -12,7 +12,7 @@ import VerifiedBadge, { getDealerTier, DEALER_TIERS } from "@/components/Verifie
 import ProfileAvatarUpload from "@/components/ProfileAvatarUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, ShieldAlert, Store, Headphones, UserCircle, Star, Globe, ChevronLeft, Menu, MessageSquare } from "lucide-react";
+import { Loader2, Plus, BarChart3, Package, Truck, Banknote, Wallet, Trophy, Ban, ShieldAlert, Store, Headphones, UserCircle, Star, Globe, ChevronLeft, Menu, MessageSquare, ShieldCheck } from "lucide-react";
 
 import type { AuctionWithImages, WinnerProfile } from "@/components/dealer/types";
 import DealerDashboardTab from "@/components/dealer/DealerDashboardTab";
@@ -31,6 +31,7 @@ import DealerReviewsTab from "@/components/dealer/DealerReviewsTab";
 import DealerQuestionsTab from "@/components/dealer/DealerQuestionsTab";
 import DealerProfileTab from "@/components/dealer/DealerProfileTab";
 import DealerOffersTab from "@/components/dealer/DealerOffersTab";
+import DealerStoreDisputesTab from "@/components/dealer/DealerStoreDisputesTab";
 
 const DealerDashboard = () => {
   const { user, isDealer, isAdmin, loading: authLoading } = useAuth();
@@ -270,6 +271,7 @@ const DealerDashboard = () => {
         { key: "wallet", label: "Mi Billetera", icon: Wallet },
         { key: "questions", label: "Preguntas", icon: MessageSquare },
         ...(isAdmin ? [{ key: "offers", label: "Ofertas", icon: MessageSquare }] : []),
+        ...(isAdmin ? [{ key: "store-disputes", label: "Disputas", icon: ShieldCheck }] : []),
       ],
     },
     {
@@ -567,6 +569,9 @@ const DealerDashboard = () => {
             )}
             {activeTab === "store-orders" && user?.id && (
               <DealerStoreOrdersTab dealerId={user.id} />
+            )}
+            {activeTab === "store-disputes" && user?.id && (
+              <DealerStoreDisputesTab dealerId={user.id} />
             )}
             {activeTab === "create" && (
               <DealerCreateTab
