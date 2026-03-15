@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import LiveKitBroadcaster from "./LiveKitBroadcaster";
+import LiveProductControls from "./LiveProductControls";
 import {
     Radio, X, Camera, CameraOff, ChevronRight, ChevronLeft,
     ExternalLink, RefreshCw, Loader2, Mic, MicOff, Square, Users,
@@ -440,6 +441,11 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                                         </span>
                                     </div>
                                 </div>
+                            )}
+
+                            {/* Product controls during live */}
+                            {eventId && (
+                                <LiveProductControls eventId={eventId} />
                             )}
 
                             {/* View live room */}

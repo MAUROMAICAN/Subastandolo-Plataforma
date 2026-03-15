@@ -35,6 +35,7 @@ interface LiveProduct {
     winner_id: string | null;
     countdown_seconds: number;
     started_at: string | null;
+    ends_at: string | null;
     sort_order: number;
 }
 

@@ -209,12 +209,16 @@ export default function DealerLivePanel({ dealer }: Props) {
                 .eq("id", currentActive.id);
         }
 
+        const now = new Date();
+        const endsAt = new Date(now.getTime() + (product.countdown_seconds || 60) * 1000);
+
         await supabase
             .from("live_event_products")
             .update({
                 status: "active",
                 current_price: product.starting_price,
-                started_at: new Date().toISOString()
+                started_at: now.toISOString(),
+                ends_at: endsAt.toISOString(),
             })
             .eq("id", product.id);
 

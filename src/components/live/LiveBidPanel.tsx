@@ -16,6 +16,7 @@ interface LiveProduct {
     winner_id: string | null;
     countdown_seconds: number;
     started_at: string | null;
+    ends_at: string | null;
 }
 
 interface LiveBid {
@@ -29,6 +30,9 @@ interface LiveBidPanelProps {
     eventId: string;
     activeProduct: LiveProduct | null;
 }
+
+const ANTI_SNIPE_THRESHOLD = 15; // seconds
+const ANTI_SNIPE_EXTENSION = 10; // seconds to add
 
 export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelProps) {
     const { user } = useAuth();
@@ -71,29 +75,41 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
         return () => { supabase.removeChannel(channel); };
     }, [activeProduct?.id]);
 
-    // Countdown timer
+    // Countdown timer using ends_at
     useEffect(() => {
-        if (!activeProduct || activeProduct.status !== "active" || !activeProduct.started_at) {
+        if (!activeProduct || activeProduct.status !== "active") {
             setCountdown(0);
             return;
         }
 
+        // Use ends_at if available, fallback to started_at + countdown_seconds
+        const getEndsAt = () => {
+            if (activeProduct.ends_at) {
+                return new Date(activeProduct.ends_at).getTime();
+            }
+            if (activeProduct.started_at) {
+                return new Date(activeProduct.started_at).getTime() + activeProduct.countdown_seconds * 1000;
+            }
+            return Date.now();
+        };
+
+        const endsAt = getEndsAt();
+
         const tick = () => {
-            const started = new Date(activeProduct.started_at!).getTime();
-            const duration = activeProduct.countdown_seconds * 1000;
-            const remaining = Math.max(0, Math.ceil((started + duration - Date.now()) / 1000));
+            const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
             setCountdown(remaining);
         };
         tick();
         const interval = setInterval(tick, 250);
         return () => clearInterval(interval);
-    }, [activeProduct?.started_at, activeProduct?.status, activeProduct?.countdown_seconds]);
+    }, [activeProduct?.ends_at, activeProduct?.started_at, activeProduct?.status, activeProduct?.countdown_seconds]);
 
     const placeBid = useCallback(async () => {
-        if (!user || !activeProduct || bidding) return;
+        if (!user || !activeProduct || bidding || countdown === 0) return;
         setBidding(true);
 
         try {
+            // 1. Place the bid
             const { error } = await supabase.from("live_bids").insert({
                 product_id: activeProduct.id,
                 event_id: eventId,
@@ -103,10 +119,20 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
 
             if (error) throw error;
 
-            // Update current price on the product
+            // 2. Update current price on the product
+            const updates: any = { current_price: nextBidAmount };
+
+            // 3. Anti-sniping: extend timer if remaining < threshold
+            if (countdown <= ANTI_SNIPE_THRESHOLD && activeProduct.ends_at) {
+                const currentEndsAt = new Date(activeProduct.ends_at).getTime();
+                const newEndsAt = new Date(currentEndsAt + ANTI_SNIPE_EXTENSION * 1000).toISOString();
+                updates.ends_at = newEndsAt;
+                console.log(`[LiveBidPanel] ⚡ Anti-snipe: extended timer by ${ANTI_SNIPE_EXTENSION}s`);
+            }
+
             await supabase
                 .from("live_event_products")
-                .update({ current_price: nextBidAmount })
+                .update(updates)
                 .eq("id", activeProduct.id);
 
         } catch (err: unknown) {
@@ -114,7 +140,7 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
         } finally {
             setBidding(false);
         }
-    }, [user, activeProduct, bidding, nextBidAmount, eventId, toast]);
+    }, [user, activeProduct, bidding, nextBidAmount, eventId, toast, countdown]);
 
     // No active product state
     if (!activeProduct) {
@@ -131,8 +157,10 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
     const isSold = activeProduct.status === "sold";
     const isEnded = countdown === 0 && activeProduct.status === "active";
     const isWinner = activeProduct.winner_id === user?.id;
-    const countdownColor = countdown <= 5 ? "text-red-500" : countdown <= 15 ? "text-amber-500" : "text-accent";
-    const countdownBarPercent = activeProduct.countdown_seconds > 0 ? (countdown / activeProduct.countdown_seconds) * 100 : 0;
+    const countdownColor = countdown <= 5 ? "text-red-500" : countdown <= ANTI_SNIPE_THRESHOLD ? "text-amber-500" : "text-accent";
+    const countdownBarMax = activeProduct.countdown_seconds || 60;
+    const countdownBarPercent = Math.min(100, (countdown / countdownBarMax) * 100);
+    const isAntiSnipeZone = countdown > 0 && countdown <= ANTI_SNIPE_THRESHOLD;
 
     return (
         <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full">
@@ -170,12 +198,19 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
                                 {countdown}s
                             </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">Tiempo restante</span>
+                        <div className="flex items-center gap-2">
+                            {isAntiSnipeZone && (
+                                <span className="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded-full">
+                                    ⚡ +10s por puja
+                                </span>
+                            )}
+                            <span className="text-xs text-muted-foreground">Tiempo restante</span>
+                        </div>
                     </div>
                     <div className="w-full h-2 bg-secondary/50 rounded-full overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-250 ${
-                                countdown <= 5 ? "bg-red-500" : countdown <= 15 ? "bg-amber-500" : "bg-accent"
+                                countdown <= 5 ? "bg-red-500" : countdown <= ANTI_SNIPE_THRESHOLD ? "bg-amber-500" : "bg-accent"
                             }`}
                             style={{ width: `${countdownBarPercent}%` }}
                         />
@@ -204,7 +239,7 @@ export default function LiveBidPanel({ eventId, activeProduct }: LiveBidPanelPro
                     <div className={`text-center py-4 rounded-xl ${isWinner ? "bg-accent/10" : "bg-secondary/20"}`}>
                         <Trophy className={`h-8 w-8 mx-auto mb-2 ${isWinner ? "text-accent" : "text-muted-foreground"}`} />
                         <p className={`font-bold text-sm ${isWinner ? "text-accent" : "text-foreground"}`}>
-                            {isWinner ? "¡Ganaste este producto!" : "Producto vendido"}
+                            {isWinner ? "¡Ganaste este producto!" : isSold ? "Producto vendido" : "Subasta finalizada"}
                         </p>
                     </div>
                 ) : user ? (
