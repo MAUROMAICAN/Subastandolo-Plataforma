@@ -121,10 +121,10 @@ export default function LiveRoom() {
                 setEvent(ev as LiveEvent);
                 const { data: profile } = await (supabase
                     .from("profiles")
-                    .select("full_name, avatar_url, dealer_level")
+                    .select("full_name, avatar_url")
                     .eq("id", ev.dealer_id)
                     .single() as any);
-                if (profile) setDealer({ display_name: profile.full_name || 'Dealer', avatar_url: profile.avatar_url, dealer_level: profile.dealer_level } as DealerProfile);
+                if (profile) setDealer({ display_name: profile.full_name || 'Dealer', avatar_url: profile.avatar_url, dealer_level: null } as DealerProfile);
             }
 
             const { data: prods } = await (supabase
