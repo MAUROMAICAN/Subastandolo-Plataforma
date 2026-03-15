@@ -79,7 +79,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     }, [cameraStream]);
 
     useEffect(() => {
-        if (step === 2 || step === 3) startCamera();
+        if (step === 2) startCamera();
     }, [step, facingMode]);
 
     // Cleanup camera on unmount
