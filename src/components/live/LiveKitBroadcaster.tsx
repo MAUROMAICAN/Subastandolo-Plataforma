@@ -7,7 +7,7 @@ import {
     useLocalParticipant,
     useRoomContext,
 } from "@livekit/components-react";
-import { Track, RoomEvent } from "livekit-client";
+import { Track, RoomEvent, ConnectionState } from "livekit-client";
 import { RefreshCw, Mic, MicOff, Camera, CameraOff, Users, Loader2 } from "lucide-react";
 
 interface LiveKitBroadcasterProps {
@@ -35,6 +35,18 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
         return () => {
             room.off(RoomEvent.ParticipantConnected, update);
             room.off(RoomEvent.ParticipantDisconnected, update);
+        };
+    }, [room]);
+
+    // Log connection state changes
+    useEffect(() => {
+        const onStateChange = (state: ConnectionState) => {
+            console.log("[BroadcasterView] Connection state:", state);
+        };
+        room.on(RoomEvent.ConnectionStateChanged, onStateChange);
+        console.log("[BroadcasterView] Initial room state:", room.state, "url:", room.serverUrl);
+        return () => {
+            room.off(RoomEvent.ConnectionStateChanged, onStateChange);
         };
     }, [room]);
 
@@ -193,6 +205,7 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
 }
 
 export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: LiveKitBroadcasterProps) {
+    console.log("[LiveKitBroadcaster] Rendering with serverUrl:", serverUrl, "token length:", token?.length);
     return (
         <LiveKitRoom
             token={token}
