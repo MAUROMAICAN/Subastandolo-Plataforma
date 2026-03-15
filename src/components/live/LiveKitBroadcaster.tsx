@@ -138,7 +138,12 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
             connect={true}
             video={true}
             audio={true}
-            onDisconnected={onDisconnect}
+            onConnected={() => console.log("[LiveKitBroadcaster] ✅ Room connected!")}
+            onDisconnected={() => {
+                console.log("[LiveKitBroadcaster] ⚠️ Room disconnected");
+                onDisconnect?.();
+            }}
+            onError={(err) => console.error("[LiveKitBroadcaster] ❌ Error:", err)}
             options={{
                 videoCaptureDefaults: {
                     facingMode: "user",

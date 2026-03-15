@@ -50,6 +50,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
     const [livekitToken, setLivekitToken] = useState<string | null>(null);
     const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
     const [livekitStatus, setLivekitStatus] = useState<"connecting" | "connected" | "error" | "idle">("idle");
+    const [cameraReady, setCameraReady] = useState(false);
     const [ending, setEnding] = useState(false);
 
     // Start camera
@@ -152,7 +153,7 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 console.warn("[LiveKit] Token error:", tokenError || tokenData?.error);
                 setLivekitStatus("error");
             } else {
-                // Stop the preview camera — LiveKitBroadcaster will open its own
+                // Stop the preview camera — wait for it to fully release before LiveKitBroadcaster opens its own
                 if (cameraStream) {
                     cameraStream.getTracks().forEach((t) => t.stop());
                     setCameraStream(null);
@@ -161,7 +162,13 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 setLivekitToken(tokenData.token);
                 setLivekitUrl(tokenData.url);
                 setLivekitStatus("connected");
-                console.log("[LiveKit] ✅ Token received, LiveKitBroadcaster will handle connection");
+                console.log("[LiveKit] ✅ Token received, waiting for camera release...");
+
+                // Give the browser time to fully release the camera hardware
+                setTimeout(() => {
+                    setCameraReady(true);
+                    console.log("[LiveKit] ✅ Camera released, LiveKitBroadcaster ready");
+                }, 800);
             }
 
             setStep(3);
@@ -388,12 +395,16 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                     {step === 3 && (
                         <div className="space-y-4 animate-fade-in">
                             {/* LiveKit Broadcaster — handles camera, mic, and connection */}
-                            {livekitToken && livekitUrl ? (
+                            {livekitToken && livekitUrl && cameraReady ? (
                                 <div className="relative">
                                     <LiveKitBroadcaster
                                         token={livekitToken}
                                         serverUrl={livekitUrl}
-                                        onDisconnect={endLive}
+                                        onDisconnect={() => {
+                                            console.log("[LiveKit] Room disconnected — showing reconnect state");
+                                            setLivekitStatus("error");
+                                            setCameraReady(false);
+                                        }}
                                     />
                                     {/* LiveKit status overlay */}
                                     <div className="absolute top-2 right-12">
