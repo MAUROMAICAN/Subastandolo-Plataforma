@@ -135,8 +135,18 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
             // 2. Try to connect LiveKit in background (fire-and-forget for now)
             setLivekitStatus("connecting");
             try {
+                console.log("[GoLive] Requesting LiveKit token for event:", newEvent.id);
                 const { data: tokenData, error: tokenError } = await supabase.functions.invoke("livekit-token", {
                     body: { event_id: newEvent.id, role: "publisher" },
+                });
+
+                console.log("[GoLive] Token response:", {
+                    hasToken: !!tokenData?.token,
+                    tokenLength: tokenData?.token?.length,
+                    url: tokenData?.url,
+                    room: tokenData?.room,
+                    role: tokenData?.role,
+                    error: tokenError || tokenData?.error,
                 });
 
                 if (tokenError || tokenData?.error || !tokenData?.token) {
@@ -145,40 +155,52 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                 } else {
                     // Connect LiveKit with the camera stream
                     try {
+                        console.log("[GoLive] Importing livekit-client...");
                         const { Room, RoomEvent } = await import("livekit-client");
+                        console.log("[GoLive] livekit-client loaded, creating Room...");
                         const room = new Room();
+                        
+                        console.log("[GoLive] Connecting to:", tokenData.url);
                         await room.connect(tokenData.url, tokenData.token);
+                        console.log("[GoLive] ✅ Room connected! State:", room.state);
 
                         // Publish cloned camera stream tracks to LiveKit
                         if (cameraStream) {
                             const videoTrack = cameraStream.getVideoTracks()[0];
                             const audioTrack = cameraStream.getAudioTracks()[0];
+                            console.log("[GoLive] Camera tracks:", { hasVideo: !!videoTrack, hasAudio: !!audioTrack });
 
                             // Clone tracks so both preview and LiveKit can use them
                             if (videoTrack) {
+                                console.log("[GoLive] Publishing video track...");
                                 await room.localParticipant.publishTrack(videoTrack.clone(), {
                                     source: "camera" as any,
                                 });
+                                console.log("[GoLive] ✅ Video track published");
                             }
                             if (audioTrack) {
+                                console.log("[GoLive] Publishing audio track...");
                                 await room.localParticipant.publishTrack(audioTrack.clone(), {
                                     source: "microphone" as any,
                                 });
+                                console.log("[GoLive] ✅ Audio track published");
                             }
+                        } else {
+                            console.warn("[GoLive] ⚠️ No cameraStream available!");
                         }
 
                         setLivekitStatus("connected");
-                        console.log("[LiveKit] Connected and publishing!");
+                        console.log("[LiveKit] ✅ Connected and publishing!");
 
                         // Store room reference for cleanup
                         (window as any).__livekitRoom = room;
                     } catch (connErr) {
-                        console.warn("[LiveKit] Connection error:", connErr);
+                        console.error("[LiveKit] ❌ Connection error:", connErr);
                         setLivekitStatus("error");
                     }
                 }
             } catch (e) {
-                console.warn("[LiveKit] Background error:", e);
+                console.error("[LiveKit] ❌ Background error:", e);
                 setLivekitStatus("error");
             }
         } catch (err: any) {
