@@ -1,5 +1,5 @@
 // @ts-nocheck — LiveKit types
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
     LiveKitRoom,
     VideoTrack,
@@ -23,6 +23,8 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
     const [isCamOff, setIsCamOff] = useState(false);
     const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
     const [participantCount, setParticipantCount] = useState(0);
+    const [cameraStarting, setCameraStarting] = useState(true);
+    const cameraAttempted = useRef(false);
 
     // Track participant count
     useEffect(() => {
@@ -35,6 +37,47 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
             room.off(RoomEvent.ParticipantDisconnected, update);
         };
     }, [room]);
+
+    // Explicitly enable camera + mic after room connects
+    // This is more reliable on mobile than relying on LiveKitRoom's video={true}
+    useEffect(() => {
+        if (cameraAttempted.current) return;
+        cameraAttempted.current = true;
+
+        const enableMedia = async () => {
+            try {
+                console.log("[BroadcasterView] Enabling camera...");
+                await localParticipant.setCameraEnabled(true, {
+                    facingMode: "user",
+                    resolution: { width: 640, height: 480 },
+                });
+                console.log("[BroadcasterView] ✅ Camera enabled!");
+            } catch (err) {
+                console.error("[BroadcasterView] ❌ Camera error:", err);
+                // Retry once with lower constraints
+                try {
+                    console.log("[BroadcasterView] Retrying camera with minimal constraints...");
+                    await localParticipant.setCameraEnabled(true);
+                    console.log("[BroadcasterView] ✅ Camera enabled (retry)!");
+                } catch (err2) {
+                    console.error("[BroadcasterView] ❌ Camera failed completely:", err2);
+                }
+            }
+
+            try {
+                console.log("[BroadcasterView] Enabling microphone...");
+                await localParticipant.setMicrophoneEnabled(true);
+                console.log("[BroadcasterView] ✅ Microphone enabled!");
+            } catch (err) {
+                console.error("[BroadcasterView] ❌ Microphone error:", err);
+            }
+
+            setCameraStarting(false);
+        };
+
+        // Small delay to ensure room is fully ready
+        setTimeout(enableMedia, 500);
+    }, [localParticipant]);
 
     // Get local video track
     const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
@@ -55,11 +98,10 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
     const switchCamera = useCallback(async () => {
         const newMode = facingMode === "user" ? "environment" : "user";
         setFacingMode(newMode);
-        // Restart camera with new facing mode
         await localParticipant.setCameraEnabled(false);
         await localParticipant.setCameraEnabled(true, {
             facingMode: newMode,
-            resolution: { width: 1280, height: 720 },
+            resolution: { width: 640, height: 480 },
         });
     }, [localParticipant, facingMode]);
 
@@ -77,8 +119,31 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
                     }}
                 />
             ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                    <CameraOff className="h-12 w-12 text-white/30" />
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                    {cameraStarting ? (
+                        <>
+                            <Loader2 className="h-10 w-10 text-accent animate-spin" />
+                            <p className="text-white/50 text-xs">Activando cámara...</p>
+                        </>
+                    ) : (
+                        <>
+                            <CameraOff className="h-12 w-12 text-white/30" />
+                            <button
+                                onClick={async () => {
+                                    setCameraStarting(true);
+                                    try {
+                                        await localParticipant.setCameraEnabled(true);
+                                    } catch (e) {
+                                        console.error("[BroadcasterView] Manual retry failed:", e);
+                                    }
+                                    setCameraStarting(false);
+                                }}
+                                className="text-accent text-xs font-bold underline"
+                            >
+                                Reintentar cámara
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -97,7 +162,6 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
             {/* Controls bar */}
             <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
                 <div className="flex items-center justify-center gap-4">
-                    {/* Toggle mic */}
                     <button
                         onClick={toggleMic}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
@@ -107,7 +171,6 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
                         {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </button>
 
-                    {/* Switch camera */}
                     <button
                         onClick={switchCamera}
                         className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors"
@@ -115,7 +178,6 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
                         <RefreshCw className="h-5 w-5" />
                     </button>
 
-                    {/* Toggle camera */}
                     <button
                         onClick={toggleCam}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
@@ -136,23 +198,14 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
             token={token}
             serverUrl={serverUrl}
             connect={true}
-            video={true}
-            audio={true}
+            video={false}
+            audio={false}
             onConnected={() => console.log("[LiveKitBroadcaster] ✅ Room connected!")}
             onDisconnected={() => {
                 console.log("[LiveKitBroadcaster] ⚠️ Room disconnected");
                 onDisconnect?.();
             }}
             onError={(err) => console.error("[LiveKitBroadcaster] ❌ Error:", err)}
-            options={{
-                videoCaptureDefaults: {
-                    facingMode: "user",
-                    resolution: { width: 1280, height: 720 },
-                },
-                publishDefaults: {
-                    videoCodec: "h264",
-                },
-            }}
         >
             <BroadcasterView onDisconnect={onDisconnect} />
         </LiveKitRoom>
