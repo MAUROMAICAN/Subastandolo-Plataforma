@@ -55,10 +55,11 @@ export default function LiveKitBroadcaster({ token, serverUrl }: LiveKitBroadcas
         const room = new Room({
             videoCaptureDefaults: {
                 facingMode: "user",
-                resolution: { width: 480, height: 854 },
+                resolution: { width: 1280, height: 720 },
             },
             publishDefaults: {
                 videoCodec: "h264",
+                videoSimulcastLayers: [],
             },
         });
         roomRef.current = room;

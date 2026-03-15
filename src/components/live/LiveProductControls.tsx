@@ -177,7 +177,10 @@ export default function LiveProductControls({ eventId }: Props) {
         const now = new Date();
         const endsAt = new Date(now.getTime() + (product.countdown_seconds || 60) * 1000);
 
-        await supabase
+        console.log("[LiveProductControls] Activating product:", product.id, product.product_title);
+        console.log("[LiveProductControls] ends_at:", endsAt.toISOString());
+
+        const { error } = await supabase
             .from("live_event_products")
             .update({
                 status: "active",
@@ -187,7 +190,13 @@ export default function LiveProductControls({ eventId }: Props) {
             })
             .eq("id", product.id);
 
-        toast({ title: "🔴 Subasta iniciada", description: product.product_title });
+        if (error) {
+            console.error("[LiveProductControls] ❌ Activation failed:", error);
+            toast({ title: "Error al activar", description: error.message, variant: "destructive" });
+        } else {
+            console.log("[LiveProductControls] ✅ Product activated successfully");
+            toast({ title: "🔴 Subasta iniciada", description: product.product_title });
+        }
         loadProducts();
     };
 
