@@ -105,20 +105,20 @@ export default function LiveRoom() {
             )
             .subscribe();
 
-        // Realtime: product updates
+        // Realtime: product updates — do a full refetch for reliability
         const prodChannel = supabase
             .channel(`live-products-${eventId}`)
             .on(
                 "postgres_changes" as any,
                 { event: "*", schema: "public", table: "live_event_products", filter: `event_id=eq.${eventId}` },
-                (payload: any) => {
-                    if (payload.eventType === "INSERT") {
-                        setProducts((prev) => [...prev, payload.new as LiveProduct]);
-                    } else if (payload.eventType === "UPDATE") {
-                        setProducts((prev) =>
-                            prev.map((p) => p.id === (payload.new as LiveProduct).id ? { ...p, ...payload.new } as LiveProduct : p)
-                        );
-                    }
+                async () => {
+                    // Full refetch to ensure all fields (including ends_at) are accurate
+                    const { data } = await supabase
+                        .from("live_event_products")
+                        .select("*")
+                        .eq("event_id", eventId)
+                        .order("sort_order", { ascending: true });
+                    if (data) setProducts(data as LiveProduct[]);
                 }
             )
             .subscribe();
@@ -291,7 +291,7 @@ export default function LiveRoom() {
                                 isLive={isLive}
                             />
                         ) : (
-                            <div className="aspect-video bg-nav rounded-2xl flex flex-col items-center justify-center gap-3 relative">
+                            <div className="bg-nav rounded-2xl flex flex-col items-center justify-center gap-3 relative" style={{ aspectRatio: '9/16', maxHeight: '70vh' }}>
                                 {isLive && (
                                     <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
                                         <span className="w-2 h-2 rounded-full bg-white" />

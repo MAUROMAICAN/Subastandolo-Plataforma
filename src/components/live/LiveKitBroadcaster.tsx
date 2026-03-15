@@ -55,7 +55,7 @@ export default function LiveKitBroadcaster({ token, serverUrl }: LiveKitBroadcas
         const room = new Room({
             videoCaptureDefaults: {
                 facingMode: "user",
-                resolution: { width: 640, height: 480 },
+                resolution: { width: 480, height: 854 },
             },
             publishDefaults: {
                 videoCodec: "h264",
@@ -197,7 +197,7 @@ export default function LiveKitBroadcaster({ token, serverUrl }: LiveKitBroadcas
     }, [attachVideo]);
 
     return (
-        <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
+        <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '70vh' }}>
             {/* Video — always rendered, visibility controlled by hasVideo */}
             <video
                 ref={videoRef}
