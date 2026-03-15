@@ -1,6 +1,6 @@
 // LiveKitBroadcaster — uses raw livekit-client for full control on mobile
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Room, RoomEvent, Track, ConnectionState, LocalVideoTrack } from "livekit-client";
+import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
 import { RefreshCw, Mic, MicOff, Camera, CameraOff, Users, Loader2 } from "lucide-react";
 
 interface LiveKitBroadcasterProps {
@@ -9,10 +9,9 @@ interface LiveKitBroadcasterProps {
     onDisconnect?: () => void;
 }
 
-export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: LiveKitBroadcasterProps) {
+export default function LiveKitBroadcaster({ token, serverUrl }: LiveKitBroadcasterProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const roomRef = useRef<Room | null>(null);
-    const [connected, setConnected] = useState(false);
     const [hasVideo, setHasVideo] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isCamOff, setIsCamOff] = useState(false);
@@ -21,6 +20,33 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
     const [status, setStatus] = useState("Conectando...");
     const [error, setError] = useState<string | null>(null);
     const connectAttempted = useRef(false);
+    const pendingTrack = useRef<MediaStreamTrack | null>(null);
+
+    // Attach video track to the <video> element
+    const attachVideo = useCallback((track: MediaStreamTrack) => {
+        if (videoRef.current) {
+            const stream = new MediaStream([track]);
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
+            pendingTrack.current = null;
+            console.log("[LiveKitBroadcaster] ✅ Video attached to element");
+        } else {
+            // Video element not rendered yet — store the track for later
+            pendingTrack.current = track;
+            console.log("[LiveKitBroadcaster] Video element not ready, storing track");
+        }
+    }, []);
+
+    // When hasVideo changes to true, attach any pending track
+    useEffect(() => {
+        if (hasVideo && pendingTrack.current && videoRef.current) {
+            const stream = new MediaStream([pendingTrack.current]);
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
+            pendingTrack.current = null;
+            console.log("[LiveKitBroadcaster] ✅ Pending track attached after render");
+        }
+    }, [hasVideo]);
 
     useEffect(() => {
         if (connectAttempted.current) return;
@@ -38,20 +64,10 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         roomRef.current = room;
 
         console.log("[LiveKitBroadcaster] Connecting to:", serverUrl);
-        console.log("[LiveKitBroadcaster] Token length:", token?.length);
 
         // Connection state
         room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
             console.log("[LiveKitBroadcaster] Connection state:", state);
-            if (state === ConnectionState.Connected) {
-                setConnected(true);
-                setStatus("Conectado! Activando cámara...");
-            } else if (state === ConnectionState.Disconnected) {
-                setConnected(false);
-                setStatus("Desconectado");
-            } else if (state === ConnectionState.Reconnecting) {
-                setStatus("Reconectando...");
-            }
         });
 
         // Participant count
@@ -62,37 +78,26 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
             setParticipantCount(room.remoteParticipants.size);
         });
 
-        // Track published
-        room.on(RoomEvent.LocalTrackPublished, (pub) => {
-            console.log("[LiveKitBroadcaster] Track published:", pub.source);
-            if (pub.source === Track.Source.Camera && pub.track) {
-                setHasVideo(true);
-                setStatus("📡 Transmitiendo");
-                attachVideo(pub.track.mediaStreamTrack);
-            }
-        });
-
-        // Connect
+        // Connect and enable media
         const connect = async () => {
             try {
-                console.log("[LiveKitBroadcaster] room.connect() starting...");
                 await room.connect(serverUrl, token);
                 console.log("[LiveKitBroadcaster] ✅ room.connect() succeeded!");
-                setConnected(true);
 
                 // Enable camera
                 try {
-                    console.log("[LiveKitBroadcaster] Enabling camera...");
                     await room.localParticipant.setCameraEnabled(true);
                     console.log("[LiveKitBroadcaster] ✅ Camera enabled!");
                     setHasVideo(true);
                     setStatus("📡 Transmitiendo");
 
-                    // Attach video to element
-                    const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-                    if (camPub?.track) {
-                        attachVideo(camPub.track.mediaStreamTrack);
-                    }
+                    // Small delay to let React render the video element
+                    setTimeout(() => {
+                        const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                        if (camPub?.track) {
+                            attachVideo(camPub.track.mediaStreamTrack);
+                        }
+                    }, 100);
                 } catch (camErr: any) {
                     console.error("[LiveKitBroadcaster] ❌ Camera error:", camErr);
                     setError("No se pudo activar la cámara: " + camErr.message);
@@ -115,19 +120,10 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         connect();
 
         return () => {
-            console.log("[LiveKitBroadcaster] Cleanup — disconnecting room");
             room.disconnect();
             roomRef.current = null;
         };
-    }, [token, serverUrl]);
-
-    const attachVideo = (track: MediaStreamTrack) => {
-        if (videoRef.current) {
-            const stream = new MediaStream([track]);
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(() => {});
-        }
-    };
+    }, [token, serverUrl, attachVideo]);
 
     const toggleMic = useCallback(async () => {
         const room = roomRef.current;
@@ -143,13 +139,13 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         await room.localParticipant.setCameraEnabled(enable);
         setIsCamOff(!isCamOff);
         if (enable) {
-            const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-            if (camPub?.track) {
-                attachVideo(camPub.track.mediaStreamTrack);
-            }
+            setTimeout(() => {
+                const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                if (camPub?.track) attachVideo(camPub.track.mediaStreamTrack);
+            }, 100);
         }
         setHasVideo(enable);
-    }, [isCamOff]);
+    }, [isCamOff, attachVideo]);
 
     const switchCamera = useCallback(async () => {
         const room = roomRef.current;
@@ -157,7 +153,6 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         const newMode = facingMode === "user" ? "environment" : "user";
         setFacingMode(newMode);
 
-        // Use restartTrack to properly switch camera device on mobile
         const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
         if (camPub?.track) {
             try {
@@ -165,23 +160,23 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
                     facingMode: newMode,
                 });
                 console.log("[LiveKitBroadcaster] Camera switched to:", newMode);
-                // Re-attach video after track restart
-                attachVideo(camPub.track.mediaStreamTrack);
+                setTimeout(() => {
+                    if (camPub.track) attachVideo(camPub.track.mediaStreamTrack);
+                }, 200);
             } catch (err) {
-                console.error("[LiveKitBroadcaster] Failed to switch camera:", err);
-                // Fallback: disable and re-enable
+                console.error("[LiveKitBroadcaster] Switch failed, fallback:", err);
                 await room.localParticipant.setCameraEnabled(false);
                 await room.localParticipant.setCameraEnabled(true, {
                     facingMode: newMode,
                     resolution: { width: 640, height: 480 },
                 });
-                const newPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-                if (newPub?.track) {
-                    attachVideo(newPub.track.mediaStreamTrack);
-                }
+                setTimeout(() => {
+                    const newPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                    if (newPub?.track) attachVideo(newPub.track.mediaStreamTrack);
+                }, 200);
             }
         }
-    }, [facingMode]);
+    }, [facingMode, attachVideo]);
 
     const retryCamera = useCallback(async () => {
         const room = roomRef.current;
@@ -190,34 +185,36 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         setStatus("Reintentando cámara...");
         try {
             await room.localParticipant.setCameraEnabled(true);
-            const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-            if (camPub?.track) {
-                attachVideo(camPub.track.mediaStreamTrack);
-            }
             setHasVideo(true);
             setStatus("📡 Transmitiendo");
+            setTimeout(() => {
+                const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                if (camPub?.track) attachVideo(camPub.track.mediaStreamTrack);
+            }, 100);
         } catch (err: any) {
             setError("No se pudo activar la cámara: " + err.message);
         }
-    }, []);
+    }, [attachVideo]);
 
     return (
         <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
-            {/* Video */}
-            {hasVideo ? (
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transform: facingMode === "user" ? "scaleX(-1)" : "none",
-                    }}
-                />
-            ) : (
+            {/* Video — always rendered, visibility controlled by hasVideo */}
+            <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: facingMode === "user" ? "scaleX(-1)" : "none",
+                    display: hasVideo ? "block" : "none",
+                }}
+            />
+
+            {/* Loading/error overlay when no video */}
+            {!hasVideo && (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                     {error ? (
                         <>
