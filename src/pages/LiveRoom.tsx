@@ -133,6 +133,11 @@ export default function LiveRoom() {
         if (!event || event.status !== "live" || !eventId) return;
         // Don't get viewer token if we're the dealer (they use the wizard broadcaster)
         if (user && event.dealer_id === user.id) return;
+        // Need auth to get token
+        if (!user) {
+            setLivekitError("Inicia sesión para ver el stream en vivo");
+            return;
+        }
 
         const getToken = async () => {
             try {

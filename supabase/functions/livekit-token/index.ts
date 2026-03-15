@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     }));
 
     const jwt = await new SignJWT(payload)
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setProtectedHeader({ alg: "HS256" })
       .sign(secret);
 
     // If dealer is going live, update room name in DB
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[livekit-token] ❌ Error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
-      status: 200,
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
