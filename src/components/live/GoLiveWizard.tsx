@@ -149,20 +149,21 @@ export default function GoLiveWizard({ onClose, onLiveStarted }: GoLiveWizardPro
                         const room = new Room();
                         await room.connect(tokenData.url, tokenData.token);
 
-                        // Publish the existing camera stream tracks
+                        // Publish cloned camera stream tracks to LiveKit
                         if (cameraStream) {
                             const videoTrack = cameraStream.getVideoTracks()[0];
                             const audioTrack = cameraStream.getAudioTracks()[0];
 
+                            // Clone tracks so both preview and LiveKit can use them
                             if (videoTrack) {
-                                const { LocalVideoTrack } = await import("livekit-client");
-                                const lvTrack = new LocalVideoTrack(videoTrack);
-                                await room.localParticipant.publishTrack(lvTrack);
+                                await room.localParticipant.publishTrack(videoTrack.clone(), {
+                                    source: "camera" as any,
+                                });
                             }
                             if (audioTrack) {
-                                const { LocalAudioTrack } = await import("livekit-client");
-                                const laTrack = new LocalAudioTrack(audioTrack);
-                                await room.localParticipant.publishTrack(laTrack);
+                                await room.localParticipant.publishTrack(audioTrack.clone(), {
+                                    source: "microphone" as any,
+                                });
                             }
                         }
 
