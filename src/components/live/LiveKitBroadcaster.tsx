@@ -1,13 +1,6 @@
-// @ts-nocheck — LiveKit types
+// LiveKitBroadcaster — uses raw livekit-client for full control on mobile
 import { useState, useCallback, useEffect, useRef } from "react";
-import {
-    LiveKitRoom,
-    VideoTrack,
-    useTracks,
-    useLocalParticipant,
-    useRoomContext,
-} from "@livekit/components-react";
-import { Track, RoomEvent, ConnectionState } from "livekit-client";
+import { Room, RoomEvent, Track, ConnectionState, LocalVideoTrack } from "livekit-client";
 import { RefreshCw, Mic, MicOff, Camera, CameraOff, Users, Loader2 } from "lucide-react";
 
 interface LiveKitBroadcasterProps {
@@ -16,113 +9,191 @@ interface LiveKitBroadcasterProps {
     onDisconnect?: () => void;
 }
 
-function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
-    const room = useRoomContext();
-    const { localParticipant } = useLocalParticipant();
+export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: LiveKitBroadcasterProps) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const roomRef = useRef<Room | null>(null);
+    const [connected, setConnected] = useState(false);
+    const [hasVideo, setHasVideo] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isCamOff, setIsCamOff] = useState(false);
     const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
     const [participantCount, setParticipantCount] = useState(0);
-    const [cameraStarting, setCameraStarting] = useState(true);
-    const cameraAttempted = useRef(false);
+    const [status, setStatus] = useState("Conectando...");
+    const [error, setError] = useState<string | null>(null);
+    const connectAttempted = useRef(false);
 
-    // Track participant count
     useEffect(() => {
-        const update = () => setParticipantCount(room.numParticipants);
-        update();
-        room.on(RoomEvent.ParticipantConnected, update);
-        room.on(RoomEvent.ParticipantDisconnected, update);
-        return () => {
-            room.off(RoomEvent.ParticipantConnected, update);
-            room.off(RoomEvent.ParticipantDisconnected, update);
-        };
-    }, [room]);
+        if (connectAttempted.current) return;
+        connectAttempted.current = true;
 
-    // Log connection state changes
-    useEffect(() => {
-        const onStateChange = (state: ConnectionState) => {
-            console.log("[BroadcasterView] Connection state:", state);
-        };
-        room.on(RoomEvent.ConnectionStateChanged, onStateChange);
-        console.log("[BroadcasterView] Initial room state:", room.state, "url:", room.serverUrl);
-        return () => {
-            room.off(RoomEvent.ConnectionStateChanged, onStateChange);
-        };
-    }, [room]);
+        const room = new Room({
+            videoCaptureDefaults: {
+                facingMode: "user",
+                resolution: { width: 640, height: 480 },
+            },
+            publishDefaults: {
+                videoCodec: "h264",
+            },
+        });
+        roomRef.current = room;
 
-    // Explicitly enable camera + mic after room connects
-    // This is more reliable on mobile than relying on LiveKitRoom's video={true}
-    useEffect(() => {
-        if (cameraAttempted.current) return;
-        cameraAttempted.current = true;
+        console.log("[LiveKitBroadcaster] Connecting to:", serverUrl);
+        console.log("[LiveKitBroadcaster] Token length:", token?.length);
 
-        const enableMedia = async () => {
+        // Connection state
+        room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
+            console.log("[LiveKitBroadcaster] Connection state:", state);
+            if (state === ConnectionState.Connected) {
+                setConnected(true);
+                setStatus("Conectado! Activando cámara...");
+            } else if (state === ConnectionState.Disconnected) {
+                setConnected(false);
+                setStatus("Desconectado");
+            } else if (state === ConnectionState.Reconnecting) {
+                setStatus("Reconectando...");
+            }
+        });
+
+        // Participant count
+        room.on(RoomEvent.ParticipantConnected, () => {
+            setParticipantCount(room.remoteParticipants.size);
+        });
+        room.on(RoomEvent.ParticipantDisconnected, () => {
+            setParticipantCount(room.remoteParticipants.size);
+        });
+
+        // Track published
+        room.on(RoomEvent.LocalTrackPublished, (pub) => {
+            console.log("[LiveKitBroadcaster] Track published:", pub.source);
+            if (pub.source === Track.Source.Camera && pub.track) {
+                setHasVideo(true);
+                setStatus("📡 Transmitiendo");
+                attachVideo(pub.track.mediaStreamTrack);
+            }
+        });
+
+        // Connect
+        const connect = async () => {
             try {
-                console.log("[BroadcasterView] Enabling camera...");
-                await localParticipant.setCameraEnabled(true, {
-                    facingMode: "user",
-                    resolution: { width: 640, height: 480 },
-                });
-                console.log("[BroadcasterView] ✅ Camera enabled!");
-            } catch (err) {
-                console.error("[BroadcasterView] ❌ Camera error:", err);
-                // Retry once with lower constraints
+                console.log("[LiveKitBroadcaster] room.connect() starting...");
+                await room.connect(serverUrl, token);
+                console.log("[LiveKitBroadcaster] ✅ room.connect() succeeded!");
+                setConnected(true);
+
+                // Enable camera
                 try {
-                    console.log("[BroadcasterView] Retrying camera with minimal constraints...");
-                    await localParticipant.setCameraEnabled(true);
-                    console.log("[BroadcasterView] ✅ Camera enabled (retry)!");
-                } catch (err2) {
-                    console.error("[BroadcasterView] ❌ Camera failed completely:", err2);
+                    console.log("[LiveKitBroadcaster] Enabling camera...");
+                    await room.localParticipant.setCameraEnabled(true);
+                    console.log("[LiveKitBroadcaster] ✅ Camera enabled!");
+                    setHasVideo(true);
+                    setStatus("📡 Transmitiendo");
+
+                    // Attach video to element
+                    const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                    if (camPub?.track) {
+                        attachVideo(camPub.track.mediaStreamTrack);
+                    }
+                } catch (camErr: any) {
+                    console.error("[LiveKitBroadcaster] ❌ Camera error:", camErr);
+                    setError("No se pudo activar la cámara: " + camErr.message);
                 }
-            }
 
-            try {
-                console.log("[BroadcasterView] Enabling microphone...");
-                await localParticipant.setMicrophoneEnabled(true);
-                console.log("[BroadcasterView] ✅ Microphone enabled!");
-            } catch (err) {
-                console.error("[BroadcasterView] ❌ Microphone error:", err);
+                // Enable mic
+                try {
+                    await room.localParticipant.setMicrophoneEnabled(true);
+                    console.log("[LiveKitBroadcaster] ✅ Mic enabled!");
+                } catch (micErr: any) {
+                    console.error("[LiveKitBroadcaster] ❌ Mic error:", micErr);
+                }
+            } catch (err: any) {
+                console.error("[LiveKitBroadcaster] ❌ Connection failed:", err);
+                setError("Error conectando: " + err.message);
+                setStatus("Error");
             }
-
-            setCameraStarting(false);
         };
 
-        // Small delay to ensure room is fully ready
-        setTimeout(enableMedia, 500);
-    }, [localParticipant]);
+        connect();
 
-    // Get local video track
-    const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
-    const localVideoTrack = tracks.find(
-        (t) => t.participant.sid === localParticipant.sid && t.source === Track.Source.Camera
-    );
+        return () => {
+            console.log("[LiveKitBroadcaster] Cleanup — disconnecting room");
+            room.disconnect();
+            roomRef.current = null;
+        };
+    }, [token, serverUrl]);
+
+    const attachVideo = (track: MediaStreamTrack) => {
+        if (videoRef.current) {
+            const stream = new MediaStream([track]);
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
+        }
+    };
 
     const toggleMic = useCallback(async () => {
-        await localParticipant.setMicrophoneEnabled(isMuted);
+        const room = roomRef.current;
+        if (!room) return;
+        await room.localParticipant.setMicrophoneEnabled(isMuted);
         setIsMuted(!isMuted);
-    }, [localParticipant, isMuted]);
+    }, [isMuted]);
 
     const toggleCam = useCallback(async () => {
-        await localParticipant.setCameraEnabled(isCamOff);
+        const room = roomRef.current;
+        if (!room) return;
+        const enable = isCamOff;
+        await room.localParticipant.setCameraEnabled(enable);
         setIsCamOff(!isCamOff);
-    }, [localParticipant, isCamOff]);
+        if (enable) {
+            const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+            if (camPub?.track) {
+                attachVideo(camPub.track.mediaStreamTrack);
+            }
+        }
+        setHasVideo(enable);
+    }, [isCamOff]);
 
     const switchCamera = useCallback(async () => {
+        const room = roomRef.current;
+        if (!room) return;
         const newMode = facingMode === "user" ? "environment" : "user";
         setFacingMode(newMode);
-        await localParticipant.setCameraEnabled(false);
-        await localParticipant.setCameraEnabled(true, {
+        await room.localParticipant.setCameraEnabled(false);
+        await room.localParticipant.setCameraEnabled(true, {
             facingMode: newMode,
             resolution: { width: 640, height: 480 },
         });
-    }, [localParticipant, facingMode]);
+        const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (camPub?.track) {
+            attachVideo(camPub.track.mediaStreamTrack);
+        }
+    }, [facingMode]);
+
+    const retryCamera = useCallback(async () => {
+        const room = roomRef.current;
+        if (!room) return;
+        setError(null);
+        setStatus("Reintentando cámara...");
+        try {
+            await room.localParticipant.setCameraEnabled(true);
+            const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+            if (camPub?.track) {
+                attachVideo(camPub.track.mediaStreamTrack);
+            }
+            setHasVideo(true);
+            setStatus("📡 Transmitiendo");
+        } catch (err: any) {
+            setError("No se pudo activar la cámara: " + err.message);
+        }
+    }, []);
 
     return (
         <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
             {/* Video */}
-            {localVideoTrack ? (
-                <VideoTrack
-                    trackRef={localVideoTrack}
+            {hasVideo ? (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
                     style={{
                         width: "100%",
                         height: "100%",
@@ -132,28 +203,21 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
                 />
             ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                    {cameraStarting ? (
+                    {error ? (
                         <>
-                            <Loader2 className="h-10 w-10 text-accent animate-spin" />
-                            <p className="text-white/50 text-xs">Activando cámara...</p>
-                        </>
-                    ) : (
-                        <>
-                            <CameraOff className="h-12 w-12 text-white/30" />
+                            <CameraOff className="h-10 w-10 text-red-400" />
+                            <p className="text-red-400 text-xs text-center px-4">{error}</p>
                             <button
-                                onClick={async () => {
-                                    setCameraStarting(true);
-                                    try {
-                                        await localParticipant.setCameraEnabled(true);
-                                    } catch (e) {
-                                        console.error("[BroadcasterView] Manual retry failed:", e);
-                                    }
-                                    setCameraStarting(false);
-                                }}
-                                className="text-accent text-xs font-bold underline"
+                                onClick={retryCamera}
+                                className="text-accent text-xs font-bold underline mt-2"
                             >
                                 Reintentar cámara
                             </button>
+                        </>
+                    ) : (
+                        <>
+                            <Loader2 className="h-10 w-10 text-accent animate-spin" />
+                            <p className="text-white/50 text-xs">{status}</p>
                         </>
                     )}
                 </div>
@@ -201,26 +265,5 @@ function BroadcasterView({ onDisconnect }: { onDisconnect?: () => void }) {
                 </div>
             </div>
         </div>
-    );
-}
-
-export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: LiveKitBroadcasterProps) {
-    console.log("[LiveKitBroadcaster] Rendering with serverUrl:", serverUrl, "token length:", token?.length);
-    return (
-        <LiveKitRoom
-            token={token}
-            serverUrl={serverUrl}
-            connect={true}
-            video={false}
-            audio={false}
-            onConnected={() => console.log("[LiveKitBroadcaster] ✅ Room connected!")}
-            onDisconnected={() => {
-                console.log("[LiveKitBroadcaster] ⚠️ Room disconnected");
-                onDisconnect?.();
-            }}
-            onError={(err) => console.error("[LiveKitBroadcaster] ❌ Error:", err)}
-        >
-            <BroadcasterView onDisconnect={onDisconnect} />
-        </LiveKitRoom>
     );
 }
