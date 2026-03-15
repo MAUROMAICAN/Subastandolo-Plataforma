@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
       video: {
         room: roomName,
         roomJoin: true,
+        roomCreate: canPublish, // publisher needs to create the room
         canPublish: canPublish,
         canSubscribe: true,
         canPublishData: true,
