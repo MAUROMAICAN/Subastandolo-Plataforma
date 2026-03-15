@@ -106,7 +106,7 @@ export default function LiveKitViewer({ token, serverUrl, isLive, viewerCount }:
     }, [token, serverUrl]);
 
     return (
-        <div className="relative rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '70vh' }}>
+        <div className="relative w-full h-full overflow-hidden bg-black">
             {/* Video element — always rendered */}
             <video
                 ref={videoRef}
