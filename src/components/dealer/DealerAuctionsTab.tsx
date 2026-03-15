@@ -550,7 +550,11 @@ export default function DealerAuctionsTab({
                       </p>
                       <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                         Creada: {new Date(auction.created_at).toLocaleDateString("es-MX")}
-                        {winner && <span className="text-primary dark:text-[#A6E300] font-bold ml-2">🏆 Ganador: {winner.full_name}</span>}
+                        {winner && (isEnded ? (
+                          <span className="text-primary dark:text-[#A6E300] font-bold ml-2">🏆 Ganador: {winner.full_name}</span>
+                        ) : (
+                          <span className="text-amber-500 font-bold ml-2">👑 Líder: {winner.full_name}</span>
+                        ))}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
