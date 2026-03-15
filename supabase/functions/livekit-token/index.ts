@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { AccessToken } from "https://esm.sh/livekit-server-sdk@2.9.1";
+import { SignJWT } from "https://esm.sh/jose@5.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,32 +65,41 @@ Deno.serve(async (req) => {
 
     const participantName = profile?.full_name || user.email || "Usuario";
 
-    // Generate token using official LiveKit SDK
-    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: user.id,
+    // Build LiveKit JWT — matching livekit-server-sdk's exact format:
+    // - iss, sub, nbf, exp, jti via jose methods (NOT in payload)
+    // - ONLY "video" and "name" in the payload
+    // - nbf = 0 (not current time)
+    // - jti = participant identity
+    const secret = new TextEncoder().encode(LIVEKIT_API_SECRET);
+
+    const jwt = await new SignJWT({
       name: participantName,
-      ttl: "4h",
-    });
+      video: {
+        room: roomName,
+        roomJoin: true,
+        roomCreate: canPublish,
+        canPublish: canPublish,
+        canSubscribe: true,
+        canPublishData: true,
+      },
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuer(LIVEKIT_API_KEY)
+      .setSubject(user.id)
+      .setNotBefore(0)
+      .setExpirationTime("4h")
+      .setJti(user.id)
+      .sign(secret);
 
-    at.addGrant({
-      room: roomName,
-      roomJoin: true,
-      roomCreate: canPublish,
-      canPublish: canPublish,
-      canSubscribe: true,
-      canPublishData: true,
-    });
-
-    const jwt = await at.toJwt();
-
-    console.log("[livekit-token] JWT generated via SDK:", {
-      identity: user.id.substring(0, 8) + "...",
+    console.log("[livekit-token] JWT payload:", JSON.stringify({
+      sub: user.id.substring(0, 8) + "...",
+      iss: LIVEKIT_API_KEY,
       name: participantName,
       room: roomName,
       canPublish,
       role,
       tokenLen: jwt.length,
-    });
+    }));
 
     // If dealer is going live, update room name in DB
     if (canPublish) {
