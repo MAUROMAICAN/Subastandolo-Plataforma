@@ -156,14 +156,30 @@ export default function LiveKitBroadcaster({ token, serverUrl, onDisconnect }: L
         if (!room) return;
         const newMode = facingMode === "user" ? "environment" : "user";
         setFacingMode(newMode);
-        await room.localParticipant.setCameraEnabled(false);
-        await room.localParticipant.setCameraEnabled(true, {
-            facingMode: newMode,
-            resolution: { width: 640, height: 480 },
-        });
+
+        // Use restartTrack to properly switch camera device on mobile
         const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
         if (camPub?.track) {
-            attachVideo(camPub.track.mediaStreamTrack);
+            try {
+                await (camPub.track as any).restartTrack({
+                    facingMode: newMode,
+                });
+                console.log("[LiveKitBroadcaster] Camera switched to:", newMode);
+                // Re-attach video after track restart
+                attachVideo(camPub.track.mediaStreamTrack);
+            } catch (err) {
+                console.error("[LiveKitBroadcaster] Failed to switch camera:", err);
+                // Fallback: disable and re-enable
+                await room.localParticipant.setCameraEnabled(false);
+                await room.localParticipant.setCameraEnabled(true, {
+                    facingMode: newMode,
+                    resolution: { width: 640, height: 480 },
+                });
+                const newPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+                if (newPub?.track) {
+                    attachVideo(newPub.track.mediaStreamTrack);
+                }
+            }
         }
     }, [facingMode]);
 

@@ -77,6 +77,7 @@ function ViewerContent({ isLive, viewerCount }: { isLive?: boolean; viewerCount?
 }
 
 export default function LiveKitViewer({ token, serverUrl, isLive, viewerCount }: LiveKitViewerProps) {
+    console.log("[LiveKitViewer] Rendering with serverUrl:", serverUrl, "token length:", token?.length);
     return (
         <LiveKitRoom
             token={token}
@@ -84,6 +85,9 @@ export default function LiveKitViewer({ token, serverUrl, isLive, viewerCount }:
             connect={true}
             video={false}
             audio={false}
+            onConnected={() => console.log("[LiveKitViewer] ✅ Connected to room!")}
+            onDisconnected={() => console.log("[LiveKitViewer] ⚠️ Disconnected from room")}
+            onError={(err) => console.error("[LiveKitViewer] ❌ Error:", err)}
         >
             <ViewerContent isLive={isLive} viewerCount={viewerCount} />
         </LiveKitRoom>
