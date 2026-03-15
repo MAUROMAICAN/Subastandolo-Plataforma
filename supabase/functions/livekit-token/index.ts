@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SignJWT } from "https://esm.sh/jose@5.2.0";
+import { AccessToken } from "https://esm.sh/livekit-server-sdk@2.9.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,42 +64,33 @@ Deno.serve(async (req) => {
       .single();
 
     const participantName = profile?.full_name || user.email || "Usuario";
-    const participantIdentity = user.id;
 
-    // Build LiveKit JWT token manually using jose
-    // LiveKit expects: iss=API_KEY, sub=participant_identity, name=display_name
-    // Video grants go under "video" key
-    const secret = new TextEncoder().encode(LIVEKIT_API_SECRET);
-    const now = Math.floor(Date.now() / 1000);
-
-    const payload = {
-      sub: participantIdentity,
-      iss: LIVEKIT_API_KEY,
-      nbf: now,
-      exp: now + 14400, // 4 hours
+    // Generate token using official LiveKit SDK
+    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+      identity: user.id,
       name: participantName,
-      video: {
-        room: roomName,
-        roomJoin: true,
-        roomCreate: canPublish, // publisher needs to create the room
-        canPublish: canPublish,
-        canSubscribe: true,
-        canPublishData: true,
-      },
-    };
+      ttl: "4h",
+    });
 
-    console.log("[livekit-token] JWT payload:", JSON.stringify({
-      sub: payload.sub.substring(0, 8) + "...",
-      iss: payload.iss,
-      name: payload.name,
+    at.addGrant({
+      room: roomName,
+      roomJoin: true,
+      roomCreate: canPublish,
+      canPublish: canPublish,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    const jwt = await at.toJwt();
+
+    console.log("[livekit-token] JWT generated via SDK:", {
+      identity: user.id.substring(0, 8) + "...",
+      name: participantName,
       room: roomName,
       canPublish,
       role,
-    }));
-
-    const jwt = await new SignJWT(payload)
-      .setProtectedHeader({ alg: "HS256" })
-      .sign(secret);
+      tokenLen: jwt.length,
+    });
 
     // If dealer is going live, update room name in DB
     if (canPublish) {
@@ -128,4 +119,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
