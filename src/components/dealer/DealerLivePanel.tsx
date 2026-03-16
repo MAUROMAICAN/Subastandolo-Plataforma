@@ -9,7 +9,7 @@ import GoLiveWizard from "@/components/live/GoLiveWizard";
 import {
     Radio, Plus, Trash2, Play, Square, GripVertical,
     Loader2, Copy, ExternalLink, ImageIcon, Calendar,
-    Lock, Shield, AlertTriangle,
+    Lock, Shield, AlertTriangle, Trophy,
 } from "lucide-react";
 
 interface LiveEvent {
@@ -37,6 +37,7 @@ interface LiveProduct {
     status: string;
     sort_order: number;
     countdown_seconds: number;
+    winner_id: string | null;
 }
 
 interface Props {
@@ -53,6 +54,7 @@ export default function DealerLivePanel({ dealer }: Props) {
     const [tab, setTab] = useState<"events" | "create">("events");
     const [liveAuthorized, setLiveAuthorized] = useState(false);
     const [showGoLive, setShowGoLive] = useState(false);
+    const [winnerProfiles, setWinnerProfiles] = useState<Record<string, { full_name: string; email?: string }>>({});
 
     // Check if dealer has admin-granted live authorization
     useEffect(() => {
@@ -224,6 +226,27 @@ export default function DealerLivePanel({ dealer }: Props) {
 
         if (selectedEvent) loadProducts(selectedEvent.id);
     };
+
+    // Fetch winner profiles when products change
+    useEffect(() => {
+        const soldWithWinner = products.filter((p) => p.status === "sold" && p.winner_id);
+        if (soldWithWinner.length === 0) return;
+        const winnerIds = [...new Set(soldWithWinner.map((p) => p.winner_id!).filter(Boolean))];
+        const missingIds = winnerIds.filter((id) => !winnerProfiles[id]);
+        if (missingIds.length === 0) return;
+
+        supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", missingIds)
+            .then(({ data }) => {
+                if (data) {
+                    const newProfiles: Record<string, { full_name: string }> = {};
+                    data.forEach((p: any) => { newProfiles[p.id] = { full_name: p.full_name || p.id.slice(0, 8) }; });
+                    setWinnerProfiles((prev) => ({ ...prev, ...newProfiles }));
+                }
+            });
+    }, [products]);
 
     // Mark product as sold (to highest bidder)
     const markSold = async (product: LiveProduct) => {
@@ -509,6 +532,19 @@ export default function DealerLivePanel({ dealer }: Props) {
                                     <p className="text-xs text-muted-foreground">
                                         ${p.starting_price.toFixed(2)} · {p.countdown_seconds}s
                                     </p>
+                                    {p.status === "sold" && (
+                                        <div className="mt-1 space-y-0.5">
+                                            <p className="text-xs text-green-400 font-bold">
+                                                💰 Vendido por ${(p.current_price || p.starting_price).toFixed(2)}
+                                            </p>
+                                            {p.winner_id && (
+                                                <p className="text-[10px] text-green-400/70 flex items-center gap-1">
+                                                    <Trophy className="h-3 w-3" />
+                                                    {winnerProfiles[p.winner_id]?.full_name || p.winner_id.slice(0, 12)}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <StatusBadge status={p.status} />
