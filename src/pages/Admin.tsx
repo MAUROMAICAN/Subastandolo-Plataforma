@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Loader2, Eye, Gavel, Users, LayoutDashboard, Settings, MessageCircle, Mail, MailPlus,
-  Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell, LogOut
+  Menu, ChevronLeft, Globe, ShieldAlert, CreditCard, Shield, Search, Package, Flag, Trophy, TrendingUp, ImagePlus, Bell, LogOut, Radio
 } from "lucide-react";
 import AdminBadge from "@/components/AdminBadge";
 import UserManagementPanel from "@/components/UserManagementPanel";
@@ -31,6 +31,7 @@ import AdminNotificationsTab from "@/components/admin/AdminNotificationsTab";
 import AdminEmailsTab from "@/components/admin/AdminEmailsTab";
 import AdminMassEmailTab from "@/components/admin/AdminMassEmailTab";
 import AdminMarketplaceDisputesTab from "@/components/admin/AdminMarketplaceDisputesTab";
+import AdminLiveSalesTab from "@/components/admin/AdminLiveSalesTab";
 import type { AdminTab, AuctionExtended, WinnerInfo, BannerImage, DealerUser, Message, SiteSetting, SiteSection } from "@/components/admin/types";
 
 const Admin = () => {
@@ -331,6 +332,7 @@ const Admin = () => {
         { key: "auctions", label: "Subastas", icon: Gavel },
         { key: "won", label: "Ganadas", icon: Trophy },
         { key: "payments", label: "Pagos", icon: CreditCard, badge: newPayments || undefined, urgent: newPayments > 0 },
+        { key: "live_sales", label: "Ventas Live", icon: Radio },
       ],
     },
     {
@@ -502,6 +504,7 @@ const Admin = () => {
             {activeTab === "mass_email" && <AdminMassEmailTab />}
             {activeTab === "users" && <UserManagementPanel allUsers={allUsers} onRefresh={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "team" && <TeamPanel />}
+            {activeTab === "live_sales" && <AdminLiveSalesTab globalSearch={globalSearch} />}
           </div>
         </main>
       </div>

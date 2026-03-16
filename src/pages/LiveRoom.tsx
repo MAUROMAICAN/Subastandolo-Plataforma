@@ -66,6 +66,14 @@ const obfuscateName = (name: string): string => {
     return `${first}${'*'.repeat(Math.min(name.length - 2, 5))}${last}`;
 };
 
+/** Format seconds as MM:SS or just SS */
+const formatTime = (seconds: number): string => {
+    if (seconds <= 0) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
 /* ───────────────────────── Component ───────────────────────── */
 export default function LiveRoom() {
     const { eventId } = useParams<{ eventId: string }>();
@@ -89,6 +97,7 @@ export default function LiveRoom() {
 
     // Bid
     const [bidding, setBidding] = useState(false);
+    const [customBidAmount, setCustomBidAmount] = useState<string>("");
 
     // Mobile tabs
     const [mobileTab, setMobileTab] = useState<"chat" | "products">("chat");
@@ -282,18 +291,21 @@ export default function LiveRoom() {
     };
 
     /* ─── Place bid ─── */
-    const placeBid = async () => {
+    const placeBid = async (amount?: number) => {
         if (!user || !activeProduct || bidding || countdown === 0) return;
+        const bidAmount = amount || nextBidAmount;
+        if (bidAmount <= currentPrice) return;
         setBidding(true);
         try {
             await supabase.from("live_bids").insert({
-                product_id: activeProduct.id, event_id: eventId, bidder_id: user.id, amount: nextBidAmount,
+                product_id: activeProduct.id, event_id: eventId, bidder_id: user.id, amount: bidAmount,
             });
-            const updates: any = { current_price: nextBidAmount };
+            const updates: any = { current_price: bidAmount };
             if (countdown <= ANTI_SNIPE_THRESHOLD && activeProduct.ends_at) {
                 updates.ends_at = new Date(new Date(activeProduct.ends_at).getTime() + ANTI_SNIPE_EXTENSION * 1000).toISOString();
             }
             await supabase.from("live_event_products").update(updates).eq("id", activeProduct.id);
+            setCustomBidAmount("");
         } catch (err: any) {
             console.error("[Bid]", err);
         } finally {
@@ -510,92 +522,118 @@ export default function LiveRoom() {
 
                     {/* Active product + bid */}
                     {activeProduct ? (
-                        <div className={`p-4 border-b border-white/10 space-y-3 transition-all ${
-                            isCritical ? "bg-red-950/30" : isDramatic ? "bg-amber-950/20" : ""
-                        }`}>
-                            {/* ─── Dramatic header when ≤10s ─── */}
-                            {isDramatic && (
-                                <div className={`text-center py-1 rounded-lg text-xs font-black tracking-wider uppercase ${
-                                    isCritical
-                                        ? "bg-red-500/20 text-red-400 animate-pulse"
-                                        : "bg-amber-500/20 text-amber-400"
-                                }`}>
-                                    {isCritical ? "🔥 ¡ÚLTIMOS SEGUNDOS!" : "⚡ ¡Se acaba el tiempo!"}
-                                </div>
-                            )}
-
-                            {/* Product title + countdown */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Subastando ahora</p>
-                                    <h3 className="font-bold text-foreground text-sm truncate">{activeProduct.product_title}</h3>
-                                </div>
-                                <div className="text-right shrink-0 ml-3">
-                                    <span className={`font-black tabular-nums ${countdownColor} ${
-                                        isCritical ? "text-4xl animate-heartbeat" : isDramatic ? "text-3xl" : "text-2xl"
+                        <div className="border-b border-white/10">
+                            {/* ─── Timer Section ─── */}
+                            <div className={`px-4 py-3 transition-all ${
+                                isCritical ? "bg-red-900" : isDramatic ? "bg-amber-900" : "bg-zinc-900"
+                            }`}>
+                                {/* Dramatic alert */}
+                                {isDramatic && (
+                                    <p className={`text-center text-[10px] font-black tracking-widest uppercase mb-2 ${
+                                        isCritical ? "text-red-200 animate-pulse" : "text-amber-200"
                                     }`}>
-                                        {countdown}s
-                                    </span>
-                                    {countdown <= ANTI_SNIPE_THRESHOLD && countdown > 0 && (
-                                        <p className="text-[9px] text-amber-400">⚡ +10s/puja</p>
-                                    )}
+                                        {isCritical ? "🔥 ¡ÚLTIMOS SEGUNDOS!" : "⚡ ¡Se acaba el tiempo!"}
+                                    </p>
+                                )}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] text-white/50 uppercase tracking-wider">Subastando ahora</p>
+                                        <h3 className="font-bold text-white text-sm truncate">{activeProduct.product_title}</h3>
+                                    </div>
+                                    <div className={`text-right shrink-0 ml-3 px-3 py-1 rounded-xl ${
+                                        isCritical ? "bg-red-700" : isDramatic ? "bg-amber-800" : "bg-zinc-800"
+                                    }`}>
+                                        <span className={`font-black tabular-nums text-white ${
+                                            isCritical ? "text-3xl animate-heartbeat" : isDramatic ? "text-2xl" : "text-xl"
+                                        }`}>
+                                            {formatTime(countdown)}
+                                        </span>
+                                        {countdown <= ANTI_SNIPE_THRESHOLD && countdown > 0 && (
+                                            <p className="text-[9px] text-white/60">⚡ +10s/puja</p>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Progress bar */}
+                                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-250 ${
+                                            isCritical ? "bg-red-400" : isDramatic ? "bg-amber-400" : "bg-accent"
+                                        }`}
+                                        style={{ width: `${Math.min(100, (countdown / (activeProduct.countdown_seconds || 60)) * 100)}%` }}
+                                    />
                                 </div>
                             </div>
 
-                            {/* Countdown bar */}
-                            <div className={`w-full rounded-full overflow-hidden ${
-                                isCritical ? "h-2.5" : "h-1.5"
-                            } bg-white/10`}>
-                                <div
-                                    className={`h-full rounded-full transition-all duration-250 ${
-                                        isCritical ? "bg-red-500 animate-pulse" : isDramatic ? "bg-amber-500" : "bg-accent"
-                                    }`}
-                                    style={{ width: `${Math.min(100, (countdown / (activeProduct.countdown_seconds || 60)) * 100)}%` }}
-                                />
-                            </div>
-
-                            {/* Price */}
-                            <div className="text-center py-2">
-                                <p className="text-xs text-muted-foreground">Precio actual</p>
-                                <p className={`font-black text-accent tabular-nums ${
-                                    isCritical ? "text-4xl" : "text-3xl"
-                                }`}>
-                                    ${currentPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">
-                                    Incremento: +${bidIncrement.toFixed(2)}
-                                </p>
-                            </div>
-
-                            {/* Bid button */}
-                            {countdown > 0 ? (
-                                user ? (
-                                    <button
-                                        onClick={placeBid}
-                                        disabled={bidding}
-                                        className={`w-full text-accent-foreground font-black text-lg rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
-                                            isCritical
-                                                ? "bg-red-500 hover:bg-red-600 py-4 text-xl animate-pulse"
-                                                : isDramatic
-                                                ? "bg-amber-500 hover:bg-amber-600 py-4"
-                                                : "bg-accent hover:bg-accent/90 py-3.5"
-                                        }`}
-                                    >
-                                        <Gavel className={isCritical ? "h-6 w-6" : "h-5 w-5"} />
-                                        {isCritical ? "¡PUJAR AHORA!" : "Pujar"} ${nextBidAmount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                                    </button>
-                                ) : (
-                                    <div className="text-center py-2">
-                                        <a href="/auth" className="text-accent font-bold text-sm">Inicia sesión para pujar</a>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="text-center py-3 bg-white/5 rounded-xl">
-                                    <p className="text-sm font-bold text-foreground">
-                                        {activeProduct.winner_id === user?.id ? "🎉 ¡Ganaste!" : "Subasta cerrada"}
+                            {/* ─── Price + Bid Section ─── */}
+                            <div className="p-4 space-y-3">
+                                {/* Current price */}
+                                <div className="text-center">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Precio actual</p>
+                                    <p className="text-3xl font-black text-accent tabular-nums">
+                                        ${currentPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
-                            )}
+
+                                {/* Bid controls */}
+                                {countdown > 0 ? (
+                                    user ? (
+                                        <div className="space-y-2">
+                                            {/* Quick bid button */}
+                                            <button
+                                                onClick={() => placeBid()}
+                                                disabled={bidding}
+                                                className={`w-full font-black text-lg rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
+                                                    isCritical
+                                                        ? "bg-red-600 hover:bg-red-700 text-white py-4"
+                                                        : "bg-accent hover:bg-accent/90 text-accent-foreground py-3.5"
+                                                }`}
+                                            >
+                                                <Gavel className="h-5 w-5" />
+                                                Pujar ${nextBidAmount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                                            </button>
+
+                                            {/* Custom bid input */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min={nextBidAmount}
+                                                        value={customBidAmount}
+                                                        onChange={(e) => setCustomBidAmount(e.target.value)}
+                                                        placeholder={`Monto mayor a ${nextBidAmount.toFixed(2)}`}
+                                                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-accent tabular-nums"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const amt = parseFloat(customBidAmount);
+                                                        if (amt > currentPrice) placeBid(amt);
+                                                    }}
+                                                    disabled={bidding || !customBidAmount || parseFloat(customBidAmount) <= currentPrice}
+                                                    className="bg-white/10 hover:bg-white/20 text-foreground font-bold text-sm px-4 py-2.5 rounded-lg disabled:opacity-30 transition-all whitespace-nowrap"
+                                                >
+                                                    Ofertar
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground text-center">
+                                                Incremento mínimo: +${bidIncrement.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-3 bg-white/5 rounded-xl">
+                                            <a href="/auth" className="text-accent font-bold text-sm">Inicia sesión para pujar</a>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-center py-3 bg-white/5 rounded-xl">
+                                        <p className="text-sm font-bold text-foreground">
+                                            {activeProduct.winner_id === user?.id ? "🎉 ¡Ganaste!" : "Subasta cerrada"}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="p-6 border-b border-white/10 text-center">
