@@ -58,6 +58,14 @@ const ANTI_SNIPE_EXTENSION = 10;
 const DRAMATIC_THRESHOLD = 10;
 const CRITICAL_THRESHOLD = 5;
 
+/** Obfuscate name for public: "Mauro" → "M***o" */
+const obfuscateName = (name: string): string => {
+    if (!name || name.length <= 2) return name;
+    const first = name[0];
+    const last = name[name.length - 1];
+    return `${first}${'*'.repeat(Math.min(name.length - 2, 5))}${last}`;
+};
+
 /* ───────────────────────── Component ───────────────────────── */
 export default function LiveRoom() {
     const { eventId } = useParams<{ eventId: string }>();
@@ -427,7 +435,7 @@ export default function LiveRoom() {
                                         ${winnerOverlay.finalPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                                     </p>
                                     <p className="text-sm text-white/70">
-                                        Ganador: <span className="text-accent font-bold">{winnerOverlay.winnerName}</span>
+                                        Ganador: <span className="text-accent font-bold">{isDealer ? winnerOverlay.winnerName : obfuscateName(winnerOverlay.winnerName)}</span>
                                     </p>
                                 </div>
                             </div>
@@ -617,7 +625,7 @@ export default function LiveRoom() {
                                             <span className="truncate block">{p.product_title}</span>
                                             {p.status === "sold" && p.winner_id && (
                                                 <span className="text-[9px] text-green-400/70 block truncate">
-                                                    🏆 {winnerNames[p.winner_id] || p.winner_id.slice(0, 8)}
+                                                    🏆 {isDealer ? (winnerNames[p.winner_id] || p.winner_id.slice(0, 8)) : obfuscateName(winnerNames[p.winner_id] || p.winner_id.slice(0, 8))}
                                                 </span>
                                             )}
                                         </div>
