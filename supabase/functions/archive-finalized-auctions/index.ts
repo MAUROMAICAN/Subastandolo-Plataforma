@@ -17,7 +17,41 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const appUrl = "https://subastandolo.com";
 
-    // Find finalized auctions that don't have an archived_at yet
+    // ═══ STEP 0: Auto-finalize expired active auctions ═══
+    // Find auctions that are still 'active' but their end_time has passed
+    const now = new Date().toISOString();
+    const { data: expiredActive } = await supabase
+      .from("auctions")
+      .select("id, title")
+      .eq("status", "active")
+      .lt("end_time", now);
+
+    let autoFinalized = 0;
+    for (const auction of expiredActive || []) {
+      // Find the highest bid for this auction
+      const { data: topBid } = await supabase
+        .from("bids")
+        .select("bidder_id, bidder_name, amount")
+        .eq("auction_id", auction.id)
+        .order("amount", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Update auction status to finalized
+      const updateData: Record<string, any> = { status: "finalized" };
+      if (topBid) {
+        updateData.winner_id = topBid.bidder_id;
+        updateData.winner_name = topBid.bidder_name;
+        updateData.current_price = topBid.amount;
+      }
+      const { error: updateErr } = await supabase
+        .from("auctions")
+        .update(updateData)
+        .eq("id", auction.id);
+      if (!updateErr) autoFinalized++;
+    }
+
+    // ═══ STEP 1: Find finalized auctions without archived_at ═══
     // and notify their winners
     const { data: auctions, error } = await supabase
       .from("auctions")
@@ -110,7 +144,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ archived: auctions?.length || 0, winnersNotified: notified }),
+      JSON.stringify({ autoFinalized, archived: auctions?.length || 0, winnersNotified: notified }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
