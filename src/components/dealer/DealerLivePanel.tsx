@@ -9,7 +9,7 @@ import GoLiveWizard from "@/components/live/GoLiveWizard";
 import {
     Radio, Plus, Trash2, Play, Square, GripVertical,
     Loader2, Copy, ExternalLink, ImageIcon, Calendar,
-    Lock, Shield, AlertTriangle, Trophy,
+    Lock, Shield, AlertTriangle, Trophy, Phone, CheckCircle,
 } from "lucide-react";
 
 interface LiveEvent {
@@ -54,7 +54,14 @@ export default function DealerLivePanel({ dealer }: Props) {
     const [tab, setTab] = useState<"events" | "create">("events");
     const [liveAuthorized, setLiveAuthorized] = useState(false);
     const [showGoLive, setShowGoLive] = useState(false);
-    const [winnerProfiles, setWinnerProfiles] = useState<Record<string, { full_name: string; email?: string }>>({});
+    const [winnerProfiles, setWinnerProfiles] = useState<Record<string, { full_name: string; phone?: string | null }>>({});
+    const [copied, setCopied] = useState<string | null>(null);
+
+    const copyText = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(label);
+        setTimeout(() => setCopied(null), 2000);
+    };
 
     // Check if dealer has admin-granted live authorization
     useEffect(() => {
@@ -237,12 +244,12 @@ export default function DealerLivePanel({ dealer }: Props) {
 
         supabase
             .from("profiles")
-            .select("id, full_name")
+            .select("id, full_name, phone")
             .in("id", missingIds)
             .then(({ data }) => {
                 if (data) {
-                    const newProfiles: Record<string, { full_name: string }> = {};
-                    data.forEach((p: any) => { newProfiles[p.id] = { full_name: p.full_name || p.id.slice(0, 8) }; });
+                    const newProfiles: Record<string, { full_name: string; phone?: string | null }> = {};
+                    data.forEach((p: any) => { newProfiles[p.id] = { full_name: p.full_name || p.id.slice(0, 8), phone: p.phone || null }; });
                     setWinnerProfiles((prev) => ({ ...prev, ...newProfiles }));
                 }
             });
@@ -538,10 +545,26 @@ export default function DealerLivePanel({ dealer }: Props) {
                                                 💰 Vendido por ${(p.current_price || p.starting_price).toFixed(2)}
                                             </p>
                                             {p.winner_id && (
-                                                <p className="text-[10px] text-green-400/70 flex items-center gap-1">
-                                                    <Trophy className="h-3 w-3" />
-                                                    {winnerProfiles[p.winner_id]?.full_name || p.winner_id.slice(0, 12)}
-                                                </p>
+                                                <div className="bg-green-500/5 border border-green-500/10 rounded-lg p-2 mt-1.5 space-y-1">
+                                                    <p className="text-[9px] font-bold text-green-400 uppercase tracking-wider flex items-center gap-1">
+                                                        <Trophy className="h-3 w-3" /> Ganador
+                                                    </p>
+                                                    <p className="text-xs font-bold text-foreground">
+                                                        {winnerProfiles[p.winner_id]?.full_name || p.winner_id.slice(0, 12)}
+                                                    </p>
+                                                    {winnerProfiles[p.winner_id]?.phone && (
+                                                        <div className="flex items-center gap-1.5 text-[10px]">
+                                                            <Phone className="h-3 w-3 text-muted-foreground" />
+                                                            <span className="text-foreground">{winnerProfiles[p.winner_id]!.phone}</span>
+                                                            <button
+                                                                onClick={() => copyText(winnerProfiles[p.winner_id]!.phone!, `p-${p.id}`)}
+                                                                className="text-muted-foreground hover:text-accent"
+                                                            >
+                                                                {copied === `p-${p.id}` ? <CheckCircle className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -745,6 +768,138 @@ export default function DealerLivePanel({ dealer }: Props) {
                     ))}
                 </div>
             )}
+
+            {/* ═══ Mis Ventas Live — consolidated view ═══ */}
+            <DealerLiveSalesSummary userId={user?.id || ""} copyText={copyText} copied={copied} />
+        </div>
+    );
+}
+
+/* ── Dealer Live Sales Summary ── */
+function DealerLiveSalesSummary({ userId, copyText, copied }: {
+    userId: string;
+    copyText: (text: string, label: string) => void;
+    copied: string | null;
+}) {
+    const [soldItems, setSoldItems] = useState<any[]>([]);
+    const [buyerProfiles, setBuyerProfiles] = useState<Record<string, { full_name: string; phone: string | null }>>({});
+    const [loadingSales, setLoadingSales] = useState(true);
+
+    useEffect(() => {
+        if (!userId) return;
+        const load = async () => {
+            setLoadingSales(true);
+            // Find all events by this dealer
+            const { data: myEvents } = await supabase
+                .from("live_events")
+                .select("id, title")
+                .eq("dealer_id", userId);
+            if (!myEvents || myEvents.length === 0) { setLoadingSales(false); return; }
+
+            const eventIds = myEvents.map((e: any) => e.id);
+            const eventMap: Record<string, string> = {};
+            myEvents.forEach((e: any) => { eventMap[e.id] = e.title; });
+
+            // Fetch sold products
+            const { data: soldProducts } = await supabase
+                .from("live_event_products")
+                .select("*")
+                .in("event_id", eventIds)
+                .eq("status", "sold")
+                .order("ended_at", { ascending: false });
+
+            const items = (soldProducts || []).map((p: any) => ({
+                ...p,
+                event_title: eventMap[p.event_id] || "Evento",
+            }));
+            setSoldItems(items);
+
+            // Fetch buyer profiles
+            const winnerIds = [...new Set(items.map((p: any) => p.winner_id).filter(Boolean))];
+            if (winnerIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from("profiles")
+                    .select("id, full_name, phone")
+                    .in("id", winnerIds);
+                const map: Record<string, { full_name: string; phone: string | null }> = {};
+                (profiles || []).forEach((p: any) => {
+                    map[p.id] = { full_name: p.full_name || p.id.slice(0, 8), phone: p.phone || null };
+                });
+                setBuyerProfiles(map);
+            }
+            setLoadingSales(false);
+        };
+        load();
+    }, [userId]);
+
+    if (loadingSales) {
+        return (
+            <div className="mt-6 flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (soldItems.length === 0) return null;
+
+    const totalRevenue = soldItems.reduce((sum: number, p: any) => sum + (p.current_price || p.starting_price), 0);
+
+    return (
+        <div className="mt-6 bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-border bg-gradient-to-r from-emerald-500/10 to-transparent">
+                <h3 className="font-heading font-bold text-foreground flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-emerald-400" />
+                    Mis Ventas Live
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                    {soldItems.length} producto{soldItems.length !== 1 ? "s" : ""} vendido{soldItems.length !== 1 ? "s" : ""} · Total: <span className="text-emerald-400 font-bold">${totalRevenue.toFixed(2)}</span>
+                </p>
+            </div>
+            <div className="divide-y divide-border">
+                {soldItems.map((item: any) => {
+                    const buyer = item.winner_id ? buyerProfiles[item.winner_id] : null;
+                    return (
+                        <div key={item.id} className="p-4 space-y-2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-foreground truncate">{item.product_title}</p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        {item.event_title} · {item.ended_at ? new Date(item.ended_at).toLocaleDateString("es-VE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                                    </p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-sm font-black text-emerald-400 tabular-nums">
+                                        ${(item.current_price || item.starting_price).toFixed(2)}
+                                    </p>
+                                    <p className="text-[9px] text-muted-foreground">Precio final</p>
+                                </div>
+                            </div>
+                            {buyer && (
+                                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-2.5 ml-5 space-y-1">
+                                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Comprador</p>
+                                    <p className="text-xs font-bold text-foreground">{buyer.full_name}</p>
+                                    {buyer.phone && (
+                                        <div className="flex items-center gap-1.5 text-[10px]">
+                                            <Phone className="h-3 w-3 text-muted-foreground" />
+                                            <span className="text-foreground">{buyer.phone}</span>
+                                            <button
+                                                onClick={() => copyText(buyer.phone!, `sale-${item.id}`)}
+                                                className="text-muted-foreground hover:text-accent"
+                                            >
+                                                {copied === `sale-${item.id}` ? <CheckCircle className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {!buyer.phone && (
+                                        <p className="text-[10px] text-muted-foreground italic">Sin teléfono registrado</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
