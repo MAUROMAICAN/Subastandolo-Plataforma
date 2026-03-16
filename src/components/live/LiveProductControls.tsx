@@ -361,24 +361,43 @@ export default function LiveProductControls({ eventId }: Props) {
                         </div>
                     )}
 
-                    {/* Completed products summary */}
+                    {/* Completed products with winner details */}
                     {completedProducts.length > 0 && (
                         <div className="p-3 border-t border-border">
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">
                                 Completados ({completedProducts.length})
                             </p>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="space-y-1.5">
                                 {completedProducts.map((p) => (
-                                    <span
+                                    <div
                                         key={p.id}
-                                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                        className={`p-2 rounded-lg text-xs ${
                                             p.status === "sold"
-                                                ? "bg-green-500/10 text-green-400"
-                                                : "bg-secondary/50 text-muted-foreground"
+                                                ? "bg-green-500/10 border border-green-500/20"
+                                                : "bg-secondary/30 border border-border"
                                         }`}
                                     >
-                                        {p.status === "sold" ? "✅" : "⏭️"} {p.product_title}
-                                    </span>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`font-bold truncate ${
+                                                p.status === "sold" ? "text-green-400" : "text-muted-foreground"
+                                            }`}>
+                                                {p.status === "sold" ? "✅" : "⏭️"} {p.product_title}
+                                            </span>
+                                            <span className="font-black tabular-nums ml-2 shrink-0 text-foreground">
+                                                ${(p.current_price || p.starting_price).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        {p.status === "sold" && p.winner_id && (
+                                            <p className="text-[10px] text-green-400/70 mt-0.5">
+                                                🏆 Ganador: {p.winner_id.slice(0, 12)}...
+                                            </p>
+                                        )}
+                                        {p.status === "sold" && (
+                                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                                {bidCounts[p.id] || 0} pujas
+                                            </p>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>

@@ -9,7 +9,7 @@ import LiveBidPanel from "@/components/live/LiveBidPanel";
 import {
     Loader2, ShieldCheck, Star, Store, Radio, Users,
     Send, ChevronLeft, Gavel, Timer, MessageCircle,
-    ChevronDown, ChevronUp,
+    ChevronDown, ChevronUp, Trophy, Crown,
 } from "lucide-react";
 
 /* ───────────────────────── Types ───────────────────────── */
@@ -55,6 +55,8 @@ interface ChatMessage {
 
 const ANTI_SNIPE_THRESHOLD = 15;
 const ANTI_SNIPE_EXTENSION = 10;
+const DRAMATIC_THRESHOLD = 10;
+const CRITICAL_THRESHOLD = 5;
 
 /* ───────────────────────── Component ───────────────────────── */
 export default function LiveRoom() {
@@ -84,6 +86,11 @@ export default function LiveRoom() {
     const [mobileTab, setMobileTab] = useState<"chat" | "products">("chat");
     const [showSidebar, setShowSidebar] = useState(false);
 
+    // Winner overlay
+    const [winnerOverlay, setWinnerOverlay] = useState<{ productTitle: string; winnerName: string; finalPrice: number; isMe: boolean } | null>(null);
+    const [winnerNames, setWinnerNames] = useState<Record<string, string>>({});
+    const prevActiveProductId = useRef<string | null>(null);
+
     const activeProduct = products.find((p) => p.status === "active") || null;
     const currentPrice = activeProduct?.current_price || activeProduct?.starting_price || 0;
     const bidIncrement = currentPrice < 10 ? 1 : currentPrice < 100 ? 5 : currentPrice < 500 ? 10 : 25;
@@ -105,6 +112,53 @@ export default function LiveRoom() {
         const interval = setInterval(tick, 250);
         return () => clearInterval(interval);
     }, [activeProduct?.ends_at, activeProduct?.started_at, activeProduct?.status]);
+
+    /* ─── Winner detection & overlay ─── */
+    useEffect(() => {
+        const soldProducts = products.filter((p) => p.status === "sold" && p.winner_id);
+        if (soldProducts.length === 0) return;
+
+        // Fetch winner names for all sold products
+        const fetchWinnerNames = async () => {
+            const winnerIds = [...new Set(soldProducts.map((p) => p.winner_id!).filter(Boolean))];
+            const missingIds = winnerIds.filter((id) => !winnerNames[id]);
+            if (missingIds.length === 0) return;
+
+            const { data: profiles } = await supabase
+                .from("profiles")
+                .select("id, full_name")
+                .in("id", missingIds);
+            if (profiles) {
+                const newNames: Record<string, string> = {};
+                profiles.forEach((p: any) => { newNames[p.id] = p.full_name || p.id.slice(0, 8); });
+                setWinnerNames((prev) => ({ ...prev, ...newNames }));
+            }
+        };
+        fetchWinnerNames();
+    }, [products]);
+
+    // Show winner overlay when a product transitions from active to sold
+    useEffect(() => {
+        if (activeProduct) {
+            prevActiveProductId.current = activeProduct.id;
+            return;
+        }
+        // No active product — check if one just got sold
+        if (prevActiveProductId.current) {
+            const justSold = products.find((p) => p.id === prevActiveProductId.current && p.status === "sold");
+            if (justSold) {
+                const winnerName = justSold.winner_id ? (winnerNames[justSold.winner_id] || justSold.winner_id.slice(0, 8)) : "Desconocido";
+                setWinnerOverlay({
+                    productTitle: justSold.product_title,
+                    winnerName,
+                    finalPrice: justSold.current_price || justSold.starting_price,
+                    isMe: justSold.winner_id === user?.id,
+                });
+                setTimeout(() => setWinnerOverlay(null), 6000);
+            }
+            prevActiveProductId.current = null;
+        }
+    }, [activeProduct, products]);
 
     /* ─── Load data ─── */
     useEffect(() => {
@@ -257,12 +311,41 @@ export default function LiveRoom() {
     const isEnded = event.status === "ended";
     const isDealer = user && event.dealer_id === user.id;
     const showLiveKit = isLive && livekitToken && livekitUrl && !isDealer;
-    const countdownColor = countdown <= 5 ? "text-red-500" : countdown <= ANTI_SNIPE_THRESHOLD ? "text-amber-400" : "text-white";
+    const isDramatic = countdown > 0 && countdown <= DRAMATIC_THRESHOLD;
+    const isCritical = countdown > 0 && countdown <= CRITICAL_THRESHOLD;
+    const countdownColor = isCritical ? "text-red-500" : isDramatic ? "text-amber-400" : "text-white";
     const visibleChat = chatMessages.filter((m) => !m.is_hidden);
 
     /* ═══════════════════════════ RENDER ═══════════════════════════ */
     return (
         <div className="min-h-screen bg-black flex flex-col">
+            {/* CSS animations for dramatic countdown */}
+            <style>{`
+                @keyframes heartbeat {
+                    0%, 100% { transform: scale(1); }
+                    25% { transform: scale(1.2); }
+                    50% { transform: scale(1); }
+                    75% { transform: scale(1.15); }
+                }
+                @keyframes pulse-glow {
+                    0%, 100% { opacity: 0.3; }
+                    50% { opacity: 0.7; }
+                }
+                @keyframes winner-entrance {
+                    0% { transform: scale(0.7); opacity: 0; }
+                    60% { transform: scale(1.08); opacity: 1; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 50%, 90% { transform: translateX(-2px); }
+                    30%, 70% { transform: translateX(2px); }
+                }
+                .animate-heartbeat { animation: heartbeat 0.6s ease-in-out infinite; }
+                .animate-pulse-glow { animation: pulse-glow 1s ease-in-out infinite; }
+                .animate-winner { animation: winner-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+                .animate-shake { animation: shake 0.3s ease-in-out; }
+            `}</style>
             {/* ─── Top bar ─── */}
             <div className="bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
@@ -314,6 +397,39 @@ export default function LiveRoom() {
                                     {isDealer ? "Transmitiendo desde el wizard" : isLive ? "Conectando..." : isEnded ? "Transmisión finalizada" : "Esperando..."}
                                 </p>
                                 {livekitError && <p className="text-red-400 text-xs">{livekitError}</p>}
+                            </div>
+                        )}
+
+                        {/* ─── Critical countdown screen edge glow ─── */}
+                        {isCritical && (
+                            <div className="absolute inset-0 pointer-events-none z-10 animate-pulse-glow" style={{
+                                boxShadow: "inset 0 0 80px rgba(239,68,68,0.4), inset 0 0 120px rgba(239,68,68,0.2)",
+                                borderRadius: "inherit",
+                            }} />
+                        )}
+
+                        {/* ─── Winner announcement overlay ─── */}
+                        {winnerOverlay && (
+                            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                                <div className="animate-winner text-center px-6">
+                                    <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
+                                        {winnerOverlay.isMe ? (
+                                            <Crown className="h-8 w-8 text-yellow-400" />
+                                        ) : (
+                                            <Trophy className="h-8 w-8 text-accent" />
+                                        )}
+                                    </div>
+                                    <h2 className="text-3xl font-black text-white mb-1">
+                                        {winnerOverlay.isMe ? "🎉 ¡GANASTE!" : "🔨 ¡VENDIDO!"}
+                                    </h2>
+                                    <p className="text-lg text-accent font-bold mb-1">{winnerOverlay.productTitle}</p>
+                                    <p className="text-4xl font-black text-white tabular-nums mb-2">
+                                        ${winnerOverlay.finalPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                                    </p>
+                                    <p className="text-sm text-white/70">
+                                        Ganador: <span className="text-accent font-bold">{winnerOverlay.winnerName}</span>
+                                    </p>
+                                </div>
                             </div>
                         )}
 
@@ -386,7 +502,20 @@ export default function LiveRoom() {
 
                     {/* Active product + bid */}
                     {activeProduct ? (
-                        <div className="p-4 border-b border-white/10 space-y-3">
+                        <div className={`p-4 border-b border-white/10 space-y-3 transition-all ${
+                            isCritical ? "bg-red-950/30" : isDramatic ? "bg-amber-950/20" : ""
+                        }`}>
+                            {/* ─── Dramatic header when ≤10s ─── */}
+                            {isDramatic && (
+                                <div className={`text-center py-1 rounded-lg text-xs font-black tracking-wider uppercase ${
+                                    isCritical
+                                        ? "bg-red-500/20 text-red-400 animate-pulse"
+                                        : "bg-amber-500/20 text-amber-400"
+                                }`}>
+                                    {isCritical ? "🔥 ¡ÚLTIMOS SEGUNDOS!" : "⚡ ¡Se acaba el tiempo!"}
+                                </div>
+                            )}
+
                             {/* Product title + countdown */}
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
@@ -394,7 +523,9 @@ export default function LiveRoom() {
                                     <h3 className="font-bold text-foreground text-sm truncate">{activeProduct.product_title}</h3>
                                 </div>
                                 <div className="text-right shrink-0 ml-3">
-                                    <span className={`text-2xl font-black tabular-nums ${countdownColor}`}>
+                                    <span className={`font-black tabular-nums ${countdownColor} ${
+                                        isCritical ? "text-4xl animate-heartbeat" : isDramatic ? "text-3xl" : "text-2xl"
+                                    }`}>
                                         {countdown}s
                                     </span>
                                     {countdown <= ANTI_SNIPE_THRESHOLD && countdown > 0 && (
@@ -404,10 +535,12 @@ export default function LiveRoom() {
                             </div>
 
                             {/* Countdown bar */}
-                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div className={`w-full rounded-full overflow-hidden ${
+                                isCritical ? "h-2.5" : "h-1.5"
+                            } bg-white/10`}>
                                 <div
                                     className={`h-full rounded-full transition-all duration-250 ${
-                                        countdown <= 5 ? "bg-red-500" : countdown <= ANTI_SNIPE_THRESHOLD ? "bg-amber-500" : "bg-accent"
+                                        isCritical ? "bg-red-500 animate-pulse" : isDramatic ? "bg-amber-500" : "bg-accent"
                                     }`}
                                     style={{ width: `${Math.min(100, (countdown / (activeProduct.countdown_seconds || 60)) * 100)}%` }}
                                 />
@@ -416,7 +549,9 @@ export default function LiveRoom() {
                             {/* Price */}
                             <div className="text-center py-2">
                                 <p className="text-xs text-muted-foreground">Precio actual</p>
-                                <p className="text-3xl font-black text-accent tabular-nums">
+                                <p className={`font-black text-accent tabular-nums ${
+                                    isCritical ? "text-4xl" : "text-3xl"
+                                }`}>
                                     ${currentPrice.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -430,10 +565,16 @@ export default function LiveRoom() {
                                     <button
                                         onClick={placeBid}
                                         disabled={bidding}
-                                        className="w-full bg-accent text-accent-foreground font-black text-lg py-3.5 rounded-xl hover:bg-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                                        className={`w-full text-accent-foreground font-black text-lg rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
+                                            isCritical
+                                                ? "bg-red-500 hover:bg-red-600 py-4 text-xl animate-pulse"
+                                                : isDramatic
+                                                ? "bg-amber-500 hover:bg-amber-600 py-4"
+                                                : "bg-accent hover:bg-accent/90 py-3.5"
+                                        }`}
                                     >
-                                        <Gavel className="h-5 w-5" />
-                                        Pujar ${nextBidAmount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                                        <Gavel className={isCritical ? "h-6 w-6" : "h-5 w-5"} />
+                                        {isCritical ? "¡PUJAR AHORA!" : "Pujar"} ${nextBidAmount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                                     </button>
                                 ) : (
                                     <div className="text-center py-2">
@@ -463,17 +604,24 @@ export default function LiveRoom() {
                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
                                 Productos ({soldCount}/{products.length})
                             </p>
-                            <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                            <div className="space-y-1 max-h-[180px] overflow-y-auto">
                                 {products.map((p, i) => (
                                     <div key={p.id} className={`flex items-center gap-2 py-1.5 px-2 rounded text-xs ${
                                         p.status === "active" ? "bg-accent/10 text-accent font-bold" :
-                                        p.status === "sold" ? "text-green-400 opacity-60" :
+                                        p.status === "sold" ? "text-green-400" :
                                         p.status === "unsold" || p.status === "skipped" ? "text-muted-foreground opacity-40 line-through" :
                                         "text-foreground"
                                     }`}>
                                         <span className="w-4 text-center font-bold text-muted-foreground">{i + 1}</span>
-                                        <span className="flex-1 truncate">{p.product_title}</span>
-                                        <span className="shrink-0 tabular-nums">
+                                        <div className="flex-1 min-w-0">
+                                            <span className="truncate block">{p.product_title}</span>
+                                            {p.status === "sold" && p.winner_id && (
+                                                <span className="text-[9px] text-green-400/70 block truncate">
+                                                    🏆 {winnerNames[p.winner_id] || p.winner_id.slice(0, 8)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="shrink-0 tabular-nums font-bold">
                                             ${(p.current_price || p.starting_price).toFixed(2)}
                                         </span>
                                         {p.status === "active" && <span className="text-[9px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">EN VIVO</span>}
