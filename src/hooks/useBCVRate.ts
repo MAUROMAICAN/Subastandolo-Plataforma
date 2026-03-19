@@ -37,7 +37,15 @@ export function useBCVRate(): number | null {
                     const data = await res.json();
                     const value = ep.extract(data);
                     if (value && !isNaN(Number(value))) {
-                        setApiRate(Number(value));
+                        const rate = Number(value);
+                        setApiRate(rate);
+                        // Persist to site_settings so all clients get the update via realtime
+                        try {
+                            await supabase.from("site_settings").upsert(
+                                { setting_key: "bcv_rate", setting_value: String(rate) },
+                                { onConflict: "setting_key" }
+                            );
+                        } catch { /* best effort */ }
                         return;
                     }
                 } catch { /* try next */ }
