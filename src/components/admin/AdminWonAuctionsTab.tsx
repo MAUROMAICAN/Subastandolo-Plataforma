@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ type SortDir = "asc" | "desc";
 const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalSearch = "" }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Filters
   const [search, setSearch] = useState("");
@@ -61,8 +63,10 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalS
   const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
 
   // Show auctions that have a winner AND are either finalized or expired (end_time passed but status stuck as "active")
+  // Also include finalized auctions with bids but missing winner_id (auto-finalization may have failed)
   const wonAuctions = useMemo(() => auctions.filter(a =>
-    !!a.winner_id && (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
+    (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())) &&
+    (!!a.winner_id || a.bids_count > 0)
   ), [auctions]);
 
   // Auctions that finalized without any bids
@@ -614,12 +618,17 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalS
                                   className="text-xs h-8 rounded-sm w-full gap-2"
                                   onClick={async () => {
                                     if (!confirm("¿Marcar esta subasta como ABANDONADA? Se notificará al comprador y al dealer.")) return;
-                                    await supabase.from("auctions").update({ payment_status: "abandoned" } as any).eq("id", a.id);
+                                    const { error } = await supabase.from("auctions").update({ payment_status: "abandoned" } as any).eq("id", a.id);
+                                    if (error) {
+                                      console.error("Error marking as abandoned:", error);
+                                      toast({ title: "Error", description: error.message || "No se pudo marcar como abandonada", variant: "destructive" });
+                                      return;
+                                    }
                                     supabase.functions.invoke("notify-payment-abandoned", {
                                       body: { auctionId: a.id, auctionTitle: a.title, buyerId: a.winner_id, dealerId: a.created_by, finalPrice: a.current_price },
                                     }).catch(() => { });
                                     toast({ title: "Subasta marcada como abandonada", description: "Se notificó al comprador y al dealer." });
-                                    window.location.reload();
+                                    queryClient.invalidateQueries();
                                   }}
                                 >
                                   <XCircle className="h-3.5 w-3.5" /> Marcar como Abandonada

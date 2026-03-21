@@ -183,6 +183,39 @@ const Admin = () => {
       bids_count: bidsCountMap[a.id] || 0,
     }));
 
+    // ═══ Auto-repair: backfill winner_id for finalized auctions with bids but no winner ═══
+    const orphanedWon = enriched.filter(a =>
+      !a.winner_id && a.bids_count > 0 &&
+      (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
+    );
+    for (const auction of orphanedWon) {
+      try {
+        const { data: topBid } = await supabase
+          .from("bids")
+          .select("bidder_id, bidder_name, amount")
+          .eq("auction_id", auction.id)
+          .order("amount", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (topBid) {
+          await supabase.from("auctions").update({
+            winner_id: topBid.bidder_id,
+            winner_name: topBid.bidder_name,
+            current_price: topBid.amount,
+            status: "finalized",
+          }).eq("id", auction.id);
+          // Update local data so UI reflects immediately
+          auction.winner_id = topBid.bidder_id;
+          auction.winner_name = topBid.bidder_name;
+          auction.current_price = topBid.amount;
+          auction.status = "finalized";
+          console.log(`[Auto-repair] Fixed winner for auction "${auction.title}" → ${topBid.bidder_name}`);
+        }
+      } catch (e) {
+        console.error(`[Auto-repair] Failed for auction ${auction.id}:`, e);
+      }
+    }
+
     setAuctions(enriched);
     setBanners((bannersRes.data as BannerImage[]) || []);
     setDealerApps(appsRes.data || []);
@@ -194,7 +227,7 @@ const Admin = () => {
     ((settingsRes.data || []) as SiteSetting[]).forEach(s => { editMap[s.setting_key] = s.setting_value || ""; });
     setEditingSettings(editMap);
 
-    const winnerIds = auctionList.filter(a => a.winner_id).map(a => a.winner_id!);
+    const winnerIds = enriched.filter(a => a.winner_id).map(a => a.winner_id!);
 
     // Fetch emails first so we can include them in winnerProfiles
     let emailMap: Record<string, string> = {};
