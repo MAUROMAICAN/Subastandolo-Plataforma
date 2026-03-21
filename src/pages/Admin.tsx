@@ -184,9 +184,9 @@ const Admin = () => {
     }));
 
     // ═══ Auto-repair: backfill winner_id for finalized auctions with bids but no winner ═══
+    // ONLY applies to auctions that are already 'finalized' — NOT expired active ones.
     const orphanedWon = enriched.filter(a =>
-      !a.winner_id && a.bids_count > 0 &&
-      (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
+      !a.winner_id && a.bids_count > 0 && a.status === "finalized"
     );
     for (const auction of orphanedWon) {
       try {
