@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isServiceRoleOrAdmin, unauthorized } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // ── Auth guard: only service role or admin can release funds ──
+  if (!await isServiceRoleOrAdmin(req)) return unauthorized(corsHeaders);
 
   try {
     const supabaseAdmin = createClient(

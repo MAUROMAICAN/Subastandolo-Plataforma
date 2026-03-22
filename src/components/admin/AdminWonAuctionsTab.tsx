@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,17 +23,16 @@ interface Props {
   auctions: AuctionExtended[];
   winnerProfiles: Record<string, WinnerInfo>;
   dealerProfiles: Record<string, WinnerInfo>;
-  paymentProofs: any[];
-  globalSearch?: string;
+  fetchAllData: () => void;
+  globalSearch: string;
 }
 
 type SortField = "end_time" | "current_price" | "title";
 type SortDir = "asc" | "desc";
 
-const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalSearch = "" }: Props) => {
+const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, fetchAllData, globalSearch }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Filters
   const [search, setSearch] = useState("");
@@ -62,18 +61,19 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalS
   const [sendingShipReminder, setSendingShipReminder] = useState<string | null>(null);
   const [sendingShipNotification, setSendingShipNotification] = useState<string | null>(null);
 
-  // Show auctions that have a winner AND are either finalized or expired (end_time passed but status stuck as "active")
-  // Also include finalized auctions with bids but missing winner_id (auto-finalization may have failed)
-  const wonAuctions = useMemo(() => auctions.filter(a =>
-    (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now())) &&
-    (!!a.winner_id || a.bids_count > 0)
-  ), [auctions]);
+  // Show ONLY auctions that are CONFIRMED finalized WITH a winner.
+  // NEVER show active or expired-but-not-finalized auctions here — they cause ghost entries.
+  // The auto-repair in Admin.tsx will formalize them on next load.
+  const wonAuctions = useMemo(() =>
+    auctions.filter(a => !!a.winner_id && a.status === "finalized")
+  , [auctions]);
 
-  // Auctions that finalized without any bids
-  const noBidAuctions = useMemo(() => auctions.filter(a =>
-    !a.winner_id && a.bids_count === 0 &&
-    (a.status === "finalized" || (a.status === "active" && new Date(a.end_time).getTime() <= Date.now()))
-  ), [auctions]);
+  // Auctions that were finalized WITHOUT any bids (truly expired with no participants)
+  const noBidAuctions = useMemo(() =>
+    auctions.filter(a =>
+      !a.winner_id && a.bids_count === 0 && a.status === "finalized"
+    )
+  , [auctions]);
 
   // Filtered & sorted
   const filtered = useMemo(() => {
@@ -628,7 +628,7 @@ const AdminWonAuctionsTab = ({ auctions, winnerProfiles, dealerProfiles, globalS
                                       body: { auctionId: a.id, auctionTitle: a.title, buyerId: a.winner_id, dealerId: a.created_by, finalPrice: a.current_price },
                                     }).catch(() => { });
                                     toast({ title: "Subasta marcada como abandonada", description: "Se notificó al comprador y al dealer." });
-                                    queryClient.invalidateQueries();
+                                    fetchAllData();
                                   }}
                                 >
                                   <XCircle className="h-3.5 w-3.5" /> Marcar como Abandonada

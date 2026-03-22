@@ -227,9 +227,20 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
       toast({ title: "Falta el comprobante", description: "Por favor selecciona el archivo nuevamente.", variant: "destructive" });
       return;
     }
+    
+    if (!reference.trim() || reference.trim().length < 4) {
+      toast({ title: "Referencia requerida", description: "Por favor ingresa un número de referencia válido (mínimo 4 caracteres).", variant: "destructive", duration: 5000 });
+      return;
+    }
+
+    const currentRate = bcvRate || 0;
+    if (currentRate <= 0) {
+      toast({ title: "Falta tasa BCV", description: "No se puede procesar el pago sin una tasa BCV válida. Por favor, reintenta obtener la tasa.", variant: "destructive", duration: 5000 });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const currentRate = bcvRate || 0;
 
       const ext = fileToUpload.name.split(".").pop();
       const filePath = `${userId}/${auctionId}-${Date.now()}.${ext}`;
@@ -501,9 +512,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
               </p>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-amber-600 dark:text-amber-400 flex-1">⚠️ No se pudo obtener la tasa BCV. Puedes enviar tu comprobante de todas formas.</p>
-              <button onClick={loadRate} className="shrink-0 text-xs font-bold text-primary dark:text-accent underline">Reintentar</button>
+            <div className="flex items-center gap-2 bg-destructive/10 text-destructive rounded-xl p-3 border border-destructive/20">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <p className="text-xs flex-1">Es necesario obtener la tasa BCV oficial para calcular el monto en Bolívares antes de reportar el pago.</p>
+              <Button size="sm" onClick={loadRate} variant="outline" className="shrink-0 h-8 font-bold border-destructive text-destructive hover:bg-destructive hover:text-white">Reintentar</Button>
             </div>
           )}
 
@@ -539,7 +551,10 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground dark:text-white">Número de Referencia (Opcional)</label>
+            <label className="text-xs font-semibold text-foreground dark:text-white flex items-center justify-between">
+              <span>Número de Referencia</span>
+              <span className="text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">* Obligatorio (mín. 4 dígitos)</span>
+            </label>
             <Input
               placeholder="Ej: 00123456789"
               value={reference}
@@ -594,8 +609,8 @@ const PaymentFlow = ({ auctionId, amountUsd, userId, showCommission = false, bat
 
           <Button
             onClick={handleSubmit}
-            disabled={submitting || (!proofFile && !fileInputRef.current?.files?.length)}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black rounded-xl h-11 text-sm shadow-md"
+            disabled={submitting || (!proofFile && !fileInputRef.current?.files?.length) || !bcvRate || reference.trim().length < 4}
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-black rounded-xl h-11 text-sm shadow-md disabled:opacity-50"
           >
             {submitting
               ? <Loader2 className="h-4 w-4 animate-spin mr-2" />

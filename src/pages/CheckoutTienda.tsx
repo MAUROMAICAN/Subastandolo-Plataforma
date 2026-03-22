@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,9 +68,10 @@ export default function CheckoutTienda() {
             }
             setProduct(prodData);
 
-            // Fetch seller name
-            if (prodData.seller_id) {
-                const { data: sp } = await supabase.from("profiles").select("full_name").eq("id", prodData.seller_id).single();
+            // Fetch seller name — marketplace_products has both seller_id and dealer_id (synced)
+            const ownerId = (prodData as any).seller_id || prodData.dealer_id;
+            if (ownerId) {
+                const { data: sp } = await supabase.from("profiles").select("full_name").eq("id", ownerId).single();
                 if (sp) setSellerName((sp as any).full_name || "Vendedor");
             }
 
@@ -118,6 +119,11 @@ export default function CheckoutTienda() {
             return;
         }
 
+        if (paymentRef && paymentRef.trim().length < 4) {
+            toast({ title: "Referencia inválida", description: "El número de referencia debe tener al menos 4 caracteres.", variant: "destructive" });
+            return;
+        }
+
         setSubmitting(true);
         try {
             // Security: Validate price server-side in a real world app via edge functions.
@@ -161,13 +167,15 @@ export default function CheckoutTienda() {
 
             // Notify dealer about the new order
             if (product.dealer_id) {
-                await supabase.from("notifications").insert({
-                    user_id: product.dealer_id,
-                    title: "🛍️ ¡Nueva venta en tu tienda!",
-                    message: `Compraron "${product.title}" por $${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}. Revisa tu panel de ventas.`,
-                    type: "marketplace_sale",
-                    link: "/panel-dealer"
-                } as any);
+                try {
+                    await supabase.from("notifications").insert({
+                        user_id: product.dealer_id,
+                        title: "🛍️ ¡Nueva venta en tu tienda!",
+                        message: `Compraron "${product.title}" por $${totalToPay.toLocaleString("es-MX", { minimumFractionDigits: 2 })}. Revisa tu panel de ventas.`,
+                        type: "marketplace_sale",
+                        link: "/panel-dealer"
+                    } as any);
+                } catch { /* silent: notification failure must not block the order */ }
             }
 
             // Update user profile location if missing
@@ -288,7 +296,7 @@ export default function CheckoutTienda() {
                                     {/* Payment Proof */}
                                     <div className="space-y-4 pt-2 border-t border-border/50">
                                         <div className="space-y-2">
-                                            <Label className="font-bold">NÃºmero de Referencia</Label>
+                                            <Label className="font-bold">Número de Referencia <span className="text-destructive text-xs">(mín. 4 dígitos)</span></Label>
                                             <Input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Ej. 09483321" className="bg-secondary/20" />
                                         </div>
 

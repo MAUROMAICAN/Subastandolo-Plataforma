@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isServiceRoleOrAdmin, unauthorized } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,9 @@ const corsHeaders = {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // ── Auth guard: only service role or admin can trigger archiving ──
+  if (!await isServiceRoleOrAdmin(req)) return unauthorized(corsHeaders);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -31,7 +35,7 @@ Deno.serve(async (req: Request) => {
       // Find the highest bid for this auction
       const { data: topBid } = await supabase
         .from("bids")
-        .select("bidder_id, bidder_name, amount")
+        .select("user_id, bidder_name, amount")
         .eq("auction_id", auction.id)
         .order("amount", { ascending: false })
         .limit(1)
@@ -40,7 +44,7 @@ Deno.serve(async (req: Request) => {
       // Update auction status to finalized
       const updateData: Record<string, any> = { status: "finalized" };
       if (topBid) {
-        updateData.winner_id = topBid.bidder_id;
+        updateData.winner_id = topBid.user_id;
         updateData.winner_name = topBid.bidder_name;
         updateData.current_price = topBid.amount;
       }

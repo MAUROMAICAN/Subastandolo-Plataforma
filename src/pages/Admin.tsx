@@ -183,8 +183,7 @@ const Admin = () => {
       bids_count: bidsCountMap[a.id] || 0,
     }));
 
-    // ═══ Auto-repair: backfill winner_id for finalized auctions with bids but no winner ═══
-    // ONLY applies to auctions that are already 'finalized' — NOT expired active ones.
+    // ═══ Auto-repair Phase 1: finalized auctions missing winner_id ═══
     const orphanedWon = enriched.filter(a =>
       !a.winner_id && a.bids_count > 0 && a.status === "finalized"
     );
@@ -192,27 +191,61 @@ const Admin = () => {
       try {
         const { data: topBid } = await supabase
           .from("bids")
-          .select("bidder_id, bidder_name, amount")
+          .select("user_id, bidder_name, amount")
           .eq("auction_id", auction.id)
           .order("amount", { ascending: false })
           .limit(1)
           .maybeSingle();
         if (topBid) {
           await supabase.from("auctions").update({
-            winner_id: topBid.bidder_id,
+            winner_id: topBid.user_id,
             winner_name: topBid.bidder_name,
             current_price: topBid.amount,
             status: "finalized",
           }).eq("id", auction.id);
-          // Update local data so UI reflects immediately
-          auction.winner_id = topBid.bidder_id;
+          auction.winner_id = topBid.user_id;
           auction.winner_name = topBid.bidder_name;
           auction.current_price = topBid.amount;
           auction.status = "finalized";
-          console.log(`[Auto-repair] Fixed winner for auction "${auction.title}" → ${topBid.bidder_name}`);
+          console.log(`[Auto-repair P1] Fixed winner for "${auction.title}" → ${topBid.bidder_name}`);
         }
       } catch (e) {
-        console.error(`[Auto-repair] Failed for auction ${auction.id}:`, e);
+        console.error(`[Auto-repair P1] Failed for ${auction.id}:`, e);
+      }
+    }
+
+    // ═══ Auto-repair Phase 2: active auctions that EXPIRED but were never closed ═══
+    // These cause "ghost" entries — they have winner_id but status=active, so the panel
+    // was showing them as incomplete. We close them properly here.
+    const expiredActive = enriched.filter(a =>
+      a.status === "active" && new Date(a.end_time).getTime() <= Date.now()
+    );
+    for (const auction of expiredActive) {
+      try {
+        const { data: topBid } = await supabase
+          .from("bids")
+          .select("user_id, bidder_name, amount")
+          .eq("auction_id", auction.id)
+          .order("amount", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const updatePayload: Record<string, any> = { status: "finalized" };
+        if (topBid) {
+          updatePayload.winner_id = topBid.user_id;
+          updatePayload.winner_name = topBid.bidder_name;
+          updatePayload.current_price = topBid.amount;
+        }
+        await supabase.from("auctions").update(updatePayload).eq("id", auction.id);
+        auction.status = "finalized";
+        if (topBid) {
+          auction.winner_id = topBid.user_id;
+          auction.winner_name = topBid.bidder_name;
+          auction.current_price = topBid.amount;
+        }
+        console.log(`[Auto-repair P2] Closed expired auction "${auction.title}"${topBid ? ` → winner: ${topBid.bidder_name}` : " (no bids)"}`);
+      } catch (e) {
+        console.error(`[Auto-repair P2] Failed for ${auction.id}:`, e);
       }
     }
 
@@ -291,7 +324,7 @@ const Admin = () => {
 
     // Fetch open support tickets count
     try {
-      const { count } = await supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["open", "pending"]);
+      const { count } = await (supabase as any).from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["open", "pending"]);
       setOpenTickets(count || 0);
     } catch { /* support_tickets table may not exist */ }
 
@@ -523,7 +556,7 @@ const Admin = () => {
             {activeTab === "review" && <AdminReviewTab auctions={auctions} fetchAllData={fetchAllData} />}
             {activeTab === "auctions" && <AdminAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} commissionPct={commissionPct} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "payments" && <AdminPaymentsTab paymentProofs={paymentProofs} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
-            {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} paymentProofs={paymentProofs} globalSearch={globalSearch} />}
+            {activeTab === "won" && <AdminWonAuctionsTab auctions={auctions} winnerProfiles={winnerProfiles} dealerProfiles={dealerProfiles} fetchAllData={fetchAllData} globalSearch={globalSearch} />}
             {activeTab === "messages" && <AdminMessagesTab globalSearch={globalSearch} />}
             {activeTab === "emails" && <AdminEmailsTab globalSearch={globalSearch} />}
             {activeTab === "cms" && <AdminCMSTab siteSettings={siteSettings} siteSections={siteSections} banners={banners} editingSettings={editingSettings} setEditingSettings={setEditingSettings} savingSettings={savingSettings} setSavingSettings={setSavingSettings} handleSaveSettings={handleSaveSettings} fetchAllData={fetchAllData} />}
