@@ -147,13 +147,23 @@ Y en `Admin.tsx` se agregó **Auto-repair Phase 2** que detecta y cierra todas l
 
 **Síntoma:** La tasa del BCV se resetea a un valor antiguo o incorrecto en el panel de nómina u otros formularios.
 
-**Causa Raíz:** Múltiples fuentes pueden escribir la tasa (Edge Function `auto-update-bcv-rate`, input manual del admin, `useSiteSettings` hook). Si se realizan llamadas redundantes o al cargar el componente se sobreescribe el valor actual con el cacheado.
+**Causa Raíz:** El BCV (Banco Central de Venezuela) publica la tasa solo en días hábiles. No existía un cron automático, así que la tasa quedaba desactualizada el fin de semana y el lunes.
 
-**REGLA DE ORO:**
-- ✅ La tasa BCV tiene una fuente de verdad única: la tabla `site_settings` en Supabase. Todo lo demás es caché.
-- ❌ NUNCA reescribas el valor de la tasa en la BD si no es el admin quien lo está cambiando explícitamente.
-- ❌ NUNCA hagas llamadas automáticas al API externo de BCV que puedan sobreescribir la tasa manual del admin sin su consentimiento.
-- ✅ El hook `useBCVRate` debe ser de solo lectura para los componentes de usuario. Solo el panel Admin puede modificarla.
+**Solución Aplicada (2026-03-22):**
+- Creado `api/update-bcv-rate.js` → Vercel Cron handler
+- Cron en `vercel.json`: `"schedule": "0 13 * * 1-5"` → lunes-viernes 9:00 AM VET (13:00 UTC)
+- La Edge Function `auto-update-bcv-rate` ya tiene 4 APIs de respaldo:
+  1. `ve.dolarapi.com` (oficial BCV)
+  2. `bcv-api.rafnixg.dev`
+  3. `open.er-api.com`
+  4. `exchangerate-api.com`
+
+**REGLAS DE ORO:**
+- ✅ La tasa BCV tiene una fuente de verdad única: la tabla `site_settings` (`setting_key = "bcv_rate"`).
+- ✅ El BCV publica solo días hábiles. **La tasa del viernes es la vigente sábado, domingo y lunes** hasta la próxima publicación. Esto es correcto y esperado.
+- ✅ El cron corre automáticamente L-V. El admin puede forzar la actualización con el botón "Actualizar BCV" en el panel de Configuración.
+- ❌ NUNCA reescribas la tasa en la BD si no es el admin o el cron oficial quien lo solicita.
+- ❌ NUNCA hagas llamadas automáticas al API externo que puedan sobreescribir la tasa manual del admin sin su consentimiento.
 
 ---
 
