@@ -9,6 +9,10 @@
         {
             "path": "/api/review-reminder",
             "schedule": "0 14 * * *"
+        },
+        {
+            "path": "/api/update-bcv-rate",
+            "schedule": "0 13 * * 1-5"
         }
     ]
 }
