@@ -152,18 +152,22 @@ Y en `Admin.tsx` se agregó **Auto-repair Phase 2** que detecta y cierra todas l
 **Solución Aplicada (2026-03-22):**
 - Creado `api/update-bcv-rate.js` → Vercel Cron handler
 - Cron en `vercel.json`: `"schedule": "0 13 * * 1-5"` → lunes-viernes 9:00 AM VET (13:00 UTC)
-- La Edge Function `auto-update-bcv-rate` ya tiene 4 APIs de respaldo:
-  1. `ve.dolarapi.com` (oficial BCV)
-  2. `bcv-api.rafnixg.dev`
-  3. `open.er-api.com`
-  4. `exchangerate-api.com`
+- Cron en `vercel.json`: `"schedule": "0 23 * * 1-5"` → lunes-viernes 7:00 PM VET (23:00 UTC)
+- La Edge Function `auto-update-bcv-rate` tiene 5 fuentes de respaldo:
+  1. `bcv.org.ve` — scraping directo HTML (fuente primaria, sin lag)
+  2. `monitordedivisavenezuela.com`
+  3. `pydolarve.org`
+  4. `ve.dolarapi.com` (puede tener lag de 1-2 días, ÚLTIMO RECURSO)
+  5. `open.er-api.com` (global fallback)
 
 **REGLAS DE ORO:**
 - ✅ La tasa BCV tiene una fuente de verdad única: la tabla `site_settings` (`setting_key = "bcv_rate"`).
-- ✅ El BCV publica solo días hábiles. **La tasa del viernes es la vigente sábado, domingo y lunes** hasta la próxima publicación. Esto es correcto y esperado.
-- ✅ El cron corre automáticamente L-V. El admin puede forzar la actualización con el botón "Actualizar BCV" en el panel de Configuración.
-- ❌ NUNCA reescribas la tasa en la BD si no es el admin o el cron oficial quien lo solicita.
-- ❌ NUNCA hagas llamadas automáticas al API externo que puedan sobreescribir la tasa manual del admin sin su consentimiento.
+- ✅ **El BCV publica la tasa TODOS los días hábiles (L-V) a las ~6:00 PM Venezuela.**
+- ✅ **El viernes a las ~6PM publica la tasa del LUNES siguiente.** Esta tasa rige desde el viernes tarde, todo el sábado, todo el domingo, y todo el lunes hasta las ~6PM que publican la nueva.
+- ✅ El cron corre a las 7PM VET (23:00 UTC) para dar tiempo a que la publicación esté disponible.
+- ✅ El admin puede forzar la actualización en cualquier momento con el botón "Actualizar BCV" en Admin → Configuración.
+- ❌ NUNCA uses `ve.dolarapi.com` como fuente principal — tiene lag de 1-2 días.
+- ❌ NUNCA reescribas la tasa en la BD si no es el admin o el cron oficial.
 
 ---
 
