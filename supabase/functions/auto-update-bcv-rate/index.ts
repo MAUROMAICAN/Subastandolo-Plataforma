@@ -52,10 +52,19 @@ serve(async (req) => {
             const html = await res.text();
             // BCV rate appears in the HTML as: id="dolar" ... <strong>457,07</strong>
             // Try multiple patterns to handle site layout changes
+            // Pattern notes:
+            // - BCV uses <div id="dolar">, NOT <section id="dolar">
+            // - Rate format: 459,45250000 (8 decimal places, using comma as separator)
+            // - First <strong> inside #dolar is "USD" (text), second is the numeric rate
             const patterns = [
-                /<section[^>]*id=["']dolar["'][^>]*>[\s\S]*?<strong>([\d,\.]+)<\/strong>/i,
-                /id="dolar"[\s\S]{0,500}?<strong>([\d,.]+)<\/strong>/i,
-                /"dolar"[\s\S]{0,800}?([\d]{3,4}[,\.]\d{2})/,
+                // ✅ Primary: div#dolar → skip text strong → find numeric strong
+                /<(?:div|section)[^>]*id=["']dolar["'][^>]*>[\s\S]{0,2000}?<strong>\s*([3-9]\d{2}[,.]\d+)\s*<\/strong>/i,
+                // ✅ Fallback 1: any element id="dolar" → 2000 chars → numeric strong tag
+                /id=["']dolar["'][\s\S]{0,2000}?<strong>\s*([3-9]\d{2}[,.]\d+)\s*<\/strong>/i,
+                // ✅ Fallback 2: "dolar" label → 1000 chars → Venezuela-range number
+                /[>\s"']dolar[<\s"'][\s\S]{0,1000}?([3-9]\d{2}[,.]\d{2,})/i,
+                // ✅ Fallback 3: any strong tag with a number in Venezuela BCV range (300–900)
+                /<strong>\s*([3-9]\d{2}[,.]\d+)\s*<\/strong>/,
             ];
             for (const pattern of patterns) {
                 const match = html.match(pattern);
